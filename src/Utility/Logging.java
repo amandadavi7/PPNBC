@@ -6,34 +6,36 @@
 package Utility;
 
 /**
- *
+ * Contains all logging functions for cleaner code, and easy debugging.
  * @author anisha
  */
 public class Logging {
-    
+
     /**
      * Log shares from a list
+     *
      * @param variableName
-     * @param shares 
+     * @param shares
      */
     public static void logShares(String variableName, Integer[] shares) {
         int n = 0;
-        System.out.print(variableName +": ");
-        for(int share:shares) {
+        System.out.print(variableName + ": ");
+        for (int share : shares) {
             System.out.print(share + " ");
         }
         System.out.println("");
     }
-    
+
     /**
      * Log a single value
+     *
      * @param variableName
-     * @param value 
+     * @param value
      */
     public static void logValue(String variableName, int value) {
-        System.out.println(variableName +": "+ value);
+        System.out.println(variableName + ": " + value);
     }
-    
+
     /**
      * Guidelines to use the Party class
      */
@@ -42,7 +44,7 @@ public class Logging {
                 + "peer_port=<peer port> party_id=<Party Id> "
                 + "values=<secret share>");
     }
-    
+
     /**
      * Guideline to use the TI class
      */
