@@ -40,8 +40,9 @@ public class Logging {
      * Guidelines to use the Party class
      */
     public static void partyUsage() {
-        System.out.println("java Party.Party party_port=<port> ti=<TI port> "
-                + "peer_port=<peer port> party_id=<Party Id> "
+        System.out.println("java Party.Party party_port=<port> ti=<TI IP:port> "
+                + "peer_port=<peer IP:port> no_func=<No of functions to compute from TI> "
+                + "party_id=<Party Id> "
                 + "values=<secret share>");
     }
 

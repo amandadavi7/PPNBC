@@ -34,10 +34,12 @@ public class PeerClient implements Runnable {
 
     BlockingQueue<Message> receiverQueue;
     int peerPort;
+    String peerIP;
 
-    public PeerClient(ServerSocket serverSocket, int port) {
+    public PeerClient(ServerSocket serverSocket, String peerIP, int port) {
         this.serverSocket = serverSocket;
         this.socketPeer = null;
+        this.peerIP = peerIP;
         this.peerPort = port;
         
         // TODO innitialize this
@@ -49,7 +51,7 @@ public class PeerClient implements Runnable {
     public void run() {
         //Client socket connection
         while (true) {
-            socketPeer = Connection.initializeClientConnection(Constants.IP, peerPort);
+            socketPeer = Connection.initializeClientConnection(peerIP, peerPort);
             if (socketPeer != null && socketPeer.isConnected()) {
                 break;
             }

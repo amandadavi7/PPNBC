@@ -11,7 +11,6 @@ package Utility;
  */
 public class Constants {
 
-    public static final String IP = "127.0.0.1";     // Server IP
     public static final int prime = 11;             // Prime 
     public static final int binaryPrime = 2;             // Prime for bit calculation
     public static final int clientCount = 2;        // No of parties computing a function

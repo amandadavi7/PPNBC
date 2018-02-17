@@ -6,11 +6,11 @@
 package Party;
 
 import Communication.Connection;
-import Utility.Constants;
-import Utility.Logging;
 import Communication.PeerClient;
 import Communication.PeerServer;
 import Model.TestModel;
+import Utility.Constants;
+import Utility.Logging;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -30,30 +30,36 @@ import java.util.logging.Logger;
  */
 public class Party {
 
-    private static ServerSocket socketServer;
+    private static ServerSocket socketServer;       // The socket connection for Peer acting as server
 
+    //TODO Keerthana -> List<Integer[]>
     // TIShares -> int[#offun][value] : value->u/v/w in mentioned order
     private static Integer[][] tiShares;
 
+    // TODO Keerthana -> Do you think we need this datastructure anymore? 
     // TODO change it to a more object oriented structure
     private static HashMap<Integer, HashMap<String, Integer>> partyShares;
     // <function id, <variable name, value>>
 
     private static int partyId;
     private static int port;
+    private static String tiIP;
     private static int tiPort;
+    private static String peerIP;
     private static int peerPort;
-    private static int[] vector;    // This is the vector
     private static int noOfFuncToCompute;
 
     private static Integer[] xShares;
     private static Integer[] yShares;
 
+    /**
+     * Initialize class variables
+     *
+     * @param args
+     */
     public static void initalizeVariables(String[] args) {
-        // This is the values of the vector
         xShares = new Integer[3];
         yShares = new Integer[3];
-
         partyShares = new HashMap<>();
         partyId = -1;
 
@@ -68,14 +74,15 @@ public class Party {
 
             switch (command) {
                 case "ti":
-                    // TODO include ti ip address
-                    tiPort = Integer.parseInt(value);
+                    tiIP = value.split(":")[0];
+                    tiPort = Integer.parseInt(value.split(":")[1]);
                     break;
                 case "party_port":
                     port = Integer.parseInt(value);
                     break;
                 case "peer_port":
-                    peerPort = Integer.parseInt(value);
+                    peerIP = value.split(":")[0];
+                    peerPort = Integer.parseInt(value.split(":")[1]);
                     break;
                 case "party_id":
                     partyId = Integer.parseInt(value);
@@ -93,7 +100,7 @@ public class Party {
                             mapToInt(Integer::parseInt).toArray();
                     yShares = Arrays.stream(yIntShares).boxed().toArray(Integer[]::new);
                     break;
-                
+
             }
 
         }
@@ -107,7 +114,7 @@ public class Party {
     }
 
     public static void main(String[] args) {
-        if (args.length < 5) {
+        if (args.length < 6) {
             Logging.partyUsage();
             System.exit(0);
         }
@@ -123,6 +130,9 @@ public class Party {
         testModel.compute();
     }
 
+    /**
+     * Gets shares from TI in a separate blocking thread and saves it.
+     */
     private static void getSharesFromTI() {
         // Initialize TI socket and receive shares
         Socket socketTI = null;
@@ -130,9 +140,9 @@ public class Party {
         System.out.println("Receiving shares from TI");
 
         // client for TI
-        socketTI = Connection.initializeClientConnection(Constants.IP, tiPort);
+        socketTI = Connection.initializeClientConnection(tiIP, tiPort);
         ExecutorService tiEs = Executors.newSingleThreadScheduledExecutor();
-        PeerTICommunication ticommunicationObj = new PeerTICommunication(socketTI, 
+        PeerTICommunication ticommunicationObj = new PeerTICommunication(socketTI,
                 tiShares, noOfFuncToCompute);
         Future<Integer[][]> sharesReceived = tiEs.submit(ticommunicationObj);
 
@@ -152,8 +162,9 @@ public class Party {
 
     }
 
-    /*
-    * Sends the data to the given peer
+    /**
+     * Creates a server thread that sends data from sender queue to the given
+     * peer/ set of peers
      */
     private static void startServer() {
         System.out.println("Server thread starting");
@@ -163,10 +174,15 @@ public class Party {
 
     }
 
+    /**
+     * Creates a client thread that receives data from socket and saves it to
+     * the corresponding receiver queue
+     *
+     */
     private static void startClient() {
         System.out.println("Client thread starting");
         ExecutorService peerServerEs = Executors.newCachedThreadPool();
-        PeerClient peerClient = new PeerClient(socketServer, peerPort);
+        PeerClient peerClient = new PeerClient(socketServer, peerIP, peerPort);
         peerServerEs.submit(peerClient);
 
     }
