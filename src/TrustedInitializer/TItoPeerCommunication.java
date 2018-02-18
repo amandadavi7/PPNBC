@@ -19,6 +19,7 @@ import java.util.logging.Logger;
 public class TItoPeerCommunication implements Runnable {
     ServerSocket tiSocket;
     TIShare tishare;
+    Socket socket;
     
     /**
      * Constructor
@@ -37,7 +38,7 @@ public class TItoPeerCommunication implements Runnable {
     @Override
     public void run() {
         try{
-            Socket socket = tiSocket.accept();
+            socket = tiSocket.accept();
             System.out.println("Connected to:" + socket + ": sending,");
             ObjectOutputStream oStream = new ObjectOutputStream(socket.getOutputStream());
             oStream.writeObject(tishare);
@@ -47,7 +48,6 @@ public class TItoPeerCommunication implements Runnable {
             for(Triple t: tishare.binaryShares){
                 System.out.println("u : " + t.u + ",v : " + t.v + ",w : " + t.w);
             }
-            socket.close();
         } catch (IOException ex){
             Logger.getLogger(TItoPeerCommunication.class.getName()).log(Level.SEVERE, null, ex);
         }

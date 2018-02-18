@@ -5,7 +5,7 @@
  */
 package TrustedInitializer;
 
-import Communication.Connection;
+import Utility.Connection;
 import Utility.Constants;
 import Utility.Logging;
 import java.net.ServerSocket;
@@ -42,6 +42,10 @@ public class TI {
         }
     }
     
+    /**
+     * Function to generate the given number of decimal and binary triples,
+     * and splits them into shares for the parties
+     */
     public static void generateUVW(){
         Random rand = new Random();
         for(int i=0;i<decTriples;i++){
@@ -89,6 +93,9 @@ public class TI {
         }
     }
     
+    /**
+     * Send shares to parties
+     */
     public static void sendShares(){
         System.out.println("Sending shares to parties");
         ServerSocket tiserver = Connection.createServerSocket(tiPort);

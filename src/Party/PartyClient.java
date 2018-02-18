@@ -3,8 +3,10 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package Communication;
+package Party;
 
+import Communication.ProtocolMessage;
+import Utility.Connection;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -17,7 +19,7 @@ import java.util.logging.Logger;
  *
  * @author keerthanaa
  */
-public class PeerClient implements Runnable{
+public class PartyClient implements Runnable{
     
     BlockingQueue<ProtocolMessage> receiverQueue;
     String peerServerIP;
@@ -33,7 +35,7 @@ public class PeerClient implements Runnable{
      * @param ip
      * @param port 
      */
-    public PeerClient(BlockingQueue<ProtocolMessage> queue, String ip, int port){
+    public PartyClient(BlockingQueue<ProtocolMessage> queue, String ip, int port){
         this.receiverQueue = queue;
         this.peerServerIP = ip;
         this.peerServerPort = port;        
@@ -61,11 +63,11 @@ public class PeerClient implements Runnable{
                         }
                     }
             } catch (IOException ex)  {
-                Logger.getLogger(PeerClient.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(PartyClient.class.getName()).log(Level.SEVERE, null, ex);
             } catch (ClassNotFoundException ex) {
-                Logger.getLogger(PeerClient.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(PartyClient.class.getName()).log(Level.SEVERE, null, ex);
             } catch (InterruptedException ex) {
-                Logger.getLogger(PeerClient.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(PartyClient.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
         

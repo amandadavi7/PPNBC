@@ -5,9 +5,7 @@
  */
 package Party;
 
-import Communication.Connection;
-import Communication.PeerClient;
-import Communication.PeerServer;
+import Utility.Connection;
 import Communication.ProtocolMessage;
 import Model.TestModel;
 import TrustedInitializer.TIShare;
@@ -125,8 +123,6 @@ public class Party {
 
         getSharesFromTI();  // This is a blocking call
         
-        
-
         startServer();
         startClient();
 
@@ -171,9 +167,9 @@ public class Party {
      */
     private static void startServer() {
         System.out.println("Server thread starting");
-        ExecutorService peerServerEs = Executors.newCachedThreadPool();
-        PeerServer peerServer = new PeerServer(socketServer,senderQueue);
-        peerServerEs.submit(peerServer);
+        ExecutorService partyServerEs = Executors.newCachedThreadPool();
+        PartyServer partyServer = new PartyServer(socketServer,senderQueue);
+        partyServerEs.submit(partyServer);
 
     }
 
@@ -184,9 +180,9 @@ public class Party {
      */
     private static void startClient() {
         System.out.println("Client thread starting");
-        ExecutorService peerServerEs = Executors.newCachedThreadPool();
-        PeerClient peerClient = new PeerClient(receiverQueue, peerIP, peerPort);
-        peerServerEs.submit(peerClient);
+        ExecutorService partyServerEs = Executors.newCachedThreadPool();
+        PartyClient partyrClient = new PartyClient(receiverQueue, peerIP, peerPort);
+        partyServerEs.submit(partyrClient);
 
     }
 

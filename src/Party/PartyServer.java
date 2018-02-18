@@ -3,8 +3,9 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package Communication;
+package Party;
 
+import Communication.ProtocolMessage;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -18,7 +19,7 @@ import java.util.logging.Logger;
  *
  * @author keerthanaa
  */
-public class PeerServer implements Runnable{
+public class PartyServer implements Runnable{
     
     ServerSocket socketServer;
     BlockingQueue<ProtocolMessage> senderQueue;
@@ -28,7 +29,7 @@ public class PeerServer implements Runnable{
      * @param socketserver
      * @param queue 
      */
-    public PeerServer(ServerSocket socketserver, BlockingQueue<ProtocolMessage> queue){
+    public PartyServer(ServerSocket socketserver, BlockingQueue<ProtocolMessage> queue){
         this.socketServer = socketserver;
         this.senderQueue = queue;
     }
@@ -54,9 +55,9 @@ public class PeerServer implements Runnable{
             }
             
         } catch (IOException ex){
-            Logger.getLogger(PeerServer.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(PartyServer.class.getName()).log(Level.SEVERE, null, ex);
         } catch (InterruptedException ex){
-            Logger.getLogger(PeerServer.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(PartyServer.class.getName()).log(Level.SEVERE, null, ex);
         }
         
     }
