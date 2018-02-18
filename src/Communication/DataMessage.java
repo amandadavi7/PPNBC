@@ -13,11 +13,10 @@ import java.io.Serializable;
  *
  * @author anisha
  */
-public class Message implements Serializable {
+public class DataMessage implements Serializable {
 
     String variableName;
     Object value;
-    int funId;
     int clientId;
 
     /**
@@ -25,13 +24,11 @@ public class Message implements Serializable {
      *
      * @param name
      * @param value
-     * @param funcId
      * @param clientId
      */
-    public Message(String name, Object value, int funcId, int clientId) {
+    public DataMessage(String name, Object value, int clientId) {
         variableName = name;
         this.value = value;
-        this.funId = funcId;
         this.clientId = clientId;
     }
 
@@ -53,14 +50,6 @@ public class Message implements Serializable {
         return value;
     }
 
-    /**
-     * Get function id
-     *
-     * @return function id
-     */
-    public int getFunId() {
-        return funId;
-    }
 
     /**
      * Get client id
@@ -76,6 +65,6 @@ public class Message implements Serializable {
      */
     public void log() {
         System.out.println("Message: Name-" + variableName + ", Value-" + value
-                + ", funId-" + funId + ", clientId-" + clientId);
+                + ", clientId-" + clientId);
     }
 }

@@ -5,6 +5,8 @@
  */
 package Party;
 
+import TrustedInitializer.TIShare;
+import TrustedInitializer.Triple;
 import Utility.Constants;
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -18,18 +20,16 @@ import java.util.logging.Logger;
  *
  * @author anisha
  */
-public class PeerTICommunication implements Callable<Integer[][]> {
+public class PeerTICommunication implements Callable<TIShare> {
 
     Socket socket = null;
     ObjectOutputStream oStream = null;
     ObjectInputStream iStream = null;
-    Integer[][] tiShares;
-    int noOfFuncToCompute;
-
-    public PeerTICommunication(Socket socket, Integer[][] tiShares, int noOfFuncToCompute) {
+    TIShare tiShares;
+    
+    public PeerTICommunication(Socket socket, TIShare tiShares) {
         this.socket = socket;
         this.tiShares = tiShares;
-        this.noOfFuncToCompute = noOfFuncToCompute;
         try {
 
             oStream = new ObjectOutputStream(socket.getOutputStream());
@@ -42,10 +42,10 @@ public class PeerTICommunication implements Callable<Integer[][]> {
     }
 
     @Override
-    public Integer[][] call() throws Exception {
+    public TIShare call() throws Exception {
 
         try {
-            tiShares = (Integer[][]) iStream.readObject();
+            tiShares = (TIShare) iStream.readObject();
         } catch (IOException ex) {
             System.out.println("Check socket connection:" + ex);
         } catch (ClassNotFoundException ex) {
@@ -53,12 +53,13 @@ public class PeerTICommunication implements Callable<Integer[][]> {
         }
 
         System.out.println("tiSharesReceived:");
-        for (int i = 0; i < noOfFuncToCompute; i++) {
-            for (int j = 0; j < 3; j++) {
-                System.out.print(tiShares[i][j] + " ");
-            }
-            System.out.println("");
+        for(Triple t: tiShares.decimalShares){
+            System.out.println("u : " + t.u + ",v : " + t.v + ",w : " + t.w);
         }
+        for(Triple t: tiShares.binaryShares){
+            System.out.println("u : " + t.u + ",v : " + t.v + ",w : " + t.w);
+        }
+        
         return tiShares;
     }
 }

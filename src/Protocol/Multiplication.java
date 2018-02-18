@@ -5,7 +5,7 @@
  */
 package Protocol;
 
-import Communication.Message;
+import Communication.DataMessage;
 import java.util.concurrent.BlockingQueue;
 
 /**
@@ -14,8 +14,8 @@ import java.util.concurrent.BlockingQueue;
  */
 public class Multiplication {
     // There is one queue each since there are only 2 parties
-    private static BlockingQueue<Message> senderQueue;
-    private static BlockingQueue<Message> receiverQueue;
+    private static BlockingQueue<DataMessage> senderQueue;
+    private static BlockingQueue<DataMessage> receiverQueue;
 
     
 }

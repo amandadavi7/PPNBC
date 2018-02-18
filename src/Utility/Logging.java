@@ -41,7 +41,7 @@ public class Logging {
      */
     public static void partyUsage() {
         System.out.println("java Party.Party party_port=<port> ti=<TI IP:port> "
-                + "peer_port=<peer IP:port> no_func=<No of functions to compute from TI> "
+                + "peer_port=<peer IP:port> "
                 + "party_id=<Party Id> "
                 + "values=<secret share>");
     }
@@ -50,7 +50,7 @@ public class Logging {
      * Guideline to use the TI class
      */
     public static void tiUsage() {
-        System.out.println("java TI <port>");
+        System.out.println("java TI <port> <no. of decimal triples> <no. of binary triples>");
     }
 
 }

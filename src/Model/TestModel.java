@@ -6,15 +6,18 @@
 package Model;
 
 import Protocol.Multiplication;
+import java.net.ServerSocket;
 
 /**
  *
  * @author anisha
  */
 public class TestModel {
+    
+    ServerSocket server;
 
-    public TestModel() {
-
+    public TestModel(ServerSocket server) {
+        this.server = server;
     }
 
     public void compute() {
