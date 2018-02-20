@@ -11,7 +11,7 @@ import java.io.Serializable;
  *
  * @author keerthanaa
  */
-public class ProtocolMessage implements Serializable {
+public class ProtocolMessage implements Serializable, Message {
     int protocolID;
     DataMessage value;
     

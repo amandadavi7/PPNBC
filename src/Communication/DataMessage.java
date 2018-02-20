@@ -13,7 +13,7 @@ import java.io.Serializable;
  *
  * @author anisha
  */
-public class DataMessage implements Serializable {
+public class DataMessage implements Serializable, Message {
 
     String variableName;
     Object value;
