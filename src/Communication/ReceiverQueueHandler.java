@@ -42,7 +42,7 @@ public class ReceiverQueueHandler implements Runnable{
                 Message strippedObj = (Message) queueObj.getValue();
                 int ID = strippedObj.getProtocolID();
                 System.out.println("adding to subqueue " + ID + " message " + strippedObj);
-                subQueues.get(ID).add(strippedObj);
+                subQueues.get(ID).put(strippedObj);
             } catch (InterruptedException ex) {
                 Logger.getLogger(ReceiverQueueHandler.class.getName()).log(Level.SEVERE, null, ex);
             }

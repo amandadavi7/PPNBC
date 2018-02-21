@@ -5,13 +5,11 @@
  */
 package Protocol;
 
-import Communication.DataMessage;
 import Communication.Message;
 import Communication.ReceiverQueueHandler;
 import Communication.SenderQueueHandler;
 import TrustedInitializer.Triple;
 import Utility.Constants;
-import Utility.Logging;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -19,12 +17,10 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -44,11 +40,13 @@ public class Comparison implements Callable<Integer> {
     private BlockingQueue<Message> commonReceiver;
     List<Integer> x;
     List<Integer> y;
+    int oneShare;
     List<Triple> tiShares;
-    List<Integer> dShares;
-    List<Integer> eShares;
-    List<Integer> multiplicationE;
-    List<Integer> cShares;
+    
+    HashMap<Integer, Integer> dShares;
+    HashMap<Integer, Integer> eShares;
+    HashMap<Integer, Integer> multiplicationE;
+    HashMap<Integer, Integer> cShares;
 
     int parentProtocolId;
     int clientID;
@@ -56,12 +54,13 @@ public class Comparison implements Callable<Integer> {
     int bitLength;
 
     public Comparison(List<Integer> x, List<Integer> y, List<Triple> tiShares,
-            BlockingQueue<Message> senderQueue,
+            int oneShares,BlockingQueue<Message> senderQueue,
             BlockingQueue<Message> receiverQueue, int clientId, int prime,
             int protocolID) {
 
         this.x = x;
         this.y = y;
+        this.oneShare = oneShares;
         this.tiShares = tiShares;
         this.commonSender = senderQueue;
         this.commonReceiver = receiverQueue;
@@ -70,13 +69,18 @@ public class Comparison implements Callable<Integer> {
         this.parentProtocolId = protocolID;
 
         bitLength = Math.max(x.size(), y.size());
+        eShares = new HashMap<>();
+        dShares = new HashMap<>();
+        multiplicationE = new HashMap<>();
+        cShares = new HashMap<>();
 
+        System.out.println("bitLength:"+bitLength);
         // Communication between the parent and the sub protocols
         recQueues = new ConcurrentHashMap<>();
         sendQueues = new ConcurrentHashMap<>();
 
-        ExecutorService sendqueueHandler = Executors.newSingleThreadExecutor();
-        ExecutorService recvqueueHandler = Executors.newSingleThreadExecutor();
+        sendqueueHandler = Executors.newSingleThreadExecutor();
+        recvqueueHandler = Executors.newSingleThreadExecutor();
         
         sendqueueHandler.execute(new SenderQueueHandler(protocolID,commonSender,sendQueues));
         recvqueueHandler.execute(new ReceiverQueueHandler(commonReceiver, recQueues));
@@ -104,19 +108,22 @@ public class Comparison implements Callable<Integer> {
         
         //compute w when c thread ends
         int w = computeW();
+        
+        tearDownThreads();
         return w;
     }
 
     private void computeEShares() {
         for (int i = 0; i < bitLength; i++) {
-            int eShare = x.get(i) + y.get(i) + 1;
-            eShares.add(i, Math.floorMod(eShare, prime));
+            int eShare = x.get(i) + y.get(i) + oneShare;
+            eShares.put(i, Math.floorMod(eShare, prime));
+            System.out.println("eShare:"+i+": "+eShares.get(i));
         }
     }
 
     // convert this to a thread
     private void computeMultiplicationE() {
-        multiplicationE.add(bitLength - 1, eShares.get(bitLength - 1));
+        multiplicationE.put(bitLength - 1, eShares.get(bitLength - 1));
         // now multiply each eshare with the previous computed multiplication one at a time
 
         int subProtocolID = bitLength;
@@ -140,9 +147,10 @@ public class Comparison implements Callable<Integer> {
                     clientID, Constants.prime, subProtocolID);
 
             Future<Integer> multiplicationTask = es.submit(multiplicationModule);
+            es.shutdown();
 
             try {
-                multiplicationE.add(i - 1, multiplicationTask.get());
+                multiplicationE.put(i - 1, multiplicationTask.get());
                 System.out.println("result of Multiplication:" + multiplicationE.get(i - 1));
             } catch (InterruptedException ex) {
                 Logger.getLogger(Comparison.class.getName()).log(Level.SEVERE, null, ex);
@@ -152,9 +160,7 @@ public class Comparison implements Callable<Integer> {
 
         }
 
-        multiplicationE.add(0, 0);
-        computeCShares();
-
+        multiplicationE.put(0, 0);
     }
 
     private void computeCShares() {
@@ -177,12 +183,14 @@ public class Comparison implements Callable<Integer> {
             taskList.add(multiplicationTask);
 
         }
+        
+        es.shutdown();
 
         // Now when I got the result for all, compute y+ x*y and add it to d[i]
-        for (int i = 0; i < bitLength; i++) {
+        for (int i = 0; i < bitLength -1; i++) {
             Future<Integer> dWorkerResponse = taskList.get(i);
             try {
-                cShares.add(i, dWorkerResponse.get());
+                cShares.put(i, dWorkerResponse.get());
             } catch (InterruptedException ex) {
                 Logger.getLogger(Comparison.class.getName()).log(Level.SEVERE, null, ex);
             } catch (ExecutionException ex) {
@@ -190,13 +198,12 @@ public class Comparison implements Callable<Integer> {
             }
         }
 
-        cShares.add(bitLength - 1, dShares.get(bitLength - 1));
+        cShares.put(bitLength - 1, dShares.get(bitLength - 1));
 
-        computeW();
     }
 
     private int computeW() {
-        int w = 1;
+        int w = oneShare;
         for (int i = 0; i < bitLength; i++) {
             w += cShares.get(i);
             w = Math.floorMod(w, Constants.prime);
@@ -227,11 +234,18 @@ public class Comparison implements Callable<Integer> {
             taskList.add(multiplicationTask);
         
         }
+        
+        es.shutdown();
 
         // Now when I got the result for all, compute y+ x*y and add it to d[i]
         for (int i = 0; i < bitLength; i++) {
             Future<Integer> dWorkerResponse = taskList.get(i);
-            dShares.add(i, y.get(i) + dWorkerResponse.get());
+            dShares.put(i, y.get(i) - dWorkerResponse.get());
         }
+    }
+
+    private void tearDownThreads() {
+        recvqueueHandler.shutdownNow();
+        sendqueueHandler.shutdownNow();
     }
 }

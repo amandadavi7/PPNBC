@@ -42,9 +42,10 @@ public class Party {
     private static int tiPort;
     private static String peerIP;
     private static int peerPort;
-    
+
     private static List<Integer> xShares;
     private static List<Integer> yShares;
+    private static int oneShares;
 
     /**
      * Initialize class variables
@@ -89,6 +90,9 @@ public class Party {
                             mapToInt(Integer::parseInt).toArray();
                     xShares = Arrays.stream(xIntShares).boxed().collect(Collectors.toList());
                     break;
+                case "oneShares":
+                    oneShares = Integer.parseInt(value);
+                    break;
                 case "yShares":
                     int[] yIntShares = Arrays.stream(value.split(",")).
                             mapToInt(Integer::parseInt).toArray();
@@ -116,12 +120,12 @@ public class Party {
         initalizeVariables(args);
 
         getSharesFromTI();  // This is a blocking call
-        
+
         startServer();
         startClient();
 
-        TestModel testModel = new TestModel(xShares, yShares, 
-                tiShares.decimalShares, senderQueue, receiverQueue, partyId);
+        TestModel testModel = new TestModel(xShares, yShares,
+                tiShares.binaryShares, oneShares, senderQueue, receiverQueue, partyId);
         testModel.compute();
     }
 
@@ -139,7 +143,7 @@ public class Party {
         ExecutorService tiEs = Executors.newSingleThreadScheduledExecutor();
         PeerTICommunication ticommunicationObj = new PeerTICommunication(socketTI, tiShares);
         Future<TIShare> sharesReceived = tiEs.submit(ticommunicationObj);
-        
+
         try {
             tiShares = sharesReceived.get();
         } catch (InterruptedException | ExecutionException ex) {
@@ -163,7 +167,7 @@ public class Party {
     private static void startServer() {
         System.out.println("Server thread starting");
         ExecutorService partyServerEs = Executors.newCachedThreadPool();
-        PartyServer partyServer = new PartyServer(socketServer,senderQueue);
+        PartyServer partyServer = new PartyServer(socketServer, senderQueue);
         partyServerEs.submit(partyServer);
 
     }
