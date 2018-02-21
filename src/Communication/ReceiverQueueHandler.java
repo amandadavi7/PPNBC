@@ -5,7 +5,6 @@
  */
 package Communication;
 
-import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
@@ -44,7 +43,7 @@ public class ReceiverQueueHandler implements Runnable{
                 System.out.println("adding to subqueue " + ID + " message " + strippedObj);
                 subQueues.get(ID).add(strippedObj);
             } catch (InterruptedException ex) {
-                Logger.getLogger(ReceiverQueueHandler.class.getName()).log(Level.SEVERE, null, ex);
+                
             }
         }
         

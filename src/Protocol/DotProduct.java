@@ -95,7 +95,6 @@ public class DotProduct implements Callable<Integer> {
                 Future<Integer> prod = multCompletionService.take();
                 int product = prod.get();
                 dotProduct += product;
-                System.out.println("answer so far is "+dotProduct);
             } catch (InterruptedException | ExecutionException ex) {
                 Logger.getLogger(DotProduct.class.getName()).log(Level.SEVERE, null, ex);
             }
@@ -104,6 +103,7 @@ public class DotProduct implements Callable<Integer> {
         sendqueueHandler.shutdownNow();
         recvqueueHandler.shutdownNow();
         
+        dotProduct = Math.floorMod(dotProduct,prime);
         return dotProduct;
         
     }

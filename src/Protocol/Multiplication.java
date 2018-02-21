@@ -61,15 +61,14 @@ public class Multiplication implements Callable {
     @Override
     public Object call() throws Exception {
         initProtocol();
-        System.out.println("Waiting for receiver." + protocolID);
+        System.out.println("Waiting for receiver.");
         Message receivedMessage = receiverQueue.take();
         List<Integer> diffList = (List<Integer>) receivedMessage.getValue();
-
+        
         int d = Math.floorMod((x - tiShares.u) + diffList.get(0), prime);
         int e = Math.floorMod((y - tiShares.v) + diffList.get(1), prime);
         int product = tiShares.w + (d * tiShares.v) + (tiShares.u * e) + (d * e);
         product = Math.floorMod(product, Constants.prime);
-        System.out.println("protocol " + protocolID + " successful");
         return product;
 
     }
