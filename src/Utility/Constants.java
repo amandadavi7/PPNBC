@@ -26,5 +26,7 @@ public class Constants {
     public static final String localD = "localD";
     public static final String localE = "localE";
     public static final String product = "product";
+    
+    public static final int threadCount = 5; 
 
 }

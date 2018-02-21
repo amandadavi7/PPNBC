@@ -85,7 +85,7 @@ public class Comparison implements Callable<Integer> {
 
     /**
      * Waits for the shares of (x-u) and (y-v), computes the product and returns
-     * the value
+     * the value. Returns 1 if x>=y, 0 otherwise
      *
      * @return
      * @throws Exception
@@ -100,16 +100,10 @@ public class Comparison implements Callable<Integer> {
         computeMultiplicationE();
                 
         // Compute c when both threads end
+        computeCShares();
+        
         //compute w when c thread ends
         int w = computeW();
-//        Message receivedMessage = receiverQueue.take();
-//        List<Integer> diffList = (List<Integer>) receivedMessage.getValue();
-//
-//        int d = Math.floorMod((x - tiShares.u) + diffList.get(0), prime);
-//        int e = Math.floorMod((y - tiShares.v) + diffList.get(1), prime);
-//        int product = tiShares.w + (d * tiShares.v) + (tiShares.u * e) + (d * e);
-//        product = Math.floorMod(product, Constants.prime);
-//        return product;
         return w;
     }
 
