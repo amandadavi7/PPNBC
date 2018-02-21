@@ -64,11 +64,11 @@ public class PartyClient implements Runnable{
                         }
                     }
             } catch (IOException ex)  {
-                Logger.getLogger(PartyClient.class.getName()).log(Level.SEVERE, null, ex);
+                
             } catch (ClassNotFoundException ex) {
-                Logger.getLogger(PartyClient.class.getName()).log(Level.SEVERE, null, ex);
+                
             } catch (InterruptedException ex) {
-                Logger.getLogger(PartyClient.class.getName()).log(Level.SEVERE, null, ex);
+               
             }
         }
         

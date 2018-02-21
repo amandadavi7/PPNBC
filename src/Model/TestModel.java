@@ -60,7 +60,7 @@ public class TestModel {
         
         try {
             int result = comparisonTask.get();
-            System.out.println("result of dot product:" + result);
+            System.out.println("result of comparison" + result);
         } catch (InterruptedException ex) {
             Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
         } catch (ExecutionException ex) {

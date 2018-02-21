@@ -112,7 +112,7 @@ public class Party {
     }
 
     public static void main(String[] args) {
-        if (args.length < 5) {
+        if (args.length < 6) {
             Logging.partyUsage();
             System.exit(0);
         }
