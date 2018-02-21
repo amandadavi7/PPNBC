@@ -47,6 +47,10 @@ public class ProtocolMessage implements Serializable, Message {
         System.out.println("Message: Protocol ID-" + protocolID + ", Value-" + value);
     }
 
+    /**
+     * Return the value field of the protocol
+     * @return 
+     */
     @Override
     public Object getValue() {
         return getDataMessage();

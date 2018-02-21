@@ -49,7 +49,6 @@ public class PartyServer implements Runnable{
             
             while(true){
                 Message msg = senderQueue.take();
-                System.out.println("Writing message to sender queue:"+ msg.getValue());
                 oStream.writeObject(msg);
                 oStream.flush();
                 

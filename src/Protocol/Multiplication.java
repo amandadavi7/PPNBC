@@ -19,7 +19,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- *
+ * The protocol computes the multiplication of shares of x and y
+ * and returns the share of the product
  * @author anisha
  */
 public class Multiplication implements Callable {
@@ -31,12 +32,6 @@ public class Multiplication implements Callable {
     Triple tiShares;
     int clientID;
     int prime;
-
-//    public Multiplication(int x, int y, int u, int v, int w,
-//            BlockingQueue<Message> senderQueue, int clientId, int prime) {
-//        this(x, y, u, v, w, senderQueue, new LinkedBlockingQueue<Message>(),
-//                clientId, prime);
-//    }
 
     public Multiplication(int x, int y, Triple tiShares,
             BlockingQueue<Message> senderQueue,
@@ -53,12 +48,17 @@ public class Multiplication implements Callable {
         Logging.logValue("x", x);
         Logging.logValue("y", y);
         tiShares.log();
-        System.out.println("prime:"+prime);
         
         initProtocol();
 
     }
 
+    /**
+     * Waits for the shares of (x-u) and (y-v), computes the product and returns
+     * the value
+     * @return
+     * @throws Exception 
+     */
     @Override
     public Object call() throws Exception {
         Message receivedMessage = receiverQueue.take();

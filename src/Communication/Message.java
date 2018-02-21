@@ -8,7 +8,8 @@ package Communication;
 import java.io.Serializable;
 
 /**
- *
+ * The interface encapsulates the DataMessage and the ProtocolMessage 
+ * from the communication layers
  * @author anisha
  */
 public interface Message {

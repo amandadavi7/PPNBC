@@ -58,7 +58,6 @@ public class PartyClient implements Runnable{
                     while(true) {
                         if(receiveSocket != null && receiveSocket.isConnected()) {
                             Message msg = (Message) iStream.readObject();
-                            System.out.println("recieved value from receiver queue:"+msg.getValue());
                             receiverQueue.put(msg);
                         } else {
                             break;

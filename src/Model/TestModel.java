@@ -9,7 +9,6 @@ import Communication.Message;
 import Protocol.Multiplication;
 import TrustedInitializer.Triple;
 import Utility.Constants;
-import Utility.Logging;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.logging.*;
@@ -37,13 +36,6 @@ public class TestModel {
         this.receiverQueue = receiverQueue;
         this.clientId = clientId;
     }
-
-//    public TestModel(List<Integer> x, List<Integer> y, List<Triple> tiShares,
-//            ServerSocket server, BlockingQueue<Message> senderQueue,
-//            int clientId) {
-//        this(x, y, tiShares, server, senderQueue,
-//                new LinkedBlockingQueue<Message>(), clientId);
-//    }
 
     public void compute() {
         ExecutorService es = Executors.newSingleThreadExecutor();

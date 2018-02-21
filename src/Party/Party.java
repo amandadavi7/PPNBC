@@ -87,7 +87,6 @@ public class Party {
                 case "xShares":
                     int[] xIntShares = Arrays.stream(value.split(",")).
                             mapToInt(Integer::parseInt).toArray();
-                    
                     xShares = Arrays.stream(xIntShares).boxed().collect(Collectors.toList());
                     break;
                 case "yShares":
