@@ -20,19 +20,29 @@ public class ReceiverQueueHandler implements Runnable{
     BlockingQueue<Message> commonQueue;
     ConcurrentHashMap<Integer, BlockingQueue<Message> > subQueues;
     
+    /**
+     * Constructor
+     * 
+     * @param commonQueue
+     * @param subQueues 
+     */
     public ReceiverQueueHandler(BlockingQueue<Message> commonQueue, ConcurrentHashMap<Integer, BlockingQueue<Message> > subQueues){
         this.commonQueue = commonQueue;        
         this.subQueues = subQueues;
     }
     
+    /**
+     * Take element from parent queue and add it to the sub queue
+     */
     @Override
     public void run(){
         while(true){
             try {
-                Message obj = commonQueue.take();
-                int ID = obj.getProtocolID();
-                System.out.println("adding to subqueue");
-                subQueues.get(ID).add(obj);
+                Message queueObj = commonQueue.take();
+                Message strippedObj = (Message) queueObj.getValue();
+                int ID = strippedObj.getProtocolID();
+                System.out.println("adding to subqueue " + ID + " message " + strippedObj);
+                subQueues.get(ID).add(strippedObj);
             } catch (InterruptedException ex) {
                 Logger.getLogger(ReceiverQueueHandler.class.getName()).log(Level.SEVERE, null, ex);
             }

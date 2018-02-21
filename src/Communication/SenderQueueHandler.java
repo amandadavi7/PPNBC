@@ -23,20 +23,30 @@ public class SenderQueueHandler implements Runnable{
     ConcurrentHashMap<Integer, BlockingQueue<Message> > subQueues;
     int protocolID;
     
+    /**
+     * Constructor
+     * 
+     * @param protocolID
+     * @param commonQueue
+     * @param subQueues 
+     */
     public SenderQueueHandler(int protocolID, BlockingQueue<Message> commonQueue, ConcurrentHashMap<Integer, BlockingQueue<Message> > subQueues){
         this.commonQueue = commonQueue;        
         this.subQueues = subQueues;
         this.protocolID = protocolID;
     }
     
+    /**
+     * Take element from sub queue and encapsulate and add to parent queue
+     */
     @Override
     public void run(){
         while(true){
                 for (BlockingQueue<Message> q: subQueues.values()){
                     if(q.size()>0){
-                        System.out.println("sender queue size > 1");
                         try {
                             Message msg = new ProtocolMessage(protocolID, q.take());
+                            System.out.println("Adding to parent queue " + protocolID + " " + msg);
                             commonQueue.add(msg);
                         } catch (InterruptedException ex) {
                             Logger.getLogger(SenderQueueHandler.class.getName()).log(Level.SEVERE, null, ex);

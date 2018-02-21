@@ -48,7 +48,8 @@ public class DataMessage implements Serializable, Message {
      * 
      * @return 
      */
-    public int getProtocolID(){
+    @Override
+public int getProtocolID(){
       return protocolId;  
     }
 
