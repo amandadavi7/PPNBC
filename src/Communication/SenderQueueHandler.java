@@ -42,17 +42,17 @@ public class SenderQueueHandler implements Runnable{
     @Override
     public void run(){
         while(true){
-                for (BlockingQueue<Message> q: subQueues.values()){
-                    if(q.size()>0){
-                        try {
-                            Message msg = new ProtocolMessage(protocolID, q.take());
-                            System.out.println("Adding to parent queue " + protocolID + " " + msg);
-                            commonQueue.add(msg);
-                        } catch (InterruptedException ex) {
-                            Logger.getLogger(SenderQueueHandler.class.getName()).log(Level.SEVERE, null, ex);
-                        }
+            for (BlockingQueue<Message> q: subQueues.values()){
+                if(q.size()>0){
+                    try {
+                        Message msg = new ProtocolMessage(protocolID, q.take());
+                        System.out.println("Adding to parent queue " + protocolID + " " + msg);
+                        commonQueue.add(msg);
+                    } catch (InterruptedException ex) {
+                        Logger.getLogger(SenderQueueHandler.class.getName()).log(Level.SEVERE, null, ex);
                     }
                 }
+            }
         }
         
     }
