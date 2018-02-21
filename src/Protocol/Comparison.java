@@ -9,7 +9,6 @@ import Communication.Message;
 import Communication.ReceiverQueueHandler;
 import Communication.SenderQueueHandler;
 import TrustedInitializer.Triple;
-import Utility.Constants;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -109,7 +108,7 @@ public class Comparison implements Callable<Integer> {
         //compute w when c thread ends
         int w = computeW();
         
-        tearDownThreads();
+        //tearDownThreads();
         return w;
     }
 
@@ -144,7 +143,7 @@ public class Comparison implements Callable<Integer> {
             Multiplication multiplicationModule = new Multiplication(multiplicationE.get(i),
                     eShares.get(i - 1), tiShares.get(bitLength + 1),
                     sendQueues.get(subProtocolID), recQueues.get(subProtocolID), 
-                    clientID, Constants.prime, subProtocolID);
+                    clientID, prime, subProtocolID);
 
             Future<Integer> multiplicationTask = es.submit(multiplicationModule);
             es.shutdown();
@@ -161,12 +160,13 @@ public class Comparison implements Callable<Integer> {
         }
 
         multiplicationE.put(0, 0);
+        System.out.println("Multiplication E completed");
     }
 
     private void computeCShares() {
 
         ExecutorService es = Executors.newFixedThreadPool(bitLength);
-        List<Future<Integer>> taskList = new ArrayList<Future<Integer>>();
+        List<Future<Integer>> taskList = new ArrayList<>();
 
         for (int i = 0; i < bitLength - 1; i++) {
             //compute local shares of d and e and add to the message queue
@@ -177,7 +177,7 @@ public class Comparison implements Callable<Integer> {
             
             Multiplication multiplicationModule = new Multiplication(multiplicationE.get(i + 1),
                     dShares.get(i), tiShares.get(i),
-                    sendQueues.get(i), recQueues.get(i), clientID, Constants.prime, i);
+                    sendQueues.get(i), recQueues.get(i), clientID, prime, i);
 
             Future<Integer> multiplicationTask = es.submit(multiplicationModule);
             taskList.add(multiplicationTask);
@@ -199,14 +199,17 @@ public class Comparison implements Callable<Integer> {
         }
 
         cShares.put(bitLength - 1, dShares.get(bitLength - 1));
+        
+        System.out.println("Computed cshares");
 
     }
 
     private int computeW() {
+        System.out.println("Computing w");
         int w = oneShare;
         for (int i = 0; i < bitLength; i++) {
             w += cShares.get(i);
-            w = Math.floorMod(w, Constants.prime);
+            w = Math.floorMod(w, prime);
         }
 
         System.out.println("w calculated:" + w);
@@ -229,7 +232,7 @@ public class Comparison implements Callable<Integer> {
             Multiplication multiplicationModule = new Multiplication(x.get(i),
                     y.get(i), tiShares.get(i),
                     sendQueues.get(i), recQueues.get(i), clientID, 
-                    Constants.prime, i);
+                    prime, i);
             Future<Integer> multiplicationTask = es.submit(multiplicationModule);
             taskList.add(multiplicationTask);
         

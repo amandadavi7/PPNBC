@@ -47,9 +47,6 @@ public class Multiplication implements Callable {
         this.prime = prime;
         this.protocolID = protocolID;
         
-        Logging.logValue("x", x);
-        Logging.logValue("y", y);
-        tiShares.log();
     }
 
     /**
@@ -68,7 +65,8 @@ public class Multiplication implements Callable {
         int d = Math.floorMod((x - tiShares.u) + diffList.get(0), prime);
         int e = Math.floorMod((y - tiShares.v) + diffList.get(1), prime);
         int product = tiShares.w + (d * tiShares.v) + (tiShares.u * e) + (d * e);
-        product = Math.floorMod(product, Constants.prime);
+        product = Math.floorMod(product, prime);
+        System.out.println("x*y("+x+","+y+"):"+product);
         return product;
 
     }
