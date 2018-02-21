@@ -5,6 +5,8 @@
  */
 package Utility;
 
+import java.util.ArrayList;
+
 /**
  * Contains all logging functions for cleaner code, and easy debugging.
  * @author anisha
@@ -18,6 +20,21 @@ public class Logging {
      * @param shares
      */
     public static void logShares(String variableName, Integer[] shares) {
+        int n = 0;
+        System.out.print(variableName + ": ");
+        for (int share : shares) {
+            System.out.print(share + " ");
+        }
+        System.out.println("");
+    }
+    
+    /**
+     * Log shares from a list
+     *
+     * @param variableName
+     * @param shares
+     */
+    public static void logShares(String variableName, ArrayList<Integer> shares) {
         int n = 0;
         System.out.print(variableName + ": ");
         for (int share : shares) {

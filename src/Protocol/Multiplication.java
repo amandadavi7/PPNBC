@@ -48,9 +48,6 @@ public class Multiplication implements Callable {
         Logging.logValue("x", x);
         Logging.logValue("y", y);
         tiShares.log();
-        
-        initProtocol();
-
     }
 
     /**
@@ -61,6 +58,7 @@ public class Multiplication implements Callable {
      */
     @Override
     public Object call() throws Exception {
+        initProtocol();
         Message receivedMessage = receiverQueue.take();
         List<Integer> diffList = (List<Integer>) receivedMessage.getValue();
 
