@@ -15,6 +15,8 @@ import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -22,8 +24,8 @@ import java.util.concurrent.LinkedBlockingQueue;
  */
 public class Multiplication implements Callable {
 
-    private static BlockingQueue<Message> senderQueue;
-    private static BlockingQueue<Message> receiverQueue;
+    private BlockingQueue<Message> senderQueue;
+    private BlockingQueue<Message> receiverQueue;
     int x;
     int y;
     Triple tiShares;
@@ -42,11 +44,11 @@ public class Multiplication implements Callable {
 
         this.x = x;
         this.y = y;
-        this.prime = prime;
         this.tiShares = tiShares;
         this.senderQueue = senderQueue;
         this.receiverQueue = receiverQueue;
         this.clientID = clientId;
+        this.prime = prime;
         
         Logging.logValue("x", x);
         Logging.logValue("y", y);
@@ -59,7 +61,6 @@ public class Multiplication implements Callable {
 
     @Override
     public Object call() throws Exception {
-        System.out.println("Waiting for receiver.");
         Message receivedMessage = receiverQueue.take();
         List<Integer> diffList = (List<Integer>) receivedMessage.getValue();
 
@@ -78,10 +79,12 @@ public class Multiplication implements Callable {
 
         Message senderMessage = new DataMessage(Constants.localShares, diffList,
                 clientID);
-        senderQueue.add(senderMessage);
+        try {
+            senderQueue.put(senderMessage);
+        } catch (InterruptedException ex) {
+            Logger.getLogger(Multiplication.class.getName()).log(Level.SEVERE, null, ex);
+        }
         
-        System.out.println("sending msg:"+ senderMessage.getValue());
-
     }
 
 }

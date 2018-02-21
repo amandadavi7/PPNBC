@@ -45,7 +45,6 @@ public class PartyServer implements Runnable{
         try {
             Socket clientSocket = socketServer.accept();
             System.out.println("Connected to:" + clientSocket);
-            ObjectInputStream iStream = new ObjectInputStream(clientSocket.getInputStream());
             ObjectOutputStream oStream = new ObjectOutputStream(clientSocket.getOutputStream());
             
             while(true){

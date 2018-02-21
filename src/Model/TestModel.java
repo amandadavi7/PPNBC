@@ -20,8 +20,8 @@ import java.util.logging.*;
  */
 public class TestModel {
 
-    private static BlockingQueue<Message> senderQueue;
-    private static BlockingQueue<Message> receiverQueue;
+    private BlockingQueue<Message> senderQueue;
+    private BlockingQueue<Message> receiverQueue;
     int clientId;
     List<Integer> x;
     List<Integer> y;
@@ -30,12 +30,12 @@ public class TestModel {
     public TestModel(List<Integer> x, List<Integer> y, List<Triple> tiShares,
             BlockingQueue<Message> senderQueue,
             BlockingQueue<Message> receiverQueue, int clientId) {
-        this.clientId = clientId;
-        this.senderQueue = senderQueue;
-        this.receiverQueue = receiverQueue;
         this.x = x;
         this.y = y;
         this.tiShares = tiShares;
+        this.senderQueue = senderQueue;
+        this.receiverQueue = receiverQueue;
+        this.clientId = clientId;
     }
 
 //    public TestModel(List<Integer> x, List<Integer> y, List<Triple> tiShares,

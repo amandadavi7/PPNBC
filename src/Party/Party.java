@@ -7,7 +7,6 @@ package Party;
 
 import Communication.Message;
 import Utility.Connection;
-import Communication.ProtocolMessage;
 import Model.TestModel;
 import TrustedInitializer.TIShare;
 import Utility.Logging;
@@ -15,14 +14,8 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.*;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingDeque;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.util.concurrent.*;
+import java.util.logging.*;
 import java.util.stream.Collectors;
 
 /**
@@ -61,8 +54,8 @@ public class Party {
     public static void initalizeVariables(String[] args) {
         xShares = new ArrayList<>();
         yShares = new ArrayList<>();
-        senderQueue = new LinkedBlockingDeque<>();
-        receiverQueue = new LinkedBlockingDeque<>();
+        senderQueue = new LinkedBlockingQueue<>();
+        receiverQueue = new LinkedBlockingQueue<>();
         tiShares = new TIShare();
         partyShares = new HashMap<>();
         partyId = -1;

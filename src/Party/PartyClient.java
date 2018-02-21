@@ -39,7 +39,7 @@ public class PartyClient implements Runnable{
     public PartyClient(BlockingQueue<Message> queue, String ip, int port){
         this.receiverQueue = queue;
         this.peerServerIP = ip;
-        this.peerServerPort = port;        
+        this.peerServerPort = port;
     }
     
     /**
