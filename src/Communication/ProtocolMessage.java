@@ -13,7 +13,7 @@ import java.io.Serializable;
  */
 public class ProtocolMessage implements Serializable, Message {
     int protocolID;
-    DataMessage value;
+    Message value;
     
     /**
      * Constructor
@@ -21,7 +21,7 @@ public class ProtocolMessage implements Serializable, Message {
      * @param protocolID
      * @param value 
      */
-    public ProtocolMessage (int protocolID, DataMessage value){
+    public ProtocolMessage (int protocolID, Message value){
         this.protocolID = protocolID;
         this.value = value;        
     }
@@ -35,7 +35,7 @@ public class ProtocolMessage implements Serializable, Message {
         return protocolID;
     }
 
-    public DataMessage getDataMessage(){
+    public Message getDataMessage(){
         return value;        
     }
 

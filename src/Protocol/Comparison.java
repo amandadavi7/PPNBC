@@ -83,7 +83,7 @@ public class Comparison implements Callable<Integer> {
             ExecutorService es = Executors.newSingleThreadExecutor();
             Multiplication multiplicationModule = new Multiplication(multiplicationE.get(i),
                     eShares.get(i-1), tiShares.get(bitLength+1),
-                    senderQueue, receiverQueue, clientID, Constants.prime);
+                    senderQueue, receiverQueue, clientID, Constants.prime, i);
 
             Future<Integer> multiplicationTask = es.submit(multiplicationModule);
 
@@ -113,7 +113,7 @@ public class Comparison implements Callable<Integer> {
             //compute local shares of d and e and add to the message queue
             Multiplication multiplicationModule = new Multiplication(multiplicationE.get(i+1),
                     dShares.get(i), tiShares.get(i),
-                    senderQueue, receiverQueue, clientID, Constants.prime);
+                    senderQueue, receiverQueue, clientID, Constants.prime, i);
 
             Future<Integer> multiplicationTask = es.submit(multiplicationModule);
             taskList.add(multiplicationTask);
@@ -156,7 +156,7 @@ public class Comparison implements Callable<Integer> {
             //compute local shares of d and e and add to the message queue
             Multiplication multiplicationModule = new Multiplication(x.get(i),
                     y.get(i), tiShares.get(i),
-                    senderQueue, receiverQueue, clientID, Constants.prime);
+                    senderQueue, receiverQueue, clientID, Constants.prime, i);
 
             Future<Integer> multiplicationTask = es.submit(multiplicationModule);
             taskList.add(multiplicationTask);
