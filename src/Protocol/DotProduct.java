@@ -9,9 +9,6 @@ import Communication.Message;
 import Communication.ReceiverQueueHandler;
 import Communication.SenderQueueHandler;
 import TrustedInitializer.Triple;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
@@ -37,6 +34,18 @@ public class DotProduct implements Callable<Integer> {
     int prime,clientID,protocolID;
     List<Triple> tiShares;
     
+    /**
+     * Constructor
+     * 
+     * @param xShares
+     * @param yShares
+     * @param tiShares
+     * @param senderqueue
+     * @param receiverqueue
+     * @param clientID
+     * @param prime
+     * @param protocolID 
+     */
     public DotProduct(List<Integer> xShares, List<Integer> yShares, List<Triple> tiShares, 
             BlockingQueue<Message> senderqueue, BlockingQueue<Message> receiverqueue, 
             int clientID, int prime, int protocolID){
@@ -50,6 +59,10 @@ public class DotProduct implements Callable<Integer> {
         this.protocolID = protocolID;
     }
     
+    /**
+     * 
+     * @return 
+     */
     @Override
     public Integer call() {
         int dotProduct = 0;
@@ -58,8 +71,6 @@ public class DotProduct implements Callable<Integer> {
         
         ConcurrentHashMap<Integer,BlockingQueue<Message> > recQueues = new ConcurrentHashMap<>();
         ConcurrentHashMap<Integer,BlockingQueue<Message> > sendQueues = new ConcurrentHashMap<>();
-       // List<BlockingQueue<Message> > recQueues = Collections.synchronizedList(new ArrayList<>(vectorLength));
-       // List<BlockingQueue<Message> > sendQueues = Collections.synchronizedList(new ArrayList<>(vectorLength));
         
         ExecutorService sendqueueHandler = Executors.newSingleThreadExecutor();
         ExecutorService recvqueueHandler = Executors.newSingleThreadExecutor();
@@ -84,6 +95,7 @@ public class DotProduct implements Callable<Integer> {
                 Future<Integer> prod = multCompletionService.take();
                 int product = prod.get();
                 dotProduct += product;
+                System.out.println("answer so far is "+dotProduct);
             } catch (InterruptedException | ExecutionException ex) {
                 Logger.getLogger(DotProduct.class.getName()).log(Level.SEVERE, null, ex);
             }
