@@ -29,6 +29,7 @@ public class Multiplication implements Callable {
     Triple tiShares;
     int clientID;
     int prime;
+    int protocolID;
 
 //    public Multiplication(int x, int y, int u, int v, int w,
 //            BlockingQueue<Message> senderQueue, int clientId, int prime) {
@@ -38,7 +39,7 @@ public class Multiplication implements Callable {
 
     public Multiplication(int x, int y, Triple tiShares,
             BlockingQueue<Message> senderQueue,
-            BlockingQueue<Message> receiverQueue, int clientId, int prime) {
+            BlockingQueue<Message> receiverQueue, int clientId, int prime, int protocolID) {
 
         this.x = x;
         this.y = y;
@@ -47,6 +48,7 @@ public class Multiplication implements Callable {
         this.senderQueue = senderQueue;
         this.receiverQueue = receiverQueue;
         this.clientID = clientId;
+        this.protocolID = protocolID;
         
         Logging.logValue("x", x);
         Logging.logValue("y", y);
@@ -77,7 +79,7 @@ public class Multiplication implements Callable {
         diffList.add(Math.floorMod(y - tiShares.v, prime));
 
         Message senderMessage = new DataMessage(Constants.localShares, diffList,
-                clientID);
+                clientID,protocolID);
         senderQueue.add(senderMessage);
         
         System.out.println("sending msg:"+ senderMessage.getValue());

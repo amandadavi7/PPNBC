@@ -18,6 +18,7 @@ public class DataMessage implements Serializable, Message {
     String variableName;
     Object value;
     int clientId;
+    int protocolId;
 
     /**
      * Constructor
@@ -26,10 +27,11 @@ public class DataMessage implements Serializable, Message {
      * @param value
      * @param clientId
      */
-    public DataMessage(String name, Object value, int clientId) {
+    public DataMessage(String name, Object value, int clientId, int protocolId) {
         variableName = name;
         this.value = value;
         this.clientId = clientId;
+        this.protocolId = protocolId;
     }
 
     /**
@@ -39,6 +41,15 @@ public class DataMessage implements Serializable, Message {
      */
     public String getName() {
         return variableName;
+    }
+    
+    /**
+     * Get protocol ID
+     * 
+     * @return 
+     */
+    public int getProtocolID(){
+      return protocolId;  
     }
 
     /**

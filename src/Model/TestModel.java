@@ -6,6 +6,7 @@
 package Model;
 
 import Communication.Message;
+import Protocol.DotProduct;
 import Protocol.Multiplication;
 import TrustedInitializer.Triple;
 import Utility.Constants;
@@ -48,15 +49,21 @@ public class TestModel {
     public void compute() {
         ExecutorService es = Executors.newSingleThreadExecutor();
         
-        Multiplication multiplicationModule = new Multiplication(x.get(0), 
-                y.get(0), tiShares.get(0), 
-                senderQueue, receiverQueue, clientId, Constants.prime);
+        //Multiplication multiplicationModule = new Multiplication(x.get(0), 
+        //        y.get(0), tiShares.get(0), 
+        //        senderQueue, receiverQueue, clientId, Constants.prime,0);
         
-        Future<Integer> multiplicationTask = es.submit(multiplicationModule);
+        
+        //Future<Integer> multiplicationTask = es.submit(multiplicationModule);
+        
+        DotProduct dotproductModule = new DotProduct(x, y, tiShares, senderQueue, 
+                receiverQueue, clientId, Constants.prime, 1);
+        
+        Future<Integer> dotProduct = es.submit(dotproductModule);
         
         try {
-            int result = multiplicationTask.get();
-            System.out.println("result of Multiplication:"+ result);
+            int result = dotProduct.get();
+            System.out.println("result of dot product:"+ result);
         } catch (InterruptedException ex) {
             Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
         } catch (ExecutionException ex) {

@@ -13,4 +13,5 @@ import java.io.Serializable;
  */
 public interface Message {
     public Object getValue();
+    public int getProtocolID();
 }
