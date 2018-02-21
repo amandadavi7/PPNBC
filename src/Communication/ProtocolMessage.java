@@ -31,6 +31,7 @@ public class ProtocolMessage implements Serializable, Message {
      * 
      * @return 
      */
+    @Override
     public int getProtocolID() {
         return protocolID;
     }
@@ -47,6 +48,11 @@ public class ProtocolMessage implements Serializable, Message {
         System.out.println("Message: Protocol ID-" + protocolID + ", Value-" + value);
     }
 
+    /**
+     * return value object
+     * 
+     * @return 
+     */
     @Override
     public Object getValue() {
         return getDataMessage();
