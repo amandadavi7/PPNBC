@@ -12,5 +12,5 @@ import java.io.Serializable;
  * @author anisha
  */
 public interface Message {
-    
+    public Object getValue();
 }

@@ -21,7 +21,7 @@ public class TestModel {
     }
 
     public void compute() {
-        Multiplication multiplicationModule = new Multiplication();
+        //Multiplication multiplicationModule = new Multiplication();
 
     }
 }
