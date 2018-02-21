@@ -5,6 +5,7 @@
  */
 package Party;
 
+import Communication.Message;
 import Communication.ProtocolMessage;
 import Utility.Connection;
 import java.io.IOException;
@@ -21,7 +22,7 @@ import java.util.logging.Logger;
  */
 public class PartyClient implements Runnable{
     
-    BlockingQueue<ProtocolMessage> receiverQueue;
+    BlockingQueue<Message> receiverQueue;
     String peerServerIP;
     int peerServerPort;
     ObjectOutputStream oStream = null;
@@ -35,7 +36,7 @@ public class PartyClient implements Runnable{
      * @param ip
      * @param port 
      */
-    public PartyClient(BlockingQueue<ProtocolMessage> queue, String ip, int port){
+    public PartyClient(BlockingQueue<Message> queue, String ip, int port){
         this.receiverQueue = queue;
         this.peerServerIP = ip;
         this.peerServerPort = port;        
@@ -56,7 +57,8 @@ public class PartyClient implements Runnable{
                     
                     while(true) {
                         if(receiveSocket != null && receiveSocket.isConnected()) {
-                            ProtocolMessage msg = (ProtocolMessage) iStream.readObject();
+                            Message msg = (Message) iStream.readObject();
+                            System.out.println("recieved value from receiver queue:"+msg.getValue());
                             receiverQueue.put(msg);
                         } else {
                             break;

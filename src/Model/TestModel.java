@@ -5,23 +5,63 @@
  */
 package Model;
 
+import Communication.Message;
 import Protocol.Multiplication;
-import java.net.ServerSocket;
+import TrustedInitializer.Triple;
+import Utility.Constants;
+import Utility.Logging;
+import java.util.*;
+import java.util.concurrent.*;
+import java.util.logging.*;
 
 /**
  *
  * @author anisha
  */
 public class TestModel {
-    
-    ServerSocket server;
 
-    public TestModel(ServerSocket server) {
-        this.server = server;
+    private static BlockingQueue<Message> senderQueue;
+    private static BlockingQueue<Message> receiverQueue;
+    int clientId;
+    List<Integer> x;
+    List<Integer> y;
+    List<Triple> tiShares;
+
+    public TestModel(List<Integer> x, List<Integer> y, List<Triple> tiShares,
+            BlockingQueue<Message> senderQueue,
+            BlockingQueue<Message> receiverQueue, int clientId) {
+        this.clientId = clientId;
+        this.senderQueue = senderQueue;
+        this.receiverQueue = receiverQueue;
+        this.x = x;
+        this.y = y;
+        this.tiShares = tiShares;
     }
 
+//    public TestModel(List<Integer> x, List<Integer> y, List<Triple> tiShares,
+//            ServerSocket server, BlockingQueue<Message> senderQueue,
+//            int clientId) {
+//        this(x, y, tiShares, server, senderQueue,
+//                new LinkedBlockingQueue<Message>(), clientId);
+//    }
+
     public void compute() {
-        //Multiplication multiplicationModule = new Multiplication();
+        ExecutorService es = Executors.newSingleThreadExecutor();
+        
+        Multiplication multiplicationModule = new Multiplication(x.get(0), 
+                y.get(0), tiShares.get(0), 
+                senderQueue, receiverQueue, clientId, Constants.prime);
+        
+        Future<Integer> multiplicationTask = es.submit(multiplicationModule);
+        
+        try {
+            int result = multiplicationTask.get();
+            System.out.println("result of Multiplication:"+ result);
+        } catch (InterruptedException ex) {
+            Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (ExecutionException ex) {
+            Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
+        }
 
     }
 }

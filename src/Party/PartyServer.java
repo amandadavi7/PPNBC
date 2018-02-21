@@ -5,6 +5,7 @@
  */
 package Party;
 
+import Communication.Message;
 import Communication.ProtocolMessage;
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -22,14 +23,14 @@ import java.util.logging.Logger;
 public class PartyServer implements Runnable{
     
     ServerSocket socketServer;
-    BlockingQueue<ProtocolMessage> senderQueue;
+    BlockingQueue<Message> senderQueue;
 
     /**
      * Constructor 
      * @param socketserver
      * @param queue 
      */
-    public PartyServer(ServerSocket socketserver, BlockingQueue<ProtocolMessage> queue){
+    public PartyServer(ServerSocket socketserver, BlockingQueue<Message> queue){
         this.socketServer = socketserver;
         this.senderQueue = queue;
     }
@@ -48,7 +49,8 @@ public class PartyServer implements Runnable{
             ObjectOutputStream oStream = new ObjectOutputStream(clientSocket.getOutputStream());
             
             while(true){
-                ProtocolMessage msg = senderQueue.take();
+                Message msg = senderQueue.take();
+                System.out.println("Writing message to sender queue:"+ msg.getValue());
                 oStream.writeObject(msg);
                 oStream.flush();
                 

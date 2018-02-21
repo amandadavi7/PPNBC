@@ -5,6 +5,7 @@
  */
 package Party;
 
+import Communication.Message;
 import Utility.Connection;
 import Communication.ProtocolMessage;
 import Model.TestModel;
@@ -13,8 +14,7 @@ import Utility.Logging;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.Arrays;
-import java.util.HashMap;
+import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -23,6 +23,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 /**
  * A party involved in computing a function
@@ -40,8 +41,8 @@ public class Party {
     private static HashMap<Integer, HashMap<String, Integer>> partyShares;
     // <function id, <variable name, value>>
 
-    private static BlockingQueue<ProtocolMessage> senderQueue;
-    private static BlockingQueue<ProtocolMessage> receiverQueue;
+    private static BlockingQueue<Message> senderQueue;
+    private static BlockingQueue<Message> receiverQueue;
     private static int partyId;
     private static int port;
     private static String tiIP;
@@ -49,8 +50,8 @@ public class Party {
     private static String peerIP;
     private static int peerPort;
     
-    private static Integer[] xShares;
-    private static Integer[] yShares;
+    private static List<Integer> xShares;
+    private static List<Integer> yShares;
 
     /**
      * Initialize class variables
@@ -58,8 +59,8 @@ public class Party {
      * @param args
      */
     public static void initalizeVariables(String[] args) {
-        xShares = new Integer[3];
-        yShares = new Integer[3];
+        xShares = new ArrayList<>();
+        yShares = new ArrayList<>();
         senderQueue = new LinkedBlockingDeque<>();
         receiverQueue = new LinkedBlockingDeque<>();
         tiShares = new TIShare();
@@ -93,12 +94,13 @@ public class Party {
                 case "xShares":
                     int[] xIntShares = Arrays.stream(value.split(",")).
                             mapToInt(Integer::parseInt).toArray();
-                    xShares = Arrays.stream(xIntShares).boxed().toArray(Integer[]::new);
+                    
+                    xShares = Arrays.stream(xIntShares).boxed().collect(Collectors.toList());
                     break;
                 case "yShares":
                     int[] yIntShares = Arrays.stream(value.split(",")).
                             mapToInt(Integer::parseInt).toArray();
-                    yShares = Arrays.stream(yIntShares).boxed().toArray(Integer[]::new);
+                    yShares = Arrays.stream(yIntShares).boxed().collect(Collectors.toList());
                     break;
 
             }
@@ -126,7 +128,8 @@ public class Party {
         startServer();
         startClient();
 
-        TestModel testModel = new TestModel(socketServer);
+        TestModel testModel = new TestModel(xShares, yShares, 
+                tiShares.decimalShares, senderQueue, receiverQueue, partyId);
         testModel.compute();
     }
 

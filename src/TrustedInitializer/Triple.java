@@ -14,4 +14,8 @@ import java.io.Serializable;
 public class Triple implements Serializable{
     public int u,v,w;
     
+    public void log() {
+        System.out.println("ti share: u:"+u+", v:"+v+", w:"+w);
+    }
+    
 }
