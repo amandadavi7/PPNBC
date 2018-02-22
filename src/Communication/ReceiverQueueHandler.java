@@ -7,6 +7,7 @@ package Communication;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -14,39 +15,44 @@ import java.util.logging.Logger;
  *
  * @author keerthanaa
  */
-public class ReceiverQueueHandler implements Runnable{
-    
+public class ReceiverQueueHandler implements Runnable {
+
     BlockingQueue<Message> commonQueue;
-    ConcurrentHashMap<Integer, BlockingQueue<Message> > subQueues;
-    
+    ConcurrentHashMap<Integer, BlockingQueue<Message>> subQueues;
+
     /**
      * Constructor
-     * 
+     *
      * @param commonQueue
-     * @param subQueues 
+     * @param subQueues
      */
-    public ReceiverQueueHandler(BlockingQueue<Message> commonQueue, ConcurrentHashMap<Integer, BlockingQueue<Message> > subQueues){
-        this.commonQueue = commonQueue;        
+    public ReceiverQueueHandler(BlockingQueue<Message> commonQueue, ConcurrentHashMap<Integer, BlockingQueue<Message>> subQueues) {
+        this.commonQueue = commonQueue;
         this.subQueues = subQueues;
     }
-    
+
     /**
      * Take element from parent queue and add it to the sub queue
      */
     @Override
-    public void run(){
-        while(true){
+    public void run() {
+        while (true) {
             try {
                 Message queueObj = commonQueue.take();
                 Message strippedObj = (Message) queueObj.getValue();
                 int ID = strippedObj.getProtocolID();
                 System.out.println("adding to subqueue " + ID + " message " + strippedObj);
+                if (!subQueues.containsKey(ID)) {
+                    BlockingQueue<Message> temp = new LinkedBlockingQueue<>();
+                    subQueues.put(ID, temp);
+                }
                 subQueues.get(ID).put(strippedObj);
+
             } catch (InterruptedException ex) {
-                
+
             }
         }
-        
+
     }
-    
+
 }

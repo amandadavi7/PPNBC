@@ -6,6 +6,8 @@
 package Utility;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Contains all logging functions for cleaner code, and easy debugging.
@@ -19,7 +21,7 @@ public class Logging {
      * @param variableName
      * @param shares
      */
-    public static void logShares(String variableName, Integer[] shares) {
+    public static void logShares(String variableName, ArrayList<Integer> shares) {
         int n = 0;
         System.out.print(variableName + ": ");
         for (int share : shares) {
@@ -34,11 +36,11 @@ public class Logging {
      * @param variableName
      * @param shares
      */
-    public static void logShares(String variableName, ArrayList<Integer> shares) {
+    public static void logShares(String variableName, HashMap<Integer, Integer> shares) {
         int n = 0;
         System.out.print(variableName + ": ");
-        for (int share : shares) {
-            System.out.print(share + " ");
+        for (Map.Entry<Integer,Integer> share : shares.entrySet()) {
+            System.out.print(share.getValue() + " ");
         }
         System.out.println("");
     }
