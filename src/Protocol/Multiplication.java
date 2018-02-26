@@ -80,6 +80,7 @@ public class Multiplication implements Callable {
                 clientID, protocolID);
         try {
             senderQueue.put(senderMessage);
+            System.out.println("sending message for protocol id:"+ protocolID);
         } catch (InterruptedException ex) {
             Logger.getLogger(Multiplication.class.getName()).log(Level.SEVERE, null, ex);
         }

@@ -46,7 +46,7 @@ public class SenderQueueHandler implements Runnable{
                 if(q.size()>0){
                     try {
                         Message msg = new ProtocolMessage(protocolID, q.take());
-                        System.out.println("Adding to parent queue " + protocolID + " " + msg);
+                        //System.out.println("Adding to parent queue " + protocolID + " " + msg);
                         commonQueue.put(msg);
                     } catch (InterruptedException ex) {
                         

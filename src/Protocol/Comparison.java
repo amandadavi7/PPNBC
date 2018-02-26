@@ -171,6 +171,7 @@ public class Comparison implements Callable<Integer> {
         // now multiply each eshare with the previous computed multiplication one at a time
 
         int subProtocolID = bitLength;
+        int tiCounter = 0;
         for (int i = bitLength - 1; i > 1; i--) {
             // You don't need i = 0. 
             // Multiplication format: multiplicationE[i] * eShares[i-1]
@@ -190,7 +191,7 @@ public class Comparison implements Callable<Integer> {
             }
             
             Multiplication multiplicationModule = new Multiplication(multiplicationE.get(i),
-                    eShares.get(i - 1), tiShares.get(bitLength + 1),
+                    eShares.get(i - 1), tiShares.get(bitLength + (tiCounter++)),
                     sendQueues.get(subProtocolID), recQueues.get(subProtocolID),
                     clientID, prime, subProtocolID);
 
