@@ -23,7 +23,10 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 
-
+/**
+ * class to take care of multiplying all w[j,n] for each j = 0 to numberCount-1
+ * @author keerthanaa
+ */
 class sequentialMultiplication implements Callable<Integer>{
 
     List<Integer> wRow;
@@ -33,6 +36,19 @@ class sequentialMultiplication implements Callable<Integer>{
     ConcurrentHashMap<Integer, BlockingQueue<Message>> recQueues;
     ConcurrentHashMap<Integer, BlockingQueue<Message>> sendQueues;
     
+    /**
+     * tiShares size = numberCount-2
+     * each row has numberCount-1 numbers and needs numberCount-2 triplets
+     * 
+     * @param row
+     * @param tishares
+     * @param clientID
+     * @param prime
+     * @param startProtocolID
+     * @param oneShare
+     * @param recQueues
+     * @param sendQueues 
+     */
     public sequentialMultiplication(List<Integer> row, List<Triple> tishares, int clientID, int prime,
             int startProtocolID, int oneShare, ConcurrentHashMap<Integer, BlockingQueue<Message>> recQueues, 
             ConcurrentHashMap<Integer, BlockingQueue<Message>> sendQueues) {
@@ -46,6 +62,11 @@ class sequentialMultiplication implements Callable<Integer>{
         this.oneShare = oneShare;
     }
     
+    /**
+     * calls multiplication protocol sequentially with previous product and next value in the row
+     * @return
+     * @throws Exception 
+     */
     @Override
     public Integer call() throws Exception{
         int product = wRow.get(0);        
@@ -96,6 +117,7 @@ public class ArgMax implements Callable<Integer[]>{
     /**
      * vShares - shares of all the numbers to be compared (k numbers)
      * each share vShare(j) contains l bits
+     * 
      * @param vShares
      * @param tiShares
      * @param oneShare
@@ -169,7 +191,6 @@ public class ArgMax implements Callable<Integer[]>{
         List<Future<Integer>> taskList = new ArrayList<>();
         int tiIndex = 0;
         int tiCount = 3*bitLength - 3;
-        //List<Triple> tiComparsion = new LinkedList<>();
         for(int i=0;i<numberCount;i++){
             for(int j=0;j<numberCount;j++){
                 if(i!=j){
@@ -186,7 +207,6 @@ public class ArgMax implements Callable<Integer[]>{
                     //each comparison needs 3(bitlength)-3 shares
                     List<Triple> tiComparsion = tiShares.subList(tiIndex, tiIndex+tiCount);
                     tiIndex += tiCount;
-                    System.out.println("i and j "+i+" "+j+", protocol ID "+key);
                     Comparison comparisonModule = new Comparison(vShares.get(i), vShares.get(j), tiComparsion, 
                             oneShare, sendQueues.get(key), recQueues.get(key), clientID, prime, key);
                     Future<Integer> comparisonTask = es.submit(comparisonModule);
@@ -240,6 +260,9 @@ public class ArgMax implements Callable<Integer[]>{
         }
     }
     
+    /**
+     * shut send and receive queue handlers
+     */
     private void tearDownHandlers() {
         recvqueueHandler.shutdownNow();
         sendqueueHandler.shutdownNow();

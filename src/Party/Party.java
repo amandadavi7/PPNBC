@@ -105,11 +105,10 @@ public class Party {
                     for(String str: vListShares) {
                         int[] vRow = Arrays.stream(str.split(",")).
                                 mapToInt(Integer::parseInt).toArray();
-                        List<Integer> vRowShares = new ArrayList<>();
+                        List<Integer> vRowShares;
                         vRowShares = Arrays.stream(vRow).boxed().collect(Collectors.toList());
                         vShares.add(vRowShares);                        
                     }
-                    System.out.println(vShares);
                     break;
 
             }
