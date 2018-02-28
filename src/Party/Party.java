@@ -45,6 +45,7 @@ public class Party {
 
     private static List<Integer> xShares;
     private static List<Integer> yShares;
+    private static List<List<Integer> > vShares;
     private static int oneShares;
 
     /**
@@ -55,6 +56,7 @@ public class Party {
     public static void initalizeVariables(String[] args) {
         xShares = new ArrayList<>();
         yShares = new ArrayList<>();
+        vShares = new ArrayList<>();
         senderQueue = new LinkedBlockingQueue<>();
         receiverQueue = new LinkedBlockingQueue<>();
         tiShares = new TIShare();
@@ -98,6 +100,17 @@ public class Party {
                             mapToInt(Integer::parseInt).toArray();
                     yShares = Arrays.stream(yIntShares).boxed().collect(Collectors.toList());
                     break;
+                case "vShares":
+                    String[] vListShares = value.split(";");
+                    for(String str: vListShares) {
+                        int[] vRow = Arrays.stream(str.split(",")).
+                                mapToInt(Integer::parseInt).toArray();
+                        List<Integer> vRowShares = new ArrayList<>();
+                        vRowShares = Arrays.stream(vRow).boxed().collect(Collectors.toList());
+                        vShares.add(vRowShares);                        
+                    }
+                    System.out.println(vShares);
+                    break;
 
             }
 
@@ -124,7 +137,7 @@ public class Party {
         startServer();
         startClient();
 
-        TestModel testModel = new TestModel(xShares, yShares,
+        TestModel testModel = new TestModel(xShares, yShares, vShares, 
                 tiShares.binaryShares, oneShares, senderQueue, receiverQueue, partyId);
         testModel.compute();
     }

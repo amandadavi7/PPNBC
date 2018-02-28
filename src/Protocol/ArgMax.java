@@ -12,6 +12,7 @@ import TrustedInitializer.Triple;
 import Utility.Logging;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
@@ -28,6 +29,7 @@ class sequentialMultiplication implements Callable<Integer>{
     List<Integer> wRow;
     List<Triple> tishares;
     int startProtocolID, clientID, prime, oneShare;
+    
     ConcurrentHashMap<Integer, BlockingQueue<Message>> recQueues;
     ConcurrentHashMap<Integer, BlockingQueue<Message>> sendQueues;
     
@@ -44,9 +46,10 @@ class sequentialMultiplication implements Callable<Integer>{
         this.oneShare = oneShare;
     }
     
+    @Override
     public Integer call() throws Exception{
-        int product = 1;        
-        for(int i=0;i<wRow.size();i++){
+        int product = wRow.get(0);        
+        for(int i=0;i<wRow.size()-1;i++){
             if (!recQueues.containsKey(i+startProtocolID)) {
                 BlockingQueue<Message> temp = new LinkedBlockingQueue<>();
                 recQueues.put(i+startProtocolID, temp);
@@ -56,12 +59,13 @@ class sequentialMultiplication implements Callable<Integer>{
                 BlockingQueue<Message> temp2 = new LinkedBlockingQueue<>();
                 sendQueues.put(i+startProtocolID, temp2);
             }
-            Multiplication multiplicationTask = new Multiplication(product, wRow.get(i), 
+            
+            Multiplication multiplicationTask = new Multiplication(product, wRow.get(i+1), 
                     tishares.get(i), sendQueues.get(i+startProtocolID), recQueues.get(i+startProtocolID), 
                     clientID, prime, startProtocolID+i, oneShare);
-            int tempProduct = (int) multiplicationTask.call();
-            product*=tempProduct;
+            product = (int) multiplicationTask.call();
         }
+        //System.out.println("returning "+product);
         return product;        
     }
 }
@@ -79,8 +83,7 @@ public class ArgMax implements Callable<Integer[]>{
     BlockingQueue<Message> commonSender;
     int prime,clientID,protocolID,oneShare;
     List<Triple> tiShares;
-    
-    
+        
     ConcurrentHashMap<Integer, BlockingQueue<Message>> recQueues;
     ConcurrentHashMap<Integer, BlockingQueue<Message>> sendQueues;
     ExecutorService sendqueueHandler;
@@ -113,6 +116,7 @@ public class ArgMax implements Callable<Integer[]>{
         this.protocolID = protocolID;
         this.vShares = vShares;
         this.oneShare = oneShare;
+        this.tiShares = tiShares;
         
         numberCount = vShares.size();
         bitLength = 0;
@@ -136,7 +140,6 @@ public class ArgMax implements Callable<Integer[]>{
         sendqueueHandler.execute(new SenderQueueHandler(protocolID,commonSender,sendQueues));
         recvqueueHandler.execute(new ReceiverQueueHandler(commonReceiver, recQueues));
         
-        
     }
     
     /**
@@ -147,8 +150,8 @@ public class ArgMax implements Callable<Integer[]>{
     @Override
     public Integer[] call() throws Exception  {
         
-        computeComparisons();
-        computeW();
+        int tiIndex = computeComparisons();
+        computeW(tiIndex);
         
         tearDownHandlers();
         return wOutput;
@@ -160,11 +163,13 @@ public class ArgMax implements Callable<Integer[]>{
      * @throws InterruptedException
      * @throws ExecutionException 
      */
-    private void computeComparisons() throws InterruptedException, ExecutionException{
+    private int computeComparisons() throws InterruptedException, ExecutionException{
         
         ExecutorService es = Executors.newFixedThreadPool(numberCount*numberCount);
         List<Future<Integer>> taskList = new ArrayList<>();
-        
+        int tiIndex = 0;
+        int tiCount = 3*bitLength - 3;
+        //List<Triple> tiComparsion = new LinkedList<>();
         for(int i=0;i<numberCount;i++){
             for(int j=0;j<numberCount;j++){
                 if(i!=j){
@@ -178,7 +183,11 @@ public class ArgMax implements Callable<Integer[]>{
                         sendQueues.put((i*numberCount)+j, temp2);
                     }
                     //Extract the required number of tiShares and pass it to comparison protocol
-                    Comparison comparisonModule = new Comparison(vShares.get(i), vShares.get(j), tiShares, 
+                    //each comparison needs 3(bitlength)-3 shares
+                    List<Triple> tiComparsion = tiShares.subList(tiIndex, tiIndex+tiCount);
+                    tiIndex += tiCount;
+                    System.out.println("i and j "+i+" "+j+", protocol ID "+key);
+                    Comparison comparisonModule = new Comparison(vShares.get(i), vShares.get(j), tiComparsion, 
                             oneShare, sendQueues.get(key), recQueues.get(key), clientID, prime, key);
                     Future<Integer> comparisonTask = es.submit(comparisonModule);
                     taskList.add(comparisonTask);
@@ -197,6 +206,8 @@ public class ArgMax implements Callable<Integer[]>{
         for(int i=0;i<numberCount;i++){
             Logging.logShares("w["+Integer.toString(i)+"]", wIntermediate.get(i));
         } 
+        
+        return tiIndex;
     }
     
     /**
@@ -205,17 +216,22 @@ public class ArgMax implements Callable<Integer[]>{
      * @throws InterruptedException
      * @throws ExecutionException 
      */
-    private void computeW() throws InterruptedException, ExecutionException{
+    private void computeW(int tiIndex) throws InterruptedException, ExecutionException{
         ExecutorService es = Executors.newFixedThreadPool(numberCount);
         List<Future<Integer>> taskList = new ArrayList<>();
-        List<Triple> tishares = null;
+        
+        //Each row has n-2 sequential multiplications to do for n-1 numbers
+        int tiCount = numberCount-2;
         int startProtocolID = numberCount*numberCount + 1;
+        
         for(int i=0;i<numberCount;i++){
+            List<Triple> tishares = tiShares.subList(tiIndex, tiIndex+tiCount);
+            tiIndex+=tiCount;
             sequentialMultiplication rowMultiplication = new sequentialMultiplication(wIntermediate.get(i),tishares,
-                    clientID, prime, startProtocolID, oneShare, sendQueues, recQueues);
+                    clientID, prime, startProtocolID, oneShare, recQueues, sendQueues);
             Future<Integer> wRowProduct = es.submit(rowMultiplication);
             taskList.add(wRowProduct);
-            startProtocolID+=numberCount;
+            startProtocolID+=numberCount-2;
         }
 
         for(int i=0;i<numberCount;i++){
@@ -228,7 +244,5 @@ public class ArgMax implements Callable<Integer[]>{
         recvqueueHandler.shutdownNow();
         sendqueueHandler.shutdownNow();
     }
-    
-
     
 }

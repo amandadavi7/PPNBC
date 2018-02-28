@@ -57,6 +57,11 @@ public class Comparison implements Callable<Integer> {
     /**
      * Constructor
      *
+     * A comparison of two numbers with bit length L requires 3L-3 tiShares
+     * L for computing dShares
+     * L-2 for computing eShares
+     * L-1 for computing cShares
+     * 
      * @param x
      * @param y
      * @param tiShares
