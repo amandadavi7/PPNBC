@@ -50,7 +50,7 @@ public class PartyServer implements Runnable{
             while(true){
                 Message msg = senderQueue.take();
                 oStream.writeObject(msg);
-                oStream.flush();
+                //oStream.flush();
                 
             }
             

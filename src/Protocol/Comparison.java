@@ -191,7 +191,7 @@ public class Comparison implements Callable<Integer> {
             }
             
             Multiplication multiplicationModule = new Multiplication(multiplicationE.get(i),
-                    eShares.get(i - 1), tiShares.get(bitLength + tiCounter++),
+                    eShares.get(i - 1), tiShares.get(bitLength + (tiCounter++)),
                     sendQueues.get(subProtocolID), recQueues.get(subProtocolID),
                     clientID, prime, subProtocolID, oneShare);
 
