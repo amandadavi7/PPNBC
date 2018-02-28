@@ -45,22 +45,22 @@ public class TestModel {
     public void compute() {
         ExecutorService es = Executors.newSingleThreadExecutor();
 
-        //Multiplication multiplicationModule = new Multiplication(x.get(0), 
-        //        y.get(0), tiShares.get(0), 
-        //        senderQueue, receiverQueue, clientId, Constants.prime,0);
-        //Future<Integer> multiplicationTask = es.submit(multiplicationModule);
-//        DotProduct dotproductModule = new DotProduct(x, y, tiShares, senderQueue, 
-//                receiverQueue, clientId, Constants.prime, 1);
-//        
-//        Future<Integer> dotProduct = es.submit(dotproductModule);
+        /*Multiplication multiplicationModule = new Multiplication(x.get(0), 
+                y.get(0), tiShares.get(0), 
+                senderQueue, receiverQueue, clientId, Constants.prime,0, oneShares);
+        Future<Integer> multiplicationTask = es.submit(multiplicationModule);*/
+        
+        /*DotProduct dotproductModule = new DotProduct(x, y, tiShares, senderQueue, 
+                receiverQueue, clientId, Constants.prime, 1, oneShares);        
+        Future<Integer> dotProduct = es.submit(dotproductModule);*/
+                
         Comparison comparisonModule = new Comparison(x, y, tiShares, oneShares, senderQueue,
                 receiverQueue, clientId, Constants.binaryPrime, 1);
-
         Future<Integer> comparisonTask = es.submit(comparisonModule);
         
         try {
             int result = comparisonTask.get();
-            System.out.println("result of comparison" + result);
+            System.out.println("result of comparison " + result);
         } catch (InterruptedException ex) {
             Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
         } catch (ExecutionException ex) {

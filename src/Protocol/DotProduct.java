@@ -31,7 +31,7 @@ public class DotProduct implements Callable<Integer> {
     List<Integer> xShares, yShares;
     BlockingQueue<Message> commonReceiver;
     BlockingQueue<Message> commonSender;
-    int prime,clientID,protocolID;
+    int prime,clientID,protocolID,oneShare;
     List<Triple> tiShares;
     
     /**
@@ -48,7 +48,7 @@ public class DotProduct implements Callable<Integer> {
      */
     public DotProduct(List<Integer> xShares, List<Integer> yShares, List<Triple> tiShares, 
             BlockingQueue<Message> senderqueue, BlockingQueue<Message> receiverqueue, 
-            int clientID, int prime, int protocolID){
+            int clientID, int prime, int protocolID, int oneShare){
         this.prime = prime;
         this.clientID = clientID;
         this.xShares = xShares;
@@ -57,6 +57,7 @@ public class DotProduct implements Callable<Integer> {
         this.commonSender = senderqueue;
         this.commonReceiver = receiverqueue;  
         this.protocolID = protocolID;
+        this.oneShare = oneShare;
     }
     
     /**
@@ -87,7 +88,7 @@ public class DotProduct implements Callable<Integer> {
             BlockingQueue<Message> temp2 = new LinkedBlockingQueue<>();
             sendQueues.put(i,temp2);
             multCompletionService.submit(new Multiplication(xShares.get(i), yShares.get(i), 
-                    tiShares.get(i), sendQueues.get(i), recQueues.get(i), clientID, prime, i));
+                    tiShares.get(i), sendQueues.get(i), recQueues.get(i), clientID, prime, i, oneShare));
         }
         
         for(int i=0;i<vectorLength;i++){

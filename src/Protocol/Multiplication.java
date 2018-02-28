@@ -33,10 +33,11 @@ public class Multiplication implements Callable {
     int clientID;
     int prime;
     int protocolID;
+    int oneShare;
 
     public Multiplication(int x, int y, Triple tiShares,
             BlockingQueue<Message> senderQueue,
-            BlockingQueue<Message> receiverQueue, int clientId, int prime, int protocolID) {
+            BlockingQueue<Message> receiverQueue, int clientId, int prime, int protocolID, int oneShare) {
 
         this.x = x;
         this.y = y;
@@ -46,6 +47,7 @@ public class Multiplication implements Callable {
         this.clientID = clientId;
         this.prime = prime;
         this.protocolID = protocolID;
+        this.oneShare = oneShare;
         
     }
 
@@ -64,9 +66,9 @@ public class Multiplication implements Callable {
         
         int d = Math.floorMod((x - tiShares.u) + diffList.get(0), prime);
         int e = Math.floorMod((y - tiShares.v) + diffList.get(1), prime);
-        int product = tiShares.w + (d * tiShares.v) + (tiShares.u * e) + (d * e);
+        int product = tiShares.w + (d * tiShares.v) + (tiShares.u * e) + (d * e * oneShare);
         product = Math.floorMod(product, prime);
-        System.out.println("x*y("+x+","+y+"):"+product);
+        System.out.println("ti("+tiShares.u+","+tiShares.v+","+tiShares.w+"), "+"x*y("+x+","+y+"):"+product);
         return product;
 
     }

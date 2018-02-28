@@ -171,6 +171,7 @@ public class Comparison implements Callable<Integer> {
         // now multiply each eshare with the previous computed multiplication one at a time
 
         int subProtocolID = bitLength;
+        int tiCounter = 0;
         for (int i = bitLength - 1; i > 1; i--) {
             // You don't need i = 0. 
             // Multiplication format: multiplicationE[i] * eShares[i-1]
@@ -190,9 +191,9 @@ public class Comparison implements Callable<Integer> {
             }
             
             Multiplication multiplicationModule = new Multiplication(multiplicationE.get(i),
-                    eShares.get(i - 1), tiShares.get(bitLength + 1),
+                    eShares.get(i - 1), tiShares.get(bitLength + tiCounter++),
                     sendQueues.get(subProtocolID), recQueues.get(subProtocolID),
-                    clientID, prime, subProtocolID);
+                    clientID, prime, subProtocolID, oneShare);
 
             Future<Integer> multiplicationTask = es.submit(multiplicationModule);
             es.shutdown();
@@ -234,8 +235,8 @@ public class Comparison implements Callable<Integer> {
             }
 
             Multiplication multiplicationModule = new Multiplication(multiplicationE.get(i + 1),
-                    dShares.get(i), tiShares.get(i),
-                    sendQueues.get(subProtocolID + i), recQueues.get(subProtocolID + i), clientID, prime, subProtocolID + i);
+                    dShares.get(i), tiShares.get(i), sendQueues.get(subProtocolID + i),
+                    recQueues.get(subProtocolID + i), clientID, prime, subProtocolID + i, oneShare);
 
             Future<Integer> multiplicationTask = es.submit(multiplicationModule);
             taskList.add(multiplicationTask);
@@ -303,7 +304,7 @@ public class Comparison implements Callable<Integer> {
             Multiplication multiplicationModule = new Multiplication(x.get(i),
                     y.get(i), tiShares.get(i),
                     sendQueues.get(i), recQueues.get(i), clientID,
-                    prime, i);
+                    prime, i, oneShare);
             Future<Integer> multiplicationTask = es.submit(multiplicationModule);
             taskList.add(multiplicationTask);
 
