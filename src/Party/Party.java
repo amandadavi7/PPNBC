@@ -123,10 +123,13 @@ public class Party {
 
         startServer();
         startClient();
-
+        
         TestModel testModel = new TestModel(xShares, yShares,
                 tiShares.binaryShares, oneShares, senderQueue, receiverQueue, partyId);
         testModel.compute();
+        
+        
+        
     }
 
     /**

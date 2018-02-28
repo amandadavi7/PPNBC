@@ -6,6 +6,7 @@
 package Model;
 
 import Communication.Message;
+import Protocol.BitDecomposition;
 import Protocol.Comparison;
 import Protocol.DotProduct;
 import Protocol.Multiplication;
@@ -53,9 +54,11 @@ public class TestModel {
 //                receiverQueue, clientId, Constants.prime, 1);
 //        
 //        Future<Integer> dotProduct = es.submit(dotproductModule);
+        
+        /* MY COMMENT
         Comparison comparisonModule = new Comparison(x, y, tiShares, oneShares, senderQueue,
                 receiverQueue, clientId, Constants.binaryPrime, 1);
-
+        
         Future<Integer> comparisonTask = es.submit(comparisonModule);
         
         try {
@@ -67,5 +70,22 @@ public class TestModel {
             Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
         }
 
+    }
+         END COMMENT */
+        
+        BitDecomposition bitTest = new BitDecomposition(x, y, tiShares, oneShares, senderQueue,
+                receiverQueue, clientId, Constants.binaryPrime, 1);
+        
+        Future<Integer> bitdecompositionTask = es.submit(bitTest);
+        
+        try {
+            int result = bitdecompositionTask.get();
+            System.out.println("result of bitDecomposition" + result);
+        } catch (InterruptedException ex) {
+            Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (ExecutionException ex) {
+            Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        
     }
 }
