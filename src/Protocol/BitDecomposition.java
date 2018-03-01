@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.concurrent.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import TrustedInitializer.Triple;
 /**
  *
  * @author bhagatsanchya
@@ -96,34 +97,45 @@ public class BitDecomposition implements Callable<Integer>{
 
     @Override
     public Integer call() throws Exception {
-        
-         ExecutorService threadService = Executors.newCachedThreadPool();
-        Runnable initThread = new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    computeInit();
-                } catch (InterruptedException ex) {
-                    Logger.getLogger(Comparison.class.getName()).log(Level.SEVERE, null, ex);
-                } catch (ExecutionException ex) {
-                    Logger.getLogger(Comparison.class.getName()).log(Level.SEVERE, null, ex);
-                }
-            }
-        };
-
-        threadService.submit(initThread);
-        threadService.shutdown();
-        System.out.println("The first c Share" + cShares.get(0));
-        return -1;
+            
+          computeInit();
+          System.out.println("the first c share: " + cShares.get(0));
+//        ExecutorService threadService = Executors.newCachedThreadPool();
+//        Runnable dThread = new Runnable() {
+//            @Override
+//            public void run() {
+//                try {
+//                    computeInit();
+//                } catch (InterruptedException ex) {
+//                    Logger.getLogger(Comparison.class.getName()).log(Level.SEVERE, null, ex);
+//                } catch (ExecutionException ex) {
+//                    Logger.getLogger(Comparison.class.getName()).log(Level.SEVERE, null, ex);
+//                }
+//            }
+//        };
+//
+//        threadService.submit(dThread);
+//        threadService.shutdown();
+//        
+//        boolean threadsCompleted = threadService.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+//        if(threadsCompleted){
+//            System.out.println("The first c Share" + cShares.get(0));
+//             return 3;
+//        }
+//        
+//        //tearDownHandlers();
+//        return 1;
+          return 1;
     }
     
     
     // Calculate step (2)  [c1] = [a1][b1] and set [x1] <- [y1]
     public void computeInit()throws InterruptedException, ExecutionException{
         
+        List<Future<Integer>> taskList = new ArrayList<>();
         System.out.println("In BitDecomposition -> ComputeInit()");
-        // Using just one thread in the executor service
-        ExecutorService es = Executors.newSingleThreadExecutor();
+//        // Using just one thread in the executor service
+            ExecutorService es = Executors.newCachedThreadPool();
         
          //compute local shares of d and e and add to the message queue
             if (!recQueues.containsKey(0)) {
@@ -135,7 +147,11 @@ public class BitDecomposition implements Callable<Integer>{
                 BlockingQueue<Message> temp2 = new LinkedBlockingQueue<>();
                 sendQueues.put(0, temp2);
             }
-        
+            
+//        System.out.println("A shares " + a.get(0));
+//        System.out.println("B shares " + b.get(0));
+//       // System.out.println("ti shares " + tiShares.get(0));
+      
         Multiplication multiplicationModule = new Multiplication(a.get(0),
                     b.get(0), tiShares.get(0),
                     sendQueues.get(0), recQueues.get(0), clientID,
@@ -143,14 +159,30 @@ public class BitDecomposition implements Callable<Integer>{
         
         // Assign the multiplication task to ExecutorService object.
         Future<Integer> multiplicationTask = es.submit(multiplicationModule);
-        
+        taskList.add(multiplicationTask);
         es.shutdown();
         
-        
-        int c_share_first = multiplicationTask.get();
-        // put the result in c[0]
-        cShares.put(0, c_share_first);
-        
+        Future<Integer> dWorkerResponse = taskList.get(0);
+            try {
+                cShares.put(0, dWorkerResponse.get());
+            } catch (InterruptedException ex) {
+                Logger.getLogger(Comparison.class.getName()).log(Level.SEVERE, null, ex);
+            } catch (ExecutionException ex) {
+                Logger.getLogger(Comparison.class.getName()).log(Level.SEVERE, null, ex);
+            }
+//        int c_share_first = multiplicationTask.get();
+//        // put the result in c[0]
+//        System.out.println("In compute init, value of c_share is = " + c_share_first);
+//        cShares.put(0, c_share_first);
+     
+    }
+    
+    /**
+     * Teardown all local threads 
+     */
+    private void tearDownHandlers() {
+        recvqueueHandler.shutdownNow();
+        sendqueueHandler.shutdownNow();
     }
     
     

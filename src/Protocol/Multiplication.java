@@ -47,6 +47,11 @@ public class Multiplication implements Callable {
         this.prime = prime;
         this.protocolID = protocolID;
         
+//        System.out.println("x: " + x);
+//        System.out.println("y: " + y);
+//        System.out.println("Ti shares");
+        tiShares.log();
+        
     }
 
     /**
