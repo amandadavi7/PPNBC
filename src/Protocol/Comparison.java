@@ -124,9 +124,7 @@ public class Comparison implements Callable<Integer> {
             public void run() {
                 try {
                     computeDSHares();
-                } catch (InterruptedException ex) {
-                    Logger.getLogger(Comparison.class.getName()).log(Level.SEVERE, null, ex);
-                } catch (ExecutionException ex) {
+                } catch (InterruptedException | ExecutionException ex) {
                     Logger.getLogger(Comparison.class.getName()).log(Level.SEVERE, null, ex);
                 }
             }
@@ -206,9 +204,7 @@ public class Comparison implements Callable<Integer> {
             try {
                 multiplicationE.put(i - 1, multiplicationTask.get());
                 System.out.println("result of Multiplication:" + multiplicationE.get(i - 1));
-            } catch (InterruptedException ex) {
-                Logger.getLogger(Comparison.class.getName()).log(Level.SEVERE, null, ex);
-            } catch (ExecutionException ex) {
+            } catch (InterruptedException | ExecutionException ex) {
                 Logger.getLogger(Comparison.class.getName()).log(Level.SEVERE, null, ex);
             }
 
@@ -255,9 +251,7 @@ public class Comparison implements Callable<Integer> {
             Future<Integer> dWorkerResponse = taskList.get(i);
             try {
                 cShares.put(i, dWorkerResponse.get());
-            } catch (InterruptedException ex) {
-                Logger.getLogger(Comparison.class.getName()).log(Level.SEVERE, null, ex);
-            } catch (ExecutionException ex) {
+            } catch (InterruptedException | ExecutionException ex) {
                 Logger.getLogger(Comparison.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
@@ -290,7 +284,7 @@ public class Comparison implements Callable<Integer> {
     private void computeDSHares() throws InterruptedException, ExecutionException {
 
         ExecutorService es = Executors.newFixedThreadPool(bitLength);
-        List<Future<Integer>> taskList = new ArrayList<Future<Integer>>();
+        List<Future<Integer>> taskList = new ArrayList<>();
 
         // The protocols for computation of d are assigned id 0-bitLength-1
         for (int i = 0; i < bitLength; i++) {

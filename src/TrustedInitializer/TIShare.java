@@ -17,8 +17,8 @@ public class TIShare implements Serializable {
     public List<Triple> decimalShares,binaryShares;
     
     public TIShare(){
-        decimalShares = new LinkedList<Triple>();
-        binaryShares = new LinkedList<Triple>();
+        decimalShares = new LinkedList<>();
+        binaryShares = new LinkedList<>();
     }
     
     /**

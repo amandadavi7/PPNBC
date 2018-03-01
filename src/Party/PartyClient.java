@@ -6,15 +6,12 @@
 package Party;
 
 import Communication.Message;
-import Communication.ProtocolMessage;
 import Utility.Connection;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.concurrent.BlockingQueue;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  *
@@ -63,12 +60,8 @@ public class PartyClient implements Runnable{
                             break;
                         }
                     }
-            } catch (IOException ex)  {
+            } catch (IOException | ClassNotFoundException | InterruptedException ex)  {
                 
-            } catch (ClassNotFoundException ex) {
-                
-            } catch (InterruptedException ex) {
-               
             }
         }
         

@@ -26,6 +26,7 @@ public class DataMessage implements Serializable, Message {
      * @param name
      * @param value
      * @param clientId
+     * @param protocolId
      */
     public DataMessage(String name, Object value, int clientId, int protocolId) {
         variableName = name;
@@ -58,6 +59,7 @@ public int getProtocolID(){
      *
      * @return value
      */
+    @Override
     public Object getValue() {
         return value;
     }

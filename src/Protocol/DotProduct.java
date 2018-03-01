@@ -45,6 +45,7 @@ public class DotProduct implements Callable<Integer> {
      * @param clientID
      * @param prime
      * @param protocolID 
+     * @param oneShare 
      */
     public DotProduct(List<Integer> xShares, List<Integer> yShares, List<Triple> tiShares, 
             BlockingQueue<Message> senderqueue, BlockingQueue<Message> receiverqueue, 

@@ -68,9 +68,7 @@ public class TestModel {
         try {
             Integer[] result = argmaxTask.get();
             System.out.println("result of argmax " + Arrays.toString(result));
-        } catch (InterruptedException ex) {
-            Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (ExecutionException ex) {
+        } catch (InterruptedException | ExecutionException ex) {
             Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
         }
 

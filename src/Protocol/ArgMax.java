@@ -12,7 +12,6 @@ import TrustedInitializer.Triple;
 import Utility.Logging;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;

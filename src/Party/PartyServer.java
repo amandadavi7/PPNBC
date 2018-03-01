@@ -6,9 +6,7 @@
 package Party;
 
 import Communication.Message;
-import Communication.ProtocolMessage;
 import java.io.IOException;
-import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -54,9 +52,7 @@ public class PartyServer implements Runnable{
                 
             }
             
-        } catch (IOException ex){
-            Logger.getLogger(PartyServer.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (InterruptedException ex){
+        } catch (IOException | InterruptedException ex){
             Logger.getLogger(PartyServer.class.getName()).log(Level.SEVERE, null, ex);
         }
         
