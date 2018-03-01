@@ -55,23 +55,23 @@ public class TestModel {
 //        
 //        Future<Integer> dotProduct = es.submit(dotproductModule);
         
-        /* MY COMMENT
-        Comparison comparisonModule = new Comparison(x, y, tiShares, oneShares, senderQueue,
-                receiverQueue, clientId, Constants.binaryPrime, 1);
         
-        Future<Integer> comparisonTask = es.submit(comparisonModule);
+//        Comparison comparisonModule = new Comparison(x, y, tiShares, oneShares, senderQueue,
+//                receiverQueue, clientId, Constants.binaryPrime, 1);
+//        
+//        Future<Integer> comparisonTask = es.submit(comparisonModule);
+//        
+//        try {
+//            int result = comparisonTask.get();
+//            System.out.println("result of comparison" + result);
+//        } catch (InterruptedException ex) {
+//            Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
+//        } catch (ExecutionException ex) {
+//            Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
+//        }
+//
+//    }
         
-        try {
-            int result = comparisonTask.get();
-            System.out.println("result of comparison" + result);
-        } catch (InterruptedException ex) {
-            Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (ExecutionException ex) {
-            Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
-        }
-
-    }
-         END COMMENT */
         
         BitDecomposition bitTest = new BitDecomposition(x, y, tiShares, oneShares, senderQueue,
                 receiverQueue, clientId, Constants.binaryPrime, 1);

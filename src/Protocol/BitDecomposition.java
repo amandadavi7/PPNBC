@@ -32,6 +32,8 @@ public class BitDecomposition implements Callable<Integer>{
     private BlockingQueue<Message> commonReceiver;
     List<Integer> a;
     List<Integer> b;
+   // List<Integer> x;
+   //List<Integer> y;
     int oneShare;
     List<Triple> tiShares;
 
@@ -80,6 +82,8 @@ public class BitDecomposition implements Callable<Integer>{
         eShares = new HashMap<>();
         dShares = new HashMap<>();
         cShares = new HashMap<>();
+        xShares = new HashMap<>();
+        yShares = new HashMap<>();
         //multiplicationE = new HashMap<>();
 
         System.out.println("bitLength:" + bitLength);
@@ -97,44 +101,81 @@ public class BitDecomposition implements Callable<Integer>{
 
     @Override
     public Integer call() throws Exception {
+          
+        // Function to initialze y[i] 
+        initY();
+        
+        // Initialize c[1] and x[1]
+        computeInit();
+        System.out.println("the first c share: " + cShares.get(0));
+          
+        ExecutorService threadService = Executors.newCachedThreadPool();
+        Runnable dThread = new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    computeDShares();
+                } catch (InterruptedException ex) {
+                    Logger.getLogger(Comparison.class.getName()).log(Level.SEVERE, null, ex);
+                } catch (ExecutionException ex) {
+                    Logger.getLogger(Comparison.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+        };
+
+        threadService.submit(dThread);
+        
+        Runnable eThread = new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    computeEShares();
+                } catch (InterruptedException ex) {
+                    Logger.getLogger(Comparison.class.getName()).log(Level.SEVERE, null, ex);
+                } catch (ExecutionException ex) {
+                    Logger.getLogger(Comparison.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+        };
+
+        threadService.submit(eThread);
+        
+        threadService.shutdown();
+        
+        boolean threadsCompleted = threadService.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+        // once we have d and e, we can compute c and x Sequentially
+        if(threadsCompleted){
+            System.out.println("The first c Share" + cShares.get(0));
+            computeCShares();
+            computeXShares();
             
-          computeInit();
-          System.out.println("the first c share: " + cShares.get(0));
-//        ExecutorService threadService = Executors.newCachedThreadPool();
-//        Runnable dThread = new Runnable() {
-//            @Override
-//            public void run() {
-//                try {
-//                    computeInit();
-//                } catch (InterruptedException ex) {
-//                    Logger.getLogger(Comparison.class.getName()).log(Level.SEVERE, null, ex);
-//                } catch (ExecutionException ex) {
-//                    Logger.getLogger(Comparison.class.getName()).log(Level.SEVERE, null, ex);
-//                }
-//            }
-//        };
-//
-//        threadService.submit(dThread);
-//        threadService.shutdown();
+        }
 //        
-//        boolean threadsCompleted = threadService.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
-//        if(threadsCompleted){
-//            System.out.println("The first c Share" + cShares.get(0));
-//             return 3;
-//        }
-//        
-//        //tearDownHandlers();
-//        return 1;
+          tearDownHandlers();
           return 1;
+    }
+    
+    public void initY(){
+        
+        for(int i = 0; i < bitLength ; i++){
+            
+            int y = a.get(i) + b.get(i);
+            y = Math.floorMod(y, prime);
+            yShares.put(i, y);
+        }
     }
     
     
     // Calculate step (2)  [c1] = [a1][b1] and set [x1] <- [y1]
     public void computeInit()throws InterruptedException, ExecutionException{
         
+        // set x[1] <- y[1]
+        int y0 = yShares.get(0);
+        xShares.put(0, y0);
+        
         List<Future<Integer>> taskList = new ArrayList<>();
         System.out.println("In BitDecomposition -> ComputeInit()");
-//        // Using just one thread in the executor service
+        // Using just one thread in the executor service
             ExecutorService es = Executors.newCachedThreadPool();
         
          //compute local shares of d and e and add to the message queue
@@ -150,7 +191,7 @@ public class BitDecomposition implements Callable<Integer>{
             
 //        System.out.println("A shares " + a.get(0));
 //        System.out.println("B shares " + b.get(0));
-//       // System.out.println("ti shares " + tiShares.get(0));
+//        System.out.println("ti shares " + tiShares.get(0));
       
         Multiplication multiplicationModule = new Multiplication(a.get(0),
                     b.get(0), tiShares.get(0),
@@ -162,9 +203,9 @@ public class BitDecomposition implements Callable<Integer>{
         taskList.add(multiplicationTask);
         es.shutdown();
         
-        Future<Integer> dWorkerResponse = taskList.get(0);
+        Future<Integer> cWorkerResponse = taskList.get(0);
             try {
-                cShares.put(0, dWorkerResponse.get());
+                cShares.put(0, cWorkerResponse.get());
             } catch (InterruptedException ex) {
                 Logger.getLogger(Comparison.class.getName()).log(Level.SEVERE, null, ex);
             } catch (ExecutionException ex) {
@@ -185,6 +226,201 @@ public class BitDecomposition implements Callable<Integer>{
         sendqueueHandler.shutdownNow();
     }
     
+    /**
+     * Compute [di] = [ai]*[bi] + 1  using distributed multiplication and set 
+     * @throws InterruptedException
+     * @throws ExecutionException 
+     */
+    private void computeDShares() throws InterruptedException, ExecutionException {
+
+        ExecutorService es = Executors.newFixedThreadPool(bitLength);
+        List<Future<Integer>> taskList = new ArrayList<Future<Integer>>();
+
+        // **** The protocols for computation of d are assigned id 1-bitLength-1 ***
+        // We already calculated the LSB, so we don't repeat that.
+        for (int i = 1; i < bitLength; i++) {
+            //compute local shares of d and e and add to the message queue
+            
+            if (!recQueues.containsKey(i)) {
+                BlockingQueue<Message> temp = new LinkedBlockingQueue<>();
+                recQueues.put(i, temp);
+            }
+
+            if (!sendQueues.containsKey(i)) {
+                BlockingQueue<Message> temp2 = new LinkedBlockingQueue<>();
+                sendQueues.put(i, temp2);
+            }
+            
+            Multiplication multiplicationModule = new Multiplication(a.get(i),
+                    b.get(i), tiShares.get(i),
+                    sendQueues.get(i), recQueues.get(i), clientID,
+                    prime, i);
+            Future<Integer> multiplicationTask = es.submit(multiplicationModule);
+            taskList.add(multiplicationTask);
+
+        }
+
+        es.shutdown();
+
+        // Save d[i] to dShares
+        for (int i = 1; i < bitLength; i++) {
+            Future<Integer> dWorkerResponse = taskList.get(i);
+            int d = dWorkerResponse.get() + 1;
+            d = Math.floorMod(d, prime);
+            dShares.put(i, d);
+        }
+        
+        Logging.logShares("dShares", dShares);
+    }
+    
+    /**
+     * Compute [ei] = [yi]*[c(i-1)] + 1  using distributed multiplication and set 
+     * @throws InterruptedException
+     * @throws ExecutionException 
+     */
+    private void computeEShares() throws InterruptedException, ExecutionException {
+
+        ExecutorService es = Executors.newFixedThreadPool(bitLength);
+        List<Future<Integer>> taskList = new ArrayList<Future<Integer>>();
+        int subProtocolID = bitLength + 1;
+        // **** The protocols for computation of e are assigned id 1-bitLength-1 ***
+        // We already calculated the LSB, so we don't repeat that.
+        for (int i = 1; i < bitLength; i++) {
+            //compute local shares of d and e and add to the message queue
+            
+            if (!recQueues.containsKey(i)) {
+                BlockingQueue<Message> temp = new LinkedBlockingQueue<>();
+                recQueues.put(subProtocolID + i, temp);
+            }
+
+            if (!sendQueues.containsKey(i)) {
+                BlockingQueue<Message> temp2 = new LinkedBlockingQueue<>();
+                sendQueues.put(subProtocolID + i, temp2);
+            }
+            
+            Multiplication multiplicationModule = new Multiplication(yShares.get(i),
+                    cShares.get(i-1), tiShares.get(i),
+                    sendQueues.get(subProtocolID + i), recQueues.get(subProtocolID + i), clientID,
+                    prime, subProtocolID + i);
+            Future<Integer> multiplicationTask = es.submit(multiplicationModule);
+            taskList.add(multiplicationTask);
+
+        }
+
+        es.shutdown();
+
+        // Save e[i] to eShares
+        for (int i = 1; i < bitLength; i++) {
+            Future<Integer> eWorkerResponse = taskList.get(i);
+            int e = eWorkerResponse.get() + 1;
+            e = Math.floorMod(e, prime);
+            eShares.put(i, e);
+        }
+        
+        Logging.logShares("eShares", eShares);
+    }
+    
+    
+    /**
+     * Compute [ci] = [ei]*[di] + 1  using distributed multiplication and set 
+     * @throws InterruptedException
+     * @throws ExecutionException 
+     */
+    private void computeCShares() throws InterruptedException, ExecutionException {
+
+        ExecutorService es = Executors.newFixedThreadPool(bitLength);
+        List<Future<Integer>> taskList = new ArrayList<Future<Integer>>();
+        
+        // TODO Check the bitLength to use here
+        int subProtocolID = (bitLength * 2) + 1;
+        
+        // **** The protocols for computation of e are assigned id 1-bitLength-1 ***
+        // We already calculated the LSB, so we don't repeat that.
+        for (int i = 1; i < bitLength; i++) {
+            //compute local shares of d and e and add to the message queue
+            
+            if (!recQueues.containsKey(i)) {
+                BlockingQueue<Message> temp = new LinkedBlockingQueue<>();
+                recQueues.put(subProtocolID + i, temp);
+            }
+
+            if (!sendQueues.containsKey(i)) {
+                BlockingQueue<Message> temp2 = new LinkedBlockingQueue<>();
+                sendQueues.put(subProtocolID + i, temp2);
+            }
+            
+            Multiplication multiplicationModule = new Multiplication(eShares.get(i),
+                    dShares.get(i), tiShares.get(i),
+                    sendQueues.get(subProtocolID + i), recQueues.get(subProtocolID + i), clientID,
+                    prime, subProtocolID + i);
+            Future<Integer> multiplicationTask = es.submit(multiplicationModule);
+            taskList.add(multiplicationTask);
+
+        }
+
+        es.shutdown();
+
+        // Save c[i] to cShares
+        for (int i = 1; i < bitLength; i++) {
+            Future<Integer> cWorkerResponse = taskList.get(i);
+            int c = cWorkerResponse.get() + 1;
+            c = Math.floorMod(c, prime);
+            cShares.put(i, c);
+        }
+        
+        Logging.logShares("eShares", eShares);
+    }
+    
+    /**
+     * Compute [xi] = [yi]*[c(i-1)] using distributed multiplication and set 
+     * @throws InterruptedException
+     * @throws ExecutionException 
+     */
+    private void computeXShares() throws InterruptedException, ExecutionException {
+
+        ExecutorService es = Executors.newFixedThreadPool(bitLength);
+        List<Future<Integer>> taskList = new ArrayList<Future<Integer>>();
+        
+        // TODO Check the bitLength to use here
+        int subProtocolID = (bitLength * 3) + 1;
+        
+        // **** The protocols for computation of x are assigned id 1-bitLength-1 ***
+        // We already calculated the LSB, so we don't repeat that.
+        for (int i = 1; i < bitLength; i++) {
+            //compute local shares of d and e and add to the message queue
+            
+            if (!recQueues.containsKey(i)) {
+                BlockingQueue<Message> temp = new LinkedBlockingQueue<>();
+                recQueues.put(subProtocolID + i, temp);
+            }
+
+            if (!sendQueues.containsKey(i)) {
+                BlockingQueue<Message> temp2 = new LinkedBlockingQueue<>();
+                sendQueues.put(subProtocolID + i, temp2);
+            }
+            
+            Multiplication multiplicationModule = new Multiplication(yShares.get(i),
+                    cShares.get(i-1), tiShares.get(i),
+                    sendQueues.get(subProtocolID + i), recQueues.get(subProtocolID + i), clientID,
+                    prime, subProtocolID + i);
+            Future<Integer> multiplicationTask = es.submit(multiplicationModule);
+            taskList.add(multiplicationTask);
+
+        }
+
+        es.shutdown();
+
+        // Save x[i] to xShares
+        for (int i = 1; i < bitLength; i++) {
+            Future<Integer> xWorkerResponse = taskList.get(i);
+            int x = xWorkerResponse.get();
+            x = Math.floorMod(x, prime);
+            xShares.put(i, x);
+        }
+        
+        Logging.logShares("xShares", xShares);
+    }
+
     
     
     
