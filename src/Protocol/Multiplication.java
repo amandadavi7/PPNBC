@@ -50,7 +50,7 @@ public class Multiplication implements Callable {
 //        System.out.println("x: " + x);
 //        System.out.println("y: " + y);
 //        System.out.println("Ti shares");
-        tiShares.log();
+        //tiShares.log();
         
     }
 
