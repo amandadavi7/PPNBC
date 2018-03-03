@@ -11,6 +11,9 @@ import TrustedInitializer.Triple;
 import Utility.Logging;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.List;
 import java.util.concurrent.*;
 import java.util.logging.Level;
@@ -41,7 +44,7 @@ public class BitDecomposition implements Callable<Integer>{
     HashMap<Integer, Integer> eShares;
    // HashMap<Integer, Integer> multiplicationE;
     HashMap<Integer, Integer> cShares;
-    HashMap<Integer, Integer> xShares;
+    HashMap<Integer,Integer> xShares;
     HashMap<Integer, Integer> yShares;
     
     /*parentProtocolId not used for testing*/
@@ -105,6 +108,11 @@ public class BitDecomposition implements Callable<Integer>{
         // Function to initialze y[i] and put x1 <- y1
         initY();
         
+        for(int j=0; j<100;j++){
+            //just wait
+        }
+         
+        
         // Initialize c[1] 
         // TODO : Check for parameters here.
         int first_c_share = computeByBit(a.get(0),b.get(0),0,0);
@@ -129,17 +137,14 @@ public class BitDecomposition implements Callable<Integer>{
         threadService.submit(dThread);       
 
         threadService.shutdown();
-//        
-//        boolean threadsCompleted = threadService.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
-//        // once we have d and e, we can compute c and x Sequentially
-//        if(threadsCompleted){
-//            System.out.println("The first c Share" + cShares.get(0));
-//            computeCShares();
-//            computeXShares();
-//            
-//        }
+        
+        boolean threadsCompleted = threadService.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+        // once we have d and e, we can compute c and x Sequentially
+        if(threadsCompleted){
+            computeVariables();
+            System.out.println("Values for xShares: [" + xShares+"]"); 
+        }
           
-          computeVariables();
           tearDownHandlers();
           return 1;
     }
@@ -167,7 +172,7 @@ public class BitDecomposition implements Callable<Integer>{
         
 //        int first_bit = getBitFromId(first_name,first_index);
 //        int second_bit = getBitFromId(second_name,second_index);
-        
+        System.out.println("Computing prtocol id: " + (protocol_id + subprotocolId) );
         // System.out.println("In BitDecomposition -> ComputeInit()");
         ExecutorService es = Executors.newSingleThreadExecutor();
         
@@ -187,7 +192,8 @@ public class BitDecomposition implements Callable<Integer>{
 //        System.out.println("ti shares " + tiShares.get(0));
       
         Multiplication multiplicationModule = new Multiplication(first_bit,
-                    second_bit, tiShares.get(protocol_id + subprotocolId),
+                    second_bit, 
+                tiShares.get(protocol_id + subprotocolId),
                     sendQueues.get(protocol_id + subprotocolId), recQueues.get(protocol_id + subprotocolId), clientID,
                     prime, subprotocolId + protocol_id);
         
@@ -439,31 +445,34 @@ public class BitDecomposition implements Callable<Integer>{
             xShares.put(i, x);
         }
         
-        Logging.logShares("xShares", xShares);
+        //Logging.logShares("xShares", xShares);
     }
     
     private void computeVariables() throws InterruptedException{
         
         for(int i = 1; i < bitLength; i++){
             System.out.println("The current index " + i);
-           ExecutorService threadService = Executors.newCachedThreadPool();
+           ExecutorService threadService = Executors.newSingleThreadExecutor();
             
            ComputeThread compute = new ComputeThread(i);
            threadService.submit(compute);
            
-           int x_result = yShares.get(i);
-           x_result = x_result + cShares.get(i-1); 
-           x_result = Math.floorMod(x_result, prime);
-           
-           xShares.put(i, x_result);
-           
-           threadService.shutdown();
+            threadService.shutdown();
            
            boolean threadsCompleted = threadService.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
         // once we have d and e, we can compute c and x Sequentially
-        //if(threadsCompleted){
+        if(threadsCompleted){
+                int x_result = yShares.get(i);
+                x_result = x_result + cShares.get(i-1); 
+                x_result = Math.floorMod(x_result, prime);
+                xShares.put(i, x_result);
+                
+                //continue;
+        }
+           
+           
+           
           
-        //}
             
            
            
