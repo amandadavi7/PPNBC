@@ -114,10 +114,9 @@ public class ArgMax implements Callable<Integer[]>{
     Integer[] wOutput;
     
     /**
-     * vShares - shares of all the numbers to be compared (k numbers)
-     * each share vShare(j) contains l bits
      * 
-     * @param vShares
+     * @param vShares shares of all the numbers to be compared (k numbers)
+     * each share vShare(j) contains l bits
      * @param tiShares
      * @param oneShare
      * @param senderQueue
