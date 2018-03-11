@@ -49,7 +49,7 @@ public class Party {
     private static List<List<Integer> > xShares;
     private static List<List<Integer> > yShares;
     private static List<List<Integer> > vShares;
-    private static int oneShares;
+    private static int oneShares; 
 
     /**
      * Initialize class variables
@@ -170,9 +170,9 @@ public class Party {
         startServer();
         startClient();
 
-        //TestModel testModel = new TestModel(xShares, yShares, vShares, 
-        //      tiShares.binaryShares, oneShares, senderQueue, receiverQueue, partyId);
-        //testModel.compute();
+        TestModel testModel = new TestModel(xShares, yShares, vShares, 
+              tiShares.binaryShares, oneShares, senderQueue, receiverQueue, partyId);
+        testModel.compute();
     }
 
     /**

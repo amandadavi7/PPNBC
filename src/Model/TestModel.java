@@ -6,12 +6,17 @@
 package Model;
 
 import Communication.Message;
+import Communication.ReceiverQueueHandler;
+import Communication.SenderQueueHandler;
 import Protocol.ArgMax;
 import Protocol.Comparison;
 import Protocol.DotProduct;
 import Protocol.Multiplication;
 import TrustedInitializer.Triple;
 import Utility.Constants;
+import Utility.Logging;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.logging.*;
@@ -22,16 +27,24 @@ import java.util.logging.*;
  */
 public class TestModel {
 
-    private BlockingQueue<Message> senderQueue;
-    private BlockingQueue<Message> receiverQueue;
+    ConcurrentHashMap<Integer, BlockingQueue<Message>> recQueues;
+    ConcurrentHashMap<Integer, BlockingQueue<Message>> sendQueues;
+
+    ExecutorService sendqueueHandler;
+    ExecutorService recvqueueHandler;
+
+    private BlockingQueue<Message> commonSender;
+    private BlockingQueue<Message> commonReceiver;
+    
     int clientId;
-    List<Integer> x;
-    List<Integer> y;
+    List<List<Integer> > x;
+    List<List<Integer> > y;
     List<List<Integer> > v;
     List<Triple> tiShares;
     int oneShares;
 
-    public TestModel(List<Integer> x, List<Integer> y, List<List<Integer> > v, List<Triple> tiShares,
+    public TestModel(List<List<Integer> > x, List<List<Integer>> y, 
+            List<List<Integer> > v, List<Triple> tiShares,
             int oneShares,
             BlockingQueue<Message> senderQueue,
             BlockingQueue<Message> receiverQueue, int clientId) {
@@ -40,14 +53,67 @@ public class TestModel {
         this.v = v;
         this.tiShares = tiShares;
         this.oneShares = oneShares;
-        this.senderQueue = senderQueue;
-        this.receiverQueue = receiverQueue;
+        this.commonSender = senderQueue;
+        this.commonReceiver = receiverQueue;
         this.clientId = clientId;
+        
+        recQueues = new ConcurrentHashMap<>();
+        sendQueues = new ConcurrentHashMap<>();
+
+        sendqueueHandler = Executors.newSingleThreadExecutor();
+        recvqueueHandler = Executors.newSingleThreadExecutor();
+
+        sendqueueHandler.execute(new SenderQueueHandler(1, commonSender, sendQueues));
+        recvqueueHandler.execute(new ReceiverQueueHandler(commonReceiver, recQueues));
     }
 
     public void compute() {
-        ExecutorService es = Executors.newSingleThreadExecutor();
+        ExecutorService es = Executors.newFixedThreadPool(Constants.threadCount);
+        List<Future<Integer>> taskList = new ArrayList<>();
+        
+        Instant start = Instant.now();
 
+        int totalCases = x.size();
+        // The protocols for computation of d are assigned id 0-bitLength-1
+        for (int i = 0; i < totalCases; i++) {
+            //compute local shares of d and e and add to the message queue
+            
+            if (!recQueues.containsKey(i)) {
+                BlockingQueue<Message> temp = new LinkedBlockingQueue<>();
+                recQueues.put(i, temp);
+            }
+
+            if (!sendQueues.containsKey(i)) {
+                BlockingQueue<Message> temp2 = new LinkedBlockingQueue<>();
+                sendQueues.put(i, temp2);
+            }
+            
+            Multiplication multiplicationModule = new Multiplication(x.get(i).get(0),
+                    y.get(i).get(0), tiShares.get(i),
+                    sendQueues.get(i), recQueues.get(i), clientId,
+                    Constants.prime, i, oneShares);
+            Future<Integer> multiplicationTask = es.submit(multiplicationModule);
+            taskList.add(multiplicationTask);
+
+        }
+
+        es.shutdown();
+
+        // Now when I got the result for all, compute y+ x*y and add it to d[i]
+        for (int i = 0; i < totalCases; i++) {
+            Future<Integer> dWorkerResponse = taskList.get(i);
+            try {
+                int result = dWorkerResponse.get();
+            } catch (InterruptedException ex) {
+                Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
+            } catch (ExecutionException ex) {
+                Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+        
+        Instant end = Instant.now();
+        System.out.println("Avg time duration:"+ Duration.between(start, end).getSeconds());
+        
         /*Multiplication multiplicationModule = new Multiplication(x.get(0), 
                 y.get(0), tiShares.get(0), 
                 senderQueue, receiverQueue, clientId, Constants.prime,0, oneShares);
@@ -61,16 +127,16 @@ public class TestModel {
                 receiverQueue, clientId, Constants.binaryPrime, 1);
         Future<Integer> comparisonTask = es.submit(comparisonModule);*/
         
-        ArgMax argmaxModule = new ArgMax(v, tiShares, oneShares, senderQueue, 
-                receiverQueue, clientId, Constants.binaryPrime, 1);
-        Future<Integer[]> argmaxTask = es.submit(argmaxModule);
+//        ArgMax argmaxModule = new ArgMax(v, tiShares, oneShares, senderQueue, 
+//                receiverQueue, clientId, Constants.binaryPrime, 1);
+//        Future<Integer[]> argmaxTask = es.submit(argmaxModule);
         
-        try {
-            Integer[] result = argmaxTask.get();
-            System.out.println("result of argmax " + Arrays.toString(result));
-        } catch (InterruptedException | ExecutionException ex) {
-            Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
-        }
+//        try {
+//            Integer[] result = argmaxTask.get();
+//            System.out.println("result of argmax " + Arrays.toString(result));
+//        } catch (InterruptedException | ExecutionException ex) {
+//            Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
+//        }
 
     }
 }
