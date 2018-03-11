@@ -10,6 +10,9 @@ import Utility.Connection;
 import Model.TestModel;
 import TrustedInitializer.TIShare;
 import Utility.Logging;
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -43,8 +46,8 @@ public class Party {
     private static String peerIP;
     private static int peerPort;
 
-    private static List<Integer> xShares;
-    private static List<Integer> yShares;
+    private static List<List<Integer> > xShares;
+    private static List<List<Integer> > yShares;
     private static List<List<Integer> > vShares;
     private static int oneShares;
 
@@ -88,29 +91,60 @@ public class Party {
                     partyId = Integer.parseInt(value);
                     break;
                 case "xShares":
-                    int[] xIntShares = Arrays.stream(value.split(",")).
-                            mapToInt(Integer::parseInt).toArray();
-                    xShares = Arrays.stream(xIntShares).boxed().collect(Collectors.toList());
+                    String csvFile = value; 
+                    BufferedReader buf;
+                    try {
+                        buf = new BufferedReader(new FileReader(csvFile));
+                        String line = null;
+                        while((line = buf.readLine()) != null){
+                            int lineInt[] = Arrays.stream(line.split(",")).mapToInt(Integer::parseInt).toArray();
+                            List<Integer> xline = Arrays.stream(lineInt).boxed().collect(Collectors.toList());
+                            xShares.add(xline);
+                            //System.out.println(xline);
+                        }
+                    } catch (FileNotFoundException ex) {
+                        Logger.getLogger(Party.class.getName()).log(Level.SEVERE, null, ex);
+                    } catch (IOException ex) {
+                        Logger.getLogger(Party.class.getName()).log(Level.SEVERE, null, ex);
+                    }
                     break;
                 case "oneShares":
                     oneShares = Integer.parseInt(value);
                     break;
                 case "yShares":
-                    int[] yIntShares = Arrays.stream(value.split(",")).
-                            mapToInt(Integer::parseInt).toArray();
-                    yShares = Arrays.stream(yIntShares).boxed().collect(Collectors.toList());
-                    break;
-                case "vShares":
-                    String[] vListShares = value.split(";");
-                    for(String str: vListShares) {
-                        int[] vRow = Arrays.stream(str.split(",")).
-                                mapToInt(Integer::parseInt).toArray();
-                        List<Integer> vRowShares;
-                        vRowShares = Arrays.stream(vRow).boxed().collect(Collectors.toList());
-                        vShares.add(vRowShares);                        
+                    csvFile = value; 
+                    try {
+                        buf = new BufferedReader(new FileReader(csvFile));
+                        String line = null;
+                        while((line = buf.readLine()) != null){
+                            int lineInt[] = Arrays.stream(line.split(",")).mapToInt(Integer::parseInt).toArray();
+                            List<Integer> yline = Arrays.stream(lineInt).boxed().collect(Collectors.toList());
+                            yShares.add(yline);
+                            //System.out.println(yline);
+                        }
+                    } catch (FileNotFoundException ex) {
+                        Logger.getLogger(Party.class.getName()).log(Level.SEVERE, null, ex);
+                    } catch (IOException ex) {
+                        Logger.getLogger(Party.class.getName()).log(Level.SEVERE, null, ex);
                     }
                     break;
-
+                case "vShares":
+                    csvFile = value;
+                    try {
+                        buf = new BufferedReader(new FileReader(csvFile));
+                        String line = null;
+                        while((line = buf.readLine()) != null){
+                            int lineInt[] = Arrays.stream(line.split(",")).mapToInt(Integer::parseInt).toArray();
+                            List<Integer> vline = Arrays.stream(lineInt).boxed().collect(Collectors.toList());
+                            vShares.add(vline);
+                            //System.out.println(vline);
+                        }                        
+                    } catch (FileNotFoundException ex) {
+                        Logger.getLogger(Party.class.getName()).log(Level.SEVERE, null, ex);
+                    } catch (IOException ex) {
+                        Logger.getLogger(Party.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                    break;
             }
 
         }
@@ -136,9 +170,9 @@ public class Party {
         startServer();
         startClient();
 
-        TestModel testModel = new TestModel(xShares, yShares, vShares, 
-                tiShares.binaryShares, oneShares, senderQueue, receiverQueue, partyId);
-        testModel.compute();
+        //TestModel testModel = new TestModel(xShares, yShares, vShares, 
+        //      tiShares.binaryShares, oneShares, senderQueue, receiverQueue, partyId);
+        //testModel.compute();
     }
 
     /**
