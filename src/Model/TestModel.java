@@ -39,12 +39,12 @@ public class TestModel {
     int clientId;
     List<List<Integer>> x;
     List<List<Integer>> y;
-    List<List<Integer>> v;
+    List<List<List<Integer>>> v;
     List<Triple> tiShares;
     int oneShares;
 
     public TestModel(List<List<Integer>> x, List<List<Integer>> y,
-            List<List<Integer>> v, List<Triple> tiShares,
+            List<List<List<Integer>>> v, List<Triple> tiShares,
             int oneShares,
             BlockingQueue<Message> senderQueue,
             BlockingQueue<Message> receiverQueue, int clientId) {

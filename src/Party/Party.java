@@ -48,7 +48,7 @@ public class Party {
 
     private static List<List<Integer> > xShares;
     private static List<List<Integer> > yShares;
-    private static List<List<Integer> > vShares;
+    private static List<List<List<Integer> > > vShares;
     private static int oneShares; 
 
     /**
@@ -134,8 +134,12 @@ public class Party {
                         buf = new BufferedReader(new FileReader(csvFile));
                         String line = null;
                         while((line = buf.readLine()) != null){
-                            int lineInt[] = Arrays.stream(line.split(",")).mapToInt(Integer::parseInt).toArray();
-                            List<Integer> vline = Arrays.stream(lineInt).boxed().collect(Collectors.toList());
+                            String[] vListShares = value.split(";");
+                            List<List<Integer> > vline = new ArrayList<>();
+                            for(String str: vListShares) { 
+                                int lineInt[] = Arrays.stream(line.split(",")).mapToInt(Integer::parseInt).toArray();
+                                vline.add(Arrays.stream(lineInt).boxed().collect(Collectors.toList()));
+                            }
                             vShares.add(vline);
                             //System.out.println(vline);
                         }                        
