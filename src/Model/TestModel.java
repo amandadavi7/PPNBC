@@ -35,16 +35,16 @@ public class TestModel {
 
     private BlockingQueue<Message> commonSender;
     private BlockingQueue<Message> commonReceiver;
-    
+
     int clientId;
-    List<List<Integer> > x;
-    List<List<Integer> > y;
-    List<List<Integer> > v;
+    List<List<Integer>> x;
+    List<List<Integer>> y;
+    List<List<Integer>> v;
     List<Triple> tiShares;
     int oneShares;
 
-    public TestModel(List<List<Integer> > x, List<List<Integer>> y, 
-            List<List<Integer> > v, List<Triple> tiShares,
+    public TestModel(List<List<Integer>> x, List<List<Integer>> y,
+            List<List<Integer>> v, List<Triple> tiShares,
             int oneShares,
             BlockingQueue<Message> senderQueue,
             BlockingQueue<Message> receiverQueue, int clientId) {
@@ -56,7 +56,7 @@ public class TestModel {
         this.commonSender = senderQueue;
         this.commonReceiver = receiverQueue;
         this.clientId = clientId;
-        
+
         recQueues = new ConcurrentHashMap<>();
         sendQueues = new ConcurrentHashMap<>();
 
@@ -70,14 +70,14 @@ public class TestModel {
     public void compute() {
         ExecutorService es = Executors.newFixedThreadPool(Constants.threadCount);
         List<Future<Integer>> taskList = new ArrayList<>();
-        
-        Instant start = Instant.now();
+
+        long startTime = System.currentTimeMillis();
 
         int totalCases = x.size();
         // The protocols for computation of d are assigned id 0-bitLength-1
         for (int i = 0; i < totalCases; i++) {
             //compute local shares of d and e and add to the message queue
-            
+
             if (!recQueues.containsKey(i)) {
                 BlockingQueue<Message> temp = new LinkedBlockingQueue<>();
                 recQueues.put(i, temp);
@@ -87,7 +87,7 @@ public class TestModel {
                 BlockingQueue<Message> temp2 = new LinkedBlockingQueue<>();
                 sendQueues.put(i, temp2);
             }
-            
+
             Multiplication multiplicationModule = new Multiplication(x.get(i).get(0),
                     y.get(i).get(0), tiShares.get(i),
                     sendQueues.get(i), recQueues.get(i), clientId,
@@ -110,33 +110,29 @@ public class TestModel {
                 Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
-        
-        Instant end = Instant.now();
-        System.out.println("Avg time duration:"+ Duration.between(start, end).getSeconds());
+
+        long stopTime = System.currentTimeMillis();
+        long elapsedTime = stopTime - startTime;
+        System.out.println("Avg time duration:" + elapsedTime);
         
         /*Multiplication multiplicationModule = new Multiplication(x.get(0), 
                 y.get(0), tiShares.get(0), 
                 senderQueue, receiverQueue, clientId, Constants.prime,0, oneShares);
         Future<Integer> multiplicationTask = es.submit(multiplicationModule);*/
-        
-        /*DotProduct dotproductModule = new DotProduct(x, y, tiShares, senderQueue, 
+ /*DotProduct dotproductModule = new DotProduct(x, y, tiShares, senderQueue, 
                 receiverQueue, clientId, Constants.prime, 1, oneShares);        
         Future<Integer> dotProduct = es.submit(dotproductModule);*/
-                
-        /*Comparison comparisonModule = new Comparison(x, y, tiShares, oneShares, senderQueue,
+ /*Comparison comparisonModule = new Comparison(x, y, tiShares, oneShares, senderQueue,
                 receiverQueue, clientId, Constants.binaryPrime, 1);
         Future<Integer> comparisonTask = es.submit(comparisonModule);*/
-        
 //        ArgMax argmaxModule = new ArgMax(v, tiShares, oneShares, senderQueue, 
 //                receiverQueue, clientId, Constants.binaryPrime, 1);
 //        Future<Integer[]> argmaxTask = es.submit(argmaxModule);
-        
 //        try {
 //            Integer[] result = argmaxTask.get();
 //            System.out.println("result of argmax " + Arrays.toString(result));
 //        } catch (InterruptedException | ExecutionException ex) {
 //            Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
 //        }
-
     }
 }
