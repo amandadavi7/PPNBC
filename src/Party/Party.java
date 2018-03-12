@@ -134,20 +134,21 @@ public class Party {
                         buf = new BufferedReader(new FileReader(csvFile));
                         String line = null;
                         while((line = buf.readLine()) != null){
-                            String[] vListShares = value.split(";");
+                            String[] vListShares = line.split(";");
                             List<List<Integer> > vline = new ArrayList<>();
                             for(String str: vListShares) { 
-                                int lineInt[] = Arrays.stream(line.split(",")).mapToInt(Integer::parseInt).toArray();
+                                int lineInt[] = Arrays.stream(str.split(",")).mapToInt(Integer::parseInt).toArray();
+                                //List<Integer> temp = Arrays.stream(lineInt).boxed().collect(Collectors.toList());
                                 vline.add(Arrays.stream(lineInt).boxed().collect(Collectors.toList()));
                             }
                             vShares.add(vline);
-                            //System.out.println(vline);
                         }                        
                     } catch (FileNotFoundException ex) {
                         Logger.getLogger(Party.class.getName()).log(Level.SEVERE, null, ex);
                     } catch (IOException ex) {
                         Logger.getLogger(Party.class.getName()).log(Level.SEVERE, null, ex);
                     }
+                    
                     break;
             }
 
