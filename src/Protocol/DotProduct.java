@@ -106,6 +106,8 @@ public class DotProduct implements Callable<Integer> {
         recvqueueHandler.shutdownNow();
         
         dotProduct = Math.floorMod(dotProduct,prime);
+        
+        System.out.println("dot product:"+dotProduct+", protocol id:"+ protocolID);
         return dotProduct;
         
     }

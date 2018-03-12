@@ -87,9 +87,9 @@ public class TestModel {
                 BlockingQueue<Message> temp2 = new LinkedBlockingQueue<>();
                 sendQueues.put(i, temp2);
             }
-
-            Multiplication multiplicationModule = new Multiplication(x.get(i).get(0),
-                    y.get(i).get(0), tiShares.get(i),
+            
+            DotProduct multiplicationModule = new DotProduct(x.get(i),
+                    y.get(i), tiShares,
                     sendQueues.get(i), recQueues.get(i), clientId,
                     Constants.prime, i, oneShares);
             Future<Integer> multiplicationTask = es.submit(multiplicationModule);
