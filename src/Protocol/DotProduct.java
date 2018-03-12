@@ -9,6 +9,7 @@ import Communication.Message;
 import Communication.ReceiverQueueHandler;
 import Communication.SenderQueueHandler;
 import TrustedInitializer.Triple;
+import Utility.Constants;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
@@ -33,6 +34,12 @@ public class DotProduct implements Callable<Integer> {
     BlockingQueue<Message> commonSender;
     int prime,clientID,protocolID,oneShare;
     List<Triple> tiShares;
+    
+    ConcurrentHashMap<Integer, BlockingQueue<Message>> recQueues;
+    ConcurrentHashMap<Integer, BlockingQueue<Message>> sendQueues;
+    
+    ExecutorService sendqueueHandler;
+    ExecutorService recvqueueHandler;
     
     /**
      * Constructor
@@ -59,6 +66,16 @@ public class DotProduct implements Callable<Integer> {
         this.commonReceiver = receiverqueue;  
         this.protocolID = protocolID;
         this.oneShare = oneShare;
+        
+        recQueues = new ConcurrentHashMap<>();
+        sendQueues = new ConcurrentHashMap<>();
+        
+        sendqueueHandler = Executors.newSingleThreadExecutor();
+        recvqueueHandler = Executors.newSingleThreadExecutor();
+        
+        sendqueueHandler.execute(new SenderQueueHandler(protocolID,commonSender,sendQueues));
+        recvqueueHandler.execute(new ReceiverQueueHandler(commonReceiver, recQueues));
+        
     }
     
     /**
@@ -69,25 +86,24 @@ public class DotProduct implements Callable<Integer> {
     public Integer call() {
         int dotProduct = 0;
         int vectorLength = xShares.size();
-        System.out.println("input len = "+vectorLength);
+        //System.out.println("input len = "+vectorLength);
         
-        ConcurrentHashMap<Integer,BlockingQueue<Message> > recQueues = new ConcurrentHashMap<>();
-        ConcurrentHashMap<Integer,BlockingQueue<Message> > sendQueues = new ConcurrentHashMap<>();
-        
-        ExecutorService sendqueueHandler = Executors.newSingleThreadExecutor();
-        ExecutorService recvqueueHandler = Executors.newSingleThreadExecutor();
-        
-        sendqueueHandler.execute(new SenderQueueHandler(protocolID,commonSender,sendQueues));
-        recvqueueHandler.execute(new ReceiverQueueHandler(commonReceiver, recQueues));
       
-        ExecutorService mults = Executors.newFixedThreadPool(vectorLength);
+        ExecutorService mults = Executors.newFixedThreadPool(Constants.threadCount);
         ExecutorCompletionService<Integer> multCompletionService = new ExecutorCompletionService<>(mults);
         
         for(int i=0;i<vectorLength;i++){
-            BlockingQueue<Message> temp = new LinkedBlockingQueue<>();
-            recQueues.put(i, temp);
-            BlockingQueue<Message> temp2 = new LinkedBlockingQueue<>();
-            sendQueues.put(i,temp2);
+            
+            if (!recQueues.containsKey(i)) {
+                BlockingQueue<Message> temp = new LinkedBlockingQueue<>();
+                recQueues.put(i, temp);
+            }
+
+            if (!sendQueues.containsKey(i)) {
+                BlockingQueue<Message> temp2 = new LinkedBlockingQueue<>();
+                sendQueues.put(i, temp2);
+            }
+            
             multCompletionService.submit(new Multiplication(xShares.get(i), yShares.get(i), 
                     tiShares.get(i), sendQueues.get(i), recQueues.get(i), clientID, prime, i, oneShare));
         }
