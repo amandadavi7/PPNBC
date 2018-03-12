@@ -93,7 +93,7 @@ public class Comparison implements Callable<Integer> {
         cShares = new HashMap<>();
         multiplicationE = new HashMap<>();
 
-        System.out.println("bitLength:" + bitLength);
+        //System.out.println("bitLength:" + bitLength);
         // Communication between the parent and the sub protocols
         recQueues = new ConcurrentHashMap<>();
         sendQueues = new ConcurrentHashMap<>();
@@ -149,6 +149,7 @@ public class Comparison implements Callable<Integer> {
             computeCShares();
             w = computeW();
         }
+        System.out.println("w:"+w+" protocol id:"+ parentProtocolId);
 
         tearDownHandlers();
         return w;
@@ -162,14 +163,14 @@ public class Comparison implements Callable<Integer> {
             int eShare = x.get(i) + y.get(i) + oneShare;
             eShares.put(i, Math.floorMod(eShare, prime));
         }
-        Logging.logShares("eShares", eShares);
+        //Logging.logShares("eShares", eShares);
     }
 
     /**
      * compute and store multiplication of ei using distributed multiplication
      */
     private void computeMultiplicationE() {
-        System.out.println("Started multiplicationE");
+        //System.out.println("Started multiplicationE");
         multiplicationE.put(bitLength - 1, eShares.get(bitLength - 1));
         // now multiply each eshare with the previous computed multiplication one at a time
 
@@ -203,7 +204,7 @@ public class Comparison implements Callable<Integer> {
 
             try {
                 multiplicationE.put(i - 1, multiplicationTask.get());
-                System.out.println("result of Multiplication:" + multiplicationE.get(i - 1));
+                //System.out.println("result of Multiplication:" + multiplicationE.get(i - 1));
             } catch (InterruptedException | ExecutionException ex) {
                 Logger.getLogger(Comparison.class.getName()).log(Level.SEVERE, null, ex);
             }
@@ -211,7 +212,7 @@ public class Comparison implements Callable<Integer> {
         }
 
         multiplicationE.put(0, 0);
-        Logging.logShares("MultiplicationE", multiplicationE);
+        //Logging.logShares("MultiplicationE", multiplicationE);
     }
 
     /**
@@ -257,7 +258,7 @@ public class Comparison implements Callable<Integer> {
         }
 
         cShares.put(bitLength - 1, dShares.get(bitLength - 1));
-        Logging.logShares("cShares", cShares);
+        //Logging.logShares("cShares", cShares);
 
     }
 
@@ -272,7 +273,7 @@ public class Comparison implements Callable<Integer> {
             w = Math.floorMod(w, prime);
         }
 
-        Logging.logValue("w", w);
+        //Logging.logValue("w", w);
         return w;
     }
 
@@ -319,7 +320,7 @@ public class Comparison implements Callable<Integer> {
             dShares.put(i, localDiff);
         }
         
-        Logging.logShares("dShares", dShares);
+        //Logging.logShares("dShares", dShares);
     }
 
     /**

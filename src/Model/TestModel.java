@@ -88,10 +88,14 @@ public class TestModel {
                 sendQueues.put(i, temp2);
             }
             
-            DotProduct multiplicationModule = new DotProduct(x.get(i),
+            Comparison multiplicationModule = new Comparison(x.get(i), y.get(i), 
+                    tiShares, oneShares, sendQueues.get(i),
+                recQueues.get(i), clientId, Constants.binaryPrime, i);
+            
+            /*DotProduct multiplicationModule = new DotProduct(x.get(i),
                     y.get(i), tiShares,
                     sendQueues.get(i), recQueues.get(i), clientId,
-                    Constants.prime, i, oneShares);
+                    Constants.prime, i, oneShares);*/
             Future<Integer> multiplicationTask = es.submit(multiplicationModule);
             taskList.add(multiplicationTask);
 

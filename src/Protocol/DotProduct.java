@@ -87,8 +87,7 @@ public class DotProduct implements Callable<Integer> {
         int dotProduct = 0;
         int vectorLength = xShares.size();
         //System.out.println("input len = "+vectorLength);
-        
-      
+              
         ExecutorService mults = Executors.newFixedThreadPool(Constants.threadCount);
         ExecutorCompletionService<Integer> multCompletionService = new ExecutorCompletionService<>(mults);
         
