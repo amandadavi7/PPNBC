@@ -170,6 +170,10 @@ public class ArgMax implements Callable<Integer[]>{
      */
     @Override
     public Integer[] call() throws Exception  {
+        if (numberCount==1){
+            wOutput[0]=1;
+            return wOutput;
+        }
         
         int tiIndex = computeComparisons();
         computeW(tiIndex);
@@ -196,11 +200,11 @@ public class ArgMax implements Callable<Integer[]>{
                     int key = (i*numberCount)+j;
                     if(!recQueues.containsKey(key)) {
                         BlockingQueue<Message> temp = new LinkedBlockingQueue<>();
-                        recQueues.put((i*numberCount)+j, temp);
+                        recQueues.put(key, temp);
                     }
                     if(!sendQueues.containsKey(key)) {
                         BlockingQueue<Message> temp2 = new LinkedBlockingQueue<>();
-                        sendQueues.put((i*numberCount)+j, temp2);
+                        sendQueues.put(key, temp2);
                     }
                     //Extract the required number of tiShares and pass it to comparison protocol
                     //each comparison needs 3(bitlength)-3 shares
@@ -222,8 +226,10 @@ public class ArgMax implements Callable<Integer[]>{
             wIntermediate.get(key).add(w_temp.get());
         }
         
+        es.shutdownNow();
+        
         for(int i=0;i<numberCount;i++){
-            Logging.logShares("w["+Integer.toString(i)+"]", wIntermediate.get(i));
+            System.out.println("w["+Integer.toString(i)+"]:"+ wIntermediate.get(i));
         } 
         
         return tiIndex;
@@ -257,6 +263,8 @@ public class ArgMax implements Callable<Integer[]>{
             Future<Integer> w_temp = taskList.get(i);
             wOutput[i]=w_temp.get();
         }
+        
+        es.shutdownNow();
     }
     
     /**
