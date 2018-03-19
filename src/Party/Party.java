@@ -48,7 +48,8 @@ public class Party {
 
     private static List<List<Integer> > xShares;
     private static List<List<Integer> > yShares;
-    private static List<List<List<Integer> > > vShares;
+    //private static List<List<List<Integer> > > vShares;
+    private static List<List<List<Integer>>> vShares;
     private static int oneShares; 
 
     /**
@@ -148,7 +149,16 @@ public class Party {
                     } catch (IOException ex) {
                         Logger.getLogger(Party.class.getName()).log(Level.SEVERE, null, ex);
                     }
-                    
+                    /*
+                    String[] vListShares = value.split(";");
+                    for(String str: vListShares) {
+                        int[] vRow = Arrays.stream(str.split(",")).
+                                mapToInt(Integer::parseInt).toArray();
+                        List<Integer> vRowShares;
+                        vRowShares = Arrays.stream(vRow).boxed().collect(Collectors.toList());
+                        vShares.add(vRowShares);                        
+                    }
+                    */
                     break;
             }
 
@@ -220,6 +230,7 @@ public class Party {
         ExecutorService partyServerEs = Executors.newCachedThreadPool();
         PartyServer partyServer = new PartyServer(socketServer, senderQueue);
         partyServerEs.submit(partyServer);
+        partyServerEs.shutdown();
 
     }
 
@@ -233,6 +244,7 @@ public class Party {
         ExecutorService partyServerEs = Executors.newCachedThreadPool();
         PartyClient partyrClient = new PartyClient(receiverQueue, peerIP, peerPort);
         partyServerEs.submit(partyrClient);
+        partyServerEs.shutdown();
 
     }
 
