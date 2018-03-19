@@ -39,6 +39,7 @@ public class TestModel {
     int clientId;
     List<List<Integer>> x;
     List<List<Integer>> y;
+    //List<List<List<Integer>>> v;
     List<List<List<Integer>>> v;
     List<Triple> tiShares;
     int oneShares;
@@ -68,11 +69,10 @@ public class TestModel {
     }
 
     public void compute() {
-        ExecutorService es = Executors.newFixedThreadPool(Constants.threadCount);
+        ExecutorService es = Executors.newFixedThreadPool(100);
         List<Future<Integer>> taskList = new ArrayList<>();
 
         long startTime = System.currentTimeMillis();
-
         int totalCases = x.size();
         // The protocols for computation of d are assigned id 0-bitLength-1
         for (int i = 0; i < totalCases; i++) {
@@ -88,17 +88,23 @@ public class TestModel {
                 sendQueues.put(i, temp2);
             }
             
-            Comparison multiplicationModule = new Comparison(x.get(i), y.get(i), 
-                    tiShares, oneShares, sendQueues.get(i),
-                recQueues.get(i), clientId, Constants.binaryPrime, i);
             
-            /*DotProduct multiplicationModule = new DotProduct(x.get(i),
+            /*ArgMax multiplicationModule = new ArgMax(v, tiShares, oneShares, sendQueues.get(i), 
+                recQueues.get(i), clientId, Constants.binaryPrime, i);*/
+            
+            
+            /*Comparison multiplicationModule = new Comparison(x.get(i), y.get(i), 
+                    tiShares, oneShares, sendQueues.get(i),
+                recQueues.get(i), clientId, Constants.binaryPrime, i);*/
+            
+            DotProduct multiplicationModule = new DotProduct(x.get(i),
                     y.get(i), tiShares,
                     sendQueues.get(i), recQueues.get(i), clientId,
-                    Constants.prime, i, oneShares);*/
+                    Constants.prime, i, oneShares);
+            
             Future<Integer> multiplicationTask = es.submit(multiplicationModule);
             taskList.add(multiplicationTask);
-
+            
         }
 
         es.shutdown();
@@ -107,10 +113,9 @@ public class TestModel {
         for (int i = 0; i < totalCases; i++) {
             Future<Integer> dWorkerResponse = taskList.get(i);
             try {
-                int result = dWorkerResponse.get();
-            } catch (InterruptedException ex) {
-                Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
-            } catch (ExecutionException ex) {
+                Integer result = dWorkerResponse.get();
+                System.out.println("got "+i);
+            } catch (InterruptedException | ExecutionException ex) {
                 Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
@@ -118,6 +123,9 @@ public class TestModel {
         long stopTime = System.currentTimeMillis();
         long elapsedTime = stopTime - startTime;
         System.out.println("Avg time duration:" + elapsedTime);
+        
+        sendqueueHandler.shutdownNow();
+        recvqueueHandler.shutdownNow();
         
         /*Multiplication multiplicationModule = new Multiplication(x.get(0), 
                 y.get(0), tiShares.get(0), 

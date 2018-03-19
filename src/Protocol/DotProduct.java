@@ -84,11 +84,12 @@ public class DotProduct implements Callable<Integer> {
      */
     @Override
     public Integer call() {
+        
         int dotProduct = 0;
         int vectorLength = xShares.size();
         //System.out.println("input len = "+vectorLength);
               
-        ExecutorService mults = Executors.newFixedThreadPool(Constants.threadCount);
+        ExecutorService mults = Executors.newFixedThreadPool(vectorLength);
         ExecutorCompletionService<Integer> multCompletionService = new ExecutorCompletionService<>(mults);
         
         for(int i=0;i<vectorLength;i++){
@@ -102,7 +103,7 @@ public class DotProduct implements Callable<Integer> {
                 BlockingQueue<Message> temp2 = new LinkedBlockingQueue<>();
                 sendQueues.put(i, temp2);
             }
-            
+            //System.out.println("my protocol: "+protocolID+", calling mult: "+i);
             multCompletionService.submit(new Multiplication(xShares.get(i), yShares.get(i), 
                     tiShares.get(i), sendQueues.get(i), recQueues.get(i), clientID, prime, i, oneShare));
         }
@@ -112,16 +113,16 @@ public class DotProduct implements Callable<Integer> {
                 Future<Integer> prod = multCompletionService.take();
                 int product = prod.get();
                 dotProduct += product;
-            } catch (InterruptedException | ExecutionException ex) {
-                Logger.getLogger(DotProduct.class.getName()).log(Level.SEVERE, null, ex);
-            }
-        }        
+                } catch (InterruptedException | ExecutionException ex) {
+                    Logger.getLogger(DotProduct.class.getName()).log(Level.SEVERE, null, ex);
+                }
+        }
         
         sendqueueHandler.shutdownNow();
         recvqueueHandler.shutdownNow();
+        mults.shutdownNow();
         
         dotProduct = Math.floorMod(dotProduct,prime);
-        
         System.out.println("dot product:"+dotProduct+", protocol id:"+ protocolID);
         return dotProduct;
         
