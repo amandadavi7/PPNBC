@@ -33,9 +33,22 @@ public class Multiplication implements Callable {
     int protocolID;
     int oneShare;
 
-    public Multiplication(int x, int y, Triple tiShares,
-            BlockingQueue<Message> senderQueue,
-            BlockingQueue<Message> receiverQueue, int clientId, int prime, int protocolID, int oneShare) {
+    /**
+     * Constructor
+     * @param x share of x
+     * @param y share of y
+     * @param tiShares
+     * @param senderQueue
+     * @param receiverQueue
+     * @param clientId
+     * @param prime
+     * @param protocolID
+     * @param oneShare 
+     */
+    public Multiplication(int x, int y, Triple tiShares, 
+            BlockingQueue<Message> senderQueue, 
+            BlockingQueue<Message> receiverQueue, int clientId, int prime, 
+            int protocolID, int oneShare) {
 
         this.x = x;
         this.y = y;
@@ -52,7 +65,7 @@ public class Multiplication implements Callable {
     /**
      * Waits for the shares of (x-u) and (y-v), computes the product and returns
      * the value
-     * @return
+     * @return shares of product
      * @throws Exception 
      */
     @Override
@@ -71,6 +84,9 @@ public class Multiplication implements Callable {
 
     }
 
+    /**
+     * Bundle the d and e values and add to the sender queue
+     */
     private void initProtocol() {
         List<Integer> diffList = new ArrayList<>();
         diffList.add(Math.floorMod(x - tiShares.u, prime));

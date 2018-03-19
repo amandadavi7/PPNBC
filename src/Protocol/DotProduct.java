@@ -94,13 +94,11 @@ public class DotProduct implements Callable<Integer> {
         for(int i=0;i<vectorLength;i++){
             
             if (!recQueues.containsKey(i)) {
-                BlockingQueue<Message> temp = new LinkedBlockingQueue<>();
-                recQueues.put(i, temp);
+                recQueues.put(i, new LinkedBlockingQueue<>());
             }
 
             if (!sendQueues.containsKey(i)) {
-                BlockingQueue<Message> temp2 = new LinkedBlockingQueue<>();
-                sendQueues.put(i, temp2);
+                sendQueues.put(i, new LinkedBlockingQueue<>());
             }
             
             multCompletionService.submit(new Multiplication(xShares.get(i), yShares.get(i), 
@@ -110,6 +108,8 @@ public class DotProduct implements Callable<Integer> {
         for(int i=0;i<vectorLength;i++){
             try {
                 Future<Integer> prod = multCompletionService.take();
+                recQueues.remove(i);
+                sendQueues.remove(i);
                 int product = prod.get();
                 dotProduct += product;
             } catch (InterruptedException | ExecutionException ex) {
