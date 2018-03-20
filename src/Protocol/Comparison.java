@@ -34,9 +34,8 @@ public class Comparison extends Protocol implements Callable<Integer> {
     ConcurrentHashMap<Integer, BlockingQueue<Message>> recQueues;
     ConcurrentHashMap<Integer, BlockingQueue<Message>> sendQueues;
 
-    ExecutorService sendqueueHandler;
-    ExecutorService recvqueueHandler;
-
+    ExecutorService queueHandlers;
+    
     private BlockingQueue<Message> commonSender;
     private BlockingQueue<Message> commonReceiver;
     List<Integer> x;
@@ -96,11 +95,9 @@ public class Comparison extends Protocol implements Callable<Integer> {
         recQueues = new ConcurrentHashMap<>();
         sendQueues = new ConcurrentHashMap<>();
 
-        sendqueueHandler = Executors.newSingleThreadExecutor();
-        recvqueueHandler = Executors.newSingleThreadExecutor();
-
-        sendqueueHandler.execute(new SenderQueueHandler(protocolID, commonSender, sendQueues));
-        recvqueueHandler.execute(new ReceiverQueueHandler(commonReceiver, recQueues));
+        queueHandlers = Executors.newFixedThreadPool(2);
+        queueHandlers.submit(new SenderQueueHandler(protocolID, commonSender, sendQueues));
+        queueHandlers.submit(new ReceiverQueueHandler(commonReceiver, recQueues));
 
     }
 
@@ -329,7 +326,6 @@ public class Comparison extends Protocol implements Callable<Integer> {
      * Teardown all local threads
      */
     private void tearDownHandlers() {
-        recvqueueHandler.shutdownNow();
-        sendqueueHandler.shutdownNow();
+        queueHandlers.shutdownNow();
     }
 }
