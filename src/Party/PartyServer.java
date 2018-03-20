@@ -48,12 +48,17 @@ public class PartyServer implements Runnable{
             while(true){
                 Message msg = senderQueue.take();
                 oStream.writeObject(msg);
+                Message temp = (Message) msg.getValue();
+                System.out.println(msg.getProtocolID()+";"+ temp.getProtocolID() + " sent successfully ");
                 //oStream.flush();
                 
             }
             
         } catch (IOException | InterruptedException ex){
-            Logger.getLogger(PartyServer.class.getName()).log(Level.SEVERE, null, ex);
+            ex.printStackTrace();
+            //Logger.getLogger(PartyServer.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (RuntimeException ex){
+            ex.printStackTrace();
         }
         
     }

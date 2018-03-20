@@ -100,18 +100,19 @@ public class DotProduct implements Callable<Integer> {
             }
             //System.out.println("my protocol: "+protocolID+", calling mult: "+i);
             multCompletionService.submit(new Multiplication(xShares.get(i), yShares.get(i), 
-                    tiShares.get(i), sendQueues.get(i), recQueues.get(i), clientID, prime, i, oneShare));
+                    tiShares.get(i), sendQueues.get(i), recQueues.get(i), clientID, prime, i, oneShare, protocolID));
         }
         
         for(int i=0;i<vectorLength;i++){
             try {
                 Future<Integer> prod = multCompletionService.take();
-                recQueues.remove(i);
-                sendQueues.remove(i);
+                //recQueues.remove(i);
+                //sendQueues.remove(i);
                 int product = prod.get();
                 dotProduct += product;
                 } catch (InterruptedException | ExecutionException ex) {
-                    Logger.getLogger(DotProduct.class.getName()).log(Level.SEVERE, null, ex);
+                    ex.printStackTrace();
+                    //Logger.getLogger(DotProduct.class.getName()).log(Level.SEVERE, null, ex);
                 }
         }
         

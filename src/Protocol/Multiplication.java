@@ -32,6 +32,7 @@ public class Multiplication implements Callable {
     int prime;
     int protocolID;
     int oneShare;
+    int parentID;
 
     /**
      * Constructor
@@ -48,7 +49,7 @@ public class Multiplication implements Callable {
     public Multiplication(int x, int y, Triple tiShares, 
             BlockingQueue<Message> senderQueue, 
             BlockingQueue<Message> receiverQueue, int clientId, int prime, 
-            int protocolID, int oneShare) {
+            int protocolID, int oneShare, int parentID) {
 
         this.x = x;
         this.y = y;
@@ -59,6 +60,7 @@ public class Multiplication implements Callable {
         this.prime = prime;
         this.protocolID = protocolID;
         this.oneShare = oneShare;
+        this.parentID = parentID;
         
     }
 
@@ -71,7 +73,7 @@ public class Multiplication implements Callable {
     @Override
     public Object call() throws Exception {
         initProtocol();
-        //System.out.println("Waiting for receiver." + protocolID);
+        System.out.println("Waiting for receiver. parentID="+parentID+" mult ID=" + protocolID);
         Message receivedMessage = receiverQueue.take();
         List<Integer> diffList = (List<Integer>) receivedMessage.getValue();
         
@@ -80,6 +82,7 @@ public class Multiplication implements Callable {
         int product = tiShares.w + (d * tiShares.v) + (tiShares.u * e) + (d * e * oneShare);
         product = Math.floorMod(product, prime);
         //System.out.println("ti("+tiShares.u+","+tiShares.v+","+tiShares.w+"), "+"x*y("+x+","+y+"):"+product);
+        System.out.println("parent ID="+parentID+" mult ID="+protocolID+" successful, product returned");
         return product;
 
     }

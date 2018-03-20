@@ -186,7 +186,7 @@ public class Party {
         startClient();
 
         TestModel testModel = new TestModel(xShares, yShares, vShares, 
-              tiShares.binaryShares, oneShares, senderQueue, receiverQueue, partyId);
+              tiShares.decimalShares, oneShares, senderQueue, receiverQueue, partyId);
         testModel.compute();
     }
 

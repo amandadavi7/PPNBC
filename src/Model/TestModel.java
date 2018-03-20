@@ -66,7 +66,7 @@ public class TestModel {
     }
 
     public void compute() {
-        ExecutorService es = Executors.newFixedThreadPool(100);
+        ExecutorService es = Executors.newFixedThreadPool(10);
         List<Future<Integer>> taskList = new ArrayList<>();
 
         long startTime = System.currentTimeMillis();
@@ -97,6 +97,9 @@ public class TestModel {
                     sendQueues.get(i), recQueues.get(i), clientId,
                     Constants.prime, i, oneShares);
             
+            /*Multiplication multiplicationModule = new Multiplication(x.get(i).get(0),y.get(i).get(0),tiShares.get(i)
+                    ,sendQueues.get(i),recQueues.get(i),clientId,Constants.prime,i,oneShares);*/
+            
             Future<Integer> multiplicationTask = es.submit(multiplicationModule);
             taskList.add(multiplicationTask);
             
@@ -109,8 +112,8 @@ public class TestModel {
             Future<Integer> dWorkerResponse = taskList.get(i);
             try {
                 int result = dWorkerResponse.get();
-                recQueues.remove(i);
-                sendQueues.remove(i);
+                //recQueues.remove(i);
+                //sendQueues.remove(i);
                 System.out.println("result:"+result+", #:"+i);
             } catch (InterruptedException ex) {
                 Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);

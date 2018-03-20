@@ -9,7 +9,6 @@ import Communication.Message;
 import Communication.ReceiverQueueHandler;
 import Communication.SenderQueueHandler;
 import TrustedInitializer.Triple;
-import Utility.Logging;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -205,8 +204,10 @@ public class Comparison implements Callable<Integer> {
 
         }
 
+        /*
         recQueues.remove(subProtocolID);
         sendQueues.remove(subProtocolID);
+        */
         
         multiplicationE.put(0, 0);
         //Logging.logShares("MultiplicationE", multiplicationE);
@@ -247,12 +248,17 @@ public class Comparison implements Callable<Integer> {
             Future<Integer> dWorkerResponse = taskList.get(i);
             try {
                 cShares.put(i, dWorkerResponse.get());
-                recQueues.remove(subProtocolID + i);
-                sendQueues.remove(subProtocolID + i);
+                
             } catch (InterruptedException | ExecutionException ex) {
                 Logger.getLogger(Comparison.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
+        
+        /*
+        for(int i = 0;i<bitLength -1;i++) {
+            recQueues.remove(subProtocolID + i);
+            sendQueues.remove(subProtocolID + i);
+        }*/
 
         cShares.put(bitLength - 1, dShares.get(bitLength - 1));
         //Logging.logShares("cShares", cShares);
@@ -312,12 +318,16 @@ public class Comparison implements Callable<Integer> {
         // Now when I got the result for all, compute y+ x*y and add it to d[i]
         for (int i = 0; i < bitLength; i++) {
             Future<Integer> dWorkerResponse = taskList.get(i);
-            recQueues.remove(i);
-            sendQueues.remove(i);
+            
             int localDiff = y.get(i) - dWorkerResponse.get();
             localDiff = Math.floorMod(localDiff, prime);
             dShares.put(i, localDiff);
         }
+        /*
+        for (int i = 0; i < bitLength; i++) {
+            recQueues.remove(i);
+            sendQueues.remove(i);
+        }*/
 
         //Logging.logShares("dShares", dShares);
     }

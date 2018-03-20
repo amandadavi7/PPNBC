@@ -37,16 +37,18 @@ public class ReceiverQueueHandler implements Runnable {
         while (true) {
             try {
                 Message queueObj = commonQueue.take();
+                int parentID = queueObj.getProtocolID();
                 Message strippedObj = (Message) queueObj.getValue();
                 int ID = strippedObj.getProtocolID();
-                //System.out.println("adding to subqueue " + ID + " message " + strippedObj);
+                System.out.println("adding to from " + parentID + " to subqueue " + ID + " message " + strippedObj);
                 if (!subQueues.containsKey(ID)) {
                     subQueues.put(ID, new LinkedBlockingQueue<>());
                 }
                 subQueues.get(ID).put(strippedObj);
-
             } catch (InterruptedException ex) {
-
+                ex.printStackTrace();
+            } catch (RuntimeException ex) {
+                ex.printStackTrace();
             }
         }
 
