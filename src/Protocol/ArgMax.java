@@ -200,12 +200,9 @@ public class ArgMax extends Protocol implements Callable<Integer[]> {
             for (int j = 0; j < numberCount; j++) {
                 if (i != j) {
                     int key = (i * numberCount) + j;
-                    if (!recQueues.containsKey(key)) {
-                        recQueues.put(key, new LinkedBlockingQueue<>());
-                    }
-                    if (!sendQueues.containsKey(key)) {
-                        sendQueues.put(key, new LinkedBlockingQueue<>());
-                    }
+                    
+                    initQueueMap(recQueues, sendQueues, key);
+                    
                     //Extract the required number of tiShares and pass it to comparison protocol
                     //each comparison needs 3(bitlength)-3 shares
                     List<Triple> tiComparsion = tiShares.subList(tiIndex, tiIndex + tiCount);
@@ -230,8 +227,7 @@ public class ArgMax extends Protocol implements Callable<Integer[]> {
             for (int j = 0; j < numberCount; j++) {
                 if (i != j) {
                     int key = (i * numberCount) + j;
-                    recQueues.remove(key);
-                    sendQueues.remove(key);
+                    clearQueueMap(recQueues, sendQueues, key);
                 }
             }
         }

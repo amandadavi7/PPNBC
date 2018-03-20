@@ -172,14 +172,8 @@ public class Comparison extends Protocol implements Callable<Integer> {
         int subProtocolID = bitLength;
         int tiCounter = 0;
 
-        if (!recQueues.containsKey(subProtocolID)) {
-            recQueues.put(subProtocolID, new LinkedBlockingQueue<>());
-        }
-
-        if (!sendQueues.containsKey(subProtocolID)) {
-            sendQueues.put(subProtocolID, new LinkedBlockingQueue<>());
-        }
-
+        initQueueMap(recQueues, sendQueues, subProtocolID);
+        
         for (int i = bitLength - 1; i > 1; i--) {
             // You don't need i = 0. 
             // Multiplication format: multiplicationE[i] * eShares[i-1]
@@ -205,8 +199,7 @@ public class Comparison extends Protocol implements Callable<Integer> {
 
         }
 
-        recQueues.remove(subProtocolID);
-        sendQueues.remove(subProtocolID);
+        clearQueueMap(recQueues, sendQueues, subProtocolID);
         
         multiplicationE.put(0, 0);
         //Logging.logShares("MultiplicationE", multiplicationE);
@@ -223,14 +216,8 @@ public class Comparison extends Protocol implements Callable<Integer> {
 
         for (int i = 0; i < bitLength - 1; i++) {
             //compute local shares of d and e and add to the message queue
-            if (!recQueues.containsKey(subProtocolID + i)) {
-                recQueues.put(subProtocolID + i, new LinkedBlockingQueue<>());
-            }
-
-            if (!sendQueues.containsKey(subProtocolID + i)) {
-                sendQueues.put(subProtocolID + i, new LinkedBlockingQueue<>());
-            }
-
+            initQueueMap(recQueues, sendQueues, subProtocolID + i);
+            
             Multiplication multiplicationModule = new Multiplication(multiplicationE.get(i + 1),
                     dShares.get(i), tiShares.get(i), sendQueues.get(subProtocolID + i),
                     recQueues.get(subProtocolID + i), clientID, prime, subProtocolID + i, oneShare);
@@ -247,8 +234,8 @@ public class Comparison extends Protocol implements Callable<Integer> {
             Future<Integer> dWorkerResponse = taskList.get(i);
             try {
                 cShares.put(i, dWorkerResponse.get());
-                recQueues.remove(subProtocolID + i);
-                sendQueues.remove(subProtocolID + i);
+                clearQueueMap(recQueues, sendQueues, subProtocolID+ i);
+                
             } catch (InterruptedException | ExecutionException ex) {
                 Logger.getLogger(Comparison.class.getName()).log(Level.SEVERE, null, ex);
             }
@@ -290,14 +277,8 @@ public class Comparison extends Protocol implements Callable<Integer> {
         for (int i = 0; i < bitLength; i++) {
             //compute local shares of d and e and add to the message queue
 
-            if (!recQueues.containsKey(i)) {
-                recQueues.put(i, new LinkedBlockingQueue<>());
-            }
-
-            if (!sendQueues.containsKey(i)) {
-                sendQueues.put(i, new LinkedBlockingQueue<>());
-            }
-
+            initQueueMap(recQueues, sendQueues, i);
+            
             Multiplication multiplicationModule = new Multiplication(x.get(i),
                     y.get(i), tiShares.get(i),
                     sendQueues.get(i), recQueues.get(i), clientID,
@@ -312,8 +293,7 @@ public class Comparison extends Protocol implements Callable<Integer> {
         // Now when I got the result for all, compute y+ x*y and add it to d[i]
         for (int i = 0; i < bitLength; i++) {
             Future<Integer> dWorkerResponse = taskList.get(i);
-            recQueues.remove(i);
-            sendQueues.remove(i);
+            clearQueueMap(recQueues, sendQueues, i);
             int localDiff = y.get(i) - dWorkerResponse.get();
             localDiff = Math.floorMod(localDiff, prime);
             dShares.put(i, localDiff);
