@@ -108,6 +108,8 @@ public class DotProduct extends Protocol implements Callable<Integer> {
             }
         }
 
+        recQueues.clear();
+        sendQueues.clear();
         queueHandlers.shutdownNow();
         mults.shutdownNow();
 

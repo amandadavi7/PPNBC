@@ -9,6 +9,7 @@ import Communication.Message;
 import Communication.ReceiverQueueHandler;
 import Communication.SenderQueueHandler;
 import TrustedInitializer.Triple;
+import Utility.Constants;
 import Utility.Logging;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -35,7 +36,7 @@ public class Comparison extends Protocol implements Callable<Integer> {
     ConcurrentHashMap<Integer, BlockingQueue<Message>> sendQueues;
 
     ExecutorService queueHandlers;
-    
+
     private BlockingQueue<Message> commonSender;
     private BlockingQueue<Message> commonReceiver;
     List<Integer> x;
@@ -113,7 +114,7 @@ public class Comparison extends Protocol implements Callable<Integer> {
         int w = -1;
         computeEShares();
 
-        ExecutorService threadService = Executors.newCachedThreadPool();
+        ExecutorService threadService = Executors.newFixedThreadPool(Constants.threadCount);
         Runnable dThread = new Runnable() {
             @Override
             public void run() {
@@ -173,7 +174,7 @@ public class Comparison extends Protocol implements Callable<Integer> {
         int tiCounter = 0;
 
         initQueueMap(recQueues, sendQueues, subProtocolID);
-        
+
         for (int i = bitLength - 1; i > 1; i--) {
             // You don't need i = 0. 
             // Multiplication format: multiplicationE[i] * eShares[i-1]
@@ -200,7 +201,7 @@ public class Comparison extends Protocol implements Callable<Integer> {
         }
 
         clearQueueMap(recQueues, sendQueues, subProtocolID);
-        
+
         multiplicationE.put(0, 0);
         //Logging.logShares("MultiplicationE", multiplicationE);
     }
@@ -210,14 +211,14 @@ public class Comparison extends Protocol implements Callable<Integer> {
      */
     private void computeCShares() {
 
-        ExecutorService es = Executors.newFixedThreadPool(bitLength);
+        ExecutorService es = Executors.newFixedThreadPool(Constants.threadCount);
         List<Future<Integer>> taskList = new ArrayList<>();
         int subProtocolID = bitLength + 1;
 
         for (int i = 0; i < bitLength - 1; i++) {
             //compute local shares of d and e and add to the message queue
             initQueueMap(recQueues, sendQueues, subProtocolID + i);
-            
+
             Multiplication multiplicationModule = new Multiplication(multiplicationE.get(i + 1),
                     dShares.get(i), tiShares.get(i), sendQueues.get(subProtocolID + i),
                     recQueues.get(subProtocolID + i), clientID, prime, subProtocolID + i, oneShare);
@@ -234,8 +235,8 @@ public class Comparison extends Protocol implements Callable<Integer> {
             Future<Integer> dWorkerResponse = taskList.get(i);
             try {
                 cShares.put(i, dWorkerResponse.get());
-                clearQueueMap(recQueues, sendQueues, subProtocolID+ i);
-                
+                clearQueueMap(recQueues, sendQueues, subProtocolID + i);
+
             } catch (InterruptedException | ExecutionException ex) {
                 Logger.getLogger(Comparison.class.getName()).log(Level.SEVERE, null, ex);
             }
@@ -270,7 +271,7 @@ public class Comparison extends Protocol implements Callable<Integer> {
      */
     private void computeDSHares() throws InterruptedException, ExecutionException {
 
-        ExecutorService es = Executors.newFixedThreadPool(bitLength);
+        ExecutorService es = Executors.newFixedThreadPool(Constants.threadCount);
         List<Future<Integer>> taskList = new ArrayList<>();
 
         // The protocols for computation of d are assigned id 0-bitLength-1
@@ -278,7 +279,7 @@ public class Comparison extends Protocol implements Callable<Integer> {
             //compute local shares of d and e and add to the message queue
 
             initQueueMap(recQueues, sendQueues, i);
-            
+
             Multiplication multiplicationModule = new Multiplication(x.get(i),
                     y.get(i), tiShares.get(i),
                     sendQueues.get(i), recQueues.get(i), clientID,

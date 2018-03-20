@@ -66,7 +66,7 @@ public class TestModel {
     }
 
     public void compute() {
-        ExecutorService es = Executors.newFixedThreadPool(100);
+        ExecutorService es = Executors.newFixedThreadPool(Constants.threadCount);
         List<Future<Integer>> taskList = new ArrayList<>();
 
         long startTime = System.currentTimeMillis();

@@ -9,7 +9,9 @@ import Communication.Message;
 import Communication.ReceiverQueueHandler;
 import Communication.SenderQueueHandler;
 import TrustedInitializer.Triple;
+import Utility.Constants;
 import Utility.Logging;
+import com.sun.corba.se.impl.orbutil.closure.Constant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -192,7 +194,7 @@ public class ArgMax extends Protocol implements Callable<Integer[]> {
      */
     private int computeComparisons() throws InterruptedException, ExecutionException {
 
-        ExecutorService es = Executors.newFixedThreadPool(numberCount * numberCount);
+        ExecutorService es = Executors.newFixedThreadPool(Constants.threadCount);
         List<Future<Integer>> taskList = new ArrayList<>();
         int tiIndex = 0;
         int tiCount = 3 * bitLength - 3;
@@ -222,7 +224,7 @@ public class ArgMax extends Protocol implements Callable<Integer[]> {
             int key = i / (numberCount - 1);
             wIntermediate.get(key).add(w_temp.get());
         }
-
+        
         for (int i = 0; i < numberCount; i++) {
             for (int j = 0; j < numberCount; j++) {
                 if (i != j) {
@@ -249,7 +251,7 @@ public class ArgMax extends Protocol implements Callable<Integer[]> {
      * @throws ExecutionException
      */
     private void computeW(int tiIndex) throws InterruptedException, ExecutionException {
-        ExecutorService es = Executors.newFixedThreadPool(numberCount);
+        ExecutorService es = Executors.newFixedThreadPool(Constants.threadCount);
         List<Future<Integer>> taskList = new ArrayList<>();
 
         //Each row has n-2 sequential multiplications to do for n-1 numbers
