@@ -114,9 +114,9 @@ public class DotProduct extends Protocol implements Callable<Integer> {
 
         }
 
-        recQueues.clear();
-        sendQueues.clear();
-        queueHandlers.shutdownNow();
+        //recQueues.clear();
+        //sendQueues.clear();
+        //queueHandlers.shutdownNow();
         mults.shutdownNow();
 
         dotProduct = Math.floorMod(dotProduct, prime);

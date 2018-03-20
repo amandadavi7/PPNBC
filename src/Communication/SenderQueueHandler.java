@@ -45,14 +45,12 @@ public class SenderQueueHandler implements Runnable{
                         System.out.println("Adding to parent queue " + protocolID + " " + temp.getProtocolID());
                         commonQueue.put(msg);
                     } catch (InterruptedException ex) {
-                        ex.printStackTrace();
-                    } catch (RuntimeException ex) {
-                        ex.printStackTrace();
-                    }
+                        //ex.printStackTrace();
+                    } 
                 }
             }
         }
         
     }
-    
+
 }

@@ -126,7 +126,7 @@ public class TestModel {
         long elapsedTime = stopTime - startTime;
         System.out.println("Avg time duration:" + elapsedTime);
         
-        queueHandlers.shutdownNow();
+        //queueHandlers.shutdownNow();
         
         /*Multiplication multiplicationModule = new Multiplication(x.get(0), 
                 y.get(0), tiShares.get(0), 
