@@ -30,9 +30,8 @@ public class TestModel {
     ConcurrentHashMap<Integer, BlockingQueue<Message>> recQueues;
     ConcurrentHashMap<Integer, BlockingQueue<Message>> sendQueues;
 
-    ExecutorService sendqueueHandler;
-    ExecutorService recvqueueHandler;
-
+    ExecutorService queueHandlers;
+    
     private BlockingQueue<Message> commonSender;
     private BlockingQueue<Message> commonReceiver;
 
@@ -61,11 +60,9 @@ public class TestModel {
         recQueues = new ConcurrentHashMap<>();
         sendQueues = new ConcurrentHashMap<>();
 
-        sendqueueHandler = Executors.newSingleThreadExecutor();
-        recvqueueHandler = Executors.newSingleThreadExecutor();
-
-        sendqueueHandler.execute(new SenderQueueHandler(1, commonSender, sendQueues));
-        recvqueueHandler.execute(new ReceiverQueueHandler(commonReceiver, recQueues));
+        queueHandlers = Executors.newFixedThreadPool(2);
+        queueHandlers.submit(new SenderQueueHandler(1, commonSender, sendQueues));
+        queueHandlers.submit(new ReceiverQueueHandler(commonReceiver, recQueues));
     }
 
     public void compute() {
@@ -124,8 +121,7 @@ public class TestModel {
         long elapsedTime = stopTime - startTime;
         System.out.println("Avg time duration:" + elapsedTime);
         
-        sendqueueHandler.shutdownNow();
-        recvqueueHandler.shutdownNow();
+        queueHandlers.shutdownNow();
         
         /*Multiplication multiplicationModule = new Multiplication(x.get(0), 
                 y.get(0), tiShares.get(0), 
