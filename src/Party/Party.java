@@ -64,6 +64,7 @@ public class Party {
         vShares = new ArrayList<>();
         senderQueue = new LinkedBlockingQueue<>();
         receiverQueue = new LinkedBlockingQueue<>();
+        partySocketEs = Executors.newFixedThreadPool(2);
         tiShares = new TIShare();
         partyShares = new HashMap<>();
         partyId = -1;
