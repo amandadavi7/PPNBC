@@ -30,6 +30,7 @@ public class Party {
 
     private static ServerSocket socketServer;       // The socket connection for Peer acting as server
 
+    private static ExecutorService partySocketEs;
     private static TIShare tiShares;
 
     // TODO Keerthana -> Do you think we need this datastructure anymore? 
@@ -63,6 +64,7 @@ public class Party {
         vShares = new ArrayList<>();
         senderQueue = new LinkedBlockingQueue<>();
         receiverQueue = new LinkedBlockingQueue<>();
+        partySocketEs = Executors.newFixedThreadPool(2);
         tiShares = new TIShare();
         partyShares = new HashMap<>();
         partyId = -1;
@@ -227,11 +229,9 @@ public class Party {
      */
     private static void startServer() {
         System.out.println("Server thread starting");
-        ExecutorService partyServerEs = Executors.newCachedThreadPool();
         PartyServer partyServer = new PartyServer(socketServer, senderQueue);
-        partyServerEs.submit(partyServer);
-        partyServerEs.shutdown();
-
+        partySocketEs.submit(partyServer);
+        
     }
 
     /**
@@ -241,11 +241,9 @@ public class Party {
      */
     private static void startClient() {
         System.out.println("Client thread starting");
-        ExecutorService partyServerEs = Executors.newCachedThreadPool();
         PartyClient partyrClient = new PartyClient(receiverQueue, peerIP, peerPort);
-        partyServerEs.submit(partyrClient);
-        partyServerEs.shutdown();
-
+        partySocketEs.submit(partyrClient);
+        
     }
 
 }

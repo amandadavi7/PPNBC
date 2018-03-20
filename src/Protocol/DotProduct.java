@@ -27,22 +27,22 @@ import java.util.logging.Logger;
  *
  * @author keerthanaa
  */
-public class DotProduct implements Callable<Integer> {
-    
+public class DotProduct extends Protocol implements Callable<Integer> {
+
     List<Integer> xShares, yShares;
     BlockingQueue<Message> commonReceiver;
     BlockingQueue<Message> commonSender;
-    int prime,clientID,protocolID,oneShare;
+    int prime, clientID, protocolID, oneShare;
     List<Triple> tiShares;
-    
+
     ConcurrentHashMap<Integer, BlockingQueue<Message>> recQueues;
     ConcurrentHashMap<Integer, BlockingQueue<Message>> sendQueues;
-    
+
     ExecutorService queueHandlers;
-    
+
     /**
      * Constructor
-     * 
+     *
      * @param xShares
      * @param yShares
      * @param tiShares
@@ -50,62 +50,59 @@ public class DotProduct implements Callable<Integer> {
      * @param receiverqueue
      * @param clientID
      * @param prime
-     * @param protocolID 
-     * @param oneShare 
+     * @param protocolID
+     * @param oneShare
      */
-    public DotProduct(List<Integer> xShares, List<Integer> yShares, List<Triple> tiShares, 
-            BlockingQueue<Message> senderqueue, BlockingQueue<Message> receiverqueue, 
-            int clientID, int prime, int protocolID, int oneShare){
+    public DotProduct(List<Integer> xShares, List<Integer> yShares, List<Triple> tiShares,
+            BlockingQueue<Message> senderqueue, BlockingQueue<Message> receiverqueue,
+            int clientID, int prime, int protocolID, int oneShare) {
         this.prime = prime;
         this.clientID = clientID;
         this.xShares = xShares;
         this.yShares = yShares;
         this.tiShares = tiShares;
         this.commonSender = senderqueue;
-        this.commonReceiver = receiverqueue;  
+        this.commonReceiver = receiverqueue;
         this.protocolID = protocolID;
         this.oneShare = oneShare;
-        
+
         recQueues = new ConcurrentHashMap<>();
         sendQueues = new ConcurrentHashMap<>();
-        
+
         queueHandlers = Executors.newFixedThreadPool(2);
-        queueHandlers.submit(new SenderQueueHandler(protocolID,commonSender,sendQueues));
+        queueHandlers.submit(new SenderQueueHandler(protocolID, commonSender, sendQueues));
         queueHandlers.submit(new ReceiverQueueHandler(commonReceiver, recQueues));
-        
+
     }
-    
+
     /**
-     * 
-     * @return 
+     *
+     * @return
      */
     @Override
     public Integer call() {
-        
+
         int dotProduct = 0;
         int vectorLength = xShares.size();
         //System.out.println("input len = "+vectorLength);
-              
-        ExecutorService mults = Executors.newFixedThreadPool(vectorLength);
-        ExecutorCompletionService<Integer> multCompletionService = new ExecutorCompletionService<>(mults);
-        
-        for(int i=0;i<vectorLength;i++){
-            
-            if (!recQueues.containsKey(i)) {
-                recQueues.put(i, new LinkedBlockingQueue<>());
-            }
 
-            if (!sendQueues.containsKey(i)) {
-                sendQueues.put(i, new LinkedBlockingQueue<>());
-            }
+        ExecutorService mults = Executors.newFixedThreadPool(Constants.threadCount);
+        ExecutorCompletionService<Integer> multCompletionService = new ExecutorCompletionService<>(mults);
+
+        for (int i = 0; i < vectorLength; i++) {
+
+            initQueueMap(recQueues, sendQueues, i);
             //System.out.println("my protocol: "+protocolID+", calling mult: "+i);
+
             multCompletionService.submit(new Multiplication(xShares.get(i), yShares.get(i), 
                     tiShares.get(i), sendQueues.get(i), recQueues.get(i), clientID, prime, i, oneShare, protocolID));
+
         }
-        
-        for(int i=0;i<vectorLength;i++){
+
+        for (int i = 0; i < vectorLength; i++) {
             try {
                 Future<Integer> prod = multCompletionService.take();
+
                 //recQueues.remove(i);
                 //sendQueues.remove(i);
                 int product = prod.get();
@@ -114,15 +111,18 @@ public class DotProduct implements Callable<Integer> {
                     ex.printStackTrace();
                     //Logger.getLogger(DotProduct.class.getName()).log(Level.SEVERE, null, ex);
                 }
+
         }
-        
+
+        recQueues.clear();
+        sendQueues.clear();
         queueHandlers.shutdownNow();
         mults.shutdownNow();
-        
-        dotProduct = Math.floorMod(dotProduct,prime);
-        System.out.println("dot product:"+dotProduct+", protocol id:"+ protocolID);
+
+        dotProduct = Math.floorMod(dotProduct, prime);
+        System.out.println("dot product:" + dotProduct + ", protocol id:" + protocolID);
         return dotProduct;
-        
+
     }
-    
+
 }

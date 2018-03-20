@@ -9,7 +9,9 @@ import Communication.Message;
 import Communication.ReceiverQueueHandler;
 import Communication.SenderQueueHandler;
 import TrustedInitializer.Triple;
+import Utility.Constants;
 import Utility.Logging;
+import com.sun.corba.se.impl.orbutil.closure.Constant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -83,7 +85,7 @@ class SequentialMultiplication implements Callable<Integer> {
         for (int i = 0; i < wRow.size() - 1; i++) {
             Multiplication multiplicationTask = new Multiplication(product, wRow.get(i + 1),
                     tishares.get(i), sendQueues.get(i + startProtocolID), recQueues.get(i + startProtocolID),
-                    clientID, prime, startProtocolID + i, oneShare);
+                    clientID, prime, startProtocolID + i, oneShare,0);
             product = (int) multiplicationTask.call();
 
         }
@@ -98,7 +100,7 @@ class SequentialMultiplication implements Callable<Integer> {
  *
  * @author keerthanaa
  */
-public class ArgMax implements Callable<Integer[]> {
+public class ArgMax extends Protocol implements Callable<Integer[]> {
 
     List<List<Integer>> vShares;
     BlockingQueue<Message> commonReceiver;
@@ -192,7 +194,7 @@ public class ArgMax implements Callable<Integer[]> {
      */
     private int computeComparisons() throws InterruptedException, ExecutionException {
 
-        ExecutorService es = Executors.newFixedThreadPool(numberCount * numberCount);
+        ExecutorService es = Executors.newFixedThreadPool(Constants.threadCount);
         List<Future<Integer>> taskList = new ArrayList<>();
         int tiIndex = 0;
         int tiCount = 3 * bitLength - 3;
@@ -200,12 +202,9 @@ public class ArgMax implements Callable<Integer[]> {
             for (int j = 0; j < numberCount; j++) {
                 if (i != j) {
                     int key = (i * numberCount) + j;
-                    if (!recQueues.containsKey(key)) {
-                        recQueues.put(key, new LinkedBlockingQueue<>());
-                    }
-                    if (!sendQueues.containsKey(key)) {
-                        sendQueues.put(key, new LinkedBlockingQueue<>());
-                    }
+                    
+                    initQueueMap(recQueues, sendQueues, key);
+                    
                     //Extract the required number of tiShares and pass it to comparison protocol
                     //each comparison needs 3(bitlength)-3 shares
                     List<Triple> tiComparsion = tiShares.subList(tiIndex, tiIndex + tiCount);
@@ -225,13 +224,12 @@ public class ArgMax implements Callable<Integer[]> {
             int key = i / (numberCount - 1);
             wIntermediate.get(key).add(w_temp.get());
         }
-
+        
         for (int i = 0; i < numberCount; i++) {
             for (int j = 0; j < numberCount; j++) {
                 if (i != j) {
                     int key = (i * numberCount) + j;
-                    recQueues.remove(key);
-                    sendQueues.remove(key);
+                    clearQueueMap(recQueues, sendQueues, key);
                 }
             }
         }
@@ -253,7 +251,7 @@ public class ArgMax implements Callable<Integer[]> {
      * @throws ExecutionException
      */
     private void computeW(int tiIndex) throws InterruptedException, ExecutionException {
-        ExecutorService es = Executors.newFixedThreadPool(numberCount);
+        ExecutorService es = Executors.newFixedThreadPool(Constants.threadCount);
         List<Future<Integer>> taskList = new ArrayList<>();
 
         //Each row has n-2 sequential multiplications to do for n-1 numbers

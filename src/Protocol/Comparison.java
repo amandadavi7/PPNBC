@@ -9,6 +9,7 @@ import Communication.Message;
 import Communication.ReceiverQueueHandler;
 import Communication.SenderQueueHandler;
 import TrustedInitializer.Triple;
+import Utility.Constants;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -28,13 +29,13 @@ import java.util.logging.Logger;
  *
  * @author anisha
  */
-public class Comparison implements Callable<Integer> {
+public class Comparison extends Protocol implements Callable<Integer> {
 
     ConcurrentHashMap<Integer, BlockingQueue<Message>> recQueues;
     ConcurrentHashMap<Integer, BlockingQueue<Message>> sendQueues;
 
     ExecutorService queueHandlers;
-    
+
     private BlockingQueue<Message> commonSender;
     private BlockingQueue<Message> commonReceiver;
     List<Integer> x;
@@ -112,7 +113,7 @@ public class Comparison implements Callable<Integer> {
         int w = -1;
         computeEShares();
 
-        ExecutorService threadService = Executors.newCachedThreadPool();
+        ExecutorService threadService = Executors.newFixedThreadPool(Constants.threadCount);
         Runnable dThread = new Runnable() {
             @Override
             public void run() {
@@ -171,13 +172,7 @@ public class Comparison implements Callable<Integer> {
         int subProtocolID = bitLength;
         int tiCounter = 0;
 
-        if (!recQueues.containsKey(subProtocolID)) {
-            recQueues.put(subProtocolID, new LinkedBlockingQueue<>());
-        }
-
-        if (!sendQueues.containsKey(subProtocolID)) {
-            sendQueues.put(subProtocolID, new LinkedBlockingQueue<>());
-        }
+        initQueueMap(recQueues, sendQueues, subProtocolID);
 
         for (int i = bitLength - 1; i > 1; i--) {
             // You don't need i = 0. 
@@ -190,7 +185,7 @@ public class Comparison implements Callable<Integer> {
             Multiplication multiplicationModule = new Multiplication(multiplicationE.get(i),
                     eShares.get(i - 1), tiShares.get(bitLength + (tiCounter++)),
                     sendQueues.get(subProtocolID), recQueues.get(subProtocolID),
-                    clientID, prime, subProtocolID, oneShare);
+                    clientID, prime, subProtocolID, oneShare, 0);
 
             Future<Integer> multiplicationTask = es.submit(multiplicationModule);
             es.shutdown();
@@ -204,11 +199,9 @@ public class Comparison implements Callable<Integer> {
 
         }
 
-        /*
-        recQueues.remove(subProtocolID);
-        sendQueues.remove(subProtocolID);
-        */
-        
+
+        clearQueueMap(recQueues, sendQueues, subProtocolID);
+
         multiplicationE.put(0, 0);
         //Logging.logShares("MultiplicationE", multiplicationE);
     }
@@ -218,23 +211,17 @@ public class Comparison implements Callable<Integer> {
      */
     private void computeCShares() {
 
-        ExecutorService es = Executors.newFixedThreadPool(bitLength);
+        ExecutorService es = Executors.newFixedThreadPool(Constants.threadCount);
         List<Future<Integer>> taskList = new ArrayList<>();
         int subProtocolID = bitLength + 1;
 
         for (int i = 0; i < bitLength - 1; i++) {
             //compute local shares of d and e and add to the message queue
-            if (!recQueues.containsKey(subProtocolID + i)) {
-                recQueues.put(subProtocolID + i, new LinkedBlockingQueue<>());
-            }
-
-            if (!sendQueues.containsKey(subProtocolID + i)) {
-                sendQueues.put(subProtocolID + i, new LinkedBlockingQueue<>());
-            }
+            initQueueMap(recQueues, sendQueues, subProtocolID + i);
 
             Multiplication multiplicationModule = new Multiplication(multiplicationE.get(i + 1),
                     dShares.get(i), tiShares.get(i), sendQueues.get(subProtocolID + i),
-                    recQueues.get(subProtocolID + i), clientID, prime, subProtocolID + i, oneShare);
+                    recQueues.get(subProtocolID + i), clientID, prime, subProtocolID + i, oneShare,0);
 
             Future<Integer> multiplicationTask = es.submit(multiplicationModule);
             taskList.add(multiplicationTask);
@@ -248,7 +235,8 @@ public class Comparison implements Callable<Integer> {
             Future<Integer> dWorkerResponse = taskList.get(i);
             try {
                 cShares.put(i, dWorkerResponse.get());
-                
+
+                clearQueueMap(recQueues, sendQueues, subProtocolID + i);
             } catch (InterruptedException | ExecutionException ex) {
                 Logger.getLogger(Comparison.class.getName()).log(Level.SEVERE, null, ex);
             }
@@ -289,25 +277,19 @@ public class Comparison implements Callable<Integer> {
      */
     private void computeDSHares() throws InterruptedException, ExecutionException {
 
-        ExecutorService es = Executors.newFixedThreadPool(bitLength);
+        ExecutorService es = Executors.newFixedThreadPool(Constants.threadCount);
         List<Future<Integer>> taskList = new ArrayList<>();
 
         // The protocols for computation of d are assigned id 0-bitLength-1
         for (int i = 0; i < bitLength; i++) {
             //compute local shares of d and e and add to the message queue
 
-            if (!recQueues.containsKey(i)) {
-                recQueues.put(i, new LinkedBlockingQueue<>());
-            }
-
-            if (!sendQueues.containsKey(i)) {
-                sendQueues.put(i, new LinkedBlockingQueue<>());
-            }
+            initQueueMap(recQueues, sendQueues, i);
 
             Multiplication multiplicationModule = new Multiplication(x.get(i),
                     y.get(i), tiShares.get(i),
                     sendQueues.get(i), recQueues.get(i), clientID,
-                    prime, i, oneShare);
+                    prime, i, oneShare,0);
             Future<Integer> multiplicationTask = es.submit(multiplicationModule);
             taskList.add(multiplicationTask);
 
@@ -318,7 +300,8 @@ public class Comparison implements Callable<Integer> {
         // Now when I got the result for all, compute y+ x*y and add it to d[i]
         for (int i = 0; i < bitLength; i++) {
             Future<Integer> dWorkerResponse = taskList.get(i);
-            
+
+            clearQueueMap(recQueues, sendQueues, i);
             int localDiff = y.get(i) - dWorkerResponse.get();
             localDiff = Math.floorMod(localDiff, prime);
             dShares.put(i, localDiff);
