@@ -27,7 +27,7 @@ import java.util.logging.Logger;
  *
  * @author keerthanaa
  */
-public class DotProduct implements Callable<Integer> {
+public class DotProduct extends Protocol implements Callable<Integer> {
     
     List<Integer> xShares, yShares;
     BlockingQueue<Message> commonReceiver;

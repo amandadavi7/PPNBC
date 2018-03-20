@@ -29,7 +29,7 @@ import java.util.logging.Logger;
  *
  * @author anisha
  */
-public class Comparison implements Callable<Integer> {
+public class Comparison extends Protocol implements Callable<Integer> {
 
     ConcurrentHashMap<Integer, BlockingQueue<Message>> recQueues;
     ConcurrentHashMap<Integer, BlockingQueue<Message>> sendQueues;

@@ -98,7 +98,7 @@ class SequentialMultiplication implements Callable<Integer> {
  *
  * @author keerthanaa
  */
-public class ArgMax implements Callable<Integer[]> {
+public class ArgMax extends Protocol implements Callable<Integer[]> {
 
     List<List<Integer>> vShares;
     BlockingQueue<Message> commonReceiver;

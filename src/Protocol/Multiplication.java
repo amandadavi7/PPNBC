@@ -21,7 +21,7 @@ import java.util.logging.Logger;
  * and returns the share of the product
  * @author anisha
  */
-public class Multiplication implements Callable {
+public class Multiplication extends Protocol implements Callable {
 
     private BlockingQueue<Message> senderQueue;
     private BlockingQueue<Message> receiverQueue;
