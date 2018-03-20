@@ -76,13 +76,11 @@ public class TestModel {
             //compute local shares of d and e and add to the message queue
 
             if (!recQueues.containsKey(i)) {
-                BlockingQueue<Message> temp = new LinkedBlockingQueue<>();
-                recQueues.put(i, temp);
+                recQueues.put(i, new LinkedBlockingQueue<>());
             }
 
             if (!sendQueues.containsKey(i)) {
-                BlockingQueue<Message> temp2 = new LinkedBlockingQueue<>();
-                sendQueues.put(i, temp2);
+                sendQueues.put(i, new LinkedBlockingQueue<>());
             }
             
             
@@ -110,9 +108,13 @@ public class TestModel {
         for (int i = 0; i < totalCases; i++) {
             Future<Integer> dWorkerResponse = taskList.get(i);
             try {
-                Integer result = dWorkerResponse.get();
-                System.out.println("got "+i);
-            } catch (InterruptedException | ExecutionException ex) {
+                int result = dWorkerResponse.get();
+                recQueues.remove(i);
+                sendQueues.remove(i);
+                System.out.println("result:"+result+", #:"+i);
+            } catch (InterruptedException ex) {
+                Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
+            } catch (ExecutionException ex) {
                 Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
