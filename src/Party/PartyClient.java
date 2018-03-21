@@ -56,18 +56,13 @@ public class PartyClient implements Runnable{
                         if(receiveSocket != null && receiveSocket.isConnected()) {
                             Message msg = (Message) iStream.readObject();
                             receiverQueue.put(msg);
-                            Message temp = (Message) msg.getValue();
-                            System.out.println("received from socket "+msg.getProtocolID() + ";"+ temp.getProtocolID());
-                            
                         } else {
                             break;
                         }
                     }
             } catch (IOException | ClassNotFoundException | InterruptedException ex)  {
                 
-            } catch (RuntimeException ex) {
-                ex.printStackTrace();
-            }
+            } 
         }
         
     }

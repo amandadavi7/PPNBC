@@ -26,9 +26,9 @@ public class ReceiverQueueHandler implements Runnable {
      * @param commonQueue
      * @param subQueues
      */
-    public ReceiverQueueHandler(BlockingQueue<Message> commonQueue, 
-            ConcurrentHashMap<Integer, BlockingQueue<Message>> subQueues, 
-            int protocolId) {
+    public ReceiverQueueHandler(int protocolId,
+            BlockingQueue<Message> commonQueue, 
+            ConcurrentHashMap<Integer, BlockingQueue<Message>> subQueues) {
         this.commonQueue = commonQueue;
         this.subQueues = subQueues;
         this.isProtocolCompleted = false;
@@ -40,7 +40,6 @@ public class ReceiverQueueHandler implements Runnable {
      */
     public void setProtocolStatus() {
         this.isProtocolCompleted = true;
-        System.out.println("Signal to close receiverqueuehandler for "+ protocolId);
     }
 
     /**
@@ -49,7 +48,7 @@ public class ReceiverQueueHandler implements Runnable {
     @Override
     public void run() {
         while (true) {
-            if (commonQueue.size() > 0) {
+            if (!commonQueue.isEmpty()) {
                 try {
                     Message queueObj = commonQueue.take();
                     int parentID = queueObj.getProtocolID();
@@ -60,10 +59,7 @@ public class ReceiverQueueHandler implements Runnable {
                             strippedObj.getValue());
                     subQueues.putIfAbsent(ID, new LinkedBlockingQueue<>());
                     subQueues.get(ID).put(strippedObj);
-                } catch (InterruptedException ex) {
-                    
-                    ex.printStackTrace();
-                } catch (RuntimeException ex) {
+                } catch (InterruptedException ex) {                   
                     ex.printStackTrace();
                 }
             } else if (isProtocolCompleted) {

@@ -162,7 +162,7 @@ public class ArgMax extends Protocol implements Callable<Integer[]> {
         
         queueHandlers = Executors.newFixedThreadPool(2);
         queueHandlers.submit(new SenderQueueHandler(protocolID,commonSender,sendQueues));
-        queueHandlers.submit(new ReceiverQueueHandler(commonReceiver, recQueues, protocolID));
+        queueHandlers.submit(new ReceiverQueueHandler(protocolID, commonReceiver, recQueues));
         
     }
 

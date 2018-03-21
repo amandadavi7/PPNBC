@@ -223,8 +223,8 @@ public class Party {
      */
     private static void startClient() {
         System.out.println("Client thread starting");
-        PartyClient partyrClient = new PartyClient(receiverQueue, peerIP, peerPort);
-        partySocketEs.submit(partyrClient);
+        PartyClient partyClient = new PartyClient(receiverQueue, peerIP, peerPort);
+        partySocketEs.submit(partyClient);
         
     }
 

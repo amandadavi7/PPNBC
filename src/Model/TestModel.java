@@ -33,7 +33,7 @@ public class TestModel {
     ExecutorService queueHandlers;
     SenderQueueHandler senderThread;
     ReceiverQueueHandler receiverThread;
-    
+
     private BlockingQueue<Message> commonSender;
     private BlockingQueue<Message> commonReceiver;
 
@@ -62,7 +62,7 @@ public class TestModel {
 
         queueHandlers = Executors.newFixedThreadPool(2);
         senderThread = new SenderQueueHandler(1, commonSender, sendQueues);
-        receiverThread = new ReceiverQueueHandler(commonReceiver, recQueues,1);
+        receiverThread = new ReceiverQueueHandler(1, commonReceiver, recQueues);
         queueHandlers.submit(senderThread);
         queueHandlers.submit(receiverThread);
     }
@@ -76,34 +76,25 @@ public class TestModel {
         // totalcases number of protocols are submitted to the executorservice
         for (int i = 0; i < totalCases; i++) {
 
-            if (!recQueues.containsKey(i)) {
-                recQueues.put(i, new LinkedBlockingQueue<>());
-            }
+            recQueues.putIfAbsent(i, new LinkedBlockingQueue<>());
+            sendQueues.putIfAbsent(i, new LinkedBlockingQueue<>());
 
-            if (!sendQueues.containsKey(i)) {
-                sendQueues.put(i, new LinkedBlockingQueue<>());
-            }
-            
             /*ArgMax multiplicationModule = new ArgMax(v, tiShares, oneShares, sendQueues.get(i), 
                 recQueues.get(i), clientId, Constants.binaryPrime, i);*/
-            
-            
-            /*Comparison multiplicationModule = new Comparison(x.get(i), y.get(i), 
+ /*Comparison multiplicationModule = new Comparison(x.get(i), y.get(i), 
                     tiShares, oneShares, sendQueues.get(i),
                 recQueues.get(i), clientId, Constants.binaryPrime, i);*/
-            
             DotProduct multiplicationModule = new DotProduct(x.get(i),
-                    y.get(i), tiShares, sendQueues.get(i), recQueues.get(i), 
+                    y.get(i), tiShares, sendQueues.get(i), recQueues.get(i),
                     clientId, Constants.prime, i, oneShares);
-            
-            System.out.println("Submitted "+ i+" dotproduct");
-            
+
+            System.out.println("Submitted " + i + " dotproduct");
+
             /*Multiplication multiplicationModule = new Multiplication(x.get(i).get(0),y.get(i).get(0),tiShares.get(i)
                     ,sendQueues.get(i),recQueues.get(i),clientId,Constants.prime,i,oneShares);*/
-            
             Future<Integer> multiplicationTask = es.submit(multiplicationModule);
             taskList.add(multiplicationTask);
-            
+
         }
 
         es.shutdown();
@@ -112,14 +103,14 @@ public class TestModel {
             Future<Integer> dWorkerResponse = taskList.get(i);
             try {
                 int result = dWorkerResponse.get();
-                System.out.println("result:"+result+", #:"+i);
+                System.out.println("result:" + result + ", #:" + i);
             } catch (InterruptedException ex) {
                 Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
             } catch (ExecutionException ex) {
                 Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
-        
+
         receiverThread.setProtocolStatus();
         senderThread.setProtocolStatus();
         queueHandlers.shutdown();
