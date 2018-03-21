@@ -101,6 +101,7 @@ public class Multiplication extends Protocol implements Callable {
             senderQueue.put(senderMessage);
             //System.out.println("sending message for protocol id:"+ protocolID);
         } catch (InterruptedException ex) {
+            ex.printStackTrace();
             Logger.getLogger(Multiplication.class.getName()).log(Level.SEVERE, null, ex);
         }
         
