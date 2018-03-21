@@ -66,7 +66,7 @@ public class TestModel {
     }
 
     public void compute() {
-        ExecutorService es = Executors.newFixedThreadPool(10);
+        ExecutorService es = Executors.newFixedThreadPool(100);
         List<Future<Integer>> taskList = new ArrayList<>();
 
         long startTime = System.currentTimeMillis();
@@ -126,7 +126,7 @@ public class TestModel {
         long elapsedTime = stopTime - startTime;
         System.out.println("Avg time duration:" + elapsedTime);
         
-        queueHandlers.shutdownNow();
+        //queueHandlers.shutdown();
         
         /*Multiplication multiplicationModule = new Multiplication(x.get(0), 
                 y.get(0), tiShares.get(0), 

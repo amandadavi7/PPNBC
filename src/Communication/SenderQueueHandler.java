@@ -5,6 +5,8 @@
  */
 package Communication;
 
+import java.util.Iterator;
+import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -17,6 +19,7 @@ public class SenderQueueHandler implements Runnable{
     BlockingQueue<Message> commonQueue;
     ConcurrentHashMap<Integer, BlockingQueue<Message> > subQueues;
     int protocolID;
+    boolean protocolStatus;
     
     /**
      * Constructor
@@ -29,6 +32,11 @@ public class SenderQueueHandler implements Runnable{
         this.commonQueue = commonQueue;        
         this.subQueues = subQueues;
         this.protocolID = protocolID;
+        this.protocolStatus = false;
+    }
+    
+    public void setProtocolStatus(){
+        this.protocolStatus = true;
     }
     
     /**
@@ -37,7 +45,31 @@ public class SenderQueueHandler implements Runnable{
     @Override
     public void run(){
         while(true){
-            for (BlockingQueue<Message> q: subQueues.values()){
+            if(protocolStatus && subQueues.isEmpty()) {
+                System.out.println("Shutting down sender queue handler");
+                break;
+            }
+            
+            Iterator<Map.Entry<Integer, BlockingQueue<Message>>> it = subQueues.entrySet().iterator();
+            while(it.hasNext()){
+                Map.Entry<Integer, BlockingQueue<Message>> pair = it.next();
+                if(pair.getValue().size()>0){
+                    try {
+                        Message temp = pair.getValue().take();
+                        Message msg = new ProtocolMessage(protocolID, temp);
+                        System.out.println("Adding to parent queue " + protocolID + " " + temp.getProtocolID());
+                        commonQueue.put(msg);
+                    } catch (InterruptedException ex) {
+                        ex.printStackTrace();
+                    } catch (RuntimeException ex) {
+                        ex.printStackTrace();
+                    }                    
+                } else if(protocolStatus) {
+                    it.remove();
+                }
+            }
+            
+            /*for (BlockingQueue<Message> q: subQueues.values()){
                 if(q.size()>0){
                     try {
                         Message temp = q.take();
@@ -49,8 +81,10 @@ public class SenderQueueHandler implements Runnable{
                     } catch (RuntimeException ex) {
                         ex.printStackTrace();
                     }
+                } else if(protocolStatus) {
+                    
                 }
-            }
+            }*/
         }
         
     }

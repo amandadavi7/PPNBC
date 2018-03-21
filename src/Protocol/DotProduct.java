@@ -39,6 +39,8 @@ public class DotProduct extends Protocol implements Callable<Integer> {
     ConcurrentHashMap<Integer, BlockingQueue<Message>> sendQueues;
 
     ExecutorService queueHandlers;
+    SenderQueueHandler senderThread;
+    ReceiverQueueHandler receiverThread;
 
     /**
      * Constructor
@@ -70,8 +72,13 @@ public class DotProduct extends Protocol implements Callable<Integer> {
         sendQueues = new ConcurrentHashMap<>();
 
         queueHandlers = Executors.newFixedThreadPool(2);
-        queueHandlers.submit(new SenderQueueHandler(protocolID, commonSender, sendQueues));
-        queueHandlers.submit(new ReceiverQueueHandler(commonReceiver, recQueues));
+        senderThread = new SenderQueueHandler(protocolID, commonSender, sendQueues);
+        receiverThread = new ReceiverQueueHandler(commonReceiver, recQueues);
+        queueHandlers.submit(senderThread);
+        queueHandlers.submit(receiverThread);
+        
+        //queueHandlers.submit(new SenderQueueHandler(protocolID, commonSender, sendQueues));
+        //queueHandlers.submit(new ReceiverQueueHandler(commonReceiver, recQueues));
 
     }
 
@@ -113,10 +120,13 @@ public class DotProduct extends Protocol implements Callable<Integer> {
                 }
 
         }
-
-        recQueues.clear();
-        sendQueues.clear();
-        queueHandlers.shutdownNow();
+        
+        senderThread.setProtocolStatus();
+        receiverThread.setProtocolStatus();
+        
+        //recQueues.clear();
+        //sendQueues.clear();
+        //queueHandlers.shutdown();
         mults.shutdownNow();
 
         dotProduct = Math.floorMod(dotProduct, prime);
