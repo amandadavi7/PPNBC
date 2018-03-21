@@ -20,7 +20,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -35,6 +34,8 @@ public class Comparison extends Protocol implements Callable<Integer> {
     ConcurrentHashMap<Integer, BlockingQueue<Message>> sendQueues;
 
     ExecutorService queueHandlers;
+    SenderQueueHandler senderThread;
+    ReceiverQueueHandler receiverThread;
 
     private BlockingQueue<Message> commonSender;
     private BlockingQueue<Message> commonReceiver;
@@ -48,11 +49,11 @@ public class Comparison extends Protocol implements Callable<Integer> {
     HashMap<Integer, Integer> multiplicationE;
     HashMap<Integer, Integer> cShares;
 
-    int parentProtocolId;
+    int protocolID;
     int clientID;
     int prime;
     int bitLength;
-
+    
     /**
      * Constructor
      *
@@ -83,7 +84,7 @@ public class Comparison extends Protocol implements Callable<Integer> {
         this.commonReceiver = receiverQueue;
         this.clientID = clientId;
         this.prime = prime;
-        this.parentProtocolId = protocolID;
+        this.protocolID = protocolID;
 
         bitLength = Math.max(x.size(), y.size());
         eShares = new HashMap<>();
@@ -97,8 +98,10 @@ public class Comparison extends Protocol implements Callable<Integer> {
         sendQueues = new ConcurrentHashMap<>();
 
         queueHandlers = Executors.newFixedThreadPool(2);
-        queueHandlers.submit(new SenderQueueHandler(protocolID, commonSender, sendQueues));
-        queueHandlers.submit(new ReceiverQueueHandler(protocolID,commonReceiver, recQueues));
+        senderThread = new SenderQueueHandler(protocolID, commonSender, sendQueues);
+        receiverThread = new ReceiverQueueHandler(protocolID,commonReceiver, recQueues);
+        queueHandlers.submit(senderThread);
+        queueHandlers.submit(receiverThread);
 
     }
 
@@ -127,14 +130,14 @@ public class Comparison extends Protocol implements Callable<Integer> {
         };
 
         threadService.submit(dThread);
-
+        
         Runnable eThread = new Runnable() {
             @Override
             public void run() {
                 computeMultiplicationE();
             }
         };
-
+        
         threadService.submit(eThread);
         threadService.shutdown();
 
@@ -145,7 +148,8 @@ public class Comparison extends Protocol implements Callable<Integer> {
             computeCShares();
             w = computeW();
         }
-        System.out.println("w:" + w + " protocol id:" + parentProtocolId);
+        
+        System.out.println("w:" + w + " protocol id:" + protocolID);
 
         tearDownHandlers();
         return w;
@@ -186,7 +190,7 @@ public class Comparison extends Protocol implements Callable<Integer> {
             Multiplication multiplicationModule = new Multiplication(multiplicationE.get(i),
                     eShares.get(i - 1), tiShares.get(bitLength + (tiCounter++)),
                     sendQueues.get(subProtocolID), recQueues.get(subProtocolID),
-                    clientID, prime, subProtocolID, oneShare, 0);
+                    clientID, prime, subProtocolID, oneShare, protocolID);
 
             Future<Integer> multiplicationTask = es.submit(multiplicationModule);
             es.shutdown();
@@ -199,9 +203,6 @@ public class Comparison extends Protocol implements Callable<Integer> {
             }
 
         }
-
-
-        clearQueueMap(recQueues, sendQueues, subProtocolID);
 
         multiplicationE.put(0, 0);
         //Logging.logShares("MultiplicationE", multiplicationE);
@@ -222,7 +223,7 @@ public class Comparison extends Protocol implements Callable<Integer> {
 
             Multiplication multiplicationModule = new Multiplication(multiplicationE.get(i + 1),
                     dShares.get(i), tiShares.get(i), sendQueues.get(subProtocolID + i),
-                    recQueues.get(subProtocolID + i), clientID, prime, subProtocolID + i, oneShare,0);
+                    recQueues.get(subProtocolID + i), clientID, prime, subProtocolID + i, oneShare,protocolID);
 
             Future<Integer> multiplicationTask = es.submit(multiplicationModule);
             taskList.add(multiplicationTask);
@@ -237,18 +238,11 @@ public class Comparison extends Protocol implements Callable<Integer> {
             try {
                 cShares.put(i, dWorkerResponse.get());
 
-                clearQueueMap(recQueues, sendQueues, subProtocolID + i);
             } catch (InterruptedException | ExecutionException ex) {
                 Logger.getLogger(Comparison.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
         
-        /*
-        for(int i = 0;i<bitLength -1;i++) {
-            recQueues.remove(subProtocolID + i);
-            sendQueues.remove(subProtocolID + i);
-        }*/
-
         cShares.put(bitLength - 1, dShares.get(bitLength - 1));
         //Logging.logShares("cShares", cShares);
 
@@ -290,7 +284,7 @@ public class Comparison extends Protocol implements Callable<Integer> {
             Multiplication multiplicationModule = new Multiplication(x.get(i),
                     y.get(i), tiShares.get(i),
                     sendQueues.get(i), recQueues.get(i), clientID,
-                    prime, i, oneShare,0);
+                    prime, i, oneShare,protocolID);
             Future<Integer> multiplicationTask = es.submit(multiplicationModule);
             taskList.add(multiplicationTask);
 
@@ -302,16 +296,10 @@ public class Comparison extends Protocol implements Callable<Integer> {
         for (int i = 0; i < bitLength; i++) {
             Future<Integer> dWorkerResponse = taskList.get(i);
 
-            clearQueueMap(recQueues, sendQueues, i);
             int localDiff = y.get(i) - dWorkerResponse.get();
             localDiff = Math.floorMod(localDiff, prime);
             dShares.put(i, localDiff);
         }
-        /*
-        for (int i = 0; i < bitLength; i++) {
-            recQueues.remove(i);
-            sendQueues.remove(i);
-        }*/
 
         //Logging.logShares("dShares", dShares);
     }
@@ -320,6 +308,8 @@ public class Comparison extends Protocol implements Callable<Integer> {
      * Teardown all local threads
      */
     private void tearDownHandlers() {
-        queueHandlers.shutdownNow();
+        senderThread.setProtocolStatus();
+        receiverThread.setProtocolStatus();
+        queueHandlers.shutdown();
     }
 }

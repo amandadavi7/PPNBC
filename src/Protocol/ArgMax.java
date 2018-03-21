@@ -10,8 +10,6 @@ import Communication.ReceiverQueueHandler;
 import Communication.SenderQueueHandler;
 import TrustedInitializer.Triple;
 import Utility.Constants;
-import Utility.Logging;
-import com.sun.corba.se.impl.orbutil.closure.Constant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -22,7 +20,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * class to take care of multiplying all w[j,n] for each j = 0 to numberCount-1
@@ -33,10 +30,9 @@ class SequentialMultiplication implements Callable<Integer> {
 
     List<Integer> wRow;
     List<Triple> tishares;
-    int startProtocolID, clientID, prime, oneShare;
+    int startProtocolID, clientID, prime, oneShare,protocolID;
 
-    ConcurrentHashMap<Integer, BlockingQueue<Message>> recQueues;
-    ConcurrentHashMap<Integer, BlockingQueue<Message>> sendQueues;
+    BlockingQueue<Message> senderQueue, receiverQueue;
 
     /**
      * tiShares size = numberCount-2 each row has numberCount-1 numbers and
@@ -51,17 +47,17 @@ class SequentialMultiplication implements Callable<Integer> {
      * @param recQueues
      * @param sendQueues
      */
-    public SequentialMultiplication(List<Integer> row, List<Triple> tishares, int clientID, int prime,
-            int startProtocolID, int oneShare, ConcurrentHashMap<Integer, BlockingQueue<Message>> recQueues,
-            ConcurrentHashMap<Integer, BlockingQueue<Message>> sendQueues) {
+    public SequentialMultiplication(List<Integer> row, List<Triple> tishares, int clientID, int prime, int protocolID, 
+            int startProtocolID, int oneShare, BlockingQueue<Message> receiverQueue, BlockingQueue<Message> senderQueue) {
         this.wRow = row;
         this.tishares = tishares;
         this.clientID = clientID;
         this.prime = prime;
         this.startProtocolID = startProtocolID;
-        this.sendQueues = sendQueues;
-        this.recQueues = recQueues;
+        this.senderQueue = senderQueue;
+        this.receiverQueue = receiverQueue;
         this.oneShare = oneShare;
+        this.protocolID = protocolID;
     }
 
     /**
@@ -74,23 +70,14 @@ class SequentialMultiplication implements Callable<Integer> {
     @Override
     public Integer call() throws Exception {
         int product = wRow.get(0);
-        if (!recQueues.containsKey(startProtocolID)) {
-            recQueues.put(startProtocolID, new LinkedBlockingQueue<>());
-        }
-
-        if (!sendQueues.containsKey(startProtocolID)) {
-            sendQueues.put(startProtocolID, new LinkedBlockingQueue<>());
-        }
 
         for (int i = 0; i < wRow.size() - 1; i++) {
             Multiplication multiplicationTask = new Multiplication(product, wRow.get(i + 1),
-                    tishares.get(i), sendQueues.get(i + startProtocolID), recQueues.get(i + startProtocolID),
-                    clientID, prime, startProtocolID + i, oneShare,0);
+                    tishares.get(i), senderQueue, receiverQueue,
+                    clientID, prime, startProtocolID, oneShare,protocolID);
             product = (int) multiplicationTask.call();
 
         }
-        recQueues.remove(startProtocolID);
-        sendQueues.remove(startProtocolID); 
         //System.out.println("returning "+product);
         return product;
     }
@@ -111,6 +98,9 @@ public class ArgMax extends Protocol implements Callable<Integer[]> {
     ConcurrentHashMap<Integer, BlockingQueue<Message>> recQueues;
     ConcurrentHashMap<Integer, BlockingQueue<Message>> sendQueues;
     ExecutorService queueHandlers;
+    SenderQueueHandler senderThread;
+    ReceiverQueueHandler receiverThread;
+    
     int bitLength, numberCount;
 
     HashMap<Integer, ArrayList<Integer>> wIntermediate;
@@ -159,11 +149,11 @@ public class ArgMax extends Protocol implements Callable<Integer[]> {
         recQueues = new ConcurrentHashMap<>();
         sendQueues = new ConcurrentHashMap<>();
 
-        
         queueHandlers = Executors.newFixedThreadPool(2);
-        queueHandlers.submit(new SenderQueueHandler(protocolID,commonSender,sendQueues));
-        queueHandlers.submit(new ReceiverQueueHandler(protocolID, commonReceiver, recQueues));
-        
+        senderThread = new SenderQueueHandler(protocolID,commonSender,sendQueues);
+        receiverThread = new ReceiverQueueHandler(protocolID, commonReceiver, recQueues);
+        queueHandlers.submit(senderThread);
+        queueHandlers.submit(receiverThread);
     }
 
     /**
@@ -225,17 +215,6 @@ public class ArgMax extends Protocol implements Callable<Integer[]> {
             int key = i / (numberCount - 1);
             wIntermediate.get(key).add(w_temp.get());
         }
-        
-        for (int i = 0; i < numberCount; i++) {
-            for (int j = 0; j < numberCount; j++) {
-                if (i != j) {
-                    int key = (i * numberCount) + j;
-                    clearQueueMap(recQueues, sendQueues, key);
-                }
-            }
-        }
-
-        es.shutdownNow();
 
         for (int i = 0; i < numberCount; i++) {
             System.out.println("w[" + Integer.toString(i) + "]:" + wIntermediate.get(i));
@@ -262,11 +241,14 @@ public class ArgMax extends Protocol implements Callable<Integer[]> {
         for (int i = 0; i < numberCount; i++) {
             List<Triple> tishares = tiShares.subList(tiIndex, tiIndex + tiCount);
             tiIndex += tiCount;
+            
+            initQueueMap(recQueues, sendQueues, startProtocolID+i);
+            
             SequentialMultiplication rowMultiplication = new SequentialMultiplication(wIntermediate.get(i), tishares,
-                    clientID, prime, startProtocolID, oneShare, recQueues, sendQueues);
+                    clientID, prime, protocolID, startProtocolID+i, oneShare, 
+                    recQueues.get(startProtocolID+i), sendQueues.get(startProtocolID+i));
             Future<Integer> wRowProduct = es.submit(rowMultiplication);
             taskList.add(wRowProduct);
-            startProtocolID += numberCount - 2;
         }
 
         for (int i = 0; i < numberCount; i++) {
@@ -274,14 +256,16 @@ public class ArgMax extends Protocol implements Callable<Integer[]> {
             wOutput[i] = w_temp.get();
         }
 
-        es.shutdownNow();
+        es.shutdown();
     }
 
     /**
      * shut send and receive queue handlers
      */
     private void tearDownHandlers() {
-        queueHandlers.shutdownNow();
+        senderThread.setProtocolStatus();
+        receiverThread.setProtocolStatus();
+        queueHandlers.shutdown();
     }
 
 }

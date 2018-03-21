@@ -77,7 +77,7 @@ public class Multiplication extends Protocol implements Callable {
     @Override
     public Object call() {
         initProtocol();
-        System.out.println("Waiting for receiver. parentID=" + parentID + " mult ID=" + protocolID);
+        //System.out.println("Waiting for receiver. parentID=" + parentID + " mult ID=" + protocolID);
         Message receivedMessage = null;
         List<Integer> diffList = null;
         try {
@@ -92,7 +92,7 @@ public class Multiplication extends Protocol implements Callable {
         int product = tiShares.w + (d * tiShares.v) + (tiShares.u * e) + (d * e * oneShare);
         product = Math.floorMod(product, prime);
         //System.out.println("ti("+tiShares.u+","+tiShares.v+","+tiShares.w+"), "+"x*y("+x+","+y+"):"+product);
-        System.out.println("parent ID=" + parentID + " mult ID=" + protocolID + " successful, product returned");
+        //System.out.println("parent ID=" + parentID + " mult ID=" + protocolID + " successful, product returned");
         return product;
 
     }

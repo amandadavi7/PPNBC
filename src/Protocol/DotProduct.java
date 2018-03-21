@@ -115,7 +115,6 @@ public class DotProduct extends Protocol implements Callable<Integer> {
 
         }
 
-        
         senderThread.setProtocolStatus();
         receiverThread.setProtocolStatus();
         queueHandlers.shutdown();

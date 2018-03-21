@@ -68,31 +68,39 @@ public class TestModel {
     }
 
     public void compute() {
-        ExecutorService es = Executors.newFixedThreadPool(100);
-        List<Future<Integer>> taskList = new ArrayList<>();
+        ExecutorService es = Executors.newFixedThreadPool(10);
+        List<Future<Integer[]>> taskList = new ArrayList<>();
 
         long startTime = System.currentTimeMillis();
-        int totalCases = x.size();
+        int totalCases = v.size();
         // totalcases number of protocols are submitted to the executorservice
         for (int i = 0; i < totalCases; i++) {
 
             recQueues.putIfAbsent(i, new LinkedBlockingQueue<>());
             sendQueues.putIfAbsent(i, new LinkedBlockingQueue<>());
 
-            /*ArgMax multiplicationModule = new ArgMax(v, tiShares, oneShares, sendQueues.get(i), 
-                recQueues.get(i), clientId, Constants.binaryPrime, i);*/
- /*Comparison multiplicationModule = new Comparison(x.get(i), y.get(i), 
+            ArgMax multiplicationModule = new ArgMax(v.get(i), tiShares, oneShares, sendQueues.get(i), 
+                recQueues.get(i), clientId, Constants.binaryPrime, i);
+            
+            System.out.println("submitted " + i + " argmax");
+            
+            /*Comparison multiplicationModule = new Comparison(x.get(i), y.get(i), 
                     tiShares, oneShares, sendQueues.get(i),
-                recQueues.get(i), clientId, Constants.binaryPrime, i);*/
-            DotProduct multiplicationModule = new DotProduct(x.get(i),
+                recQueues.get(i), clientId, Constants.binaryPrime, i);
+            
+            System.out.println("submitted " + i + " comparison");*/
+            
+            /*DotProduct multiplicationModule = new DotProduct(x.get(i),
                     y.get(i), tiShares, sendQueues.get(i), recQueues.get(i),
                     clientId, Constants.prime, i, oneShares);
 
-            System.out.println("Submitted " + i + " dotproduct");
+            System.out.println("Submitted " + i + " dotproduct");*/
+            
 
             /*Multiplication multiplicationModule = new Multiplication(x.get(i).get(0),y.get(i).get(0),tiShares.get(i)
                     ,sendQueues.get(i),recQueues.get(i),clientId,Constants.prime,i,oneShares);*/
-            Future<Integer> multiplicationTask = es.submit(multiplicationModule);
+            
+            Future<Integer[]> multiplicationTask = es.submit(multiplicationModule);
             taskList.add(multiplicationTask);
 
         }
@@ -100,9 +108,9 @@ public class TestModel {
         es.shutdown();
 
         for (int i = 0; i < totalCases; i++) {
-            Future<Integer> dWorkerResponse = taskList.get(i);
+            Future<Integer[]> dWorkerResponse = taskList.get(i);
             try {
-                int result = dWorkerResponse.get();
+                Integer[] result = dWorkerResponse.get();
                 System.out.println("result:" + result + ", #:" + i);
             } catch (InterruptedException ex) {
                 Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
