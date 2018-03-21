@@ -58,6 +58,7 @@ public class DotProduct extends Protocol implements Callable<Integer> {
     public DotProduct(List<Integer> xShares, List<Integer> yShares, List<Triple> tiShares,
             BlockingQueue<Message> senderqueue, BlockingQueue<Message> receiverqueue,
             int clientID, int prime, int protocolID, int oneShare) {
+        super(protocolID);
         this.prime = prime;
         this.clientID = clientID;
         this.xShares = xShares;

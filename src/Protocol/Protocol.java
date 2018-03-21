@@ -16,9 +16,10 @@ import java.util.concurrent.LinkedBlockingQueue;
  */
 public class Protocol {
     //ExecutorService queueHandlers;
+    int protocolId;
 
-    public Protocol() {
-
+    public Protocol(int protocolId) {
+        this.protocolId = protocolId;
     }
 
     public void initQueueMap(
@@ -26,15 +27,8 @@ public class Protocol {
             ConcurrentHashMap<Integer, BlockingQueue<Message>> sendQueues,
             int key) {
 
-        if (!recQueues.containsKey(key)) {
-            System.out.println("Dot Product receiver queue "+key+" not present. creating one");
-            recQueues.put(key, new LinkedBlockingQueue<>());
-        }
-
-        if (!sendQueues.containsKey(key)) {
-            System.out.println("Dot Product sender queue "+key+" not present. creating one");
-            sendQueues.put(key, new LinkedBlockingQueue<>());
-        }
+        recQueues.putIfAbsent(key, new LinkedBlockingQueue<>());
+        sendQueues.putIfAbsent(key, new LinkedBlockingQueue<>());
     }
 
     public void clearQueueMap(

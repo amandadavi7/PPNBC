@@ -58,13 +58,10 @@ public class ReceiverQueueHandler implements Runnable {
                     System.out.println("adding to receiverqueue from " + 
                             parentID + " to subqueue " + ID + " message " + 
                             strippedObj.getValue());
-                    if (!subQueues.containsKey(ID)) {
-                        System.out.println("receiverqueueHandler "+protocolId+","
-                                + " subqueue "+ID+" not present. Creating one.");
-                        subQueues.put(ID, new LinkedBlockingQueue<>());
-                    }
+                    subQueues.putIfAbsent(ID, new LinkedBlockingQueue<>());
                     subQueues.get(ID).put(strippedObj);
                 } catch (InterruptedException ex) {
+                    
                     ex.printStackTrace();
                 } catch (RuntimeException ex) {
                     ex.printStackTrace();

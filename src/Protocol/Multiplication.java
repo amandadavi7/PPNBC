@@ -17,8 +17,9 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * The protocol computes the multiplication of shares of x and y
- * and returns the share of the product
+ * The protocol computes the multiplication of shares of x and y and returns the
+ * share of the product
+ *
  * @author anisha
  */
 public class Multiplication extends Protocol implements Callable {
@@ -36,6 +37,7 @@ public class Multiplication extends Protocol implements Callable {
 
     /**
      * Constructor
+     *
      * @param x share of x
      * @param y share of y
      * @param tiShares
@@ -44,13 +46,14 @@ public class Multiplication extends Protocol implements Callable {
      * @param clientId
      * @param prime
      * @param protocolID
-     * @param oneShare 
+     * @param oneShare
      */
-    public Multiplication(int x, int y, Triple tiShares, 
-            BlockingQueue<Message> senderQueue, 
-            BlockingQueue<Message> receiverQueue, int clientId, int prime, 
+    public Multiplication(int x, int y, Triple tiShares,
+            BlockingQueue<Message> senderQueue,
+            BlockingQueue<Message> receiverQueue, int clientId, int prime,
             int protocolID, int oneShare, int parentID) {
 
+        super(protocolID);
         this.x = x;
         this.y = y;
         this.tiShares = tiShares;
@@ -61,19 +64,20 @@ public class Multiplication extends Protocol implements Callable {
         this.protocolID = protocolID;
         this.oneShare = oneShare;
         this.parentID = parentID;
-        
+
     }
 
     /**
      * Waits for the shares of (x-u) and (y-v), computes the product and returns
      * the value
+     *
      * @return shares of product
-     * @throws Exception 
+     * @throws Exception
      */
     @Override
     public Object call() {
         initProtocol();
-        System.out.println("Waiting for receiver. parentID="+parentID+" mult ID=" + protocolID);
+        System.out.println("Waiting for receiver. parentID=" + parentID + " mult ID=" + protocolID);
         Message receivedMessage = null;
         List<Integer> diffList = null;
         try {
@@ -82,13 +86,13 @@ public class Multiplication extends Protocol implements Callable {
         } catch (InterruptedException ex) {
             ex.printStackTrace();
         }
-        
+
         int d = Math.floorMod((x - tiShares.u) + diffList.get(0), prime);
         int e = Math.floorMod((y - tiShares.v) + diffList.get(1), prime);
         int product = tiShares.w + (d * tiShares.v) + (tiShares.u * e) + (d * e * oneShare);
         product = Math.floorMod(product, prime);
         //System.out.println("ti("+tiShares.u+","+tiShares.v+","+tiShares.w+"), "+"x*y("+x+","+y+"):"+product);
-        System.out.println("parent ID="+parentID+" mult ID="+protocolID+" successful, product returned");
+        System.out.println("parent ID=" + parentID + " mult ID=" + protocolID + " successful, product returned");
         return product;
 
     }
@@ -110,7 +114,7 @@ public class Multiplication extends Protocol implements Callable {
             ex.printStackTrace();
             Logger.getLogger(Multiplication.class.getName()).log(Level.SEVERE, null, ex);
         }
-        
+
     }
 
 }

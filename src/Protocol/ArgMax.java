@@ -133,6 +133,7 @@ public class ArgMax extends Protocol implements Callable<Integer[]> {
             int oneShare, BlockingQueue<Message> senderQueue,
             BlockingQueue<Message> receiverQueue, int clientId, int prime,
             int protocolID) {
+        super(protocolID);
         this.commonReceiver = receiverQueue;
         this.commonSender = senderQueue;
         this.clientID = clientId;

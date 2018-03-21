@@ -74,6 +74,7 @@ public class Comparison extends Protocol implements Callable<Integer> {
             BlockingQueue<Message> receiverQueue, int clientId, int prime,
             int protocolID) {
 
+        super(protocolID);
         this.x = x;
         this.y = y;
         this.oneShare = oneShare;
