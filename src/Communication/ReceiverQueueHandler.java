@@ -31,6 +31,9 @@ public class ReceiverQueueHandler implements Runnable {
         this.protocolStatus = false;
     }
     
+    /**
+     * change protocol status to true (indicates the protocol has finished)
+     */
     public void setProtocolStatus(){
         this.protocolStatus = true;
     }
@@ -63,7 +66,6 @@ public class ReceiverQueueHandler implements Runnable {
                 }
             }
         }
-
     }
 
 }

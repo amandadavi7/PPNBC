@@ -33,11 +33,6 @@ public class Party {
     private static ExecutorService partySocketEs;
     private static TIShare tiShares;
 
-    // TODO Keerthana -> Do you think we need this datastructure anymore? 
-    // TODO change it to a more object oriented structure
-    private static HashMap<Integer, HashMap<String, Integer>> partyShares;
-    // <function id, <variable name, value>>
-
     private static BlockingQueue<Message> senderQueue;
     private static BlockingQueue<Message> receiverQueue;
     private static int partyId;
@@ -66,7 +61,6 @@ public class Party {
         receiverQueue = new LinkedBlockingQueue<>();
         partySocketEs = Executors.newFixedThreadPool(2);
         tiShares = new TIShare();
-        partyShares = new HashMap<>();
         partyId = -1;
 
         for (String arg : args) {
@@ -123,7 +117,6 @@ public class Party {
                             int lineInt[] = Arrays.stream(line.split(",")).mapToInt(Integer::parseInt).toArray();
                             List<Integer> yline = Arrays.stream(lineInt).boxed().collect(Collectors.toList());
                             yShares.add(yline);
-                            //System.out.println(yline);
                         }
                     } catch (FileNotFoundException ex) {
                         Logger.getLogger(Party.class.getName()).log(Level.SEVERE, null, ex);
@@ -141,7 +134,6 @@ public class Party {
                             List<List<Integer> > vline = new ArrayList<>();
                             for(String str: vListShares) { 
                                 int lineInt[] = Arrays.stream(str.split(",")).mapToInt(Integer::parseInt).toArray();
-                                //List<Integer> temp = Arrays.stream(lineInt).boxed().collect(Collectors.toList());
                                 vline.add(Arrays.stream(lineInt).boxed().collect(Collectors.toList()));
                             }
                             vShares.add(vline);
@@ -151,16 +143,6 @@ public class Party {
                     } catch (IOException ex) {
                         Logger.getLogger(Party.class.getName()).log(Level.SEVERE, null, ex);
                     }
-                    /*
-                    String[] vListShares = value.split(";");
-                    for(String str: vListShares) {
-                        int[] vRow = Arrays.stream(str.split(",")).
-                                mapToInt(Integer::parseInt).toArray();
-                        List<Integer> vRowShares;
-                        vRowShares = Arrays.stream(vRow).boxed().collect(Collectors.toList());
-                        vShares.add(vRowShares);                        
-                    }
-                    */
                     break;
             }
 

@@ -56,7 +56,6 @@ public class PartyServer implements Runnable{
             
         } catch (IOException | InterruptedException ex){
             ex.printStackTrace();
-            //Logger.getLogger(PartyServer.class.getName()).log(Level.SEVERE, null, ex);
         } catch (RuntimeException ex){
             ex.printStackTrace();
         }

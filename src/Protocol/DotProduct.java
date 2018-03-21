@@ -77,9 +77,6 @@ public class DotProduct extends Protocol implements Callable<Integer> {
         queueHandlers.submit(senderThread);
         queueHandlers.submit(receiverThread);
         
-        //queueHandlers.submit(new SenderQueueHandler(protocolID, commonSender, sendQueues));
-        //queueHandlers.submit(new ReceiverQueueHandler(commonReceiver, recQueues));
-
     }
 
     /**
@@ -91,32 +88,28 @@ public class DotProduct extends Protocol implements Callable<Integer> {
 
         int dotProduct = 0;
         int vectorLength = xShares.size();
-        //System.out.println("input len = "+vectorLength);
-
+        
         ExecutorService mults = Executors.newFixedThreadPool(Constants.threadCount);
         ExecutorCompletionService<Integer> multCompletionService = new ExecutorCompletionService<>(mults);
 
         for (int i = 0; i < vectorLength; i++) {
 
             initQueueMap(recQueues, sendQueues, i);
-            //System.out.println("my protocol: "+protocolID+", calling mult: "+i);
-
+            
             multCompletionService.submit(new Multiplication(xShares.get(i), yShares.get(i), 
                     tiShares.get(i), sendQueues.get(i), recQueues.get(i), clientID, prime, i, oneShare, protocolID));
 
         }
+        
+        mults.shutdown();
 
         for (int i = 0; i < vectorLength; i++) {
             try {
                 Future<Integer> prod = multCompletionService.take();
-
-                //recQueues.remove(i);
-                //sendQueues.remove(i);
                 int product = prod.get();
                 dotProduct += product;
                 } catch (InterruptedException | ExecutionException ex) {
                     ex.printStackTrace();
-                    //Logger.getLogger(DotProduct.class.getName()).log(Level.SEVERE, null, ex);
                 }
 
         }
@@ -124,12 +117,8 @@ public class DotProduct extends Protocol implements Callable<Integer> {
         
         senderThread.setProtocolStatus();
         receiverThread.setProtocolStatus();
+        queueHandlers.shutdown();
         
-        //recQueues.clear();
-        //sendQueues.clear();
-        //queueHandlers.shutdown();
-        mults.shutdownNow();
-
         dotProduct = Math.floorMod(dotProduct, prime);
         System.out.println("dot product:" + dotProduct + ", protocol id:" + protocolID);
         return dotProduct;
