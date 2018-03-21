@@ -27,10 +27,12 @@ public class Protocol {
             int key) {
 
         if (!recQueues.containsKey(key)) {
+            System.out.println("Dot Product receiver queue "+key+" not present. creating one");
             recQueues.put(key, new LinkedBlockingQueue<>());
         }
 
         if (!sendQueues.containsKey(key)) {
+            System.out.println("Dot Product sender queue "+key+" not present. creating one");
             sendQueues.put(key, new LinkedBlockingQueue<>());
         }
     }

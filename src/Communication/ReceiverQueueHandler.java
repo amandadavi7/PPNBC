@@ -17,7 +17,8 @@ public class ReceiverQueueHandler implements Runnable {
 
     BlockingQueue<Message> commonQueue;
     ConcurrentHashMap<Integer, BlockingQueue<Message>> subQueues;
-    boolean protocolStatus;
+    boolean isProtocolCompleted;
+    int protocolId;
 
     /**
      * Constructor
@@ -25,17 +26,21 @@ public class ReceiverQueueHandler implements Runnable {
      * @param commonQueue
      * @param subQueues
      */
-    public ReceiverQueueHandler(BlockingQueue<Message> commonQueue, ConcurrentHashMap<Integer, BlockingQueue<Message>> subQueues) {
+    public ReceiverQueueHandler(BlockingQueue<Message> commonQueue, 
+            ConcurrentHashMap<Integer, BlockingQueue<Message>> subQueues, 
+            int protocolId) {
         this.commonQueue = commonQueue;
         this.subQueues = subQueues;
-        this.protocolStatus = false;
+        this.isProtocolCompleted = false;
+        this.protocolId = protocolId;
     }
-    
+
     /**
      * change protocol status to true (indicates the protocol has finished)
      */
-    public void setProtocolStatus(){
-        this.protocolStatus = true;
+    public void setProtocolStatus() {
+        this.isProtocolCompleted = true;
+        System.out.println("Signal to close receiverqueuehandler for "+ protocolId);
     }
 
     /**
@@ -44,26 +49,29 @@ public class ReceiverQueueHandler implements Runnable {
     @Override
     public void run() {
         while (true) {
-            if(protocolStatus) {
-                System.out.println("Shutting down receiver handler");
-                break;
-            }
-            if(commonQueue.size()>0) {
+            if (commonQueue.size() > 0) {
                 try {
                     Message queueObj = commonQueue.take();
                     int parentID = queueObj.getProtocolID();
                     Message strippedObj = (Message) queueObj.getValue();
                     int ID = strippedObj.getProtocolID();
-                    System.out.println("adding to from " + parentID + " to subqueue " + ID + " message " + strippedObj);
+                    System.out.println("adding to receiverqueue from " + 
+                            parentID + " to subqueue " + ID + " message " + 
+                            strippedObj.getValue());
                     if (!subQueues.containsKey(ID)) {
+                        System.out.println("receiverqueueHandler "+protocolId+","
+                                + " subqueue "+ID+" not present. Creating one.");
                         subQueues.put(ID, new LinkedBlockingQueue<>());
                     }
                     subQueues.get(ID).put(strippedObj);
                 } catch (InterruptedException ex) {
-                          //ex.printStackTrace();
+                    ex.printStackTrace();
                 } catch (RuntimeException ex) {
-                        ex.printStackTrace();
+                    ex.printStackTrace();
                 }
+            } else if (isProtocolCompleted) {
+                System.out.println("Shutting down receiver handler:"+protocolId);
+                break;
             }
         }
     }

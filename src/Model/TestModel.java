@@ -62,7 +62,7 @@ public class TestModel {
 
         queueHandlers = Executors.newFixedThreadPool(2);
         senderThread = new SenderQueueHandler(1, commonSender, sendQueues);
-        receiverThread = new ReceiverQueueHandler(commonReceiver, recQueues);
+        receiverThread = new ReceiverQueueHandler(commonReceiver, recQueues,1);
         queueHandlers.submit(senderThread);
         queueHandlers.submit(receiverThread);
     }
@@ -95,6 +95,8 @@ public class TestModel {
             DotProduct multiplicationModule = new DotProduct(x.get(i),
                     y.get(i), tiShares, sendQueues.get(i), recQueues.get(i), 
                     clientId, Constants.prime, i, oneShares);
+            
+            System.out.println("Submitted "+ i+" dotproduct");
             
             /*Multiplication multiplicationModule = new Multiplication(x.get(i).get(0),y.get(i).get(0),tiShares.get(i)
                     ,sendQueues.get(i),recQueues.get(i),clientId,Constants.prime,i,oneShares);*/

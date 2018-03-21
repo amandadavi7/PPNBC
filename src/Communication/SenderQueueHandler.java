@@ -19,7 +19,7 @@ public class SenderQueueHandler implements Runnable{
     BlockingQueue<Message> commonQueue;
     ConcurrentHashMap<Integer, BlockingQueue<Message> > subQueues;
     int protocolID;
-    boolean protocolStatus;
+    boolean isProtocolCompleted;
     
     /**
      * Constructor
@@ -32,14 +32,15 @@ public class SenderQueueHandler implements Runnable{
         this.commonQueue = commonQueue;        
         this.subQueues = subQueues;
         this.protocolID = protocolID;
-        this.protocolStatus = false;
+        this.isProtocolCompleted = false;
     }
     
     /**
      * change protocol status to true (indicates the protocol has finished)
      */
     public void setProtocolStatus(){
-        this.protocolStatus = true;
+        this.isProtocolCompleted = true;
+        System.out.println("Signal to close senderqueuehandler for "+ protocolID);
     }
     
     /**
@@ -48,8 +49,8 @@ public class SenderQueueHandler implements Runnable{
     @Override
     public void run(){
         while(true){
-            if(protocolStatus && subQueues.isEmpty()) {
-                System.out.println("Shutting down sender queue handler");
+            if(isProtocolCompleted && subQueues.isEmpty()) {
+                System.out.println("Shutting down sender queue handler for "+protocolID);
                 break;
             }
             
@@ -67,8 +68,11 @@ public class SenderQueueHandler implements Runnable{
                     } catch (RuntimeException ex) {
                         ex.printStackTrace();
                     }                    
-                } else if(protocolStatus) {
+                } else if(isProtocolCompleted) {
                     it.remove();
+                    System.out.println("sender subqueue "+pair.getKey()+
+                            " completed. Removing it for protocol id:"+
+                            protocolID);
                 }
             }
         }

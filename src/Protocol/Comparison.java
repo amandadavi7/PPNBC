@@ -97,7 +97,7 @@ public class Comparison extends Protocol implements Callable<Integer> {
 
         queueHandlers = Executors.newFixedThreadPool(2);
         queueHandlers.submit(new SenderQueueHandler(protocolID, commonSender, sendQueues));
-        queueHandlers.submit(new ReceiverQueueHandler(commonReceiver, recQueues));
+        queueHandlers.submit(new ReceiverQueueHandler(commonReceiver, recQueues, protocolID));
 
     }
 

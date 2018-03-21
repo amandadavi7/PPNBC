@@ -71,11 +71,17 @@ public class Multiplication extends Protocol implements Callable {
      * @throws Exception 
      */
     @Override
-    public Object call() throws Exception {
+    public Object call() {
         initProtocol();
         System.out.println("Waiting for receiver. parentID="+parentID+" mult ID=" + protocolID);
-        Message receivedMessage = receiverQueue.take();
-        List<Integer> diffList = (List<Integer>) receivedMessage.getValue();
+        Message receivedMessage = null;
+        List<Integer> diffList = null;
+        try {
+            receivedMessage = receiverQueue.take();
+            diffList = (List<Integer>) receivedMessage.getValue();
+        } catch (InterruptedException ex) {
+            ex.printStackTrace();
+        }
         
         int d = Math.floorMod((x - tiShares.u) + diffList.get(0), prime);
         int e = Math.floorMod((y - tiShares.v) + diffList.get(1), prime);

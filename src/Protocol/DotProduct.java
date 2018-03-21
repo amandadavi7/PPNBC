@@ -73,7 +73,7 @@ public class DotProduct extends Protocol implements Callable<Integer> {
 
         queueHandlers = Executors.newFixedThreadPool(2);
         senderThread = new SenderQueueHandler(protocolID, commonSender, sendQueues);
-        receiverThread = new ReceiverQueueHandler(commonReceiver, recQueues);
+        receiverThread = new ReceiverQueueHandler(commonReceiver, recQueues, protocolID);
         queueHandlers.submit(senderThread);
         queueHandlers.submit(receiverThread);
         
