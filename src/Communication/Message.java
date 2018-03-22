@@ -54,6 +54,7 @@ public class Message implements Serializable {
     }
     
     /**
+     * remove the top protocol ID and return
      * 
      * @return 
      */

@@ -19,8 +19,6 @@ import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.stream.IntStream;
-
 /**
  *
  * @author keerthanaa
@@ -79,7 +77,8 @@ public class DotProduct extends Protocol implements Callable<Integer> {
     }
 
     /**
-     *
+     * Do a batchmultiplication on chunks of vector, collate the results and return (10 mults per batch)
+     * 
      * @return
      */
     @Override
