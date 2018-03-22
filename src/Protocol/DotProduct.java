@@ -88,7 +88,7 @@ public class DotProduct extends Protocol implements Callable<Integer> {
         int dotProduct = 0;
         int vectorLength = xShares.size();
         
-        ExecutorService mults = Executors.newFixedThreadPool(vectorLength);
+        ExecutorService mults = Executors.newFixedThreadPool(Constants.threadCount);
         ExecutorCompletionService<Integer[]> multCompletionService = new ExecutorCompletionService<>(mults);
         
         int i=0;

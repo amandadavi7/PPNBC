@@ -84,17 +84,17 @@ public class TestModel {
             
             System.out.println("submitted " + i + " argmax");*/
             
-            /*Comparison multiplicationModule = new Comparison(x.get(i), y.get(i), 
+            Comparison multiplicationModule = new Comparison(x.get(i), y.get(i), 
                     tiShares, oneShares, sendQueues.get(i),
                 recQueues.get(i), clientId, Constants.binaryPrime, i);
             
-            System.out.println("submitted " + i + " comparison");*/
+            System.out.println("submitted " + i + " comparison");
             
-            DotProduct multiplicationModule = new DotProduct(x.get(i),
+            /*DotProduct multiplicationModule = new DotProduct(x.get(i),
                     y.get(i), tiShares, sendQueues.get(i), recQueues.get(i),
                     clientId, Constants.prime, i, oneShares);
 
-            System.out.println("Submitted " + i + " dotproduct");
+            System.out.println("Submitted " + i + " dotproduct");*/
             
 
             /*Multiplication multiplicationModule = new Multiplication(x.get(i).get(0),y.get(i).get(0),tiShares.get(i)
