@@ -5,7 +5,6 @@
  */
 package Protocol;
 
-import Communication.DataMessage;
 import Communication.Message;
 import TrustedInitializer.Triple;
 import Utility.Constants;
@@ -105,7 +104,7 @@ public class Multiplication extends Protocol implements Callable {
         diffList.add(Math.floorMod(x - tiShares.u, prime));
         diffList.add(Math.floorMod(y - tiShares.v, prime));
 
-        Message senderMessage = new DataMessage(Constants.localShares, diffList,
+        Message senderMessage = new Message(Constants.localShares, diffList,
                 clientID, protocolID);
         try {
             senderQueue.put(senderMessage);
