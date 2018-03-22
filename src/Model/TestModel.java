@@ -57,8 +57,8 @@ public class TestModel {
         this.commonReceiver = receiverQueue;
         this.clientId = clientId;
 
-        recQueues = new ConcurrentHashMap<>();
-        sendQueues = new ConcurrentHashMap<>();
+        recQueues = new ConcurrentHashMap<>(10, 0.9f, 1);
+        sendQueues = new ConcurrentHashMap<>(10, 0.9f, 1);
 
         queueHandlers = Executors.newFixedThreadPool(2);
         senderThread = new SenderQueueHandler(1, commonSender, sendQueues);

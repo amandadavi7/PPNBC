@@ -19,9 +19,7 @@ import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.util.stream.IntStream;
 
 /**
  *
@@ -69,8 +67,8 @@ public class DotProduct extends Protocol implements Callable<Integer> {
         this.protocolID = protocolID;
         this.oneShare = oneShare;
 
-        recQueues = new ConcurrentHashMap<>();
-        sendQueues = new ConcurrentHashMap<>();
+        recQueues = new ConcurrentHashMap<>(10, 0.9f, 1);
+        sendQueues = new ConcurrentHashMap<>(10, 0.9f, 1);
 
         queueHandlers = Executors.newFixedThreadPool(2);
         senderThread = new SenderQueueHandler(protocolID, commonSender, sendQueues);
@@ -91,28 +89,49 @@ public class DotProduct extends Protocol implements Callable<Integer> {
         int vectorLength = xShares.size();
         
         ExecutorService mults = Executors.newFixedThreadPool(vectorLength);
-        ExecutorCompletionService<Integer> multCompletionService = new ExecutorCompletionService<>(mults);
-
-        for (int i = 0; i < vectorLength; i++) {
-
-            initQueueMap(recQueues, sendQueues, i);
+        ExecutorCompletionService<Integer[]> multCompletionService = new ExecutorCompletionService<>(mults);
+        
+        int i=0;
+        int batchsize = 10;
+        int startpid = 0;
+        
+        while(i+batchsize < vectorLength) {
             
-            multCompletionService.submit(new Multiplication(xShares.get(i), yShares.get(i), 
-                    tiShares.get(i), sendQueues.get(i), recQueues.get(i), clientID, prime, i, oneShare, protocolID));
-
+            System.out.println("Protocol "+protocolID+" batch "+startpid);
+            initQueueMap(recQueues, sendQueues, startpid);
+            
+            multCompletionService.submit(new BatchMultiplication(xShares.subList(i, i+batchsize), 
+                    yShares.subList(i, i+batchsize), tiShares, sendQueues.get(startpid), recQueues.get(startpid), 
+                    clientID, prime, startpid, oneShare, protocolID));
+            
+            startpid++;
+            i+=batchsize;
         }
         
+        if(i<vectorLength) {
+            System.out.println("Protocol "+protocolID+" batch "+startpid);
+            initQueueMap(recQueues, sendQueues, startpid);
+            
+            multCompletionService.submit(new BatchMultiplication(xShares.subList(i, vectorLength), 
+                    yShares.subList(i, vectorLength), tiShares, sendQueues.get(startpid), recQueues.get(startpid), 
+                    clientID, prime, startpid, oneShare, protocolID));
+            
+            startpid++;
+            
+        }
+
         mults.shutdown();
 
-        for (int i = 0; i < vectorLength; i++) {
+        for (i = 0; i < startpid; i++) {
             try {
-                Future<Integer> prod = multCompletionService.take();
-                int product = prod.get();
-                dotProduct += product;
-                } catch (InterruptedException | ExecutionException ex) {
-                    ex.printStackTrace();
+                Future<Integer[]> prod = multCompletionService.take();
+                Integer[] products = prod.get();
+                for(int j: products){
+                    dotProduct+=j;
                 }
-
+            } catch (InterruptedException | ExecutionException ex) {
+                    ex.printStackTrace();
+            }
         }
 
         senderThread.setProtocolStatus();
