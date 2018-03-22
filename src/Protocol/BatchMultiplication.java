@@ -16,7 +16,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- *
+ * Batch multiplication of list of xshares with yshares
+ * 
  * @author keerthanaa
  */
 public class BatchMultiplication extends Protocol implements Callable<Integer[]> {
@@ -96,7 +97,6 @@ public class BatchMultiplication extends Protocol implements Callable<Integer[]>
             products[i] = product;
         }
 
-        //System.out.println("ti("+tiShares.u+","+tiShares.v+","+tiShares.w+"), "+"x*y("+x+","+y+"):"+product);
         //System.out.println("parent ID=" + parentID + " mult ID=" + protocolID + " successful, product returned");
         return products;
 
