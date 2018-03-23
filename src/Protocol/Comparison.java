@@ -80,7 +80,7 @@ public class Comparison extends Protocol implements Callable<Integer> {
         this.tiShares = tiShares;
         this.clientID = clientId;
         this.prime = prime;
-        
+
         bitLength = Math.max(x.size(), y.size());
         eShares = new HashMap<>();
         dShares = new ConcurrentSkipListMap<>();
@@ -162,6 +162,66 @@ public class Comparison extends Protocol implements Callable<Integer> {
     }
 
     /**
+     * Compute [yi] - [yi*xi] using distributed multiplication
+     *
+     * @throws InterruptedException
+     * @throws ExecutionException
+     */
+    private void computeDSHares() throws InterruptedException, ExecutionException {
+
+        ExecutorService es = Executors.newFixedThreadPool(Constants.threadCount);
+        List<Future<Integer[]>> taskList = new ArrayList<>();
+
+        int i = 0;
+        int startpid = 0;
+
+        // The protocols for computation of d are assigned id 0-bitLength-1
+        do {
+            System.out.println("Protocol " + protocolId + " batch " + startpid);
+            initQueueMap(recQueues, sendQueues, startpid);
+
+            int toIndex = (i + Constants.batchSize < bitLength)
+                    ? (i + Constants.batchSize) : bitLength;
+
+            BatchMultiplication batchMultiplication = new BatchMultiplication(
+                    x.subList(i, toIndex),
+                    y.subList(i, toIndex),
+                    tiShares.subList(i, toIndex),
+                    sendQueues.get(startpid), recQueues.get(startpid),
+                    clientID, prime, startpid, oneShare, protocolId);
+
+            Future<Integer[]> multiplicationTask = es.submit(batchMultiplication);
+            taskList.add(multiplicationTask);
+
+            startpid++;
+            i += Constants.batchSize;
+        } while (i < bitLength);
+
+        es.shutdown();
+
+        int taskLen = taskList.size();
+        // Now when I got the result for all, compute y - x*y and add it to d[i]
+        for (i = 0; i < taskLen; i++) {
+            try {
+                Future<Integer[]> prod = taskList.get(i);
+                Integer[] products = prod.get();
+                int prodLen = products.length;
+                for (int j = 0; j < prodLen; j++) {
+                    int globalIndex = i * 10 + j;
+                    int localDiff = y.get(globalIndex) - products[j];
+                    localDiff = Math.floorMod(localDiff, prime);
+                    dShares.put(globalIndex, localDiff);
+                }
+            } catch (InterruptedException | ExecutionException ex) {
+                ex.printStackTrace();
+            }
+
+        }
+
+        //Logging.logShares("dShares", dShares);
+    }
+
+    /**
      * compute and store multiplication of ei using distributed multiplication
      */
     private void computeMultiplicationE() {
@@ -182,7 +242,8 @@ public class Comparison extends Protocol implements Callable<Integer> {
             //TODO use the correct sender and receiver queue
             ExecutorService es = Executors.newSingleThreadExecutor();
 
-            Multiplication multiplicationModule = new Multiplication(multiplicationE.get(i),
+            Multiplication multiplicationModule = new Multiplication(
+                    multiplicationE.get(i),
                     eShares.get(i - 1), tiShares.get(bitLength + (tiCounter++)),
                     sendQueues.get(subProtocolID), recQueues.get(subProtocolID),
                     clientID, prime, subProtocolID, oneShare, protocolId);
@@ -215,20 +276,19 @@ public class Comparison extends Protocol implements Callable<Integer> {
         List<Future<Integer[]>> taskList = new ArrayList<>();
 
         int startpid = bitLength + 1;
-
         int i = 0;
-        int batchsize = 10;
 
-        // The protocols for computation of d are assigned id 0-bitLength-1
-        while (i + batchsize < bitLength) {
-
+        do {
             System.out.println("Protocol " + protocolId + " batch " + startpid);
             initQueueMap(recQueues, sendQueues, startpid);
 
+            int toIndex = (i + Constants.batchSize < bitLength - 1)
+                    ? (i + Constants.batchSize) : (bitLength - 1);
+
             BatchMultiplication batchMultiplication = new BatchMultiplication(
-                    multiplicationEList.subList(i + 1, i + 1 + batchsize),
-                    dShareList.subList(i, i + batchsize),
-                    tiShares.subList(i, i + batchsize), sendQueues.get(startpid),
+                    multiplicationEList.subList(i + 1, toIndex + 1),
+                    dShareList.subList(i, toIndex),
+                    tiShares.subList(i, toIndex), sendQueues.get(startpid),
                     recQueues.get(startpid), clientID, prime, startpid,
                     oneShare, protocolId);
 
@@ -236,40 +296,26 @@ public class Comparison extends Protocol implements Callable<Integer> {
             taskList.add(multiplicationTask);
 
             startpid++;
-            i += batchsize;
-        }
-
-        if (i < bitLength) {
-            System.out.println("Protocol " + protocolId + " batch " + startpid);
-            initQueueMap(recQueues, sendQueues, startpid);
-
-            BatchMultiplication batchMultiplication = new BatchMultiplication(
-                    multiplicationEList.subList(i + 1, bitLength -1),
-                    dShareList.subList(i, bitLength - 2),
-                    tiShares.subList(i, bitLength - 2), sendQueues.get(startpid),
-                    recQueues.get(startpid), clientID, prime, startpid,
-                    oneShare, protocolId);
-            
-            Future<Integer[]> multiplicationTask = es.submit(batchMultiplication);
-            taskList.add(multiplicationTask);
-
-            startpid++;
-
-        }
+            i += Constants.batchSize;
+        } while (i < bitLength - 1);
 
         es.shutdown();
 
+        int taskLen = taskList.size();
         // Now when I got the result for all, compute y+ x*y and add it to d[i]
-        for (i = 0; i < startpid; i++) {
+        for (i = 0; i < taskLen; i++) {
             try {
                 Future<Integer[]> prod = taskList.get(i);
                 Integer[] products = prod.get();
-                for (int j = 0; j < products.length; j++) {
-                    cShares.put(i+j, products[j]);
+                int prodLen = products.length;
+                for (int j = 0; j < prodLen; j++) {
+                    int globalIndex = i * 10 + j;
+                    cShares.put(globalIndex, products[j]);
                 }
             } catch (InterruptedException | ExecutionException ex) {
                 ex.printStackTrace();
             }
+
         }
 
         cShares.put(bitLength - 1, dShares.get(bitLength - 1));
@@ -291,78 +337,6 @@ public class Comparison extends Protocol implements Callable<Integer> {
 
         //Logging.logValue("w", w);
         return w;
-    }
-
-    /**
-     * Compute [yi] - [yi*xi] using distributed multiplication
-     *
-     * @throws InterruptedException
-     * @throws ExecutionException
-     */
-    private void computeDSHares() throws InterruptedException, ExecutionException {
-
-        ExecutorService es = Executors.newFixedThreadPool(Constants.threadCount);
-        List<Future<Integer[]>> taskList = new ArrayList<>();
-
-        int i = 0;
-        int batchsize = 10;
-        int startpid = 0;
-
-        // The protocols for computation of d are assigned id 0-bitLength-1
-        while (i + batchsize < bitLength) {
-
-            System.out.println("Protocol " + protocolId + " batch " + startpid);
-            initQueueMap(recQueues, sendQueues, startpid);
-
-            BatchMultiplication batchMultiplication = new BatchMultiplication(
-                    x.subList(i, i + batchsize), y.subList(i, i + batchsize),
-                    tiShares.subList(i, i + batchsize), sendQueues.get(startpid),
-                    recQueues.get(startpid), clientID, prime, startpid,
-                    oneShare, protocolId);
-
-            Future<Integer[]> multiplicationTask = es.submit(batchMultiplication);
-            taskList.add(multiplicationTask);
-
-            startpid++;
-            i += batchsize;
-        }
-
-        if (i < bitLength) {
-            System.out.println("Protocol " + protocolId + " batch " + startpid);
-            initQueueMap(recQueues, sendQueues, startpid);
-
-            BatchMultiplication batchMultiplication = new BatchMultiplication(
-                    x.subList(i, bitLength), y.subList(i, bitLength),
-                    tiShares.subList(i, bitLength), sendQueues.get(startpid),
-                    recQueues.get(startpid), clientID, prime, startpid,
-                    oneShare, protocolId);
-
-            Future<Integer[]> multiplicationTask = es.submit(batchMultiplication);
-            taskList.add(multiplicationTask);
-
-            startpid++;
-
-        }
-
-        es.shutdown();
-
-        // Now when I got the result for all, compute y+ x*y and add it to d[i]
-        for (i = 0; i < startpid; i++) {
-            try {
-                Future<Integer[]> prod = taskList.get(i);
-                Integer[] products = prod.get();
-                for (int j = 0; j < products.length; j++) {
-                    int localDiff = y.get(i + j) - products[j];
-                    localDiff = Math.floorMod(localDiff, prime);
-                    dShares.put(i + j, localDiff);
-                }
-            } catch (InterruptedException | ExecutionException ex) {
-                ex.printStackTrace();
-            }
-
-        }
-
-        //Logging.logShares("dShares", dShares);
     }
 
     /**

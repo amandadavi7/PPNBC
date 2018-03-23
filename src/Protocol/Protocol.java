@@ -37,17 +37,6 @@ public class Protocol {
         sendQueues.putIfAbsent(key, new LinkedBlockingQueue<>());
     }
 
-    /*
-    //To Anisha: We probably don't need this as we are clearing the map in queueHandlers
-    // To be removed later
-    public void clearQueueMap(
-            ConcurrentHashMap<Integer, BlockingQueue<Message>> recQueues,
-            ConcurrentHashMap<Integer, BlockingQueue<Message>> sendQueues,
-            int key) {
-        recQueues.remove(key);
-        sendQueues.remove(key);
-    }*/
-    
     public void teardown() {
     
     }
