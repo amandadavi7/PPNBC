@@ -26,9 +26,7 @@ import java.util.concurrent.Future;
 public class DotProduct extends Protocol implements Callable<Integer> {
 
     List<Integer> xShares, yShares;
-    BlockingQueue<Message> commonReceiver;
-    BlockingQueue<Message> commonSender;
-    int prime, clientID, protocolID, oneShare;
+    int prime, clientID, oneShare;
     List<Triple> tiShares;
 
     ConcurrentHashMap<Integer, BlockingQueue<Message>> recQueues;
@@ -54,23 +52,20 @@ public class DotProduct extends Protocol implements Callable<Integer> {
     public DotProduct(List<Integer> xShares, List<Integer> yShares, List<Triple> tiShares,
             BlockingQueue<Message> senderqueue, BlockingQueue<Message> receiverqueue,
             int clientID, int prime, int protocolID, int oneShare) {
-        super(protocolID);
+        super(protocolID, senderqueue, receiverqueue);
         this.prime = prime;
         this.clientID = clientID;
         this.xShares = xShares;
         this.yShares = yShares;
         this.tiShares = tiShares;
-        this.commonSender = senderqueue;
-        this.commonReceiver = receiverqueue;
-        this.protocolID = protocolID;
         this.oneShare = oneShare;
 
         recQueues = new ConcurrentHashMap<>(10, 0.9f, 1);
         sendQueues = new ConcurrentHashMap<>(10, 0.9f, 1);
 
         queueHandlers = Executors.newFixedThreadPool(2);
-        senderThread = new SenderQueueHandler(protocolID, commonSender, sendQueues);
-        receiverThread = new ReceiverQueueHandler(protocolID,commonReceiver, recQueues);
+        senderThread = new SenderQueueHandler(protocolID, super.senderQueue, sendQueues);
+        receiverThread = new ReceiverQueueHandler(protocolID,super.receiverQueue, recQueues);
         queueHandlers.submit(senderThread);
         queueHandlers.submit(receiverThread);
         
@@ -96,24 +91,24 @@ public class DotProduct extends Protocol implements Callable<Integer> {
         
         while(i+batchsize < vectorLength) {
             
-            System.out.println("Protocol "+protocolID+" batch "+startpid);
+            System.out.println("Protocol "+protocolId+" batch "+startpid);
             initQueueMap(recQueues, sendQueues, startpid);
             
             multCompletionService.submit(new BatchMultiplication(xShares.subList(i, i+batchsize), 
                     yShares.subList(i, i+batchsize), tiShares, sendQueues.get(startpid), recQueues.get(startpid), 
-                    clientID, prime, startpid, oneShare, protocolID));
+                    clientID, prime, startpid, oneShare, protocolId));
             
             startpid++;
             i+=batchsize;
         }
         
         if(i<vectorLength) {
-            System.out.println("Protocol "+protocolID+" batch "+startpid);
+            System.out.println("Protocol "+protocolId+" batch "+startpid);
             initQueueMap(recQueues, sendQueues, startpid);
             
             multCompletionService.submit(new BatchMultiplication(xShares.subList(i, vectorLength), 
                     yShares.subList(i, vectorLength), tiShares, sendQueues.get(startpid), recQueues.get(startpid), 
-                    clientID, prime, startpid, oneShare, protocolID));
+                    clientID, prime, startpid, oneShare, protocolId));
             
             startpid++;
             
@@ -138,7 +133,7 @@ public class DotProduct extends Protocol implements Callable<Integer> {
         queueHandlers.shutdown();
         
         dotProduct = Math.floorMod(dotProduct, prime);
-        System.out.println("dot product:" + dotProduct + ", protocol id:" + protocolID);
+        System.out.println("dot product:" + dotProduct + ", protocol id:" + protocolId);
         return dotProduct;
 
     }

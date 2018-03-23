@@ -23,14 +23,11 @@ import java.util.logging.Logger;
  */
 public class Multiplication extends Protocol implements Callable {
 
-    private BlockingQueue<Message> senderQueue;
-    private BlockingQueue<Message> receiverQueue;
     int x;
     int y;
     Triple tiShares;
     int clientID;
     int prime;
-    int protocolID;
     int oneShare;
     int parentID;
 
@@ -52,15 +49,12 @@ public class Multiplication extends Protocol implements Callable {
             BlockingQueue<Message> receiverQueue, int clientId, int prime,
             int protocolID, int oneShare, int parentID) {
 
-        super(protocolID);
+        super(protocolID, senderQueue, receiverQueue);
         this.x = x;
         this.y = y;
         this.tiShares = tiShares;
-        this.senderQueue = senderQueue;
-        this.receiverQueue = receiverQueue;
         this.clientID = clientId;
         this.prime = prime;
-        this.protocolID = protocolID;
         this.oneShare = oneShare;
         this.parentID = parentID;
 
@@ -105,7 +99,7 @@ public class Multiplication extends Protocol implements Callable {
         diffList.add(Math.floorMod(y - tiShares.v, prime));
 
         Message senderMessage = new Message(Constants.localShares, diffList,
-                clientID, protocolID);
+                clientID, protocolId);
         try {
             senderQueue.put(senderMessage);
             //System.out.println("sending message for protocol id:"+ protocolID);

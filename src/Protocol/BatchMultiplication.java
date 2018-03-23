@@ -22,14 +22,11 @@ import java.util.logging.Logger;
  */
 public class BatchMultiplication extends Protocol implements Callable<Integer[]> {
     
-    private BlockingQueue<Message> senderQueue;
-    private BlockingQueue<Message> receiverQueue;
     List<Integer> x;
     List<Integer> y;
     List<Triple> tiShares;
     int clientID;
     int prime;
-    int protocolID;
     int oneShare;
     int parentID;
 
@@ -46,12 +43,13 @@ public class BatchMultiplication extends Protocol implements Callable<Integer[]>
      * @param protocolID
      * @param oneShare
      */
-    public BatchMultiplication(List<Integer> x, List<Integer> y, List<Triple> tiShares,
+    public BatchMultiplication(List<Integer> x, List<Integer> y, 
+            List<Triple> tiShares, 
             BlockingQueue<Message> senderQueue,
             BlockingQueue<Message> receiverQueue, int clientId, int prime,
             int protocolID, int oneShare, int parentID) {
 
-        super(protocolID);
+        super(protocolID, senderQueue, receiverQueue);
         this.x = x;
         this.y = y;
         this.tiShares = tiShares;
@@ -59,7 +57,6 @@ public class BatchMultiplication extends Protocol implements Callable<Integer[]>
         this.receiverQueue = receiverQueue;
         this.clientID = clientId;
         this.prime = prime;
-        this.protocolID = protocolID;
         this.oneShare = oneShare;
         this.parentID = parentID;
 
@@ -117,7 +114,7 @@ public class BatchMultiplication extends Protocol implements Callable<Integer[]>
         }
         
         Message senderMessage = new Message(Constants.localShares, diffList,
-                clientID, protocolID);
+                clientID, protocolId);
         
         try {
             senderQueue.put(senderMessage);

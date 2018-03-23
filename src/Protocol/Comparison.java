@@ -12,9 +12,7 @@ import TrustedInitializer.Triple;
 import Utility.Constants;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
@@ -40,8 +38,6 @@ public class Comparison extends Protocol implements Callable<Integer> {
     SenderQueueHandler senderThread;
     ReceiverQueueHandler receiverThread;
 
-    private BlockingQueue<Message> commonSender;
-    private BlockingQueue<Message> commonReceiver;
     List<Integer> x;
     List<Integer> y;
     int oneShare;
@@ -52,7 +48,6 @@ public class Comparison extends Protocol implements Callable<Integer> {
     ConcurrentSkipListMap<Integer, Integer> multiplicationE;
     HashMap<Integer, Integer> cShares;
 
-    int protocolID;
     int clientID;
     int prime;
     int bitLength;
@@ -78,17 +73,14 @@ public class Comparison extends Protocol implements Callable<Integer> {
             BlockingQueue<Message> receiverQueue, int clientId, int prime,
             int protocolID) {
 
-        super(protocolID);
+        super(protocolID, senderQueue, receiverQueue);
         this.x = x;
         this.y = y;
         this.oneShare = oneShare;
         this.tiShares = tiShares;
-        this.commonSender = senderQueue;
-        this.commonReceiver = receiverQueue;
         this.clientID = clientId;
         this.prime = prime;
-        this.protocolID = protocolID;
-
+        
         bitLength = Math.max(x.size(), y.size());
         eShares = new HashMap<>();
         dShares = new ConcurrentSkipListMap<>();
@@ -101,8 +93,8 @@ public class Comparison extends Protocol implements Callable<Integer> {
         sendQueues = new ConcurrentHashMap<>();
 
         queueHandlers = Executors.newFixedThreadPool(2);
-        senderThread = new SenderQueueHandler(protocolID, commonSender, sendQueues);
-        receiverThread = new ReceiverQueueHandler(protocolID, commonReceiver, recQueues);
+        senderThread = new SenderQueueHandler(protocolID, super.senderQueue, sendQueues);
+        receiverThread = new ReceiverQueueHandler(protocolID, super.receiverQueue, recQueues);
         queueHandlers.submit(senderThread);
         queueHandlers.submit(receiverThread);
 
@@ -152,7 +144,7 @@ public class Comparison extends Protocol implements Callable<Integer> {
             w = computeW();
         }
 
-        System.out.println("w:" + w + " protocol id:" + protocolID);
+        System.out.println("w:" + w + " protocol id:" + protocolId);
 
         tearDownHandlers();
         return w;
@@ -193,7 +185,7 @@ public class Comparison extends Protocol implements Callable<Integer> {
             Multiplication multiplicationModule = new Multiplication(multiplicationE.get(i),
                     eShares.get(i - 1), tiShares.get(bitLength + (tiCounter++)),
                     sendQueues.get(subProtocolID), recQueues.get(subProtocolID),
-                    clientID, prime, subProtocolID, oneShare, protocolID);
+                    clientID, prime, subProtocolID, oneShare, protocolId);
 
             Future<Integer> multiplicationTask = es.submit(multiplicationModule);
             es.shutdown();
@@ -230,7 +222,7 @@ public class Comparison extends Protocol implements Callable<Integer> {
         // The protocols for computation of d are assigned id 0-bitLength-1
         while (i + batchsize < bitLength) {
 
-            System.out.println("Protocol " + protocolID + " batch " + startpid);
+            System.out.println("Protocol " + protocolId + " batch " + startpid);
             initQueueMap(recQueues, sendQueues, startpid);
 
             BatchMultiplication batchMultiplication = new BatchMultiplication(
@@ -238,7 +230,7 @@ public class Comparison extends Protocol implements Callable<Integer> {
                     dShareList.subList(i, i + batchsize),
                     tiShares.subList(i, i + batchsize), sendQueues.get(startpid),
                     recQueues.get(startpid), clientID, prime, startpid,
-                    oneShare, protocolID);
+                    oneShare, protocolId);
 
             Future<Integer[]> multiplicationTask = es.submit(batchMultiplication);
             taskList.add(multiplicationTask);
@@ -248,7 +240,7 @@ public class Comparison extends Protocol implements Callable<Integer> {
         }
 
         if (i < bitLength) {
-            System.out.println("Protocol " + protocolID + " batch " + startpid);
+            System.out.println("Protocol " + protocolId + " batch " + startpid);
             initQueueMap(recQueues, sendQueues, startpid);
 
             BatchMultiplication batchMultiplication = new BatchMultiplication(
@@ -256,7 +248,7 @@ public class Comparison extends Protocol implements Callable<Integer> {
                     dShareList.subList(i, bitLength - 2),
                     tiShares.subList(i, bitLength - 2), sendQueues.get(startpid),
                     recQueues.get(startpid), clientID, prime, startpid,
-                    oneShare, protocolID);
+                    oneShare, protocolId);
             
             Future<Integer[]> multiplicationTask = es.submit(batchMultiplication);
             taskList.add(multiplicationTask);
@@ -319,14 +311,14 @@ public class Comparison extends Protocol implements Callable<Integer> {
         // The protocols for computation of d are assigned id 0-bitLength-1
         while (i + batchsize < bitLength) {
 
-            System.out.println("Protocol " + protocolID + " batch " + startpid);
+            System.out.println("Protocol " + protocolId + " batch " + startpid);
             initQueueMap(recQueues, sendQueues, startpid);
 
             BatchMultiplication batchMultiplication = new BatchMultiplication(
                     x.subList(i, i + batchsize), y.subList(i, i + batchsize),
                     tiShares.subList(i, i + batchsize), sendQueues.get(startpid),
                     recQueues.get(startpid), clientID, prime, startpid,
-                    oneShare, protocolID);
+                    oneShare, protocolId);
 
             Future<Integer[]> multiplicationTask = es.submit(batchMultiplication);
             taskList.add(multiplicationTask);
@@ -336,14 +328,14 @@ public class Comparison extends Protocol implements Callable<Integer> {
         }
 
         if (i < bitLength) {
-            System.out.println("Protocol " + protocolID + " batch " + startpid);
+            System.out.println("Protocol " + protocolId + " batch " + startpid);
             initQueueMap(recQueues, sendQueues, startpid);
 
             BatchMultiplication batchMultiplication = new BatchMultiplication(
                     x.subList(i, bitLength), y.subList(i, bitLength),
                     tiShares.subList(i, bitLength), sendQueues.get(startpid),
                     recQueues.get(startpid), clientID, prime, startpid,
-                    oneShare, protocolID);
+                    oneShare, protocolId);
 
             Future<Integer[]> multiplicationTask = es.submit(batchMultiplication);
             taskList.add(multiplicationTask);

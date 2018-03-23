@@ -16,10 +16,16 @@ import java.util.concurrent.LinkedBlockingQueue;
  */
 public class Protocol {
     //ExecutorService queueHandlers;
+    
+    BlockingQueue<Message> senderQueue;
+    BlockingQueue<Message> receiverQueue;
     int protocolId;
 
-    public Protocol(int protocolId) {
+    public Protocol(int protocolId, BlockingQueue<Message> senderQueue,
+            BlockingQueue<Message> receiverQueue) {
         this.protocolId = protocolId;
+        this.senderQueue = senderQueue;
+        this.receiverQueue = receiverQueue;
     }
 
     public void initQueueMap(
