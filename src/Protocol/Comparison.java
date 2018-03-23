@@ -58,13 +58,15 @@ public class Comparison extends Protocol implements Callable<Integer> {
     /**
      * Constructor
      *
-     * A comparison of two numbers with bit length L requires 3L-3 tiShares L
-     * for computing dShares L-2 for computing eShares L-1 for computing cShares
-     *
-     * @param x
-     * @param y
+     * A comparison of two numbers with bit length L requires 3L-3 tiShares
+     * L for computing dShares
+     * L-2 for computing eShares
+     * L-1 for computing cShares
+     * 
+     * @param x List of bits of shares of x
+     * @param y List of bits of shares of y
      * @param tiShares
-     * @param oneShare
+     * @param oneShare  [[1]] with the Party
      * @param senderQueue
      * @param receiverQueue
      * @param clientId
@@ -107,7 +109,7 @@ public class Comparison extends Protocol implements Callable<Integer> {
      * Waits for the shares of (x-u) and (y-v), computes the product and returns
      * the value. Returns 1 if x>=y, 0 otherwise
      *
-     * @return
+     * @return shares of [1] if x>=y and [0] if x<y
      * @throws Exception
      */
     @Override
