@@ -11,6 +11,7 @@ import Communication.SenderQueueHandler;
 import TrustedInitializer.Triple;
 import Utility.Constants;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
@@ -24,6 +25,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 /**
  *
@@ -43,10 +45,10 @@ public class Comparison extends Protocol implements Callable<Integer> {
     int oneShare;
     List<Triple> tiShares;
 
-    ConcurrentSkipListMap<Integer, Integer> dShares;
-    HashMap<Integer, Integer> eShares;
+    int[] dShares;
+    int[] eShares;
     ConcurrentSkipListMap<Integer, Integer> multiplicationE;
-    HashMap<Integer, Integer> cShares;
+    int[] cShares;
 
     int clientID;
     int prime;
@@ -82,9 +84,9 @@ public class Comparison extends Protocol implements Callable<Integer> {
         this.prime = prime;
 
         bitLength = Math.max(x.size(), y.size());
-        eShares = new HashMap<>();
-        dShares = new ConcurrentSkipListMap<>();
-        cShares = new HashMap<>();
+        eShares = new int[bitLength];
+        dShares = new int[bitLength];
+        cShares = new int[bitLength];
         multiplicationE = new ConcurrentSkipListMap<>();
 
         //System.out.println("bitLength:" + bitLength);
@@ -156,7 +158,8 @@ public class Comparison extends Protocol implements Callable<Integer> {
     private void computeEShares() {
         for (int i = 0; i < bitLength; i++) {
             int eShare = x.get(i) + y.get(i) + oneShare;
-            eShares.put(i, Math.floorMod(eShare, prime));
+            eShares[i] = Math.floorMod(eShare, prime);
+            
         }
         //Logging.logShares("eShares", eShares);
     }
@@ -210,7 +213,8 @@ public class Comparison extends Protocol implements Callable<Integer> {
                     int globalIndex = i * 10 + j;
                     int localDiff = y.get(globalIndex) - products[j];
                     localDiff = Math.floorMod(localDiff, prime);
-                    dShares.put(globalIndex, localDiff);
+                    dShares[globalIndex] = localDiff;
+                    //dShares.put(globalIndex, localDiff);
                 }
             } catch (InterruptedException | ExecutionException ex) {
                 ex.printStackTrace();
@@ -226,7 +230,7 @@ public class Comparison extends Protocol implements Callable<Integer> {
      */
     private void computeMultiplicationE() {
         //System.out.println("Started multiplicationE");
-        multiplicationE.put(bitLength - 1, eShares.get(bitLength - 1));
+        multiplicationE.put(bitLength - 1, eShares[bitLength - 1]);
         // now multiply each eshare with the previous computed multiplication one at a time
 
         int subProtocolID = bitLength;
@@ -244,7 +248,7 @@ public class Comparison extends Protocol implements Callable<Integer> {
 
             Multiplication multiplicationModule = new Multiplication(
                     multiplicationE.get(i),
-                    eShares.get(i - 1), tiShares.get(bitLength + (tiCounter++)),
+                    eShares[i - 1], tiShares.get(bitLength + (tiCounter++)),
                     sendQueues.get(subProtocolID), recQueues.get(subProtocolID),
                     clientID, prime, subProtocolID, oneShare, protocolId);
 
@@ -270,7 +274,7 @@ public class Comparison extends Protocol implements Callable<Integer> {
     private void computeCShares() {
 
         List<Integer> multiplicationEList = new ArrayList<>(multiplicationE.values());
-        List<Integer> dShareList = new ArrayList<>(dShares.values());
+        List<Integer> dShareList = Arrays.stream(dShares).boxed().collect(Collectors.toList());;
 
         ExecutorService es = Executors.newFixedThreadPool(Constants.threadCount);
         List<Future<Integer[]>> taskList = new ArrayList<>();
@@ -310,7 +314,8 @@ public class Comparison extends Protocol implements Callable<Integer> {
                 int prodLen = products.length;
                 for (int j = 0; j < prodLen; j++) {
                     int globalIndex = i * 10 + j;
-                    cShares.put(globalIndex, products[j]);
+                    cShares[globalIndex] = products[j];
+                    //cShares.put(globalIndex, products[j]);
                 }
             } catch (InterruptedException | ExecutionException ex) {
                 ex.printStackTrace();
@@ -318,7 +323,8 @@ public class Comparison extends Protocol implements Callable<Integer> {
 
         }
 
-        cShares.put(bitLength - 1, dShares.get(bitLength - 1));
+        cShares[bitLength-1] = dShares[bitLength - 1];
+        //cShares.put(bitLength - 1, dShares[bitLength - 1]);
         //Logging.logShares("cShares", cShares);
 
     }
@@ -331,7 +337,7 @@ public class Comparison extends Protocol implements Callable<Integer> {
     private int computeW() {
         int w = oneShare;
         for (int i = 0; i < bitLength; i++) {
-            w += cShares.get(i);
+            w += cShares[i];
             w = Math.floorMod(w, prime);
         }
 
