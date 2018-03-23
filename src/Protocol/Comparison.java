@@ -47,12 +47,13 @@ public class Comparison extends Protocol implements Callable<Integer> {
 
     int[] dShares;
     int[] eShares;
-    ConcurrentSkipListMap<Integer, Integer> multiplicationE;
+    int[] multiplicationE;
     int[] cShares;
 
     int clientID;
     int prime;
     int bitLength;
+    int cProcessId;
 
     /**
      * Constructor
@@ -87,7 +88,7 @@ public class Comparison extends Protocol implements Callable<Integer> {
         eShares = new int[bitLength];
         dShares = new int[bitLength];
         cShares = new int[bitLength];
-        multiplicationE = new ConcurrentSkipListMap<>();
+        multiplicationE = new int[bitLength];
 
         //System.out.println("bitLength:" + bitLength);
         // Communication between the parent and the sub protocols
@@ -131,7 +132,7 @@ public class Comparison extends Protocol implements Callable<Integer> {
         Runnable eThread = new Runnable() {
             @Override
             public void run() {
-                computeMultiplicationE();
+                computeMultiplicationEParallel();
             }
         };
 
@@ -159,7 +160,7 @@ public class Comparison extends Protocol implements Callable<Integer> {
         for (int i = 0; i < bitLength; i++) {
             int eShare = x.get(i) + y.get(i) + oneShare;
             eShares[i] = Math.floorMod(eShare, prime);
-            
+
         }
         //Logging.logShares("eShares", eShares);
     }
@@ -228,9 +229,9 @@ public class Comparison extends Protocol implements Callable<Integer> {
     /**
      * compute and store multiplication of ei using distributed multiplication
      */
-    private void computeMultiplicationE() {
+    /*private void computeMultiplicationE() {
         //System.out.println("Started multiplicationE");
-        multiplicationE.put(bitLength - 1, eShares[bitLength - 1]);
+        multiplicationE[bitLength-1] = eShares[bitLength-1];
         // now multiply each eshare with the previous computed multiplication one at a time
 
         int subProtocolID = bitLength;
@@ -247,7 +248,7 @@ public class Comparison extends Protocol implements Callable<Integer> {
             ExecutorService es = Executors.newSingleThreadExecutor();
 
             Multiplication multiplicationModule = new Multiplication(
-                    multiplicationE.get(i),
+                    multiplicationE[i],
                     eShares[i - 1], tiShares.get(bitLength + (tiCounter++)),
                     sendQueues.get(subProtocolID), recQueues.get(subProtocolID),
                     clientID, prime, subProtocolID, oneShare, protocolId);
@@ -256,7 +257,7 @@ public class Comparison extends Protocol implements Callable<Integer> {
             es.shutdown();
 
             try {
-                multiplicationE.put(i - 1, multiplicationTask.get());
+                multiplicationE[i-1] = multiplicationTask.get();
                 //System.out.println("result of Multiplication:" + multiplicationE.get(i - 1));
             } catch (InterruptedException | ExecutionException ex) {
                 Logger.getLogger(Comparison.class.getName()).log(Level.SEVERE, null, ex);
@@ -264,8 +265,73 @@ public class Comparison extends Protocol implements Callable<Integer> {
 
         }
 
-        multiplicationE.put(0, 0);
+        multiplicationE[0] = 0;
         //Logging.logShares("MultiplicationE", multiplicationE);
+    }*/
+
+    private void computeMultiplicationEParallel() {
+        List<Integer> tempMultE = Arrays.stream(eShares).boxed().collect(Collectors.toList());
+        
+        int mainIndex = bitLength - 1;
+        multiplicationE[mainIndex--] = eShares[bitLength - 1];
+
+        List<Integer> dShareList = Arrays.stream(dShares).boxed().collect(Collectors.toList());
+        
+        int startpid = bitLength;
+        
+        // Runs log n times
+        while (tempMultE.size() > 1) {
+            ExecutorService es = Executors.newFixedThreadPool(Constants.threadCount);
+            List<Future<Integer[]>> taskList = new ArrayList<>();
+
+            int i = 0;
+            // batch multiply each pair of tempMultE[i], tempMult[i+1]
+            do {
+                System.out.println("Protocol " + protocolId + " batch " + startpid);
+                initQueueMap(recQueues, sendQueues, startpid);
+
+                int toIndex = (i + Constants.batchSize < bitLength)
+                        ? (i + Constants.batchSize) : (bitLength);
+
+                BatchMultiplication batchMultiplication = new BatchMultiplication(
+                        tempMultE.subList(i, toIndex - 1),
+                        tempMultE.subList(i + 1, toIndex),
+                        tiShares.subList(i, toIndex), sendQueues.get(startpid),
+                        recQueues.get(startpid), clientID, prime, startpid,
+                        oneShare, protocolId);
+
+                Future<Integer[]> multiplicationTask = es.submit(batchMultiplication);
+                taskList.add(multiplicationTask);
+
+                startpid++;
+                i += Constants.batchSize;
+            } while (i < bitLength - 1);
+
+            es.shutdown();
+
+            int taskLen = taskList.size();
+            // Now when I got the result for all, compute y+ x*y and add it to d[i]
+            for (i = 0; i < taskLen; i++) {
+                try {
+                    Future<Integer[]> prod = taskList.get(i);
+                    Integer[] products = prod.get();
+                    // update all values
+                    tempMultE.clear();
+                    tempMultE = Arrays.stream(products).collect(Collectors.toList());
+                } catch (InterruptedException | ExecutionException ex) {
+                    ex.printStackTrace();
+                }
+
+            }
+
+            // store the main value in the end
+            multiplicationE[mainIndex--] = tempMultE.get(tempMultE.size() - 1);
+        }
+        
+        cProcessId = startpid;
+
+        multiplicationE[0] = 0;
+
     }
 
     /**
@@ -273,13 +339,13 @@ public class Comparison extends Protocol implements Callable<Integer> {
      */
     private void computeCShares() {
 
-        List<Integer> multiplicationEList = new ArrayList<>(multiplicationE.values());
-        List<Integer> dShareList = Arrays.stream(dShares).boxed().collect(Collectors.toList());;
+        List<Integer> multiplicationEList = Arrays.stream(multiplicationE).boxed().collect(Collectors.toList());
+        List<Integer> dShareList = Arrays.stream(dShares).boxed().collect(Collectors.toList());
 
         ExecutorService es = Executors.newFixedThreadPool(Constants.threadCount);
         List<Future<Integer[]>> taskList = new ArrayList<>();
 
-        int startpid = bitLength + 1;
+        int startpid = cProcessId;
         int i = 0;
 
         do {
@@ -323,7 +389,7 @@ public class Comparison extends Protocol implements Callable<Integer> {
 
         }
 
-        cShares[bitLength-1] = dShares[bitLength - 1];
+        cShares[bitLength - 1] = dShares[bitLength - 1];
         //cShares.put(bitLength - 1, dShares[bitLength - 1]);
         //Logging.logShares("cShares", cShares);
 
