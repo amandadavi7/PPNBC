@@ -31,14 +31,7 @@ import java.util.stream.Collectors;
  *
  * @author anisha
  */
-public class Comparison extends Protocol implements Callable<Integer> {
-
-    ConcurrentHashMap<Integer, BlockingQueue<Message>> recQueues;
-    ConcurrentHashMap<Integer, BlockingQueue<Message>> sendQueues;
-
-    ExecutorService queueHandlers;
-    SenderQueueHandler senderThread;
-    ReceiverQueueHandler receiverThread;
+public class Comparison extends CompositeProtocol implements Callable<Integer> {
 
     List<Integer> x;
     List<Integer> y;
@@ -50,8 +43,6 @@ public class Comparison extends Protocol implements Callable<Integer> {
     int[] multiplicationE;
     int[] cShares;
 
-    int clientID;
-    int prime;
     int bitLength;
     int cProcessId;
 
@@ -78,14 +69,12 @@ public class Comparison extends Protocol implements Callable<Integer> {
             BlockingQueue<Message> receiverQueue, int clientId, int prime,
             int protocolID) {
 
-        super(protocolID, senderQueue, receiverQueue);
+        super(protocolID, senderQueue, receiverQueue, clientId, prime);
         this.x = x;
         this.y = y;
         this.oneShare = oneShare;
         this.tiShares = tiShares;
-        this.clientID = clientId;
-        this.prime = prime;
-
+        
         bitLength = Math.max(x.size(), y.size());
         eShares = new int[bitLength];
         dShares = new int[bitLength];
@@ -93,16 +82,6 @@ public class Comparison extends Protocol implements Callable<Integer> {
         multiplicationE = new int[bitLength];
 
         //System.out.println("bitLength:" + bitLength);
-        // Communication between the parent and the sub protocols
-        recQueues = new ConcurrentHashMap<>();
-        sendQueues = new ConcurrentHashMap<>();
-
-        queueHandlers = Executors.newFixedThreadPool(2);
-        senderThread = new SenderQueueHandler(protocolID, super.senderQueue, sendQueues);
-        receiverThread = new ReceiverQueueHandler(protocolID, super.receiverQueue, recQueues);
-        queueHandlers.submit(senderThread);
-        queueHandlers.submit(receiverThread);
-
     }
 
     /**
@@ -114,6 +93,7 @@ public class Comparison extends Protocol implements Callable<Integer> {
      */
     @Override
     public Integer call() throws Exception {
+        startHandler();
         int w = -1;
         computeEShares();
 
@@ -411,15 +391,6 @@ public class Comparison extends Protocol implements Callable<Integer> {
 
         //Logging.logValue("w", w);
         return w;
-    }
-
-    /**
-     * Teardown all local threads
-     */
-    private void tearDownHandlers() {
-        senderThread.setProtocolStatus();
-        receiverThread.setProtocolStatus();
-        queueHandlers.shutdown();
     }
 
     /*private List<Integer> convertMapToList(HashMap<Integer, Integer> multiplicationE1) {
