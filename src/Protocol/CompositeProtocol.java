@@ -29,11 +29,25 @@ public class CompositeProtocol extends Protocol {
     int clientID;
     int prime;
 
+    /**
+     * 
+     * @param protocolId
+     * @param senderQueue
+     * @param receiverQueue 
+     */
     public CompositeProtocol(int protocolId, BlockingQueue<Message> senderQueue,
             BlockingQueue<Message> receiverQueue) {
         super(protocolId, senderQueue, receiverQueue);
     }
 
+    /**
+     * 
+     * @param protocolId
+     * @param senderQueue
+     * @param receiverQueue
+     * @param clientId
+     * @param prime 
+     */
     public CompositeProtocol(int protocolId, BlockingQueue<Message> senderQueue,
             BlockingQueue<Message> receiverQueue, int clientId, int prime) {
         super(protocolId, senderQueue, receiverQueue);
@@ -49,7 +63,10 @@ public class CompositeProtocol extends Protocol {
 
     }
 
-    public void startHandler() {
+    /**
+     * Start the local threads for queue handlers
+     */
+    public void startHandlers() {
         queueHandlers.submit(senderThread);
         queueHandlers.submit(receiverThread);
     }

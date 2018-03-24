@@ -6,35 +6,26 @@
 package Protocol;
 
 import Communication.Message;
-import Communication.ReceiverQueueHandler;
-import Communication.SenderQueueHandler;
 import TrustedInitializer.Triple;
 import Utility.Constants;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+
 /**
  *
  * @author keerthanaa
  */
-public class DotProduct extends Protocol implements Callable<Integer> {
+public class DotProduct extends CompositeProtocol implements Callable<Integer> {
 
     List<Integer> xShares, yShares;
-    int prime, clientID, oneShare;
+    int oneShare;
     List<Triple> tiShares;
-
-    ConcurrentHashMap<Integer, BlockingQueue<Message>> recQueues;
-    ConcurrentHashMap<Integer, BlockingQueue<Message>> sendQueues;
-
-    ExecutorService queueHandlers;
-    SenderQueueHandler senderThread;
-    ReceiverQueueHandler receiverThread;
 
     /**
      * Constructor
@@ -52,23 +43,14 @@ public class DotProduct extends Protocol implements Callable<Integer> {
     public DotProduct(List<Integer> xShares, List<Integer> yShares, List<Triple> tiShares,
             BlockingQueue<Message> senderqueue, BlockingQueue<Message> receiverqueue,
             int clientID, int prime, int protocolID, int oneShare) {
-        super(protocolID, senderqueue, receiverqueue);
-        this.prime = prime;
-        this.clientID = clientID;
+        
+        super(protocolID, senderqueue, receiverqueue, clientID, prime);
+        
         this.xShares = xShares;
         this.yShares = yShares;
         this.tiShares = tiShares;
         this.oneShare = oneShare;
-
-        recQueues = new ConcurrentHashMap<>(10, 0.9f, 1);
-        sendQueues = new ConcurrentHashMap<>(10, 0.9f, 1);
-
-        queueHandlers = Executors.newFixedThreadPool(2);
-        senderThread = new SenderQueueHandler(protocolID, super.senderQueue, sendQueues);
-        receiverThread = new ReceiverQueueHandler(protocolID,super.receiverQueue, recQueues);
-        queueHandlers.submit(senderThread);
-        queueHandlers.submit(receiverThread);
-        
+    
     }
 
     /**
@@ -81,38 +63,28 @@ public class DotProduct extends Protocol implements Callable<Integer> {
 
         int dotProduct = 0;
         int vectorLength = xShares.size();
+        startHandlers();
         
         ExecutorService mults = Executors.newFixedThreadPool(Constants.threadCount);
         ExecutorCompletionService<Integer[]> multCompletionService = new ExecutorCompletionService<>(mults);
         
         int i=0;
-        int batchsize = 10;
         int startpid = 0;
         
-        while(i+batchsize < vectorLength) {
+        do {
+            int toIndex = Math.min(i+Constants.batchSize,vectorLength);
             
             System.out.println("Protocol "+protocolId+" batch "+startpid);
             initQueueMap(recQueues, sendQueues, startpid);
             
-            multCompletionService.submit(new BatchMultiplication(xShares.subList(i, i+batchsize), 
-                    yShares.subList(i, i+batchsize), tiShares, sendQueues.get(startpid), recQueues.get(startpid), 
-                    clientID, prime, startpid, oneShare, protocolId));
+            multCompletionService.submit(new BatchMultiplication(xShares.subList(i, toIndex), 
+                    yShares.subList(i, toIndex), tiShares.subList(i, toIndex), sendQueues.get(startpid), 
+                    recQueues.get(startpid), clientID, prime, startpid, oneShare, protocolId));
             
             startpid++;
-            i+=batchsize;
-        }
-        
-        if(i<vectorLength) {
-            System.out.println("Protocol "+protocolId+" batch "+startpid);
-            initQueueMap(recQueues, sendQueues, startpid);
+            i = toIndex;
             
-            multCompletionService.submit(new BatchMultiplication(xShares.subList(i, vectorLength), 
-                    yShares.subList(i, vectorLength), tiShares, sendQueues.get(startpid), recQueues.get(startpid), 
-                    clientID, prime, startpid, oneShare, protocolId));
-            
-            startpid++;
-            
-        }
+        } while(i < vectorLength);
 
         mults.shutdown();
 
@@ -128,9 +100,7 @@ public class DotProduct extends Protocol implements Callable<Integer> {
             }
         }
 
-        senderThread.setProtocolStatus();
-        receiverThread.setProtocolStatus();
-        queueHandlers.shutdown();
+        tearDownHandlers();
         
         dotProduct = Math.floorMod(dotProduct, prime);
         System.out.println("dot product:" + dotProduct + ", protocol id:" + protocolId);

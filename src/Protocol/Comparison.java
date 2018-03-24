@@ -6,18 +6,13 @@
 package Protocol;
 
 import Communication.Message;
-import Communication.ReceiverQueueHandler;
-import Communication.SenderQueueHandler;
 import TrustedInitializer.Triple;
 import Utility.Constants;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -93,7 +88,7 @@ public class Comparison extends CompositeProtocol implements Callable<Integer> {
      */
     @Override
     public Integer call() throws Exception {
-        startHandler();
+        startHandlers();
         int w = -1;
         computeEShares();
 
@@ -251,6 +246,7 @@ public class Comparison extends CompositeProtocol implements Callable<Integer> {
         //Logging.logShares("MultiplicationE", multiplicationE);
     }*/
 
+    
     private void computeMultiplicationEParallel() {
         List<Integer> tempMultE = Arrays.stream(eShares).boxed().collect(Collectors.toList());
         

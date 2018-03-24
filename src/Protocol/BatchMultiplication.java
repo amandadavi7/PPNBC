@@ -53,13 +53,10 @@ public class BatchMultiplication extends Protocol implements Callable<Integer[]>
         this.x = x;
         this.y = y;
         this.tiShares = tiShares;
-        this.senderQueue = senderQueue;
-        this.receiverQueue = receiverQueue;
         this.clientID = clientId;
         this.prime = prime;
         this.oneShare = oneShare;
         this.parentID = parentID;
-
     }
 
     /**
