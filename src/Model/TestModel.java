@@ -12,6 +12,7 @@ import Protocol.ArgMax;
 import Protocol.Comparison;
 import Protocol.DotProduct;
 import Protocol.Multiplication;
+import Protocol.OIS;
 import TrustedInitializer.Triple;
 import Utility.Constants;
 import Utility.Logging;
@@ -114,6 +115,53 @@ public class TestModel {
         
     }
     
+    public void callOIS(){
+        
+        System.out.println("calling OIS with v"+v);
+        
+        ExecutorService es = Executors.newSingleThreadExecutor();
+        
+        long startTime = System.currentTimeMillis();
+        
+        recQueues.putIfAbsent(0, new LinkedBlockingQueue<>());
+        sendQueues.putIfAbsent(0, new LinkedBlockingQueue<>());
+
+        OIS ois;
+        
+        if(v.size()==0){
+            System.out.println("v is null");
+            ois = new OIS(null,tiShares, oneShares, sendQueues.get(0), recQueues.get(0), clientId,
+            Constants.binaryPrime, 0, 4, 1, 3);
+        } else {
+            System.out.println("v is not null");
+            ois = new OIS(v.get(0),tiShares, oneShares, sendQueues.get(0), recQueues.get(0), clientId,
+            Constants.binaryPrime, 0, 4, -1, 3);
+        }
+           
+            
+        Future<Integer[]> task = es.submit(ois);
+        
+        es.shutdown();
+
+        try {
+            Integer[] result = task.get();
+            System.out.println("result:" + Arrays.toString(result));
+        } catch (InterruptedException ex) {
+            Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (ExecutionException ex) {
+            Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    
+        
+        receiverThread.setProtocolStatus();
+        senderThread.setProtocolStatus();
+        queueHandlers.shutdown();
+
+        long stopTime = System.currentTimeMillis();
+        long elapsedTime = stopTime - startTime;
+        System.out.println("Avg time duration:" + elapsedTime);
+    }
+    
     public void callProtocol(int protocolType) {
         ExecutorService es = Executors.newFixedThreadPool(100);
         List<Future<Integer>> taskList = new ArrayList<>();
@@ -198,10 +246,10 @@ public class TestModel {
     public void compute() {
         
         //callArgMax();
-        
+        callOIS();
         
         // pass 1 - multiplication, 2 - dot product and 3 - comparison
-        callProtocol(3);
+        //callProtocol(3);
         
     }
 }
