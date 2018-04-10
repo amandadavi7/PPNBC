@@ -128,7 +128,7 @@ public class TestModel {
 
         OIS ois;
         
-        if(v.size()==0){
+        if(v.isEmpty()){
             System.out.println("v is null");
             ois = new OIS(null,tiShares, oneShares, sendQueues.get(0), recQueues.get(0), clientId,
             Constants.binaryPrime, 0, 4, 1, 3);

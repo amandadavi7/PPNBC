@@ -14,13 +14,13 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 /**
- *
+ * Takes a feature vector, k (index of the feature that needs to be selected and returns shares of xk
+ * assymetric computation one party sends k=-1 and feature vector, another party sends k and featurevector = null
  * @author keerthanaa
  */
 public class OIS extends CompositeProtocol implements Callable<Integer[]>{
@@ -29,6 +29,21 @@ public class OIS extends CompositeProtocol implements Callable<Integer[]>{
     List<Triple> tiShares;
     int numberCount,bitLength, oneShare;
     
+    /**
+     * Constructor
+     * 
+     * @param features
+     * @param tiShares
+     * @param oneShare
+     * @param senderQueue
+     * @param receiverQueue
+     * @param clientId
+     * @param prime
+     * @param protocolID
+     * @param bitLength
+     * @param k
+     * @param numberCount 
+     */
     public OIS(List<List<Integer>> features, List<Triple> tiShares,
             int oneShare, BlockingQueue<Message> senderQueue,
             BlockingQueue<Message> receiverQueue, int clientId, int prime,
@@ -72,7 +87,7 @@ public class OIS extends CompositeProtocol implements Callable<Integer[]>{
     }
     
     /**
-     * 
+     * for each bit, call dot product between all the nth bits of the features and yshares vector
      * @return
      * @throws Exception 
      */
