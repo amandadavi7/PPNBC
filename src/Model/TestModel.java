@@ -27,46 +27,23 @@ import java.util.logging.*;
  *
  * @author anisha
  */
-public class TestModel {
+public class TestModel extends Model{
 
-    ConcurrentHashMap<Integer, BlockingQueue<Message>> recQueues;
-    ConcurrentHashMap<Integer, BlockingQueue<Message>> sendQueues;
-
-    ExecutorService queueHandlers;
-    SenderQueueHandler senderThread;
-    ReceiverQueueHandler receiverThread;
-
-    private BlockingQueue<Message> commonSender;
-    private BlockingQueue<Message> commonReceiver;
-
-    int clientId;
     List<List<Integer>> x;
     List<List<Integer>> y;
     List<List<List<Integer>>> v;
-    List<Triple> tiShares;
-    int oneShares;
-
+    
     public TestModel(List<List<Integer>> x, List<List<Integer>> y,
-            List<List<List<Integer>>> v, List<Triple> tiShares,
+            List<List<List<Integer>>> v, List<Triple> binaryTriples, List<Triple> decimalTriples,
             int oneShares, BlockingQueue<Message> senderQueue,
             BlockingQueue<Message> receiverQueue, int clientId) {
+        
+        super(senderQueue, receiverQueue, clientId, oneShares, binaryTriples, decimalTriples);
+        
         this.x = x;
         this.y = y;
         this.v = v;
-        this.tiShares = tiShares;
-        this.oneShares = oneShares;
-        this.commonSender = senderQueue;
-        this.commonReceiver = receiverQueue;
-        this.clientId = clientId;
-
-        recQueues = new ConcurrentHashMap<>(50, 0.9f, 1);
-        sendQueues = new ConcurrentHashMap<>(50, 0.9f, 1);
-
-        queueHandlers = Executors.newFixedThreadPool(2);
-        senderThread = new SenderQueueHandler(1, commonSender, sendQueues);
-        receiverThread = new ReceiverQueueHandler(1, commonReceiver, recQueues);
-        queueHandlers.submit(senderThread);
-        queueHandlers.submit(receiverThread);
+        
     }
     
     public void callArgMax() {
@@ -82,7 +59,7 @@ public class TestModel {
             recQueues.putIfAbsent(i, new LinkedBlockingQueue<>());
             sendQueues.putIfAbsent(i, new LinkedBlockingQueue<>());
 
-            ArgMax argmaxModule = new ArgMax(v.get(i), tiShares, oneShares, sendQueues.get(i), 
+            ArgMax argmaxModule = new ArgMax(v.get(i), binaryTiShares, oneShares, sendQueues.get(i), 
                 recQueues.get(i), clientId, Constants.binaryPrime, i);
             
             System.out.println("submitted " + i + " argmax");
@@ -142,11 +119,11 @@ public class TestModel {
         
         if(v.isEmpty()){
             System.out.println("v is null");
-            ois = new OIS(null,tiShares, oneShares, sendQueues.get(0), recQueues.get(0), clientId,
+            ois = new OIS(null,binaryTiShares, oneShares, sendQueues.get(0), recQueues.get(0), clientId,
             Constants.binaryPrime, 0, 4, 1, 3);
         } else {
             System.out.println("v is not null");
-            ois = new OIS(v.get(0),tiShares, oneShares, sendQueues.get(0), recQueues.get(0), clientId,
+            ois = new OIS(v.get(0),binaryTiShares, oneShares, sendQueues.get(0), recQueues.get(0), clientId,
             Constants.binaryPrime, 0, 4, -1, 3);
         }
            
@@ -188,7 +165,7 @@ public class TestModel {
                     recQueues.putIfAbsent(i, new LinkedBlockingQueue<>());
                     sendQueues.putIfAbsent(i, new LinkedBlockingQueue<>());
                     
-                    Multiplication multiplicationModule = new Multiplication(x.get(i).get(0),y.get(i).get(0),tiShares.get(i)
+                    Multiplication multiplicationModule = new Multiplication(x.get(i).get(0),y.get(i).get(0),decimalTiShares.get(i)
                     ,sendQueues.get(i),recQueues.get(i),clientId,Constants.prime,i,oneShares,0);
                 
                     System.out.println("Submitted " + i + " multiplication");
@@ -204,7 +181,7 @@ public class TestModel {
                     sendQueues.putIfAbsent(i, new LinkedBlockingQueue<>());
                     
                     DotProduct DPModule = new DotProduct(x.get(i),
-                    y.get(i), tiShares, sendQueues.get(i), recQueues.get(i),
+                    y.get(i), decimalTiShares, sendQueues.get(i), recQueues.get(i),
                     clientId, Constants.prime, i, oneShares);  
                 
                     System.out.println("Submitted " + i + " dotproduct");
@@ -220,7 +197,7 @@ public class TestModel {
                     sendQueues.putIfAbsent(i, new LinkedBlockingQueue<>());
                     
                     Comparison comparisonModule = new Comparison(x.get(i), y.get(i), 
-                    tiShares, oneShares, sendQueues.get(i),
+                    binaryTiShares, oneShares, sendQueues.get(i),
                     recQueues.get(i), clientId, Constants.binaryPrime, i); 
                 
                     System.out.println("submitted " + i + " comparison");
@@ -257,11 +234,16 @@ public class TestModel {
 
     public void compute() {
         
+        startModelHandlers();
+        
         //callArgMax();
         callOIS();
         
         // pass 1 - multiplication, 2 - dot product and 3 - comparison
         //callProtocol(3);
+        
+        
+        teardownModelHandlers();
         
     }
          

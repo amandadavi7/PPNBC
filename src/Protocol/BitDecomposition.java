@@ -5,34 +5,21 @@
  */
 package Protocol;
 import Communication.Message;
-import Communication.ReceiverQueueHandler;
-import Communication.SenderQueueHandler;
-import TrustedInitializer.Triple;
 import Utility.Logging;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.TreeMap;
 import java.util.List;
 import java.util.concurrent.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import TrustedInitializer.Triple;
+
 /**
  *
  * @author bhagatsanchya
  */
-public class BitDecomposition implements Callable<Integer>{
+public class BitDecomposition extends CompositeProtocol implements Callable<Integer>{
    
-    ConcurrentHashMap<Integer, BlockingQueue<Message>> recQueues;
-    ConcurrentHashMap<Integer, BlockingQueue<Message>> sendQueues;
-
-    ExecutorService sendqueueHandler;
-    ExecutorService recvqueueHandler;
-
-    private BlockingQueue<Message> commonSender;
-    private BlockingQueue<Message> commonReceiver;
     List<Integer> a;
     List<Integer> b;
    // List<Integer> x;
@@ -48,9 +35,7 @@ public class BitDecomposition implements Callable<Integer>{
     HashMap<Integer, Integer> yShares;
     
     /*parentProtocolId not used for testing*/
-    int parentProtocolId;   
-    int clientID;
-    int prime;
+    //int parentProtocolId;   
     int bitLength;
 
     /**
@@ -70,16 +55,14 @@ public class BitDecomposition implements Callable<Integer>{
             int oneShare, BlockingQueue<Message> senderQueue,
             BlockingQueue<Message> receiverQueue, int clientId, int prime,
             int protocolID) {
+        
+        super(protocolID, senderQueue, receiverQueue, clientId, prime);
 
         this.a = a;
         this.b = b;
         this.oneShare = oneShare;
         this.tiShares = tiShares;
-        this.commonSender = senderQueue;
-        this.commonReceiver = receiverQueue;
-        this.clientID = clientId;
-        this.prime = prime;
-        this.parentProtocolId = protocolID;
+        //this.parentProtocolId = protocolID;
 
         bitLength = Math.max(a.size(), b.size());
         eShares = new HashMap<>();
@@ -90,21 +73,14 @@ public class BitDecomposition implements Callable<Integer>{
         //multiplicationE = new HashMap<>();
 
         System.out.println("bitLength:" + bitLength);
-        // Communication between the parent and the sub protocols
-        recQueues = new ConcurrentHashMap<>();
-        sendQueues = new ConcurrentHashMap<>();
-
-        sendqueueHandler = Executors.newSingleThreadExecutor();
-        recvqueueHandler = Executors.newSingleThreadExecutor();
-
-        sendqueueHandler.execute(new SenderQueueHandler(protocolID, commonSender, sendQueues));
-        recvqueueHandler.execute(new ReceiverQueueHandler(protocolID,commonReceiver, recQueues));
 
     }
 
     @Override
     public Integer call() throws Exception {
-          
+        
+        startHandlers();
+        
         // Function to initialze y[i] and put x1 <- y1
         initY();
         
@@ -112,7 +88,6 @@ public class BitDecomposition implements Callable<Integer>{
             //just wait
         }
          
-        
         // Initialize c[1] 
         // TODO : Check for parameters here.
         int first_c_share = computeByBit(a.get(0),b.get(0),0,0);
@@ -239,16 +214,8 @@ public class BitDecomposition implements Callable<Integer>{
             case 'y':
                 return_val =  yShares.get(index);
                 break;    
-            
         }
         return return_val;
-    }
-    /**
-     * Teardown all local threads 
-     */
-    private void tearDownHandlers() {
-        recvqueueHandler.shutdownNow();
-        sendqueueHandler.shutdownNow();
     }
     
     /**
@@ -469,13 +436,6 @@ public class BitDecomposition implements Callable<Integer>{
                 
                 //continue;
         }
-           
-           
-           
-          
-            
-           
-           
         
         }
     }

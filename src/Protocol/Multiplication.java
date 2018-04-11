@@ -57,13 +57,6 @@ public class Multiplication extends Protocol implements Callable {
         this.prime = prime;
         this.oneShare = oneShare;
         this.parentID = parentID;
-
-        
-//        System.out.println("x: " + x);
-//        System.out.println("y: " + y);
-//        System.out.println("Ti shares");
-        //tiShares.log();
-        
     }
 
     /**
