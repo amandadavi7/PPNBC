@@ -151,11 +151,11 @@ public class DecisionTreeScoring extends Model {
         
         if(partyHasTree) {
             for(int i=0;i<leafNodes-1;i++){
-                initQueueMap(recQueues, sendQueues, i+leafNodes-1);
-                Comparison comp = new Comparison(Arrays.asList(featureVectors[i]),);
-            
-                Future<Integer[]> task = es.submit(comp);
-                taskList.add(task);
+//                initQueueMap(recQueues, sendQueues, i+leafNodes-1);
+//                Comparison comp = new Comparison(Arrays.asList(featureVectors[i]));
+//            
+//                Future<Integer[]> task = es.submit(comp);
+//                taskList.add(task);
             
             }
         } else {

@@ -55,19 +55,15 @@ public class Multiplication extends Protocol implements Callable {
         this.tiShares = tiShares;
         this.clientID = clientId;
         this.prime = prime;
-<<<<<<< HEAD
         this.oneShare = oneShare;
         this.parentID = parentID;
 
-=======
-        this.protocolID = protocolID;
         
 //        System.out.println("x: " + x);
 //        System.out.println("y: " + y);
 //        System.out.println("Ti shares");
-        tiShares.log();
+        //tiShares.log();
         
->>>>>>> bitdecomposition
     }
 
     /**
