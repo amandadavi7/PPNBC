@@ -168,10 +168,19 @@ public class Party {
 
         startServer();
         startClient();
+<<<<<<< HEAD
 
         TestModel testModel = new TestModel(xShares, yShares, vShares, 
               tiShares.binaryShares, oneShares, senderQueue, receiverQueue, partyId);
+=======
+        
+        TestModel testModel = new TestModel(xShares, yShares,
+                tiShares.binaryShares, oneShares, senderQueue, receiverQueue, partyId);
+>>>>>>> bitdecomposition
         testModel.compute();
+        
+        
+        
     }
 
     /**

@@ -6,9 +6,13 @@
 package Model;
 
 import Communication.Message;
+<<<<<<< HEAD
 import Communication.ReceiverQueueHandler;
 import Communication.SenderQueueHandler;
 import Protocol.ArgMax;
+=======
+import Protocol.BitDecomposition;
+>>>>>>> bitdecomposition
 import Protocol.Comparison;
 import Protocol.DotProduct;
 import Protocol.Multiplication;
@@ -126,7 +130,24 @@ public class TestModel {
         recQueues.putIfAbsent(0, new LinkedBlockingQueue<>());
         sendQueues.putIfAbsent(0, new LinkedBlockingQueue<>());
 
+<<<<<<< HEAD
         OIS ois;
+=======
+        //Multiplication multiplicationModule = new Multiplication(x.get(0), 
+        //        y.get(0), tiShares.get(0), 
+        //        senderQueue, receiverQueue, clientId, Constants.prime,0);
+        //Future<Integer> multiplicationTask = es.submit(multiplicationModule);
+//        DotProduct dotproductModule = new DotProduct(x, y, tiShares, senderQueue, 
+//                receiverQueue, clientId, Constants.prime, 1);
+//        
+//        Future<Integer> dotProduct = es.submit(dotproductModule);
+        
+        /* MY COMMENT
+        Comparison comparisonModule = new Comparison(x, y, tiShares, oneShares, senderQueue,
+                receiverQueue, clientId, Constants.binaryPrime, 1);
+        
+        Future<Integer> comparisonTask = es.submit(comparisonModule);
+>>>>>>> bitdecomposition
         
         if(v.isEmpty()){
             System.out.println("v is null");
@@ -250,6 +271,23 @@ public class TestModel {
         
         // pass 1 - multiplication, 2 - dot product and 3 - comparison
         //callProtocol(3);
+        
+    }
+         END COMMENT */
+        
+        BitDecomposition bitTest = new BitDecomposition(x, y, tiShares, oneShares, senderQueue,
+                receiverQueue, clientId, Constants.binaryPrime, 1);
+        
+        Future<Integer> bitdecompositionTask = es.submit(bitTest);
+        
+        try {
+            int result = bitdecompositionTask.get();
+            System.out.println("result of bitDecomposition" + result);
+        } catch (InterruptedException ex) {
+            Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (ExecutionException ex) {
+            Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
+        }
         
     }
 }
