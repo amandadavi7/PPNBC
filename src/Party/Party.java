@@ -44,7 +44,6 @@ public class Party {
 
     private static List<List<Integer> > xShares;
     private static List<List<Integer> > yShares;
-    //private static List<List<List<Integer> > > vShares;
     private static List<List<List<Integer>>> vShares;
     private static int oneShares; 
 
@@ -94,11 +93,9 @@ public class Party {
                         buf = new BufferedReader(new FileReader(csvFile));
                         String line = null;
                         while((line = buf.readLine()) != null){
-                            System.out.println("Line:" + line);
                             int lineInt[] = Arrays.stream(line.split(",")).mapToInt(Integer::parseInt).toArray();
                             List<Integer> xline = Arrays.stream(lineInt).boxed().collect(Collectors.toList());
                             xShares.add(xline);
-                            System.out.println(xline);
                         }
                     } catch (FileNotFoundException ex) {
                         Logger.getLogger(Party.class.getName()).log(Level.SEVERE, null, ex);
@@ -115,7 +112,6 @@ public class Party {
                         buf = new BufferedReader(new FileReader(csvFile));
                         String line = null;
                         while((line = buf.readLine()) != null){
-                            System.out.println("Line:" + line);
                             int lineInt[] = Arrays.stream(line.split(",")).mapToInt(Integer::parseInt).toArray();
                             List<Integer> yline = Arrays.stream(lineInt).boxed().collect(Collectors.toList());
                             yShares.add(yline);

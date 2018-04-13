@@ -47,7 +47,8 @@ public class TestModel extends Model{
         ExecutorService es = Executors.newFixedThreadPool(1);
         initQueueMap(recQueues, sendQueues, 1);
         //TODO: change this to just take integers instead of wasting memory on List<Integer> 
-        BitDecomposition bitTest = new BitDecomposition(x.get(0), y.get(0), binaryTiShares, oneShares, sendQueues.get(1),
+        BitDecomposition bitTest = new BitDecomposition(x.get(0).get(0), y.get(0).get(0),
+                binaryTiShares, oneShares, 4, sendQueues.get(1),
                 recQueues.get(1), clientId, Constants.binaryPrime, 1);
         
         Future<List<Integer>> bitdecompositionTask = es.submit(bitTest);
@@ -288,8 +289,8 @@ public class TestModel extends Model{
         
         //callArgMax();
         //callOIS();
-
-        callOR_XOR();
+        //callOR_XOR();
+        callBitDecomposition();
         
         // pass 1 - multiplication, 2 - dot product and 3 - comparison
         //callProtocol(3);

@@ -6,6 +6,7 @@
 package Model;
 
 import Communication.Message;
+import Protocol.BitDecomposition;
 import Protocol.Comparison;
 import Protocol.OIS;
 import TrustedInitializer.Triple;
@@ -34,7 +35,7 @@ public class DecisionTreeScoring extends Model {
     int[] leafToClassIndexMapping;
     int[] nodeToAttributeIndexMapping;
     int[] attributeThresholds;
-    int[][] attributeThresholdsBitShares;
+    List<List<Integer>> attributeThresholdsBitShares;
     int leafNodes, tiBinaryStartIndex, tiDecimalStartIndex;
     int[] comparisonOutputs;
     
@@ -78,7 +79,7 @@ public class DecisionTreeScoring extends Model {
         //Doing common initializations for both parties here
         leafNodes = (int) Math.pow(2, depth);
         featureVectors = new Integer[leafNodes-1][attributeBitLength];
-        attributeThresholdsBitShares = new int[leafNodes-1][attributeBitLength];
+        attributeThresholdsBitShares = new ArrayList<>();
         comparisonOutputs = new int[leafNodes-1];
         tiBinaryStartIndex = 0;
         tiDecimalStartIndex = 0;
@@ -86,22 +87,23 @@ public class DecisionTreeScoring extends Model {
         //Protocol IDs from 0 to leafNodes-2
         getFeatureVectors();
         
-        //Convert Threshold to bit shares
-        //call bit decomposition here
+        //Convert Threshold to bit shares leafNodes-1 to 2(leafNodes)-3
+        convertThresholdsToBits(leafNodes-1);
         
-        //Protocol IDs from leaftNodes-1 to 2(leafNodes)- 3
-        doThresholdComparisons();
+        //Protocol IDs from 2(leafNodes)- 2 to 3(leafNodes) - 4
+        doThresholdComparisons(2*leafNodes - 1);
+        
+        //
+        computePolynomialEquation(3*leafNodes - 4);
         
         teardownModelHandlers();
         return 0;
     }
     
-    
     void getFeatureVectors(){
         
         ExecutorService es = Executors.newFixedThreadPool(Constants.threadCount);
         List<Future<Integer[]>> taskList = new ArrayList<>();
-        
         
         if(partyHasTree){
             for(int i=0;i<leafNodes-1;i++){
@@ -145,31 +147,58 @@ public class DecisionTreeScoring extends Model {
        
     }
     
-    void doThresholdComparisons() {
+    void convertThresholdsToBits(int startpid) {
+        ExecutorService es = Executors.newFixedThreadPool(Constants.threadCount);
+        List<Future<List<Integer>>> taskList = new ArrayList<>();
+        
+        
+        //Need to handle tishares sublist
+        if(partyHasTree) {
+            for(int i=0;i<leafNodes-1;i++) {
+                initQueueMap(recQueues, sendQueues, i+startpid);
+                BitDecomposition bitD = new BitDecomposition(attributeThresholds[i], 0, binaryTiShares, oneShares, Constants.bitLength,
+                        sendQueues.get(i+startpid), recQueues.get(i+startpid), clientId, Constants.binaryPrime, i+startpid);
+                Future<List<Integer>> task = es.submit(bitD);
+                taskList.add(task);
+            }
+        } else {
+            for(int i=0;i<leafNodes-1;i++) {
+                initQueueMap(recQueues, sendQueues, i+startpid);
+                BitDecomposition bitD = new BitDecomposition(0, 0, binaryTiShares, oneShares, Constants.bitLength,
+                        sendQueues.get(i+startpid), recQueues.get(i+startpid), clientId, Constants.binaryPrime, i+startpid);
+                Future<List<Integer>> task = es.submit(bitD);
+                taskList.add(task);
+            }
+        }
+        
+        es.shutdown();
+        
+        for (int i = 0; i < leafNodes-1; i++) {
+            Future<List<Integer>> taskResponse = taskList.get(i);
+            try {
+                attributeThresholdsBitShares.add(taskResponse.get());
+            } catch (InterruptedException ex) {
+                Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
+            } catch (ExecutionException ex) {
+                Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
+            }        
+        }
+        
+    }
+    
+    void doThresholdComparisons(int startpid) {
         
         ExecutorService es = Executors.newFixedThreadPool(Constants.threadCount);
         List<Future<Integer>> taskList = new ArrayList<>();
-        /*
-        if(partyHasTree) {
-            for(int i=0;i<leafNodes-1;i++){
-                initQueueMap(recQueues, sendQueues, i+leafNodes-1);
-                Comparison comp = new Comparison(Arrays.asList(featureVectors[i]), Arrays.asList(attributeThresholdsBitShares[i]),
-                sendQueues.get(i+leafNodes-1), recQueues.get(i+leafNodes-1));
+        
+        //Need to handle tishares sublist
+        for(int i=0;i<leafNodes-1;i++){
+            initQueueMap(recQueues, sendQueues, i+startpid);
+            Comparison comp = new Comparison(Arrays.asList(featureVectors[i]), attributeThresholdsBitShares.get(i), binaryTiShares,
+                    oneShares, sendQueues.get(i+startpid), recQueues.get(i+startpid), clientId, Constants.binaryPrime, i+startpid);
             
-                Future<Integer[]> task = es.submit(comp);
-                taskList.add(task);
-            
-            }
-        } else {
-            for(int i=0;i<leafNodes-1;i++){
-                initQueueMap(recQueues, sendQueues, i+leafNodes-1);
-                Comparison comp = new Comparison(Arrays.asList(featureVectors[i]), Arrays.asList(attributeThresholdsBitShares[i]),
-                sendQueues.get(i+leafNodes-1), recQueues.get(i+leafNodes-1));
-            
-                Future<Integer[]> task = es.submit(comp);
-                taskList.add(task);
-            
-            }            
+            Future<Integer> task = es.submit(comp);
+            taskList.add(task);
         }
         
         es.shutdown();
@@ -183,10 +212,10 @@ public class DecisionTreeScoring extends Model {
             } catch (ExecutionException ex) {
                 Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
             }
-        }*/
+        }
     }
     
-    void computePolynomial(){
+    void computePolynomialEquation(int startpid){
         
     }
 }
