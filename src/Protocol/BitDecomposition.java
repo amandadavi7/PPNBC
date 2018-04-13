@@ -18,12 +18,12 @@ import TrustedInitializer.Triple;
  *
  * @author bhagatsanchya
  */
-public class BitDecomposition extends CompositeProtocol implements Callable<Integer>{
+public class BitDecomposition extends CompositeProtocol implements Callable<List<Integer>>{
    
+    int a_decimal;
+    int b_decimal;
     List<Integer> a;
     List<Integer> b;
-   // List<Integer> x;
-   //List<Integer> y;
     int oneShare;
     List<Triple> tiShares;
 
@@ -31,7 +31,8 @@ public class BitDecomposition extends CompositeProtocol implements Callable<Inte
     HashMap<Integer, Integer> eShares;
    // HashMap<Integer, Integer> multiplicationE;
     HashMap<Integer, Integer> cShares;
-    HashMap<Integer,Integer> xShares;
+    //Changed to List from HashMap
+    List<Integer> xShares;
     HashMap<Integer, Integer> yShares;
     
     /*parentProtocolId not used for testing*/
@@ -41,8 +42,8 @@ public class BitDecomposition extends CompositeProtocol implements Callable<Inte
     /**
      * Constructor
      *
-     * @param a
-     * @param b
+     * @param a_decimal
+     * @param b_decimal
      * @param tiShares
      * @param oneShare
      * @param senderQueue
@@ -51,15 +52,40 @@ public class BitDecomposition extends CompositeProtocol implements Callable<Inte
      * @param prime
      * @param protocolID
      */
-    public BitDecomposition(List<Integer> a, List<Integer> b, List<Triple> tiShares,
+    // TODO Change a_decimal and b_decimal to just take be integers and not lists.
+    public BitDecomposition(List<Integer> a_decimal, List<Integer> b_decimal, List<Triple> tiShares,
             int oneShare, BlockingQueue<Message> senderQueue,
             BlockingQueue<Message> receiverQueue, int clientId, int prime,
             int protocolID) {
         
         super(protocolID, senderQueue, receiverQueue, clientId, prime);
 
-        this.a = a;
-        this.b = b;
+        this.a_decimal = a_decimal.get(0);
+        this.b_decimal = b_decimal.get(0);
+        System.out.println("a_share" + a_decimal.get(0));
+        System.out.println("b_share" + b_decimal.get(0));
+        
+        // convert decimal to binary notation
+        this.a = decimalToBinary(this.a_decimal);
+        this.b = decimalToBinary(this.b_decimal);
+        
+        //add padding to  make the number of bits same
+        int diff = Math.abs(a.size() - b.size());
+        
+        // add padding to b if a>b
+        if (a.size() > b.size()){
+            for(int i = 0; i < diff;i++){
+                b.add(0);
+            }
+        }
+        // add padding to a if a<b
+        else if (b.size() > a.size()){
+            for(int i = 0; i < diff;i++){
+                a.add(0);
+            }
+        }
+        System.out.println("a size after padding: " + a.size());
+        System.out.println("b size after padding:" + b.size());
         this.oneShare = oneShare;
         this.tiShares = tiShares;
         //this.parentProtocolId = protocolID;
@@ -68,7 +94,7 @@ public class BitDecomposition extends CompositeProtocol implements Callable<Inte
         eShares = new HashMap<>();
         dShares = new HashMap<>();
         cShares = new HashMap<>();
-        xShares = new HashMap<>();
+        xShares = new ArrayList<>();
         yShares = new HashMap<>();
         //multiplicationE = new HashMap<>();
 
@@ -77,7 +103,7 @@ public class BitDecomposition extends CompositeProtocol implements Callable<Inte
     }
 
     @Override
-    public Integer call() throws Exception {
+    public List<Integer> call() throws Exception {
         
         startHandlers();
         
@@ -117,11 +143,11 @@ public class BitDecomposition extends CompositeProtocol implements Callable<Inte
         // once we have d and e, we can compute c and x Sequentially
         if(threadsCompleted){
             computeVariables();
-            System.out.println("Values for xShares: [" + xShares+"]"); 
+//            System.out.println("Values for xShares: [" + xShares+"]"); 
         }
           
           tearDownHandlers();
-          return 1;
+          return xShares;
     }
     
     public void initY(){
@@ -136,7 +162,7 @@ public class BitDecomposition extends CompositeProtocol implements Callable<Inte
         
         // set x[1] <- y[1]
         int y0 = yShares.get(0);
-        xShares.put(0, y0);
+        xShares.add(0, y0);
         System.out.println("LSB for x: " + xShares);
     }
     
@@ -144,9 +170,7 @@ public class BitDecomposition extends CompositeProtocol implements Callable<Inte
     // Calculate step (2)  [c1] = [a1][b1] 
     public int computeByBit(int first_bit, int second_bit, int protocol_id, int subprotocolId)throws InterruptedException, ExecutionException{
         int multiplication_result = -1;
-        
-//        int first_bit = getBitFromId(first_name,first_index);
-//        int second_bit = getBitFromId(second_name,second_index);
+    
         System.out.println("Computing prtocol id: " + (protocol_id + subprotocolId) );
         // System.out.println("In BitDecomposition -> ComputeInit()");
         ExecutorService es = Executors.newSingleThreadExecutor();
@@ -186,36 +210,6 @@ public class BitDecomposition extends CompositeProtocol implements Callable<Inte
             }
           
         return multiplication_result;
-    }
-    
-    private int getBitFromId(char name, int index){
-        
-        int return_val = -1;
-        
-        switch(name){
-            case 'a':
-                return_val =  a.get(index);
-                break;
-            case 'b':
-                return_val =  b.get(index);
-                break;
-            case 'e':
-                return_val =  eShares.get(index);
-                break;
-            case 'd':
-                return_val =  dShares.get(index);
-                break;
-            case 'c':
-                return_val =  cShares.get(index);
-                break;
-            case 'x':
-                return_val =  xShares.get(index);
-                break;
-            case 'y':
-                return_val =  yShares.get(index);
-                break;    
-        }
-        return return_val;
     }
     
     /**
@@ -267,152 +261,20 @@ public class BitDecomposition extends CompositeProtocol implements Callable<Inte
     }
     
     /**
-     * Compute [ei] = [yi]*[c(i-1)] + 1  using distributed multiplication and set 
-     * @throws InterruptedException
-     * @throws ExecutionException 
+     * Converts decimal value to List<> of bits (binary)
+     * @param decimal_val
+     * @return 
      */
-    private void computeEShares() throws InterruptedException, ExecutionException {
-
-        ExecutorService es = Executors.newFixedThreadPool(bitLength);
-        List<Future<Integer>> taskList = new ArrayList<Future<Integer>>();
-        int subProtocolID = bitLength + 1;
-        // **** The protocols for computation of e are assigned id 1-bitLength-1 ***
-        // We already calculated the LSB, so we don't repeat that.
-        for (int i = 1; i < bitLength; i++) {
-            //compute local shares of d and e and add to the message queue
+     public static List<Integer> decimalToBinary(int decimal_val){
+         List<Integer> bits = new ArrayList<>();
+        while(decimal_val > 0){
             
-            if (!recQueues.containsKey(subProtocolID + i)) {
-                BlockingQueue<Message> temp = new LinkedBlockingQueue<>();
-                recQueues.put(subProtocolID + i, temp);
-            }
-
-            if (!sendQueues.containsKey(subProtocolID + i)) {
-                BlockingQueue<Message> temp2 = new LinkedBlockingQueue<>();
-                sendQueues.put(subProtocolID + i, temp2);
-            }
+            bits.add(decimal_val % 2);
             
-            Multiplication multiplicationModule = new Multiplication(yShares.get(i),
-                    cShares.get(i-1), tiShares.get(subProtocolID + i),
-                    sendQueues.get(subProtocolID + i), recQueues.get(subProtocolID + i), clientID,
-                    prime, subProtocolID + i, oneShare, 1);
-            Future<Integer> multiplicationTask = es.submit(multiplicationModule);
-            taskList.add(multiplicationTask);
-
+            decimal_val = decimal_val / 2;
+          
         }
-
-        es.shutdown();
-
-        // Save e[i] to eShares
-        for (int i = 1; i < bitLength; i++) {
-            Future<Integer> eWorkerResponse = taskList.get(i-1);
-            int e = eWorkerResponse.get() + 1;
-            e = Math.floorMod(e, prime);
-            eShares.put(i, e);
-            System.out.println("E shares " + i + " ");
-        }
-        
-        Logging.logShares("eShares", eShares);
-    }
-    
-    
-    /**
-     * Compute [ci] = [ei]*[di] + 1  using distributed multiplication and set 
-     * @throws InterruptedException
-     * @throws ExecutionException 
-     */
-    private void computeCShares() throws InterruptedException, ExecutionException {
-
-        ExecutorService es = Executors.newFixedThreadPool(bitLength);
-        List<Future<Integer>> taskList = new ArrayList<Future<Integer>>();
-        
-        // TODO Check the bitLength to use here
-        int subProtocolID = (bitLength * 2) + 1;
-        
-        // **** The protocols for computation of e are assigned id 1-bitLength-1 ***
-        // We already calculated the LSB, so we don't repeat that.
-        for (int i = 1; i < bitLength; i++) {
-            //compute local shares of d and e and add to the message queue
-            
-            if (!recQueues.containsKey(subProtocolID + i)) {
-                BlockingQueue<Message> temp = new LinkedBlockingQueue<>();
-                recQueues.put(subProtocolID + i, temp);
-            }
-
-            if (!sendQueues.containsKey(subProtocolID + i)) {
-                BlockingQueue<Message> temp2 = new LinkedBlockingQueue<>();
-                sendQueues.put(subProtocolID + i, temp2);
-            }
-            
-            Multiplication multiplicationModule = new Multiplication(eShares.get(i),
-                    dShares.get(i), tiShares.get(subProtocolID + i),
-                    sendQueues.get(subProtocolID + i), recQueues.get(subProtocolID + i), clientID,
-                    prime, subProtocolID + i, oneShare, 1);
-            Future<Integer> multiplicationTask = es.submit(multiplicationModule);
-            taskList.add(multiplicationTask);
-
-        }
-
-        es.shutdown();
-
-        // Save c[i] to cShares
-        for (int i = 1; i < bitLength; i++) {
-            Future<Integer> cWorkerResponse = taskList.get(i-1);
-            int c = cWorkerResponse.get() + 1;
-            c = Math.floorMod(c, prime);
-            cShares.put(i, c);
-        }
-        
-        Logging.logShares("eShares", eShares);
-    }
-    
-    /**
-     * Compute [xi] = [yi]*[c(i-1)] using distributed multiplication and set 
-     * @throws InterruptedException
-     * @throws ExecutionException 
-     */
-    private void computeXShares() throws InterruptedException, ExecutionException {
-
-        ExecutorService es = Executors.newFixedThreadPool(bitLength);
-        List<Future<Integer>> taskList = new ArrayList<Future<Integer>>();
-        
-        // TODO Check the bitLength to use here
-        int subProtocolID = (bitLength * 3) + 1;
-        
-        // **** The protocols for computation of x are assigned id 1-bitLength-1 ***
-        // We already calculated the LSB, so we don't repeat that.
-        for (int i = 1; i < bitLength; i++) {
-            //compute local shares of d and e and add to the message queue
-            
-            if (!recQueues.containsKey(subProtocolID + i)) {
-                BlockingQueue<Message> temp = new LinkedBlockingQueue<>();
-                recQueues.put(subProtocolID + i, temp);
-            }
-
-            if (!sendQueues.containsKey(subProtocolID + i)) {
-                BlockingQueue<Message> temp2 = new LinkedBlockingQueue<>();
-                sendQueues.put(subProtocolID + i, temp2);
-            }
-            
-            Multiplication multiplicationModule = new Multiplication(yShares.get(i),
-                    cShares.get(i-1), tiShares.get(subProtocolID + i),
-                    sendQueues.get(subProtocolID + i), recQueues.get(subProtocolID + i), clientID,
-                    prime, subProtocolID + i, oneShare, 1);
-            Future<Integer> multiplicationTask = es.submit(multiplicationModule);
-            taskList.add(multiplicationTask);
-
-        }
-
-        es.shutdown();
-
-        // Save x[i] to xShares
-        for (int i = 1; i < bitLength; i++) {
-            Future<Integer> xWorkerResponse = taskList.get(i-1);
-            int x = xWorkerResponse.get();
-            x = Math.floorMod(x, prime);
-            xShares.put(i, x);
-        }
-        
-        //Logging.logShares("xShares", xShares);
+       return bits;
     }
     
     private void computeVariables() throws InterruptedException{
@@ -432,9 +294,8 @@ public class BitDecomposition extends CompositeProtocol implements Callable<Inte
                 int x_result = yShares.get(i);
                 x_result = x_result + cShares.get(i-1); 
                 x_result = Math.floorMod(x_result, prime);
-                xShares.put(i, x_result);
+                xShares.add(i, x_result);
                 
-                //continue;
         }
         
         }

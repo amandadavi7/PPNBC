@@ -288,8 +288,8 @@ public class TestModel extends Model{
         
         //callArgMax();
         //callOIS();
+
         callOR_XOR();
-        
         
         // pass 1 - multiplication, 2 - dot product and 3 - comparison
         //callProtocol(3);
