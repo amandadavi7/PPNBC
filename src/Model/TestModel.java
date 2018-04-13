@@ -46,6 +46,26 @@ public class TestModel extends Model{
         
     }
     
+    public void callBitDecomposition(){
+        
+        ExecutorService es = Executors.newFixedThreadPool(1);
+        initQueueMap(recQueues, sendQueues, 1);
+        BitDecomposition bitTest = new BitDecomposition(x.get(0), y.get(0), binaryTiShares, oneShares, sendQueues.get(1),
+                recQueues.get(1), clientId, Constants.binaryPrime, 1);
+        
+        Future<Integer> bitdecompositionTask = es.submit(bitTest);
+        
+        try {
+            int result = bitdecompositionTask.get();
+            System.out.println("result of bitDecomposition" + result);
+        } catch (InterruptedException ex) {
+            Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (ExecutionException ex) {
+
+            Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+    
     public void callArgMax() {
         
         ExecutorService es = Executors.newFixedThreadPool(100);
@@ -237,7 +257,8 @@ public class TestModel extends Model{
         startModelHandlers();
         
         //callArgMax();
-        callOIS();
+        //callOIS();
+        callBitDecomposition();
         
         // pass 1 - multiplication, 2 - dot product and 3 - comparison
         //callProtocol(3);
