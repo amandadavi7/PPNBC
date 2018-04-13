@@ -67,7 +67,7 @@ public class BatchMultiplication extends Protocol implements Callable<Integer[]>
      * @throws Exception
      */
     @Override
-    public Integer[] call() {
+    public Integer[] call() throws Exception{
         
         int batchSize = x.size();
         Integer[] products = new Integer[batchSize];

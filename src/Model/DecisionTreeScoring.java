@@ -6,8 +6,6 @@
 package Model;
 
 import Communication.Message;
-import Communication.ReceiverQueueHandler;
-import Communication.SenderQueueHandler;
 import Protocol.Comparison;
 import Protocol.OIS;
 import TrustedInitializer.Triple;
@@ -16,15 +14,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
 
 /**
  *
@@ -39,6 +34,7 @@ public class DecisionTreeScoring extends Model {
     int[] leafToClassIndexMapping;
     int[] nodeToAttributeIndexMapping;
     int[] attributeThresholds;
+    int[][] attributeThresholdsBitShares;
     int leafNodes, tiBinaryStartIndex, tiDecimalStartIndex;
     int[] comparisonOutputs;
     
@@ -82,11 +78,16 @@ public class DecisionTreeScoring extends Model {
         //Doing common initializations for both parties here
         leafNodes = (int) Math.pow(2, depth);
         featureVectors = new Integer[leafNodes-1][attributeBitLength];
+        attributeThresholdsBitShares = new int[leafNodes-1][attributeBitLength];
+        comparisonOutputs = new int[leafNodes-1];
         tiBinaryStartIndex = 0;
         tiDecimalStartIndex = 0;
                 
         //Protocol IDs from 0 to leafNodes-2
         getFeatureVectors();
+        
+        //Convert Threshold to bit shares
+        //call bit decomposition here
         
         //Protocol IDs from leaftNodes-1 to 2(leafNodes)- 3
         doThresholdComparisons();
@@ -148,23 +149,44 @@ public class DecisionTreeScoring extends Model {
         
         ExecutorService es = Executors.newFixedThreadPool(Constants.threadCount);
         List<Future<Integer>> taskList = new ArrayList<>();
-        
+        /*
         if(partyHasTree) {
             for(int i=0;i<leafNodes-1;i++){
-//                initQueueMap(recQueues, sendQueues, i+leafNodes-1);
-//                Comparison comp = new Comparison(Arrays.asList(featureVectors[i]));
-//            
-//                Future<Integer[]> task = es.submit(comp);
-//                taskList.add(task);
+                initQueueMap(recQueues, sendQueues, i+leafNodes-1);
+                Comparison comp = new Comparison(Arrays.asList(featureVectors[i]), Arrays.asList(attributeThresholdsBitShares[i]),
+                sendQueues.get(i+leafNodes-1), recQueues.get(i+leafNodes-1));
+            
+                Future<Integer[]> task = es.submit(comp);
+                taskList.add(task);
             
             }
         } else {
+            for(int i=0;i<leafNodes-1;i++){
+                initQueueMap(recQueues, sendQueues, i+leafNodes-1);
+                Comparison comp = new Comparison(Arrays.asList(featureVectors[i]), Arrays.asList(attributeThresholdsBitShares[i]),
+                sendQueues.get(i+leafNodes-1), recQueues.get(i+leafNodes-1));
             
+                Future<Integer[]> task = es.submit(comp);
+                taskList.add(task);
+            
+            }            
         }
         
+        es.shutdown();
         
-        
-        
+        for (int i = 0; i < leafNodes-1; i++) {
+            Future<Integer> taskResponse = taskList.get(i);
+            try {
+                comparisonOutputs[i] = taskResponse.get();
+            } catch (InterruptedException ex) {
+                Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
+            } catch (ExecutionException ex) {
+                Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }*/
+    }
+    
+    void computePolynomial(){
         
     }
 }
