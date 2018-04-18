@@ -29,8 +29,8 @@ public class Model {
     SenderQueueHandler senderThread;
     ReceiverQueueHandler receiverThread;
 
-    private BlockingQueue<Message> commonSender;
-    private BlockingQueue<Message> commonReceiver;
+    BlockingQueue<Message> commonSender;
+    BlockingQueue<Message> commonReceiver;
 
     int clientId;
     List<Triple> binaryTiShares,decimalTiShares;

@@ -19,8 +19,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 /**
- * Takes a feature vector, k (index of the feature that needs to be selected and returns shares of xk
- * assymetric computation one party sends k=-1 and feature vector, another party sends k and featurevector = null
+ * Takes a feature vector, k (index (0 index) of the feature that needs to be selected and returns shares of xk
+ * asymmetric computation one party sends k=-1 and feature vector, another party sends k and featurevector = null
  * @author keerthanaa
  */
 public class OIS extends CompositeProtocol implements Callable<Integer[]>{
@@ -95,7 +95,7 @@ public class OIS extends CompositeProtocol implements Callable<Integer[]>{
     public Integer[] call() throws Exception {
         System.out.println("numcount "+numberCount+" bitlen "+bitLength);
         Integer[] output = new Integer[bitLength];
-        System.out.println("yshares is "+yShares);
+        System.out.println("yshares is "+yShares+" featuretransposed " +featureVectorTransposed);
         
         startHandlers();
         
@@ -107,7 +107,7 @@ public class OIS extends CompositeProtocol implements Callable<Integer[]>{
             
             initQueueMap(recQueues, sendQueues, i);
             
-            System.out.println("calling dp between with pid "+ i + " - " +featureVectorTransposed.get(i)+" and "+yShares);
+            System.out.println("parentID-"+ protocolId +", dp with pid "+ i + " - " +featureVectorTransposed.get(i)+" and "+yShares);
             
             DotProduct dp = new DotProduct(featureVectorTransposed.get(i), yShares, 
                     tiShares.subList(tiStartIndex, tiStartIndex+numberCount), sendQueues.get(i), recQueues.get(i), 

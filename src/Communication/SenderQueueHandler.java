@@ -51,7 +51,7 @@ public class SenderQueueHandler implements Runnable{
     public void run(){
         while(true){
             if(isProtocolCompleted && subQueues.isEmpty()) {
-                System.out.println("Shutting down sender queue handler for "+protocolID);
+                //System.out.println("Shutting down sender queue handler for "+protocolID);
                 break;
             }
             

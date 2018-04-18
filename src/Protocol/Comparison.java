@@ -109,7 +109,7 @@ public class Comparison extends CompositeProtocol implements Callable<Integer> {
         Runnable eThread = new Runnable() {
             @Override
             public void run() {
-                computeMultiplicationEParallel();
+                computeMultiplicationE();
             }
         };
 
@@ -206,7 +206,7 @@ public class Comparison extends CompositeProtocol implements Callable<Integer> {
     /**
      * compute and store multiplication of ei using distributed multiplication
      */
-    /*private void computeMultiplicationE() {
+    private void computeMultiplicationE() {
         //System.out.println("Started multiplicationE");
         multiplicationE[bitLength-1] = eShares[bitLength-1];
         // now multiply each eshare with the previous computed multiplication one at a time
@@ -244,9 +244,9 @@ public class Comparison extends CompositeProtocol implements Callable<Integer> {
 
         multiplicationE[0] = 0;
         //Logging.logShares("MultiplicationE", multiplicationE);
-    }*/
+    }
 
-    
+    /*
     private void computeMultiplicationEParallel() {
         List<Integer> tempMultE = Arrays.stream(eShares).boxed().collect(Collectors.toList());
         
@@ -310,7 +310,7 @@ public class Comparison extends CompositeProtocol implements Callable<Integer> {
 
         multiplicationE[0] = 0;
 
-    }
+    }*/
 
     /**
      * Compute [di] * integration(ej); j=i+1->l using distributed multiplication
