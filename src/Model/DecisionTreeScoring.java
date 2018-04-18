@@ -84,7 +84,7 @@ class PolynomialComputing implements Callable<Integer[]> {
                 int toIndex = Math.min(i+Constants.batchSize, alpha);
                 //System.out.println("toIndex="+toIndex+", comp"+Arrays.toString(comparisonOutputs)+"jbin"+Arrays.toString(jBinary));
                 
-                System.out.println("j="+Arrays.toString(jBinary)+"batchmults between "+yj+" and "+z_u);
+                //System.out.println("j="+Arrays.toString(jBinary)+"batchmults between "+yj+" and "+z_u);
                 
                 recQueues.putIfAbsent(startpid, new LinkedBlockingQueue<>());
                 sendQueues.putIfAbsent(startpid, new LinkedBlockingQueue<>());
@@ -106,7 +106,7 @@ class PolynomialComputing implements Callable<Integer[]> {
                 Future<Integer[]> taskResponse = taskList.get(i);
                 try {
                     Integer[] arr = taskResponse.get();
-                    System.out.println("jBin="+Arrays.toString(jBinary)+"arr="+Arrays.toString(arr));
+                    //System.out.println("jBin="+Arrays.toString(jBinary)+"arr="+Arrays.toString(arr));
                     for(int l=0;l<arr.length;l++) {
                         y_j[globalIndex] = arr[l];
                         globalIndex++;
@@ -232,22 +232,24 @@ public class DecisionTreeScoring extends Model {
         alpha = (int) Math.ceil(Math.log(classValueCount)/Math.log(2.0));
         finalOutputs = new int[alpha];
                 
+        long startTime = System.currentTimeMillis();
         //Protocol IDs from 0 to leafNodes-2
         getFeatureVectors();
         System.out.println("got the feature vectors");
         
         //Convert Threshold to bit shares leafNodes-1 to 2(leafNodes)-3
         convertThresholdsToBits(leafNodes - 1);
-        System.out.println("converted thresholds to bits using bitdec");
         
         //Protocol IDs from 2(leafNodes)- 2 to 3(leafNodes) - 4
         doThresholdComparisons(2*leafNodes - 1);
-        System.out.println("comparisons of thresholds: " + Arrays.toString(comparisonOutputs));
         
         //
         computePolynomialEquation(3*leafNodes - 4);
-        
+        long stopTime = System.currentTimeMillis();
+        long elapsedTime = stopTime - startTime;
+                
         System.out.println("the output in bits: " + Arrays.toString(finalOutputs));
+        System.out.println("Avg time duration:" + elapsedTime);
         
         teardownModelHandlers();
     }
@@ -288,7 +290,6 @@ public class DecisionTreeScoring extends Model {
         }
         
         es.shutdown();
-        System.out.println("Submitted for getting feature vectors...");
                 
         for (int i = 0; i < leafNodes-1; i++) {
             Future<Integer[]> taskResponse = taskList.get(i);
