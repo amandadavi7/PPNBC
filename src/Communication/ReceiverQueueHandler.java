@@ -62,7 +62,7 @@ public class ReceiverQueueHandler implements Runnable {
                     ex.printStackTrace();
                 }
             } else if (isProtocolCompleted) {
-                System.out.println("Shutting down receiver handler:"+protocolId);
+                //System.out.println("Shutting down receiver handler:"+protocolId);
                 break;
             }
         }

@@ -6,9 +6,11 @@
 package Party;
 
 import Communication.Message;
+import Model.DecisionTreeScoring;
 import Utility.Connection;
 import Model.TestModel;
 import TrustedInitializer.TIShare;
+import TrustedInitializer.Triple;
 import Utility.Logging;
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
@@ -44,7 +46,6 @@ public class Party {
 
     private static List<List<Integer> > xShares;
     private static List<List<Integer> > yShares;
-    //private static List<List<List<Integer> > > vShares;
     private static List<List<List<Integer>>> vShares;
     private static int oneShares; 
 
@@ -94,11 +95,9 @@ public class Party {
                         buf = new BufferedReader(new FileReader(csvFile));
                         String line = null;
                         while((line = buf.readLine()) != null){
-                            System.out.println("Line:" + line);
                             int lineInt[] = Arrays.stream(line.split(",")).mapToInt(Integer::parseInt).toArray();
                             List<Integer> xline = Arrays.stream(lineInt).boxed().collect(Collectors.toList());
                             xShares.add(xline);
-                            System.out.println(xline);
                         }
                     } catch (FileNotFoundException ex) {
                         Logger.getLogger(Party.class.getName()).log(Level.SEVERE, null, ex);
@@ -115,7 +114,6 @@ public class Party {
                         buf = new BufferedReader(new FileReader(csvFile));
                         String line = null;
                         while((line = buf.readLine()) != null){
-                            System.out.println("Line:" + line);
                             int lineInt[] = Arrays.stream(line.split(",")).mapToInt(Integer::parseInt).toArray();
                             List<Integer> yline = Arrays.stream(lineInt).boxed().collect(Collectors.toList());
                             yShares.add(yline);
@@ -171,12 +169,38 @@ public class Party {
         startServer();
         startClient();
 
-        TestModel testModel = new TestModel(xShares, yShares, vShares, 
+        /*TestModel testModel = new TestModel(xShares, yShares, vShares, 
               tiShares.binaryShares, tiShares.decimalShares,oneShares, senderQueue, receiverQueue, partyId);
         
-        testModel.compute();
+        testModel.compute();*/
         
+        if(partyId==1) {
+            
+            int[] leafToClassIndexMapping = new int[5];
+            leafToClassIndexMapping[1] = 1;
+            leafToClassIndexMapping[2] = 2;
+            leafToClassIndexMapping[3] = 3;
+            leafToClassIndexMapping[4] = 1;
+            int[] nodeToAttributeIndexMapping = new int[3];
+            nodeToAttributeIndexMapping[0] = 0;
+            nodeToAttributeIndexMapping[1] = 1;
+            nodeToAttributeIndexMapping[2] = 2;
+            int[] attributeThresholds = new int[3];
+            attributeThresholds[0] = 10;
+            attributeThresholds[1] = 5;
+            attributeThresholds[2] = 20;
+            DecisionTreeScoring DTree = new DecisionTreeScoring(oneShares, senderQueue, receiverQueue, partyId, tiShares.binaryShares, 
+                    tiShares.decimalShares, 2, 3, 5, leafToClassIndexMapping, nodeToAttributeIndexMapping, attributeThresholds, 3);
+            DTree.ScoreDecisionTree();
         
+        } else if(partyId==2) {
+            
+            DecisionTreeScoring DScore = new DecisionTreeScoring(oneShares, senderQueue, receiverQueue, partyId, tiShares.binaryShares, 
+                    tiShares.decimalShares, 2, 3, 5, vShares.get(0), 3);
+            
+            
+            DScore.ScoreDecisionTree();
+        }
         
     }
 

@@ -46,51 +46,52 @@ public class BitDecomposition extends CompositeProtocol implements Callable<List
      * @param b_decimal
      * @param tiShares
      * @param oneShare
+     * @param bitLength
      * @param senderQueue
      * @param receiverQueue
      * @param clientId
      * @param prime
      * @param protocolID
      */
-    // TODO Change a_decimal and b_decimal to just take be integers and not lists.
-    public BitDecomposition(List<Integer> a_decimal, List<Integer> b_decimal, List<Triple> tiShares,
-            int oneShare, BlockingQueue<Message> senderQueue,
+    public BitDecomposition(Integer a_decimal, Integer b_decimal, List<Triple> tiShares,
+            int oneShare, int bitLength, BlockingQueue<Message> senderQueue,
             BlockingQueue<Message> receiverQueue, int clientId, int prime,
             int protocolID) {
         
         super(protocolID, senderQueue, receiverQueue, clientId, prime);
 
-        this.a_decimal = a_decimal.get(0);
-        this.b_decimal = b_decimal.get(0);
-        System.out.println("a_share" + a_decimal.get(0));
-        System.out.println("b_share" + b_decimal.get(0));
+        this.a_decimal = a_decimal;
+        this.b_decimal = b_decimal;
+        this.bitLength = bitLength;
+        System.out.println("a_share" + a_decimal);
+        System.out.println("b_share" + b_decimal);
         
         // convert decimal to binary notation
         this.a = decimalToBinary(this.a_decimal);
         this.b = decimalToBinary(this.b_decimal);
         
         //add padding to  make the number of bits same
-        int diff = Math.abs(a.size() - b.size());
+        int diff = Math.abs(bitLength - b.size());
         
         // add padding to b if a>b
-        if (a.size() > b.size()){
-            for(int i = 0; i < diff;i++){
-                b.add(0);
-            }
+        for(int i = 0; i < diff;i++){
+            b.add(0);
         }
+        
+        diff = Math.abs(bitLength - a.size());
+        
         // add padding to a if a<b
-        else if (b.size() > a.size()){
-            for(int i = 0; i < diff;i++){
-                a.add(0);
-            }
+        for(int i = 0; i < diff;i++){
+            a.add(0);
         }
+        
         System.out.println("a size after padding: " + a.size());
         System.out.println("b size after padding:" + b.size());
         this.oneShare = oneShare;
         this.tiShares = tiShares;
         //this.parentProtocolId = protocolID;
 
-        bitLength = Math.max(a.size(), b.size());
+        //bitLength = Math.max(a.size(), b.size());
         eShares = new HashMap<>();
         dShares = new HashMap<>();
         cShares = new HashMap<>();

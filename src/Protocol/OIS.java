@@ -19,8 +19,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 /**
- * Takes a feature vector, k (index of the feature that needs to be selected and returns shares of xk
- * assymetric computation one party sends k=-1 and feature vector, another party sends k and featurevector = null
+ * Takes a feature vector, k (index (0 index) of the feature that needs to be selected and returns shares of xk
+ * asymmetric computation one party sends k=-1 and feature vector, another party sends k and featurevector = null
  * @author keerthanaa
  */
 public class OIS extends CompositeProtocol implements Callable<Integer[]>{
@@ -58,7 +58,7 @@ public class OIS extends CompositeProtocol implements Callable<Integer[]>{
         
         featureVectorTransposed = new ArrayList<>();
         if(features==null) {
-            System.out.println("features is null");
+            //System.out.println("features is null");
             for(int i=0;i<bitLength;i++){
                 List<Integer> temp = new ArrayList<>();
                 for(int j=0;j<numberCount;j++){
@@ -67,7 +67,7 @@ public class OIS extends CompositeProtocol implements Callable<Integer[]>{
                 featureVectorTransposed.add(temp);
             }
         } else {
-            System.out.println("features is not null");
+            //System.out.println("features is not null");
             for(int i=0;i<bitLength;i++){
                 featureVectorTransposed.add(new ArrayList<>());
             }
@@ -81,7 +81,7 @@ public class OIS extends CompositeProtocol implements Callable<Integer[]>{
         
         yShares = new ArrayList<>(Collections.nCopies(numberCount, 0));
         if(k!=-1){
-            System.out.println("setting 1 for "+k);
+            //System.out.println("setting 1 for "+k);
             yShares.set(k, 1);
         }
     }
@@ -93,9 +93,9 @@ public class OIS extends CompositeProtocol implements Callable<Integer[]>{
      */
     @Override
     public Integer[] call() throws Exception {
-        System.out.println("numcount "+numberCount+" bitlen "+bitLength);
+        //System.out.println("numcount "+numberCount+" bitlen "+bitLength);
         Integer[] output = new Integer[bitLength];
-        System.out.println("yshares is "+yShares);
+        //System.out.println("yshares is "+yShares+" featuretransposed " +featureVectorTransposed);
         
         startHandlers();
         
@@ -107,7 +107,7 @@ public class OIS extends CompositeProtocol implements Callable<Integer[]>{
             
             initQueueMap(recQueues, sendQueues, i);
             
-            System.out.println("calling dp between with pid "+ i + " - " +featureVectorTransposed.get(i)+" and "+yShares);
+            //System.out.println("parentID-"+ protocolId +", dp with pid "+ i + " - " +featureVectorTransposed.get(i)+" and "+yShares);
             
             DotProduct dp = new DotProduct(featureVectorTransposed.get(i), yShares, 
                     tiShares.subList(tiStartIndex, tiStartIndex+numberCount), sendQueues.get(i), recQueues.get(i), 
@@ -127,7 +127,7 @@ public class OIS extends CompositeProtocol implements Callable<Integer[]>{
         }
         
         tearDownHandlers();
-        System.out.println("returning " + Arrays.toString(output));
+        System.out.println("OIS PID: "+protocolId+"-returning " + Arrays.toString(output));
         return output;
     }
     

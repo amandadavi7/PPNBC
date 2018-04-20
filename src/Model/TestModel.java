@@ -6,19 +6,15 @@
 package Model;
 
 import Communication.Message;
-import Communication.ReceiverQueueHandler;
-import Communication.SenderQueueHandler;
 import Protocol.ArgMax;
 import Protocol.BitDecomposition;
 import Protocol.Comparison;
 import Protocol.DotProduct;
 import Protocol.Multiplication;
 import Protocol.OIS;
+import Protocol.OR_XOR;
 import TrustedInitializer.Triple;
 import Utility.Constants;
-import Utility.Logging;
-import java.time.Duration;
-import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.logging.*;
@@ -46,12 +42,13 @@ public class TestModel extends Model{
         
     }
     
-    public void callBitDecomposition(){
+     public void callBitDecomposition(){
         
         ExecutorService es = Executors.newFixedThreadPool(1);
         initQueueMap(recQueues, sendQueues, 1);
         //TODO: change this to just take integers instead of wasting memory on List<Integer> 
-        BitDecomposition bitTest = new BitDecomposition(x.get(0), y.get(0), binaryTiShares, oneShares, sendQueues.get(1),
+        BitDecomposition bitTest = new BitDecomposition(x.get(0).get(0), y.get(0).get(0),
+                binaryTiShares, oneShares, 4, sendQueues.get(1),
                 recQueues.get(1), clientId, Constants.binaryPrime, 1);
         
         Future<List<Integer>> bitdecompositionTask = es.submit(bitTest);
@@ -114,6 +111,50 @@ public class TestModel extends Model{
         
     }
     
+    public void callOR_XOR(){
+        
+        System.out.println("calling or_xor with x="+x+" y="+y);
+        
+        ExecutorService es = Executors.newFixedThreadPool(Constants.threadCount);
+        List<Future<Integer[]>> taskList = new ArrayList<>();
+        
+        long startTime = System.currentTimeMillis();
+        int totalCases = x.size();
+        
+        for(int i=0;i<totalCases;i++) {
+            
+            initQueueMap(recQueues, sendQueues, i);
+            OR_XOR or_xor = new OR_XOR(x.get(i), y.get(i), decimalTiShares, oneShares, 1, sendQueues.get(i), 
+                    recQueues.get(i), clientId, Constants.prime, i);
+
+            Future<Integer[]> task = es.submit(or_xor);
+            taskList.add(task);
+        }
+        
+        es.shutdown();
+
+        for(int i=0;i<totalCases;i++) {
+            try {
+                Future<Integer[]> task = taskList.get(i);
+                Integer[] result = task.get();
+                System.out.println("result: "+i+": " + Arrays.toString(result));
+            } catch (InterruptedException ex) {
+                Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
+            } catch (ExecutionException ex) {
+                Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+        
+        receiverThread.setProtocolStatus();
+        senderThread.setProtocolStatus();
+        queueHandlers.shutdown();
+
+        long stopTime = System.currentTimeMillis();
+        long elapsedTime = stopTime - startTime;
+        System.out.println("Avg time duration:" + elapsedTime);
+        
+    }
+    
     public void callOIS(){
         
         System.out.println("calling OIS with v"+v);
@@ -126,17 +167,6 @@ public class TestModel extends Model{
         sendQueues.putIfAbsent(0, new LinkedBlockingQueue<>());
 
         OIS ois;
-        //Multiplication multiplicationModule = new Multiplication(x.get(0), 
-        //        y.get(0), tiShares.get(0), 
-        //        senderQueue, receiverQueue, clientId, Constants.prime,0);
-        //Future<Integer> multiplicationTask = es.submit(multiplicationModule);
-//        DotProduct dotproductModule = new DotProduct(x, y, tiShares, senderQueue, 
-//                receiverQueue, clientId, Constants.prime, 1);
-//        
-//        Future<Integer> dotProduct = es.submit(dotproductModule);
-        
-        
-        //Future<Integer> comparisonTask = es.submit(comparisonModule);
         
         if(v.isEmpty()){
             System.out.println("v is null");
@@ -259,6 +289,7 @@ public class TestModel extends Model{
         
         //callArgMax();
         //callOIS();
+        //callOR_XOR();
         callBitDecomposition();
         
         // pass 1 - multiplication, 2 - dot product and 3 - comparison
