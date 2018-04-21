@@ -13,6 +13,7 @@ import java.util.concurrent.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import TrustedInitializer.Triple;
+import Utility.Constants;
 
 /**
  *
@@ -111,10 +112,6 @@ public class BitDecomposition extends CompositeProtocol implements Callable<List
         // Function to initialze y[i] and put x1 <- y1
         initY();
         
-        for(int j=0; j<100;j++){
-            //just wait
-        }
-         
         // Initialize c[1] 
         // TODO : Check for parameters here.
         int first_c_share = computeByBit(a.get(0),b.get(0),0,0);
@@ -221,41 +218,52 @@ public class BitDecomposition extends CompositeProtocol implements Callable<List
     private void computeDShares() throws InterruptedException, ExecutionException {
 
         ExecutorService es = Executors.newFixedThreadPool(bitLength);
-        List<Future<Integer>> taskList = new ArrayList<Future<Integer>>();
+        List<Future<Integer[]>> taskList = new ArrayList<Future<Integer[]>>();
         System.out.println("In D shares");
-        // **** The protocols for computation of d are assigned id 1-bitLength-1 ***
+        
+        int i = 1;
+        int startpid = 1;
+        
+           // **** The protocols for computation of d are assigned id 1-bitLength-1 ***
         // We already calculated the LSB, so we don't repeat that.
-        for (int i = 1; i < bitLength; i++) {
-            //compute local shares of d and e and add to the message queue
-            
-            if (!recQueues.containsKey(i)) {
-                BlockingQueue<Message> temp = new LinkedBlockingQueue<>();
-                recQueues.put(i, temp);
-            }
+        do {
+            System.out.println("Protocol " + protocolId + " batch " + startpid);
+            initQueueMap(recQueues, sendQueues, startpid);
 
-            if (!sendQueues.containsKey(i)) {
-                BlockingQueue<Message> temp2 = new LinkedBlockingQueue<>();
-                sendQueues.put(i, temp2);
-            }
-            
-            Multiplication multiplicationModule = new Multiplication(a.get(i),
-                    b.get(i), tiShares.get(i),
-                    sendQueues.get(i), recQueues.get(i), clientID,
-                    prime, i, oneShare, 1);
-            Future<Integer> multiplicationTask = es.submit(multiplicationModule);
+            int toIndex = (i + Constants.batchSize < bitLength)
+                    ? (i + Constants.batchSize) : bitLength;
+
+            BatchMultiplication batchMultiplication = new BatchMultiplication(
+                    a.subList(i, toIndex),
+                    b.subList(i, toIndex),
+                    tiShares.subList(i, toIndex),
+                    sendQueues.get(startpid), recQueues.get(startpid),
+                    clientID, prime, startpid, oneShare, protocolId);
+
+            Future<Integer[]> multiplicationTask = es.submit(batchMultiplication);
             taskList.add(multiplicationTask);
 
-        }
+            startpid++;
+            i += Constants.batchSize;
+        } while (i < bitLength);
 
         es.shutdown();
-
+        
+        // Number of Future Integer[] present after batch multiplications
+        int taskLength = taskList.size();
         // Save d[i] to dShares
-        for (int i = 1; i < bitLength; i++) {
-            Future<Integer> dWorkerResponse = taskList.get(i-1);
-            int d = dWorkerResponse.get() + oneShare;
+        for (int j = 1; j < taskLength; j++) {
+            Future<Integer[]> dWorkerResponse = taskList.get(j-1);
+            //int[] d = dWorkerResponse.get() + oneShare;
+            Integer[] d_batch = dWorkerResponse.get();
+            // Iterate through each batch to do computations
+            for(int index = 0; index < d_batch.length; index++){
+                
+                int d = d_batch[index];
+            }
             d = Math.floorMod(d, prime);
-            dShares.put(i, d);
-            System.out.println("d share + " + i + " is: " + d);
+            dShares.put(j, d);
+            System.out.println("d share + " + j + " is: " + d);
         }
         
         Logging.logShares("dShares", dShares);
