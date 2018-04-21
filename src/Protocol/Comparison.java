@@ -44,15 +44,13 @@ public class Comparison extends CompositeProtocol implements Callable<Integer> {
     /**
      * Constructor
      *
-     * A comparison of two numbers with bit length L requires 3L-3 tiShares
-     * L for computing dShares
-     * L-2 for computing eShares
-     * L-1 for computing cShares
-     * 
+     * A comparison of two numbers with bit length L requires 3L-3 tiShares L
+     * for computing dShares L-2 for computing eShares L-1 for computing cShares
+     *
      * @param x List of bits of shares of x
      * @param y List of bits of shares of y
      * @param tiShares
-     * @param oneShare  [[1]] with the Party
+     * @param oneShare [[1]] with the Party
      * @param senderQueue
      * @param receiverQueue
      * @param clientId
@@ -69,7 +67,7 @@ public class Comparison extends CompositeProtocol implements Callable<Integer> {
         this.y = y;
         this.oneShare = oneShare;
         this.tiShares = tiShares;
-        
+
         bitLength = Math.max(x.size(), y.size());
         eShares = new int[bitLength];
         dShares = new int[bitLength];
@@ -109,7 +107,11 @@ public class Comparison extends CompositeProtocol implements Callable<Integer> {
         Runnable eThread = new Runnable() {
             @Override
             public void run() {
-                computeMultiplicationE();
+                try {
+                    computeMultiplicationEParallel();
+                } catch (InterruptedException ex) {
+                    Logger.getLogger(Comparison.class.getName()).log(Level.SEVERE, null, ex);
+                }
             }
         };
 
@@ -206,9 +208,10 @@ public class Comparison extends CompositeProtocol implements Callable<Integer> {
     /**
      * compute and store multiplication of ei using distributed multiplication
      */
+    /*
     private void computeMultiplicationE() {
         //System.out.println("Started multiplicationE");
-        multiplicationE[bitLength-1] = eShares[bitLength-1];
+        multiplicationE[bitLength - 1] = eShares[bitLength - 1];
         // now multiply each eshare with the previous computed multiplication one at a time
 
         int subProtocolID = bitLength;
@@ -234,7 +237,7 @@ public class Comparison extends CompositeProtocol implements Callable<Integer> {
             es.shutdown();
 
             try {
-                multiplicationE[i-1] = multiplicationTask.get();
+                multiplicationE[i - 1] = multiplicationTask.get();
                 //System.out.println("result of Multiplication:" + multiplicationE.get(i - 1));
             } catch (InterruptedException | ExecutionException ex) {
                 Logger.getLogger(Comparison.class.getName()).log(Level.SEVERE, null, ex);
@@ -244,19 +247,17 @@ public class Comparison extends CompositeProtocol implements Callable<Integer> {
 
         multiplicationE[0] = 0;
         //Logging.logShares("MultiplicationE", multiplicationE);
-    }
+    }*/
 
-    /*
-    private void computeMultiplicationEParallel() {
+    private void computeMultiplicationEParallel() throws InterruptedException {
         List<Integer> tempMultE = Arrays.stream(eShares).boxed().collect(Collectors.toList());
-        
+
         int mainIndex = bitLength - 1;
         multiplicationE[mainIndex--] = eShares[bitLength - 1];
 
-        List<Integer> dShareList = Arrays.stream(dShares).boxed().collect(Collectors.toList());
-        
+        //List<Integer> dShareList = Arrays.stream(dShares).boxed().collect(Collectors.toList());
         int startpid = bitLength;
-        
+
         // Runs log n times
         while (tempMultE.size() > 1) {
             ExecutorService es = Executors.newFixedThreadPool(Constants.threadCount);
@@ -288,29 +289,35 @@ public class Comparison extends CompositeProtocol implements Callable<Integer> {
             es.shutdown();
 
             int taskLen = taskList.size();
+            List<Integer> products = new ArrayList<>();
             // Now when I got the result for all, compute y+ x*y and add it to d[i]
             for (i = 0; i < taskLen; i++) {
                 try {
                     Future<Integer[]> prod = taskList.get(i);
-                    Integer[] products = prod.get();
-                    // update all values
-                    tempMultE.clear();
-                    tempMultE = Arrays.stream(products).collect(Collectors.toList());
+                    products.addAll(Arrays.asList(prod.get()));
+
                 } catch (InterruptedException | ExecutionException ex) {
                     ex.printStackTrace();
                 }
 
             }
 
+            // in the end of one iteration, update tempmultE for next round of execution
+            if (es.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS)) {
+                // update all values
+                tempMultE.clear();
+                tempMultE = products;
+            }
+
             // store the main value in the end
             multiplicationE[mainIndex--] = tempMultE.get(tempMultE.size() - 1);
         }
-        
+
         cProcessId = startpid;
 
         multiplicationE[0] = 0;
 
-    }*/
+    }
 
     /**
      * Compute [di] * integration(ej); j=i+1->l using distributed multiplication
