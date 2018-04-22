@@ -48,7 +48,7 @@ public class TestModel extends Model{
         initQueueMap(recQueues, sendQueues, 1);
         //TODO: change this to just take integers instead of wasting memory on List<Integer> 
         BitDecomposition bitTest = new BitDecomposition(x.get(0).get(0), y.get(0).get(0),
-                binaryTiShares, oneShares, 4, sendQueues.get(1),
+                binaryTiShares, oneShares, Constants.bitLength, sendQueues.get(1),
                 recQueues.get(1), clientId, Constants.binaryPrime, 1);
         
         Future<List<Integer>> bitdecompositionTask = es.submit(bitTest);
