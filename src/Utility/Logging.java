@@ -69,7 +69,7 @@ public class Logging {
      * Guideline to use the TI class
      */
     public static void tiUsage() {
-        System.out.println("java TI <port> <no. of decimal triples> <no. of binary triples>");
+        System.out.println("java TI <port> <no. of decimal triples> <no. of binary triples> <no. of equality shares>");
     }
 
 }

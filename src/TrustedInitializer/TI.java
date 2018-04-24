@@ -19,7 +19,7 @@ import java.util.concurrent.Executors;
  */
 public class TI {
     
-    static int tiPort, decTriples, binTriples;
+    static int tiPort, decTriples, binTriples, equalityCount;
     static TIShare[] uvw;
     
     /**
@@ -29,10 +29,11 @@ public class TI {
      * @param count1
      * @param count2 
      */
-    public static void initializeVariables(String port,String count1, String count2){
+    public static void initializeVariables(String port,String count1, String count2, String count3){
         tiPort = Integer.parseInt(port);
         decTriples = Integer.parseInt(count1);
         binTriples = Integer.parseInt(count2);
+        equalityCount = Integer.parseInt(count3);
         uvw = new TIShare[Constants.clientCount];
         for(int i=0;i<Constants.clientCount;i++){
             uvw[i] = new TIShare();
@@ -88,6 +89,18 @@ public class TI {
             t.w = Math.floorMod(W-wsum, Constants.binaryPrime);
             uvw[Constants.clientCount-1].addBinary(t);
         }
+        
+        for(int i=0;i<equalityCount;i++) {
+            int R = rand.nextInt(Constants.prime-1) + 1;
+            int rsum = 0;
+            for(int j=0;j<Constants.clientCount-1;j++){
+                int r = rand.nextInt(Constants.prime);
+                rsum+=r;
+                uvw[j].addEquality(r);
+            }
+            int r = Math.floorMod(R-rsum, Constants.prime);
+            uvw[Constants.clientCount-1].addEquality(r);
+        }
     }
     
     /**
@@ -106,15 +119,15 @@ public class TI {
     }
     
     public static void main(String[] args) {
-        if(args.length < 3){
+        if(args.length < 4){
             Logging.tiUsage();
             System.exit(0);
         }
         
-        initializeVariables(args[0],args[1],args[2]);
+        initializeVariables(args[0],args[1],args[2],args[3]);
         
-        System.out.println("Generating " + decTriples+" decimal triples and " + 
-                binTriples + " binary triples");
+        System.out.println("Generating " + decTriples+" decimal triples, " + 
+                binTriples + " binary triples and " + equalityCount + " equality shares");
         generateUVW();
         
         sendShares();        

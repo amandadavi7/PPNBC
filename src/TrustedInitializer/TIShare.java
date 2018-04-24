@@ -15,14 +15,16 @@ import java.util.List;
  */
 public class TIShare implements Serializable {
     public List<Triple> decimalShares,binaryShares;
+    public List<Integer> equalityShares;
     
     public TIShare(){
         decimalShares = new LinkedList<>();
         binaryShares = new LinkedList<>();
+        equalityShares = new LinkedList<>();
     }
     
     /**
-     * add Triple object to decimalshares
+     * add Triple object to decimal shares
      * @param t 
      */
     public void addDecimal(Triple t){
@@ -35,5 +37,9 @@ public class TIShare implements Serializable {
      */
     public void addBinary(Triple t){
         binaryShares.add(t);
+    }
+    
+    public void addEquality(int i) {
+        equalityShares.add(i);
     }
 }

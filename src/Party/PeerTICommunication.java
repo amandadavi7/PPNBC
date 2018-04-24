@@ -58,6 +58,9 @@ public class PeerTICommunication implements Callable<TIShare> {
         for(Triple t: tiShares.binaryShares){
             System.out.println("u : " + t.u + ",v : " + t.v + ",w : " + t.w);
         }
+        for(int i: tiShares.equalityShares) {
+            System.out.println("r : " + i);
+        }
         
         return tiShares;
     }
