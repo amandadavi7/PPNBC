@@ -19,6 +19,7 @@ import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * Class to take care of multiplying all w[j,n] for each j = 0 to numberCount-1
@@ -28,7 +29,7 @@ class ParallelMultiplication extends Protocol implements Callable<Integer> {
     
     List<Integer> wRow;
     List<Triple> tishares;
-    int startProtocolID, clientID, prime, oneShare;
+    int startProtocolID, oneShare;
     ConcurrentHashMap<Integer, BlockingQueue<Message>> sendQueues;
     ConcurrentHashMap<Integer, BlockingQueue<Message>> recQueues;
     
@@ -38,11 +39,9 @@ class ParallelMultiplication extends Protocol implements Callable<Integer> {
             ConcurrentHashMap<Integer, BlockingQueue<Message>> recQueues,
             BlockingQueue<Message> senderQueue, BlockingQueue<Message> receiverQueue) {
         
-        super(protocolID,senderQueue,receiverQueue);
+        super(protocolID,senderQueue,receiverQueue,clientID,prime);
         this.wRow = row;
         this.tishares = tishares;
-        this.clientID = clientID;
-        this.prime = prime;
         this.startProtocolID = startProtocolID;
         this.oneShare = oneShare;   
         this.sendQueues = sendQueues;
@@ -83,7 +82,8 @@ class ParallelMultiplication extends Protocol implements Callable<Integer> {
                 int tempIndex1 = Math.min(i1+Constants.batchSize, toIndex1);
                 int tempIndex2 = Math.min(i2+Constants.batchSize, toIndex2);
                 
-                initQueueMap(recQueues, sendQueues, startpid);
+                recQueues.putIfAbsent(startpid, new LinkedBlockingQueue<>());
+                sendQueues.putIfAbsent(startpid, new LinkedBlockingQueue<>());
                 System.out.println("calling batchmult with pid:"+startpid+",indices:"+tempIndex1+","+tempIndex2);
                 
                 multCompletionService.submit(new BatchMultiplication(products.subList(i1, tempIndex1), 

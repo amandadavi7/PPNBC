@@ -48,6 +48,9 @@ public class TItoPeerCommunication implements Runnable {
             for(Triple t: tishare.binaryShares){
                 System.out.println("u : " + t.u + ",v : " + t.v + ",w : " + t.w);
             }
+            for(int i: tishare.equalityShares) {
+                System.out.println("r : " + i);
+            }
         } catch (IOException ex){
             Logger.getLogger(TItoPeerCommunication.class.getName()).log(Level.SEVERE, null, ex);
         }

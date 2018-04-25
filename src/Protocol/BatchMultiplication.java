@@ -25,8 +25,6 @@ public class BatchMultiplication extends Protocol implements Callable<Integer[]>
     List<Integer> x;
     List<Integer> y;
     List<Triple> tiShares;
-    int clientID;
-    int prime;
     int oneShare;
     int parentID;
 
@@ -49,12 +47,10 @@ public class BatchMultiplication extends Protocol implements Callable<Integer[]>
             BlockingQueue<Message> receiverQueue, int clientId, int prime,
             int protocolID, int oneShare, int parentID) {
 
-        super(protocolID, senderQueue, receiverQueue);
+        super(protocolID, senderQueue, receiverQueue, clientId, prime);
         this.x = x;
         this.y = y;
         this.tiShares = tiShares;
-        this.clientID = clientId;
-        this.prime = prime;
         this.oneShare = oneShare;
         this.parentID = parentID;
     }

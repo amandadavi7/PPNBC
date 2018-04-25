@@ -12,6 +12,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  *
@@ -26,20 +27,7 @@ public class CompositeProtocol extends Protocol {
     SenderQueueHandler senderThread;
     ReceiverQueueHandler receiverThread;
 
-    int clientID;
-    int prime;
-
-    /**
-     * 
-     * @param protocolId
-     * @param senderQueue
-     * @param receiverQueue 
-     */
-    public CompositeProtocol(int protocolId, BlockingQueue<Message> senderQueue,
-            BlockingQueue<Message> receiverQueue) {
-        super(protocolId, senderQueue, receiverQueue);
-    }
-
+    
     /**
      * 
      * @param protocolId
@@ -50,10 +38,9 @@ public class CompositeProtocol extends Protocol {
      */
     public CompositeProtocol(int protocolId, BlockingQueue<Message> senderQueue,
             BlockingQueue<Message> receiverQueue, int clientId, int prime) {
-        super(protocolId, senderQueue, receiverQueue);
-        this.clientID = clientId;
-        this.prime = prime;
-
+        
+        super(protocolId, senderQueue, receiverQueue, clientId, prime);
+        
         recQueues = new ConcurrentHashMap<>();
         sendQueues = new ConcurrentHashMap<>();
 
@@ -61,6 +48,15 @@ public class CompositeProtocol extends Protocol {
         senderThread = new SenderQueueHandler(protocolId, super.senderQueue, sendQueues);
         receiverThread = new ReceiverQueueHandler(protocolId, super.receiverQueue, recQueues);
 
+    }
+    
+    public void initQueueMap(
+            ConcurrentHashMap<Integer, BlockingQueue<Message>> recQueues,
+            ConcurrentHashMap<Integer, BlockingQueue<Message>> sendQueues,
+            int key) {
+
+        recQueues.putIfAbsent(key, new LinkedBlockingQueue<>());
+        sendQueues.putIfAbsent(key, new LinkedBlockingQueue<>());
     }
 
     /**
