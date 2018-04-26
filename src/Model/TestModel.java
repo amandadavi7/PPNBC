@@ -34,7 +34,7 @@ public class TestModel extends Model{
             int oneShares, BlockingQueue<Message> senderQueue,
             BlockingQueue<Message> receiverQueue, int clientId) {
         
-        super(senderQueue, receiverQueue, clientId, oneShares, binaryTriples, decimalTriples);
+        super(senderQueue, receiverQueue, clientId, oneShares, binaryTriples, decimalTriples, null);
         
         this.x = x;
         this.y = y;

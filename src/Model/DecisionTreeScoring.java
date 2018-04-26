@@ -168,7 +168,7 @@ public class DecisionTreeScoring extends Model {
             int depth, int attributeCount, int bitLength, int[] leafToClassIndexMapping, 
             int[] nodeToAttributeIndexMapping, int[] attributeThresholds, int classValueCount) {
         
-        super(senderQueue, receiverQueue, clientId, oneShares, binaryTriples, decimalTriple);
+        super(senderQueue, receiverQueue, clientId, oneShares, binaryTriples, decimalTriple, null);
         
         this.depth = depth;
         partyHasTree = true;
@@ -198,10 +198,10 @@ public class DecisionTreeScoring extends Model {
      * @param classValueCount 
      */
     public DecisionTreeScoring(int oneShares, BlockingQueue<Message> senderQueue,
-            BlockingQueue<Message> receiverQueue, int clientId, List<Triple> binaryTriples, List<Triple> decimalTriple,
+            BlockingQueue<Message> receiverQueue, int clientId, List<Triple> binaryTriples, List<Triple> decimalTriples,
             int depth, int attributeCount, int bitLength, List<List<Integer>> testVector, int classValueCount){
         
-        super(senderQueue, receiverQueue, clientId, oneShares, binaryTriples, decimalTriple);
+        super(senderQueue, receiverQueue, clientId, oneShares, binaryTriples, decimalTriples, null);
         
         partyHasTree = false;
         this.depth = depth;
