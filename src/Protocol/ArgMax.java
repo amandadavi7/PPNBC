@@ -279,15 +279,10 @@ public class ArgMax extends CompositeProtocol implements Callable<Integer[]> {
             List<Triple> tishares = tiShares.subList(tiIndex, tiIndex + tiCount);
             tiIndex += tiCount;
             
-            //initQueueMap(recQueues, sendQueues, startProtocolID+i);
-            
-//            ParallelMultiplication rowMultiplication = new ParallelMultiplication(wIntermediate.get(i), tishares,
-//                    clientID, prime, protocolId, startProtocolID+i, oneShare, 
-//                    recQueues.get(startProtocolID+i), sendQueues.get(startProtocolID+i));
-            
-            ParallelMultiplication rowMultiplication = new ParallelMultiplication(wIntermediate.get(i), tishares,
-                    clientID, prime, protocolId, startProtocolID, oneShare, sendQueues,
-                    recQueues, senderQueue, receiverQueue);
+            ParallelMultiplication rowMultiplication = new ParallelMultiplication(
+                    wIntermediate.get(i), tishares, clientID, prime, protocolId, 
+                    startProtocolID, oneShare, sendQueues, recQueues, 
+                    senderQueue, receiverQueue);
             
             startProtocolID+=IDSizePerRow;
             

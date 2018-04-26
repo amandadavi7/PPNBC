@@ -205,50 +205,6 @@ public class Comparison extends CompositeProtocol implements Callable<Integer> {
         //Logging.logShares("dShares", dShares);
     }
 
-    /**
-     * compute and store multiplication of ei using distributed multiplication
-     */
-    /*
-    private void computeMultiplicationE() {
-        //System.out.println("Started multiplicationE");
-        multiplicationE[bitLength - 1] = eShares[bitLength - 1];
-        // now multiply each eshare with the previous computed multiplication one at a time
-
-        int subProtocolID = bitLength;
-        int tiCounter = 0;
-
-        initQueueMap(recQueues, sendQueues, subProtocolID);
-
-        for (int i = bitLength - 1; i > 1; i--) {
-            // You don't need i = 0. 
-            // Multiplication format: multiplicationE[i] * eShares[i-1]
-            //compute local shares of d and e and add to the message queue
-
-            //TODO use the correct sender and receiver queue
-            ExecutorService es = Executors.newSingleThreadExecutor();
-
-            Multiplication multiplicationModule = new Multiplication(
-                    multiplicationE[i],
-                    eShares[i - 1], tiShares.get(bitLength + (tiCounter++)),
-                    sendQueues.get(subProtocolID), recQueues.get(subProtocolID),
-                    clientID, prime, subProtocolID, oneShare, protocolId);
-
-            Future<Integer> multiplicationTask = es.submit(multiplicationModule);
-            es.shutdown();
-
-            try {
-                multiplicationE[i - 1] = multiplicationTask.get();
-                //System.out.println("result of Multiplication:" + multiplicationE.get(i - 1));
-            } catch (InterruptedException | ExecutionException ex) {
-                Logger.getLogger(Comparison.class.getName()).log(Level.SEVERE, null, ex);
-            }
-
-        }
-
-        multiplicationE[0] = 0;
-        //Logging.logShares("MultiplicationE", multiplicationE);
-    }*/
-
     private void computeMultiplicationEParallel() throws InterruptedException {
         List<Integer> tempMultE = Arrays.stream(eShares).boxed().collect(Collectors.toList());
 
@@ -375,7 +331,6 @@ public class Comparison extends CompositeProtocol implements Callable<Integer> {
         }
 
         cShares[bitLength - 1] = dShares[bitLength - 1];
-        //cShares.put(bitLength - 1, dShares[bitLength - 1]);
         //Logging.logShares("cShares", cShares);
 
     }
@@ -396,13 +351,4 @@ public class Comparison extends CompositeProtocol implements Callable<Integer> {
         return w;
     }
 
-    /*private List<Integer> convertMapToList(HashMap<Integer, Integer> multiplicationE1) {
-        List<Integer> list = new ArrayList<>();
-        Iterator i = multiplicationE.entrySet().iterator();
-        while (i.hasNext()) {
-            Map.Entry entry = (Map.Entry) i.next();
-            list.add((Integer) entry.getKey(), (Integer) entry.getValue());
-        }
-        return list;
-    }*/
 }
