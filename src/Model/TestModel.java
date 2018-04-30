@@ -10,6 +10,7 @@ import Protocol.ArgMax;
 import Protocol.BitDecomposition;
 import Protocol.Comparison;
 import Protocol.DotProduct;
+import Protocol.JaccardDistance;
 import Protocol.Multiplication;
 import Protocol.OIS;
 import Protocol.OR_XOR;
@@ -282,7 +283,32 @@ public class TestModel extends Model{
         System.out.println("Avg time duration:" + elapsedTime);
     }
     
-
+//    public void callJaccard(){
+//        ExecutorService es = Executors.newFixedThreadPool(2);
+//        initQueueMap(recQueues, sendQueues, 1);
+//       
+////        BitDecomposition bitTest = new BitDecomposition(x.get(0).get(0), y.get(0).get(0),
+////                binaryTiShares, oneShares, Constants.bitLength, sendQueues.get(1),
+////                recQueues.get(1), clientId, Constants.binaryPrime, 1);
+//
+//          JaccardDistance jdistance = new JaccardDistance(firstTrainShare,
+//                                      secondTrainShare,testShare, oneShares, 
+//                                      binaryTiShares, clientId,commonSender, 
+//                                      commonReceiver, clientId, clientId, clientId)
+//        
+//        Future<List<Integer>> bitdecompositionTask = es.submit(bitTest);
+//        
+//        try {
+//            List<Integer> result = bitdecompositionTask.get();
+//            System.out.println("result of bitDecomposition: " + result);
+//        } catch (InterruptedException ex) {
+//            Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
+//        } catch (ExecutionException ex) {
+//
+//            Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
+//        }
+//        
+//    }
     public void compute() {
         
         startModelHandlers();

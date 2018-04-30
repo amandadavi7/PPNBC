@@ -1,3 +1,4 @@
+
 /*
  * To change this license header, choose License Headers in Project Properties.
  * To change this template file, choose Tools | Templates
@@ -65,11 +66,12 @@ public class BitDecomposition extends CompositeProtocol implements Callable<List
         this.a_decimal = a_decimal;
         this.b_decimal = b_decimal;
         this.bitLength = bitLength;
-
+        
+      
         // convert decimal to binary notation
         this.a = decimalToBinary(this.a_decimal);
         this.b = decimalToBinary(this.b_decimal);
-
+        
         //add padding to  make the number of bits same
         int diff = Math.abs(bitLength - b.size());
 
@@ -84,6 +86,11 @@ public class BitDecomposition extends CompositeProtocol implements Callable<List
         for (int i = 0; i < diff; i++) {
             a.add(0);
         }
+        
+//        System.out.println("a shares: " + a_decimal);
+//        System.out.println("b shares: " + b_decimal);
+//        System.out.println("a as list: " + a);
+//        System.out.println("b as list: " + b);
 
         this.oneShare = oneShare;
         this.tiShares = tiShares;
@@ -108,7 +115,7 @@ public class BitDecomposition extends CompositeProtocol implements Callable<List
         int first_c_share = computeByBit(a.get(0), b.get(0), 0, 0);
         first_c_share = Math.floorMod(first_c_share, prime);
         cShares.put(0, first_c_share);
-        System.out.println("the first c share: " + cShares.get(0));
+        //System.out.println("the first c share: " + cShares.get(0));
 
         ExecutorService threadService = Executors.newCachedThreadPool();
         Runnable dThread = new Runnable() {
@@ -147,12 +154,12 @@ public class BitDecomposition extends CompositeProtocol implements Callable<List
             y = Math.floorMod(y, prime);
             yShares.put(i, y);
         }
-        System.out.println("Y shares: " + yShares);
+        //System.out.println("Y shares: " + yShares);
 
         // set x[1] <- y[1]
         int y0 = yShares.get(0);
         xShares.add(0, y0);
-        System.out.println("LSB for x: " + xShares);
+        //System.out.println("LSB for x: " + xShares);
     }
 
     // Calculate step (2)  [c1] = [a1][b1] 
