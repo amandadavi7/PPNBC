@@ -283,40 +283,47 @@ public class TestModel extends Model{
         System.out.println("Avg time duration:" + elapsedTime);
     }
     
-//    public void callJaccard(){
-//        ExecutorService es = Executors.newFixedThreadPool(2);
-//        initQueueMap(recQueues, sendQueues, 1);
-//       
-////        BitDecomposition bitTest = new BitDecomposition(x.get(0).get(0), y.get(0).get(0),
-////                binaryTiShares, oneShares, Constants.bitLength, sendQueues.get(1),
-////                recQueues.get(1), clientId, Constants.binaryPrime, 1);
-//
-//          JaccardDistance jdistance = new JaccardDistance(firstTrainShare,
-//                                      secondTrainShare,testShare, oneShares, 
-//                                      binaryTiShares, clientId,commonSender, 
-//                                      commonReceiver, clientId, clientId, clientId)
-//        
-//        Future<List<Integer>> bitdecompositionTask = es.submit(bitTest);
-//        
-//        try {
-//            List<Integer> result = bitdecompositionTask.get();
-//            System.out.println("result of bitDecomposition: " + result);
-//        } catch (InterruptedException ex) {
-//            Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
-//        } catch (ExecutionException ex) {
-//
-//            Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
-//        }
-//        
-//    }
+    public void callJaccard(){
+        ExecutorService es = Executors.newFixedThreadPool(1);
+        initQueueMap(recQueues, sendQueues, 0);
+       
+//        BitDecomposition bitTest = new BitDecomposition(x.get(0).get(0), y.get(0).get(0),
+//                binaryTiShares, oneShares, Constants.bitLength, sendQueues.get(1),
+//                recQueues.get(1), clientId, Constants.binaryPrime, 1);
+
+          JaccardDistance jdistance = new JaccardDistance(x.get(0),
+                                      x.get(1),y.get(0), oneShares, 
+                                      decimalTiShares, Constants.bitLength,sendQueues.get(0), 
+                                      recQueues.get(0), clientId, Constants.binaryPrime, 0);
+        
+        Future<Integer> jaccardTask = es.submit(jdistance);
+        es.shutdown();
+        
+        try {
+            Integer result = jaccardTask.get();
+            System.out.println("result of jaccard distance comparison: " + result);
+        } catch (InterruptedException ex) {
+            Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (ExecutionException ex) {
+
+            Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        
+        receiverThread.setProtocolStatus();
+        senderThread.setProtocolStatus();
+        queueHandlers.shutdown();
+        
+    }
     public void compute() {
         
         startModelHandlers();
         
         //callArgMax();
         //callOIS();
-        //callOR_XOR();
-        callBitDecomposition();
+//        callOR_XOR();
+//         callBitDecomposition();
+
+          callJaccard();
         
         // pass 1 - multiplication, 2 - dot product and 3 - comparison
         //callProtocol(3);
