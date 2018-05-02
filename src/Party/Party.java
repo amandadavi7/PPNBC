@@ -7,6 +7,7 @@ package Party;
 
 import Communication.Message;
 import Model.DecisionTreeScoring;
+import Model.LinearRegressionEvaluation;
 import Utility.Connection;
 import Model.TestModel;
 import TrustedInitializer.TIShare;
@@ -169,11 +170,19 @@ public class Party {
         startServer();
         startClient();
 
+        LinearRegressionEvaluation regressionModel = 
+                new LinearRegressionEvaluation(xShares, yShares.get(0), 
+                        tiShares.decimalShares,oneShares, senderQueue, 
+                        receiverQueue, partyId);
+        
+        regressionModel.predictValues();
+
+        /*
         TestModel testModel = new TestModel(xShares, yShares, vShares, 
               tiShares.binaryShares, tiShares.decimalShares,oneShares, senderQueue, receiverQueue, partyId);
         
         testModel.compute();
-        
+        */
 //        if(partyId==1) {
 //            
 //            int[] leafToClassIndexMapping = new int[5];
