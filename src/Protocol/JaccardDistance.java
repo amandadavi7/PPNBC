@@ -43,6 +43,7 @@ public class JaccardDistance extends CompositeProtocol implements Callable<Integ
         
         this.firstTrainShare = firstTrainShare;
         this.secondTrainShare = secondTrainShare;
+        this.testShare = testShare;
         this.oneShare = oneShare;
         this.tiShares = tiShares;
         bitLength = firstTrainShare.size(); 
@@ -65,47 +66,48 @@ public class JaccardDistance extends CompositeProtocol implements Callable<Integ
        initQueueMap(recQueues, sendQueues, startpid);
        OR_XOR orModule = new OR_XOR(firstTrainShare, testShare
                                     ,tiShares, oneShare, 1,
-                        sendQueues.get(startpid), recQueues.get(startpid), clientID, prime, startpid);
-       startpid++;
-       //xor module for train 1 - test distance
-       initQueueMap(recQueues, sendQueues, startpid);
-       OR_XOR xorModule = new OR_XOR(firstTrainShare, testShare, 
-                                     tiShares, oneShare, 2,
-                        sendQueues.get(startpid), recQueues.get(startpid), clientID, prime, startpid);
-       startpid++;
-       // or module for train 2 - test distance
-       initQueueMap(recQueues, sendQueues, startpid);
-       OR_XOR orModule2 = new OR_XOR(secondTrainShare, testShare
-                                    ,tiShares, oneShare, 1,
-                        sendQueues.get(startpid), recQueues.get(startpid), clientID, prime, startpid);
-       startpid++;
-       //xor module for train 2 - test distance
-       initQueueMap(recQueues, sendQueues, startpid);
-       OR_XOR xorModule2 = new OR_XOR(secondTrainShare, testShare, 
-                                     tiShares, oneShare, 2,
-                        sendQueues.get(startpid), recQueues.get(startpid), clientID, prime, startpid);
-//         initQueueMap(recQueues, sendQueues, i);
-//            OR_XOR or_xor = new OR_XOR(x.get(i), y.get(i), decimalTiShares, oneShares, 1, sendQueues.get(i), 
-//                    recQueues.get(i), clientId, Constants.prime, i);
+                        sendQueues.get(startpid), recQueues.get(startpid), clientID, prime, protocolId);
+//       startpid++;
+//       //xor module for train 1 - test distance
+//       initQueueMap(recQueues, sendQueues, startpid);
+//       OR_XOR xorModule = new OR_XOR(firstTrainShare, testShare, 
+//                                     tiShares, oneShare, 2,
+//                                    sendQueues.get(startpid), 
+//                                    recQueues.get(startpid), 
+//                                    clientID, prime, protocolId);
+//       startpid++;
+//       // or module for train 2 - test distance
+//       initQueueMap(recQueues, sendQueues, startpid);
+//       OR_XOR orModule2 = new OR_XOR(secondTrainShare, testShare
+//                                    ,tiShares, oneShare, 1,
+//                                     sendQueues.get(startpid), 
+//                                     recQueues.get(startpid), clientID,
+//                                     prime, protocolId);
+//       startpid++;
+//       //xor module for train 2 - test distance
+//       initQueueMap(recQueues, sendQueues, startpid);
+//       OR_XOR xorModule2 = new OR_XOR(secondTrainShare, testShare, 
+//                                     tiShares, oneShare, 2,
+//                        sendQueues.get(startpid), recQueues.get(startpid), clientID, prime, protocolId);
        
        Future<Integer[]> orTask = es.submit(orModule);
-       Future<Integer[]> xorTask = es.submit(xorModule);
-       Future<Integer[]> orTask2 = es.submit(orModule2);
-       Future<Integer[]> xorTask2 = es.submit(xorModule2);
+//       Future<Integer[]> xorTask = es.submit(xorModule);
+//       Future<Integer[]> orTask2 = es.submit(orModule2);
+//       Future<Integer[]> xorTask2 = es.submit(xorModule2);
 
        es.shutdown();
        
             try {
                     Integer[] orResult = orTask.get();
-                    Integer[] xorResult = xorTask.get();
-                    
-                    Integer[] orResult2 = orTask2.get();
-                    Integer[] xorResult2 = xorTask2.get();
-                    
+//                    Integer[] xorResult = xorTask.get();
+//                    
+//                    Integer[] orResult2 = orTask2.get();
+//                    Integer[] xorResult2 = xorTask2.get();
+//                    
                     System.out.println("or Result:" + orResult);
-                    System.out.println("xor Result:" + xorResult);
-                    System.out.println("or2 Result:" + orResult2);
-                    System.out.println("xor2 Result:" + xorResult2);
+//                    System.out.println("xor Result:" + xorResult);
+//                    System.out.println("or2 Result:" + orResult2);
+//                    System.out.println("xor2 Result:" + xorResult2);
 //                    int orScore = getScoreFromList(orResult);
 //                    int xorScore = getScoreFromList(xorResult);
 //                    
