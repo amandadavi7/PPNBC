@@ -3,9 +3,11 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package Protocol;
+package Protocol.Utility;
 
 import Communication.Message;
+import Protocol.Multiplication;
+import Protocol.Protocol;
 import TrustedInitializer.Triple;
 import Utility.Constants;
 import java.util.ArrayList;

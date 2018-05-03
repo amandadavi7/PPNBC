@@ -48,7 +48,7 @@ public class Multiplication extends Protocol implements Callable {
             int protocolID, int oneShare, int parentID) {
 
         super(protocolID, senderQueue, receiverQueue, clientId, prime);
-        
+
         this.x = x;
         this.y = y;
         this.tiShares = tiShares;

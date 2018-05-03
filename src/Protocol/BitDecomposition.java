@@ -5,10 +5,9 @@
  */
 package Protocol;
 
+import Protocol.Utility.BatchMultiplication;
 import Communication.Message;
-import Utility.Logging;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.*;
 import java.util.logging.Level;

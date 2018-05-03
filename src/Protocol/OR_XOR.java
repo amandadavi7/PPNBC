@@ -5,6 +5,7 @@
  */
 package Protocol;
 
+import Protocol.Utility.BatchMultiplication;
 import Communication.Message;
 import TrustedInitializer.Triple;
 import Utility.Constants;

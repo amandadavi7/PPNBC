@@ -15,9 +15,11 @@ import java.util.concurrent.BlockingQueue;
 public class Protocol {
     //ExecutorService queueHandlers;
     
-    BlockingQueue<Message> senderQueue;
-    BlockingQueue<Message> receiverQueue;
-    int protocolId, clientID, prime;
+
+    protected BlockingQueue<Message> senderQueue;
+    protected BlockingQueue<Message> receiverQueue;
+    protected int protocolId, clientID, prime;
+
 
     public Protocol(int protocolId, BlockingQueue<Message> senderQueue,
             BlockingQueue<Message> receiverQueue, int clientID, int prime) {
