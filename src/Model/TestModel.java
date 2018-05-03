@@ -294,7 +294,7 @@ public class TestModel extends Model{
           JaccardDistance jdistance = new JaccardDistance(x.get(0),
                                       x.get(1),y.get(0), oneShares, 
                                       decimalTiShares, Constants.bitLength,sendQueues.get(0), 
-                                      recQueues.get(0), clientId, Constants.binaryPrime, 0);
+                                      recQueues.get(0), clientId, Constants.prime, 0);
         
         Future<Integer> jaccardTask = es.submit(jdistance);
         es.shutdown();
@@ -321,9 +321,9 @@ public class TestModel extends Model{
         //callArgMax();
         //callOIS();
 //        callOR_XOR();
-//         callBitDecomposition();
+//        callBitDecomposition();
 
-          callJaccard();
+       callJaccard();
         
         // pass 1 - multiplication, 2 - dot product and 3 - comparison
         //callProtocol(3);

@@ -68,6 +68,7 @@ public class JaccardDistance extends CompositeProtocol implements Callable<Integ
                                     ,tiShares, oneShare, 1,
                         sendQueues.get(startpid), recQueues.get(startpid), clientID, prime, startpid);
        startpid++;
+       
        //xor module for train 1 - test distance
        initQueueMap(recQueues, sendQueues, startpid);
        OR_XOR xorModule = new OR_XOR(firstTrainShare, testShare, 
@@ -76,6 +77,7 @@ public class JaccardDistance extends CompositeProtocol implements Callable<Integ
                                     recQueues.get(startpid), 
                                     clientID, prime, startpid);
        startpid++;
+       
        // or module for train 2 - test distance
        initQueueMap(recQueues, sendQueues, startpid);
        OR_XOR orModule2 = new OR_XOR(secondTrainShare, testShare
@@ -84,13 +86,16 @@ public class JaccardDistance extends CompositeProtocol implements Callable<Integ
                                      recQueues.get(startpid), clientID,
                                      prime, startpid);
        startpid++;
+       
        //xor module for train 2 - test distance
        initQueueMap(recQueues, sendQueues, startpid);
        OR_XOR xorModule2 = new OR_XOR(secondTrainShare, testShare, 
                                      tiShares, oneShare, 2,
                                      sendQueues.get(startpid), recQueues.get(startpid),
                                      clientID, prime, startpid);
+       startpid++;
        
+       //Submit all tasks for execution
        Future<Integer[]> orTask = es.submit(orModule);
        Future<Integer[]> xorTask = es.submit(xorModule);
        Future<Integer[]> orTask2 = es.submit(orModule2);
@@ -99,19 +104,27 @@ public class JaccardDistance extends CompositeProtocol implements Callable<Integ
        es.shutdown();
        
             try {
-                      Integer[] orResult = orTask.get();
-                    Integer[] xorResult = xorTask.get();
-                    
+                    // These scores are additive shares over prime (Constants.prime)
+                    // We eventually need sum of individual list over prime
+                    Integer[] orResult = orTask.get();
+                    Integer[] xorResult = xorTask.get();    
                     Integer[] orResult2 = orTask2.get();
                     Integer[] xorResult2 = xorTask2.get();
                   
-//                    System.out.println("or Result:" + orResult);
-//                    System.out.println("xor Result:" + xorResult);
-//                    System.out.println("or2 Result:" + orResult2);
-//                    System.out.println("xor2 Result:" + xorResult2);
-                    int orScore = getScoreFromList(orResult);
-                    int xorScore = getScoreFromList(xorResult);
+                    System.out.println("or 1");
+                    printScoreList(orResult);
                     
+                    System.out.println("xor 1");
+                    printScoreList(xorResult);
+                    
+                    System.out.println("or 2");
+                    printScoreList(orResult2);
+                    
+                    System.out.println("xor 2");
+                    printScoreList(xorResult2);
+
+                    int orScore = getScoreFromList(orResult);
+                    int xorScore = getScoreFromList(xorResult);         
                     int orScore2 = getScoreFromList(orResult2);
                     int xorScore2 = getScoreFromList(xorResult2);
                     
@@ -120,8 +133,8 @@ public class JaccardDistance extends CompositeProtocol implements Callable<Integ
                     System.out.println("or2 Score:" + orScore2);
                     System.out.println("xor2 Score:" + xorScore2);
                     
-//                    result = crossMultiplyAndCompare(orScore, xorScore, orScore2, 
-//                             xorScore2, startpid);
+                    result = crossMultiplyAndCompare(orScore, xorScore, orScore2, 
+                             xorScore2, startpid);
                     
             } catch (InterruptedException ex) {
                 Logger.getLogger(JaccardDistance.class.getName()).log(Level.SEVERE, null, ex);
@@ -139,20 +152,24 @@ public class JaccardDistance extends CompositeProtocol implements Callable<Integ
         
         // Multiplication 1 -> XOR1a, OR2a AND XOR1b, OR2b
         //TODO check prime here for multiplication, Check startpid/protocolID here
+        System.out.println("Cross Multiplication!");
+        
+        initQueueMap(recQueues, sendQueues, startpid);
         Multiplication multiplicationModule = new Multiplication(xorScore,
                     orScore2, tiShares.get(startpid),
                     sendQueues.get(startpid), recQueues.get(startpid), clientID,
-                    Constants.prime, startpid, oneShare, protocolId);
+                    Constants.prime, startpid, oneShare,protocolId);
         Future<Integer> firstCrossMultiplication = es.submit(multiplicationModule);
         startpid++;
         
+        initQueueMap(recQueues, sendQueues, startpid);
         Multiplication multiplicationModule2 = new Multiplication(xorScore2,
                     orScore, tiShares.get(startpid),
                     sendQueues.get(startpid), recQueues.get(startpid), clientID,
                     Constants.prime, startpid, oneShare, protocolId);
         
         Future<Integer> secondCrossMultiplication = es.submit(multiplicationModule2);
-         
+        startpid++; 
         es.shutdown();
         
         try {
@@ -160,12 +177,10 @@ public class JaccardDistance extends CompositeProtocol implements Callable<Integ
                 int secondDistance = secondCrossMultiplication.get();
                 
                 System.out.println("First distance share: " + firstDistance);
-                System.out.println("First distance share: " + secondDistance);
+                System.out.println("Second distance share: " + secondDistance);
                 //TODO Test existing code and Add comparison here
                 
-                
-                
-                    
+                  
             } catch (InterruptedException ex) {
                 Logger.getLogger(Comparison.class.getName()).log(Level.SEVERE, null, ex);
             } catch (ExecutionException ex) {
@@ -182,7 +197,15 @@ public class JaccardDistance extends CompositeProtocol implements Callable<Integ
             sum  = sum + element;
         }
         
-        return sum;
+        return Math.floorMod(sum, Constants.prime);
+    }
+    
+    public static void printScoreList(Integer[] scoreList){
+        
+        for (int element: scoreList){
+            
+            System.out.println("["+element+"]");
+        }
     }
 //    public static void main(String[] args) {
 //        

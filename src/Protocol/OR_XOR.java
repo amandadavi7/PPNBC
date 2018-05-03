@@ -61,8 +61,7 @@ public class OR_XOR extends CompositeProtocol implements Callable<Integer[]> {
 
             int toIndex = Math.min(i + Constants.batchSize, bitLength);
             
-            System.out.println("x sublist:" + xShares.subList(i, toIndex));
-            System.out.println("y sublist:" + yShares.subList(i, toIndex));
+       
             BatchMultiplication batchMultiplication = new BatchMultiplication(
                     xShares.subList(i, toIndex),
                     yShares.subList(i, toIndex),
