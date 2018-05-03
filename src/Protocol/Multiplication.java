@@ -26,7 +26,6 @@ public class Multiplication extends Protocol implements Callable {
     int x;
     int y;
     Triple tiShares;
-    int oneShare;
     int parentID;
 
     /**
@@ -47,12 +46,11 @@ public class Multiplication extends Protocol implements Callable {
             BlockingQueue<Message> receiverQueue, int clientId, int prime,
             int protocolID, int oneShare, int parentID) {
 
-        super(protocolID, senderQueue, receiverQueue, clientId, prime);
 
+        super(protocolID, senderQueue, receiverQueue, clientId, prime, oneShare);
         this.x = x;
         this.y = y;
         this.tiShares = tiShares;
-        this.oneShare = oneShare;
         this.parentID = parentID;
     }
 

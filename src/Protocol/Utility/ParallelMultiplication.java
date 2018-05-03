@@ -28,7 +28,7 @@ public class ParallelMultiplication extends Protocol implements Callable<Integer
     
     List<Integer> wRow;
     List<Triple> tishares;
-    int startProtocolID, oneShare;
+    int startProtocolID;
     ConcurrentHashMap<Integer, BlockingQueue<Message>> sendQueues;
     ConcurrentHashMap<Integer, BlockingQueue<Message>> recQueues;
     
@@ -38,11 +38,10 @@ public class ParallelMultiplication extends Protocol implements Callable<Integer
             ConcurrentHashMap<Integer, BlockingQueue<Message>> recQueues,
             BlockingQueue<Message> senderQueue, BlockingQueue<Message> receiverQueue) {
         
-        super(protocolID,senderQueue,receiverQueue,clientID,prime);
+        super(protocolID,senderQueue,receiverQueue,clientID,prime, oneShare);
         this.wRow = row;
         this.tishares = tishares;
         this.startProtocolID = startProtocolID;
-        this.oneShare = oneShare;   
         this.sendQueues = sendQueues;
         this.recQueues = recQueues;
     }
