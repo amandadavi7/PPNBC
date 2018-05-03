@@ -21,7 +21,7 @@ import java.util.logging.Logger;
  * @author keerthanaa
  */
 public class Equality extends Protocol implements Callable<Integer> {
-    int xShare, yShare, rShare, oneShare;
+    int xShare, yShare, rShare;
     Triple tiShare;
     
     public Equality(int xShare, int yShare, int rShare,
@@ -29,13 +29,12 @@ public class Equality extends Protocol implements Callable<Integer> {
             BlockingQueue<Message> receiverQueue, int clientId, int prime,
             int protocolID) {
         
-        super(protocolID, senderQueue, receiverQueue, clientId, prime);
+        super(protocolID, senderQueue, receiverQueue, clientId, prime, oneShare);
         
         this.xShare = xShare;
         this.yShare = yShare;
         this.rShare = rShare;
         this.tiShare = tiShare;
-        this.oneShare = oneShare;
         
     }
     
