@@ -9,6 +9,8 @@ import Communication.Message;
 import Protocol.DotProduct;
 import TrustedInitializer.Triple;
 import Utility.Constants;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
@@ -41,14 +43,15 @@ public class LinearRegressionEvaluation extends Model {
 
     }
 
-    public List<Integer> predictValues() {
+    public void predictValues() {
 
         startModelHandlers();
 
         computeDotProduct();
         //Dot product for each row
         teardownModelHandlers();
-        return y;
+        writeToCSV();
+        
     }
 
     public void computeDotProduct() {
@@ -87,6 +90,19 @@ public class LinearRegressionEvaluation extends Model {
         long stopTime = System.currentTimeMillis();
         long elapsedTime = stopTime - startTime;
         System.out.println("Avg time duration:" + elapsedTime);
+    }
+
+    private void writeToCSV() {
+        try {
+            FileWriter writer = new FileWriter("y_"+clientId+".csv");
+            for(int i=0;i<testCases;i++) {
+                writer.write(y.get(i));
+                writer.write("\n");
+            }
+        } catch (IOException ex) {
+            Logger.getLogger(LinearRegressionEvaluation.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        
     }
 
 }

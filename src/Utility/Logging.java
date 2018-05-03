@@ -71,5 +71,12 @@ public class Logging {
     public static void tiUsage() {
         System.out.println("java TI <port> <no. of decimal triples> <no. of binary triples>");
     }
+    
+    /**
+     * Guideline to use the Client class
+     */
+    public static void clientUsage() {
+        System.out.println("java ShareDistribution <inputfilePath>");
+    }
 
 }
