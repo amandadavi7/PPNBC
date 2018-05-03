@@ -7,7 +7,7 @@ package Model;
 
 import Communication.Message;
 import Protocol.ArgMax;
-import Protocol.BatchMultiplication;
+import Protocol.Utility.BatchMultiplication;
 import Protocol.BitDecomposition;
 import Protocol.DotProduct;
 import Protocol.Equality;
