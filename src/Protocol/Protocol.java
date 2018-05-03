@@ -7,8 +7,6 @@ package Protocol;
 
 import Communication.Message;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  *
@@ -17,27 +15,16 @@ import java.util.concurrent.LinkedBlockingQueue;
 public class Protocol {
     //ExecutorService queueHandlers;
     
-    BlockingQueue<Message> senderQueue;
-    BlockingQueue<Message> receiverQueue;
-    int protocolId;
+    protected BlockingQueue<Message> senderQueue;
+    protected BlockingQueue<Message> receiverQueue;
+    protected int protocolId, clientID, prime;
 
     public Protocol(int protocolId, BlockingQueue<Message> senderQueue,
-            BlockingQueue<Message> receiverQueue) {
+            BlockingQueue<Message> receiverQueue, int clientID, int prime) {
         this.protocolId = protocolId;
         this.senderQueue = senderQueue;
         this.receiverQueue = receiverQueue;
-    }
-
-    public void initQueueMap(
-            ConcurrentHashMap<Integer, BlockingQueue<Message>> recQueues,
-            ConcurrentHashMap<Integer, BlockingQueue<Message>> sendQueues,
-            int key) {
-
-        recQueues.putIfAbsent(key, new LinkedBlockingQueue<>());
-        sendQueues.putIfAbsent(key, new LinkedBlockingQueue<>());
-    }
-
-    public void teardown() {
-    
+        this.clientID = clientID;
+        this.prime = prime;
     }
 }

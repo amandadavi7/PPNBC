@@ -49,7 +49,7 @@ public class Multiplication extends Protocol implements Callable {
             BlockingQueue<Message> receiverQueue, int clientId, int prime,
             int protocolID, int oneShare, int parentID) {
 
-        super(protocolID, senderQueue, receiverQueue);
+        super(protocolID, senderQueue, receiverQueue, clientId, prime);
         this.x = x;
         this.y = y;
         this.tiShares = tiShares;

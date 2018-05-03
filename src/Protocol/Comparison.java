@@ -5,6 +5,7 @@
  */
 package Protocol;
 
+import Protocol.Utility.BatchMultiplication;
 import Communication.Message;
 import TrustedInitializer.Triple;
 import Utility.Constants;
@@ -160,7 +161,7 @@ public class Comparison extends CompositeProtocol implements Callable<Integer> {
 
         // The protocols for computation of d are assigned id 0-bitLength-1
         do {
-            System.out.println("Protocol " + protocolId + " batch " + startpid);
+            //System.out.println("Protocol " + protocolId + " batch " + startpid);
             initQueueMap(recQueues, sendQueues, startpid);
 
             int toIndex = (i + Constants.batchSize < bitLength)
@@ -210,23 +211,24 @@ public class Comparison extends CompositeProtocol implements Callable<Integer> {
 
         int mainIndex = bitLength - 1;
         multiplicationE[mainIndex--] = eShares[bitLength - 1];
-
+        
         //List<Integer> dShareList = Arrays.stream(dShares).boxed().collect(Collectors.toList());
         int startpid = bitLength;
-
+        
         // Runs log n times
         while (tempMultE.size() > 1) {
+            
             ExecutorService es = Executors.newFixedThreadPool(Constants.threadCount);
             List<Future<Integer[]>> taskList = new ArrayList<>();
 
             int i = 0;
+            
             // batch multiply each pair of tempMultE[i], tempMult[i+1]
             do {
-                System.out.println("Protocol " + protocolId + " batch " + startpid);
+                //System.out.println("Protocol " + protocolId + " batch " + startpid);
                 initQueueMap(recQueues, sendQueues, startpid);
 
-                int toIndex = (i + Constants.batchSize < bitLength)
-                        ? (i + Constants.batchSize) : (bitLength);
+                int toIndex = Math.min(i+Constants.batchSize, tempMultE.size());
 
                 BatchMultiplication batchMultiplication = new BatchMultiplication(
                         tempMultE.subList(i, toIndex - 1),
@@ -239,8 +241,8 @@ public class Comparison extends CompositeProtocol implements Callable<Integer> {
                 taskList.add(multiplicationTask);
 
                 startpid++;
-                i += Constants.batchSize;
-            } while (i < bitLength - 1);
+                i += toIndex-1;
+            } while (i < tempMultE.size()-1);
 
             es.shutdown();
 
@@ -251,26 +253,23 @@ public class Comparison extends CompositeProtocol implements Callable<Integer> {
                 try {
                     Future<Integer[]> prod = taskList.get(i);
                     products.addAll(Arrays.asList(prod.get()));
-
                 } catch (InterruptedException | ExecutionException ex) {
                     ex.printStackTrace();
                 }
-
             }
-
+            
             // in the end of one iteration, update tempmultE for next round of execution
             if (es.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS)) {
                 // update all values
                 tempMultE.clear();
                 tempMultE = products;
             }
-
+            
             // store the main value in the end
             multiplicationE[mainIndex--] = tempMultE.get(tempMultE.size() - 1);
         }
 
         cProcessId = startpid;
-
         multiplicationE[0] = 0;
 
     }
@@ -290,7 +289,7 @@ public class Comparison extends CompositeProtocol implements Callable<Integer> {
         int i = 0;
 
         do {
-            System.out.println("Protocol " + protocolId + " batch " + startpid);
+            //System.out.println("Protocol " + protocolId + " batch " + startpid);
             initQueueMap(recQueues, sendQueues, startpid);
 
             int toIndex = (i + Constants.batchSize < bitLength - 1)
