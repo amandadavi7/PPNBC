@@ -26,7 +26,6 @@ import java.util.concurrent.Future;
 public class ArgMax extends CompositeProtocol implements Callable<Integer[]> {
 
     List<List<Integer>> vShares;
-    int oneShare;
     List<Triple> tiShares;    
     int bitLength, numberCount;
 
@@ -51,10 +50,9 @@ public class ArgMax extends CompositeProtocol implements Callable<Integer[]> {
             BlockingQueue<Message> receiverQueue, int clientId, int prime,
             int protocolID) {
         
-        super(protocolID, senderQueue, receiverQueue, clientId, prime);
+        super(protocolID, senderQueue, receiverQueue, clientId, prime, oneShare);
         
         this.vShares = vShares;
-        this.oneShare = oneShare;
         this.tiShares = tiShares;
 
         numberCount = vShares.size();

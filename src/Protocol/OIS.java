@@ -27,7 +27,7 @@ public class OIS extends CompositeProtocol implements Callable<Integer[]>{
     List<List<Integer>> featureVectorTransposed;
     List<Integer> yShares;
     List<Triple> tiShares;
-    int numberCount,bitLength, oneShare;
+    int numberCount,bitLength;
     
     /**
      * Constructor
@@ -49,10 +49,9 @@ public class OIS extends CompositeProtocol implements Callable<Integer[]>{
             BlockingQueue<Message> receiverQueue, int clientId, int prime,
             int protocolID, int bitLength, int k, int numberCount){
         
-        super(protocolID, senderQueue, receiverQueue, clientId, prime);
+        super(protocolID, senderQueue, receiverQueue, clientId, prime, oneShare);
         this.numberCount = numberCount;
         this.bitLength = bitLength;
-        this.oneShare = oneShare;
         this.tiShares = tiShares;
         
         

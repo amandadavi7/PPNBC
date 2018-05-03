@@ -31,7 +31,6 @@ public class Comparison extends CompositeProtocol implements Callable<Integer> {
 
     List<Integer> x;
     List<Integer> y;
-    int oneShare;
     List<Triple> tiShares;
 
     int[] dShares;
@@ -63,10 +62,9 @@ public class Comparison extends CompositeProtocol implements Callable<Integer> {
             BlockingQueue<Message> receiverQueue, int clientId, int prime,
             int protocolID) {
 
-        super(protocolID, senderQueue, receiverQueue, clientId, prime);
+        super(protocolID, senderQueue, receiverQueue, clientId, prime, oneShare);
         this.x = x;
         this.y = y;
-        this.oneShare = oneShare;
         this.tiShares = tiShares;
 
         bitLength = Math.max(x.size(), y.size());

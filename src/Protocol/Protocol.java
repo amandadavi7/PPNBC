@@ -17,14 +17,15 @@ public class Protocol {
     
     protected BlockingQueue<Message> senderQueue;
     protected BlockingQueue<Message> receiverQueue;
-    protected int protocolId, clientID, prime;
+    protected int protocolId, clientID, prime, oneShare;
 
     public Protocol(int protocolId, BlockingQueue<Message> senderQueue,
-            BlockingQueue<Message> receiverQueue, int clientID, int prime) {
+            BlockingQueue<Message> receiverQueue, int clientID, int prime, int oneShare) {
         this.protocolId = protocolId;
         this.senderQueue = senderQueue;
         this.receiverQueue = receiverQueue;
         this.clientID = clientID;
         this.prime = prime;
+        this.oneShare = oneShare;
     }
 }
