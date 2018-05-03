@@ -11,6 +11,7 @@ import Protocol.BatchMultiplication;
 import Protocol.BitDecomposition;
 import Protocol.DotProduct;
 import Protocol.Equality;
+import Protocol.Multiplication;
 import TrustedInitializer.Triple;
 import Utility.Constants;
 import java.util.ArrayList;
@@ -294,24 +295,46 @@ public class ID3 extends Model {
             
             //Compute x^2
             List<Future<Integer[]>> batchMultTasks = new ArrayList<>();
-            for(int j=0;j<attrValueCount;j++) {
-                initQueueMap(recQueues, sendQueues, pid+j);
-                BatchMultiplication batchMult = new BatchMultiplication(Arrays.asList(X[k][j]), 
-                        Arrays.asList(X[k][j]), decimalTiShares, sendQueues.get(pid+j), 
-                        recQueues.get(pid+j), clientId, Constants.prime, pid+j, oneShares, 0);
+            for(int i=0;i<classLabelCount;i++) {
+                initQueueMap(recQueues, sendQueues, pid+i);
+                BatchMultiplication batchMult = new BatchMultiplication(Arrays.asList(X[k][i]), 
+                        Arrays.asList(X[k][i]), decimalTiShares, sendQueues.get(pid+i), 
+                        recQueues.get(pid+i), clientId, Constants.prime, pid+i, oneShares, 0);
                 Future<Integer[]> bmTask = es.submit(batchMult);
                 batchMultTasks.add(bmTask);
             }
-            pid+=attrValueCount;
-            for(int j=0;j<attrValueCount;j++) {
-                Future<Integer[]> bmTask = batchMultTasks.get(j);
+            pid+=classLabelCount;
+            for(int i=0;i<classLabelCount;i++) {
+                Future<Integer[]> bmTask = batchMultTasks.get(i);
                 try {
-                    X2[k][j] = bmTask.get();
+                    X2[k][i] = bmTask.get();
                 } catch (InterruptedException | ExecutionException ex) {
                     Logger.getLogger(ID3.class.getName()).log(Level.SEVERE, null, ex);
                 }
             }
             
+            Integer numerator = 0;
+            for(int i=0;i<classLabelCount;i++) {
+                for(int j=0;j<attrValueCount;j++) {
+                    numerator += X2[k][i][j];
+                }
+            }
+            
+            Integer YProd = Y[k][0];
+            initQueueMap(recQueues, sendQueues, pid);
+            for(int j=1;j<attrValueCount;j++) {
+                Multiplication mult = new Multiplication(YProd, Y[k][j], decimalTiShares.get(0), sendQueues.get(pid), 
+                        recQueues.get(pid), clientId, Constants.prime, pid, oneShares, 0);
+                Future<Integer> multTask = es.submit(mult);
+                try {
+                    YProd = multTask.get();
+                } catch (InterruptedException | ExecutionException ex) {
+                    Logger.getLogger(ID3.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+            
+            Integer denominator = YProd;
+           
         }
         
         //do argmax of Gk and return
