@@ -298,7 +298,7 @@ public class TestModel extends Model{
 
           JaccardDistance jdistance = new JaccardDistance(x.get(0),
                                       x.get(1),y.get(0), oneShares, 
-                                      decimalTiShares, Constants.bitLength,sendQueues.get(0), 
+                                      decimalTiShares, binaryTiShares,Constants.bitLength,sendQueues.get(0), 
                                       recQueues.get(0), clientId, Constants.prime, 0);
         
         Future<Integer> jaccardTask = es.submit(jdistance);

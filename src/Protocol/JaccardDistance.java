@@ -8,6 +8,9 @@ package Protocol;
 import Communication.Message;
 import TrustedInitializer.Triple;
 import Utility.Constants;
+import com.sun.javafx.scene.control.skin.VirtualFlow;
+import java.util.AbstractList;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
@@ -29,12 +32,13 @@ public class JaccardDistance extends CompositeProtocol implements Callable<Integ
     List<Integer> testShare;
     int oneShare;
     List<Triple> tiShares;
+    List<Triple> binaryTiShares;
     int bitLength;
    
 
     public JaccardDistance(List<Integer> firstTrainShare, List<Integer> secondTrainShare,
             List<Integer> testShare, int oneShare, List<Triple> tiShares, 
-            int bitLength,
+            List<Triple> binaryTiShares , int bitLength,
             BlockingQueue<Message> senderQueue,
             BlockingQueue<Message> receiverQueue, int clientId, int prime,
             int protocolID){
@@ -46,6 +50,7 @@ public class JaccardDistance extends CompositeProtocol implements Callable<Integ
         this.testShare = testShare;
         this.oneShare = oneShare;
         this.tiShares = tiShares;
+        this.binaryTiShares = binaryTiShares;
         bitLength = firstTrainShare.size(); 
         
         System.out.println("First train share: " + firstTrainShare);
@@ -148,6 +153,7 @@ public class JaccardDistance extends CompositeProtocol implements Callable<Integ
     public int crossMultiplyAndCompare(int orScore, int xorScore, int orScore2,
                                        int xorScore2, int startpid){
         int result = -1;
+        
         ExecutorService es = Executors.newFixedThreadPool(Constants.threadCount);
         
         // Multiplication 1 -> XOR1a, OR2a AND XOR1b, OR2b
@@ -178,9 +184,12 @@ public class JaccardDistance extends CompositeProtocol implements Callable<Integ
                 
                 System.out.println("First distance share: " + firstDistance);
                 System.out.println("Second distance share: " + secondDistance);
-                //TODO Test existing code and Add comparison here
+                // TODO: Add comparison here
                 
-                  
+                List<List<Integer>> bitShares = getBitShares(firstDistance,secondDistance,startpid);
+                
+                result = getComparsionResult(bitShares, startpid);
+                   
             } catch (InterruptedException ex) {
                 Logger.getLogger(Comparison.class.getName()).log(Level.SEVERE, null, ex);
             } catch (ExecutionException ex) {
@@ -189,6 +198,71 @@ public class JaccardDistance extends CompositeProtocol implements Callable<Integ
         return result;
     }
     
+    public List<List<Integer>> getBitShares(int firstShare, int secondShare, int startpid){
+        List<List<Integer>> results = new ArrayList<>();
+        ExecutorService es = Executors.newFixedThreadPool(Constants.threadCount);
+       
+        initQueueMap(recQueues, sendQueues, startpid);
+        BitDecomposition firstTask = new BitDecomposition(firstShare,binaryTiShares,
+                                        oneShare, Constants.bitLength, sendQueues.get(startpid), 
+                                        recQueues.get(startpid), clientID, Constants.binaryPrime, startpid);
+        startpid++;
+        initQueueMap(recQueues, sendQueues, startpid);
+        BitDecomposition secondTask = new BitDecomposition(secondShare,binaryTiShares,
+                                        oneShare, Constants.bitLength, sendQueues.get(startpid), 
+                                        recQueues.get(startpid), clientID, Constants.binaryPrime, startpid);
+     
+        //Submit all tasks for execution
+       Future<List<Integer>> firstBitResult = es.submit(firstTask);
+       Future<List<Integer>>  secondBitResult= es.submit(secondTask);
+       es.shutdown();
+       
+       try{
+           List<Integer> firstBitShare = firstBitResult.get();
+           List<Integer> secondBitShare = secondBitResult.get();
+
+           results.add(firstBitShare);
+           results.add(secondBitShare);
+           System.out.println("Firstbitshare: " + results.get(0));
+           System.out.println("Secondbitshare: " + results.get(1));
+           
+           
+        }catch (InterruptedException ex) {
+                Logger.getLogger(Comparison.class.getName()).log(Level.SEVERE, null, ex);
+        }catch (ExecutionException ex) {
+                Logger.getLogger(Comparison.class.getName()).log(Level.SEVERE, null, ex);
+        }
+       
+        return results;
+    }
+    
+    public int getComparsionResult(List<List<Integer>> bitShares, int startpid){
+        
+        int comparisonResult = -1;
+        
+        ExecutorService es = Executors.newSingleThreadExecutor();
+        
+        initQueueMap(recQueues, sendQueues, startpid);
+        
+        Comparison comparisonModule = new Comparison(bitShares.get(0),
+                                    bitShares.get(1), binaryTiShares, oneShare,
+                                    sendQueues.get(startpid), recQueues.get(startpid), clientID, 
+                                    Constants.binaryPrime, startpid);
+        
+        Future<Integer> comparisonTask = es.submit(comparisonModule);
+        es.shutdown();
+        
+        try{
+                comparisonResult = comparisonTask.get();
+        }catch (InterruptedException ex) {
+                Logger.getLogger(Comparison.class.getName()).log(Level.SEVERE, null, ex);
+        }catch (ExecutionException ex) {
+                Logger.getLogger(Comparison.class.getName()).log(Level.SEVERE, null, ex);
+        }
+       
+        
+        return comparisonResult;
+    }
     public static int getScoreFromList(Integer[] scoreList){
         
         int sum = 0;
