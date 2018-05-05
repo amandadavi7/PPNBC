@@ -31,5 +31,8 @@ public class Constants {
     
     public static final int threadCount = 10; 
     public static final int batchSize = 10;
+    
+    public static final int decimal_precision = 64;
+    public static final int integer_precision = 64;
 
 }
