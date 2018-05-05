@@ -12,7 +12,9 @@ import java.io.FileNotFoundException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.RoundingMode;
+import java.security.SecureRandom;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Scanner;
@@ -27,8 +29,10 @@ import java.util.stream.Stream;
 public class Client {
 
     static String sourceFile;
-    protected static List<List<BigInteger>> x;
+    protected static BigInteger[][] x;
     static BigInteger Zq;
+    static int row, col;
+    static BigInteger[][][] partyInput;
 
     public static void main(String[] args) {
         if (args.length < 1) {
@@ -38,14 +42,14 @@ public class Client {
         initalizeVariables(args);
 
         loadCSVFromFile();
-        splitData();
+        splitInput();
+        saveToCSV();
     }
 
     private static void initalizeVariables(String[] args) {
         sourceFile = args[0];
-        List<List<Double>> x = new ArrayList<>();
-        Zq = BigInteger.valueOf(2).pow(Constants.integer_precision + 
-                2 * Constants.decimal_precision + 1).nextProbablePrime();  //Zq must be a prime field
+        Zq = BigInteger.valueOf(2).pow(Constants.integer_precision
+                + 2 * Constants.decimal_precision + 1).nextProbablePrime();  //Zq must be a prime field
         System.out.println("Field: Zq = " + Zq);
 
     }
@@ -88,8 +92,13 @@ public class Client {
 
         try {
             inputStream = new Scanner(file);
+            int row = 0;
             while (inputStream.hasNext()) {
                 String line = inputStream.next();
+                Double[] doubleValues = Stream.of(line.split(","))
+                        .map(Double::valueOf).toArray(Double[]::new);
+
+                /*
                 List<Double> list = Stream.of(line.split(","))
                         .map(Double::parseDouble)
                         .collect(Collectors.toList());
@@ -99,6 +108,16 @@ public class Client {
                     bigIntegerlist.add(realToZq(listValue,Constants.decimal_precision, Zq));
                 });
                 x.add(bigIntegerlist);
+                 */
+                int col = doubleValues.length;
+                BigInteger[] bigIntegerlist = new BigInteger[col];
+                for (int i = 0; i < col; i++) {
+                    bigIntegerlist[i] = realToZq(doubleValues[i],
+                            Constants.decimal_precision, Zq);
+                }
+
+                x[row++] = bigIntegerlist;
+
             }
 
             inputStream.close();
@@ -106,9 +125,29 @@ public class Client {
             e.printStackTrace();
         }
 
+        row = x.length;
+        col = x[0].length;
+        
+        partyInput = new BigInteger[Constants.clientCount][row][col];
+
     }
 
-    private static void splitData() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    private static void splitInput() {
+        SecureRandom srng = new SecureRandom();
+        for (int i = 0; i < row; i++) {
+            for (int j = 0; j < col; j++) {
+                //generate n-1 random variables in the range
+                BigInteger totalSum = BigInteger.ZERO;
+                for(int k=0;k<Constants.clientCount-1;k++) {
+                    BigInteger xK = new BigInteger(Constants.integer_precision
+                        + 2 * Constants.decimal_precision, srng).mod(Zq);
+                    partyInput[k][row][col] = xK;
+                    totalSum = totalSum.add(xK).mod(Zq);
+                }
+                BigInteger xK = x[row][col].subtract(totalSum).mod(Zq);
+                partyInput[Constants.clientCount-1][row][col] = xK;
+            }
+        }
     }
+
 }
