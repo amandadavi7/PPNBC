@@ -150,4 +150,8 @@ public class Client {
         }
     }
 
+    private static void saveToCSV() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
 }
