@@ -30,7 +30,6 @@ public class JaccardDistance extends CompositeProtocol implements Callable<Integ
     List<Integer> firstTrainShare;
     List<Integer> secondTrainShare;
     List<Integer> testShare;
-    int oneShare;
     List<Triple> tiShares;
     List<Triple> binaryTiShares;
     int bitLength;
@@ -43,12 +42,11 @@ public class JaccardDistance extends CompositeProtocol implements Callable<Integ
             BlockingQueue<Message> receiverQueue, int clientId, int prime,
             int protocolID){
         
-        super(protocolID, senderQueue, receiverQueue, clientId, prime);
+        super(protocolID, senderQueue, receiverQueue, clientId, prime, oneShare);
         
         this.firstTrainShare = firstTrainShare;
         this.secondTrainShare = secondTrainShare;
         this.testShare = testShare;
-        this.oneShare = oneShare;
         this.tiShares = tiShares;
         this.binaryTiShares = binaryTiShares;
         bitLength = firstTrainShare.size(); 
