@@ -6,10 +6,9 @@
  */
 package Protocol;
 
+import Protocol.Utility.BatchMultiplication;
 import Communication.Message;
-import Utility.Logging;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.*;
 import java.util.logging.Level;
@@ -27,7 +26,6 @@ public class BitDecomposition extends CompositeProtocol implements Callable<List
 
     int input;
     List<List<Integer>> inputShares;
-    int oneShare;
     List<Triple> tiShares;
 
     Integer[] dShares, eShares, cShares, yShares;
@@ -41,8 +39,7 @@ public class BitDecomposition extends CompositeProtocol implements Callable<List
     /**
      * Constructor
      *
-     * @param a_decimal
-     * @param b_decimal
+     * @param input
      * @param tiShares
      * @param oneShare
      * @param bitLength
@@ -57,7 +54,7 @@ public class BitDecomposition extends CompositeProtocol implements Callable<List
             BlockingQueue<Message> receiverQueue, int clientId, int prime,
             int protocolID) {
 
-        super(protocolID, senderQueue, receiverQueue, clientId, prime);
+        super(protocolID, senderQueue, receiverQueue, clientId, prime, oneShare);
 
         this.input = input;
         this.bitLength = bitLength;
@@ -87,7 +84,6 @@ public class BitDecomposition extends CompositeProtocol implements Callable<List
 //        System.out.println("a as list: " + a);
 //        System.out.println("b as list: " + b);
 
-        this.oneShare = oneShare;
         this.tiShares = tiShares;
         //this.parentProtocolId = protocolID;
         eShares = new Integer[bitLength];
