@@ -6,6 +6,7 @@
 package Client;
 
 import Utility.Constants;
+import Utility.FileIO;
 import Utility.Logging;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -42,7 +43,14 @@ public class Client {
         }
         initalizeVariables(args);
 
-        loadCSVFromFile();
+        x = FileIO.loadCSVFromFile(sourceFile, Zq);
+        
+        row = x.size();
+        System.out.println("row:"+row);
+        col = x.get(0).length;
+
+        partyInput = new BigInteger[Constants.clientCount][row][col];
+        
         splitInput();
         saveToCSV();
     }
@@ -53,85 +61,6 @@ public class Client {
                 + 2 * Constants.decimal_precision + 1).nextProbablePrime();  //Zq must be a prime field
         System.out.println("Field: Zq = " + Zq);
         x = new ArrayList<>();
-
-    }
-
-    /**
-     * @param x value in reals
-     * @param f bit resolution of decimal component
-     * @return SMPCVariable of x in Z_q
-     */
-    static BigInteger realToZq(double x, int f, BigInteger q) {
-        // Our integer space must be at least 2^k
-        // TODO: Does this need to be larger given more parties?
-        BigDecimal X = BigDecimal.valueOf(x);
-        BigDecimal fac = BigDecimal.valueOf(2).pow(f);
-        X = X.multiply(fac);
-
-        return X.toBigInteger().mod(q);
-    }
-
-    static BigDecimal ZqToReal(BigInteger x, int f, BigInteger q) {
-        BigInteger partition = q.subtract(BigInteger.ONE).divide(BigInteger.valueOf(2));
-        BigInteger inverse = BigInteger.valueOf(2).pow(f);
-        BigDecimal Zk;
-
-        // If x is more than half of the field size, it is negative.
-        if (x.compareTo(partition) > 0) {
-            Zk = new BigDecimal(x.subtract(q));
-        } else {
-            Zk = new BigDecimal(x);
-        }
-
-        BigDecimal Q = Zk.divide(new BigDecimal(inverse), f, RoundingMode.CEILING);
-        return Q;
-        // return Zk.divide(new BigDecimal(inverse), BigDecimal.ROUND_HALF_UP);
-    }
-
-    public static void loadCSVFromFile() {
-        File file = new File(sourceFile);
-        Scanner inputStream;
-
-        try {
-            inputStream = new Scanner(file);
-            int row = 0;
-            while (inputStream.hasNext()) {
-                String line = inputStream.next();
-                Double[] doubleValues = Stream.of(line.split(","))
-                        .map(Double::valueOf).toArray(Double[]::new);
-
-                /*
-                List<Double> list = Stream.of(line.split(","))
-                        .map(Double::parseDouble)
-                        .collect(Collectors.toList());
-                
-                List<BigInteger> bigIntegerlist = new ArrayList<>();
-                list.forEach((listValue) -> {
-                    bigIntegerlist.add(realToZq(listValue,Constants.decimal_precision, Zq));
-                });
-                x.add(bigIntegerlist);
-                 */
-                int col = doubleValues.length;
-                BigInteger[] bigIntegerlist = new BigInteger[col];
-                for (int i = 0; i < col; i++) {
-                    bigIntegerlist[i] = realToZq(doubleValues[i],
-                            Constants.decimal_precision, Zq);
-                }
-
-                x.add(bigIntegerlist);
-
-            }
-
-            inputStream.close();
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
-
-        row = x.size();
-        System.out.println("row:"+row);
-        col = x.get(0).length;
-
-        partyInput = new BigInteger[Constants.clientCount][row][col];
 
     }
 
@@ -157,7 +86,7 @@ public class Client {
     private static void saveToCSV() {
         String baseFileName = "thetaPower_";
         for (int partyId = 0; partyId < Constants.clientCount; partyId++) {
-            try (BufferedWriter br = new BufferedWriter(new FileWriter(baseFileName + partyId))) {
+            try (BufferedWriter br = new BufferedWriter(new FileWriter(baseFileName + partyId+".csv"))) {
                 for (int rowIndex = 0; rowIndex < row; rowIndex++) {
                     for (int colIndex = 0; colIndex < col; colIndex++) {
                         br.append(partyInput[partyId][rowIndex][colIndex]+",");

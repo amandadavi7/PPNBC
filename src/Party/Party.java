@@ -12,11 +12,14 @@ import Utility.Connection;
 import Model.TestModel;
 import TrustedInitializer.TIShare;
 import TrustedInitializer.Triple;
+import Utility.Constants;
+import Utility.FileIO;
 import Utility.Logging;
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.math.BigInteger;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.*;
@@ -47,6 +50,8 @@ public class Party {
 
     private static List<List<Integer> > xShares;
     private static List<List<Integer> > yShares;
+    private static List<BigInteger[]> ySharesBigInt;
+    
     private static List<List<List<Integer>>> vShares;
     private static int oneShares; 
 
@@ -111,19 +116,26 @@ public class Party {
                     break;
                 case "yShares":
                     csvFile = value; 
-                    try {
-                        buf = new BufferedReader(new FileReader(csvFile));
-                        String line = null;
-                        while((line = buf.readLine()) != null){
-                            int lineInt[] = Arrays.stream(line.split(",")).mapToInt(Integer::parseInt).toArray();
-                            List<Integer> yline = Arrays.stream(lineInt).boxed().collect(Collectors.toList());
-                            yShares.add(yline);
-                        }
-                    } catch (FileNotFoundException ex) {
-                        Logger.getLogger(Party.class.getName()).log(Level.SEVERE, null, ex);
-                    } catch (IOException ex) {
-                        Logger.getLogger(Party.class.getName()).log(Level.SEVERE, null, ex);
-                    }
+                    //TODO generalize it
+                    BigInteger Zq = BigInteger.valueOf(2).pow(
+                            Constants.integer_precision + 
+                                    2 * Constants.decimal_precision + 1)
+                            .nextProbablePrime();  //Zq must be a prime field
+                    
+                    ySharesBigInt = FileIO.loadCSVFromFile(csvFile, Zq);
+//                    try {
+//                        buf = new BufferedReader(new FileReader(csvFile));
+//                        String line = null;
+//                        while((line = buf.readLine()) != null){
+//                            int lineInt[] = Arrays.stream(line.split(",")).mapToInt(Integer::parseInt).toArray();
+//                            List<Integer> yline = Arrays.stream(lineInt).boxed().collect(Collectors.toList());
+//                            yShares.add(yline);
+//                        }
+//                    } catch (FileNotFoundException ex) {
+//                        Logger.getLogger(Party.class.getName()).log(Level.SEVERE, null, ex);
+//                    } catch (IOException ex) {
+//                        Logger.getLogger(Party.class.getName()).log(Level.SEVERE, null, ex);
+//                    }
                     break;
                 case "vShares":
                     csvFile = value;
@@ -170,6 +182,7 @@ public class Party {
         startServer();
         startClient();
 
+        //TODO change the variable name here
         LinearRegressionEvaluation regressionModel = 
                 new LinearRegressionEvaluation(xShares, yShares.get(0), 
                         tiShares.decimalShares,oneShares, senderQueue, 
