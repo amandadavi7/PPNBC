@@ -5,6 +5,7 @@
  */
 package Protocol;
 
+import Protocol.Utility.BatchMultiplication;
 import Communication.Message;
 import TrustedInitializer.Triple;
 import Utility.Constants;
@@ -24,7 +25,6 @@ import java.util.concurrent.Future;
 public class DotProduct extends CompositeProtocol implements Callable<Integer> {
 
     List<Integer> xShares, yShares;
-    int oneShare;
     List<Triple> tiShares;
 
     /**
@@ -44,13 +44,12 @@ public class DotProduct extends CompositeProtocol implements Callable<Integer> {
             BlockingQueue<Message> senderqueue, BlockingQueue<Message> receiverqueue,
             int clientID, int prime, int protocolID, int oneShare) {
         
-        super(protocolID, senderqueue, receiverqueue, clientID, prime);
+        super(protocolID, senderqueue, receiverqueue, clientID, prime, oneShare);
         
         this.xShares = xShares;
         this.yShares = yShares;
         this.tiShares = tiShares;
-        this.oneShare = oneShare;
-    
+        
     }
 
     /**
