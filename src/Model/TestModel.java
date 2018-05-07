@@ -10,7 +10,7 @@ import Protocol.ArgMax;
 import Protocol.BitDecomposition;
 import Protocol.Comparison;
 import Protocol.DotProduct;
-import Protocol.JaccardDistance;
+import Protocol.Utility.JaccardDistance;
 import Protocol.Multiplication;
 import Protocol.OIS;
 import Protocol.OR_XOR;

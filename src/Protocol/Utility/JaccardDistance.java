@@ -3,9 +3,14 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package Protocol;
+package Protocol.Utility;
 
 import Communication.Message;
+import Protocol.BitDecomposition;
+import Protocol.Comparison;
+import Protocol.CompositeProtocol;
+import Protocol.Multiplication;
+import Protocol.OR_XOR;
 import TrustedInitializer.Triple;
 import Utility.Constants;
 import com.sun.javafx.scene.control.skin.VirtualFlow;

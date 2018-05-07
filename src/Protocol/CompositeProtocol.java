@@ -20,8 +20,8 @@ import java.util.concurrent.LinkedBlockingQueue;
  */
 public class CompositeProtocol extends Protocol {
 
-    ConcurrentHashMap<Integer, BlockingQueue<Message>> recQueues;
-    ConcurrentHashMap<Integer, BlockingQueue<Message>> sendQueues;
+    protected ConcurrentHashMap<Integer, BlockingQueue<Message>> recQueues;
+    protected ConcurrentHashMap<Integer, BlockingQueue<Message>> sendQueues;
 
     ExecutorService queueHandlers;
     SenderQueueHandler senderThread;
