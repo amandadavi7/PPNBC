@@ -296,16 +296,15 @@ public class TestModel extends Model{
 //                binaryTiShares, oneShares, Constants.bitLength, sendQueues.get(1),
 //                recQueues.get(1), clientId, Constants.binaryPrime, 1);
 
-          JaccardDistance jdistance = new JaccardDistance(x.get(0),
-                                      x.get(1),y.get(0), oneShares, 
-                                      decimalTiShares, binaryTiShares,Constants.bitLength,sendQueues.get(0), 
+          JaccardDistance jdistance = new JaccardDistance(x, y.get(0), oneShares, 
+                                      decimalTiShares, sendQueues.get(0), 
                                       recQueues.get(0), clientId, Constants.prime, 0);
         
-        Future<Integer> jaccardTask = es.submit(jdistance);
+        Future<List<List<Integer>>> jaccardTask = es.submit(jdistance);
         es.shutdown();
         
         try {
-            Integer result = jaccardTask.get();
+            List<List<Integer>> result = jaccardTask.get();
             System.out.println("result of jaccard distance comparison: " + result);
         } catch (InterruptedException ex) {
             Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
