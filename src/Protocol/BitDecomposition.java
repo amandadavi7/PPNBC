@@ -5,16 +5,17 @@
  */
 package Protocol;
 
+import Protocol.Utility.BatchMultiplication;
 import Communication.Message;
-import Utility.Logging;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import TrustedInitializer.Triple;
 import Utility.Constants;
+import java.util.Arrays;
+import java.util.Collections;
 
 /**
  *
@@ -22,21 +23,14 @@ import Utility.Constants;
  */
 public class BitDecomposition extends CompositeProtocol implements Callable<List<Integer>> {
 
-    int a_decimal;
-    int b_decimal;
-    List<Integer> a;
-    List<Integer> b;
-    int oneShare;
+    int input;
+    List<List<Integer>> inputShares;
     List<Triple> tiShares;
 
-    HashMap<Integer, Integer> dShares;
-    HashMap<Integer, Integer> eShares;
-    // HashMap<Integer, Integer> multiplicationE;
-    HashMap<Integer, Integer> cShares;
-    //Changed to List from HashMap
+    Integer[] dShares, eShares, cShares, yShares;
+    
     List<Integer> xShares;
-    HashMap<Integer, Integer> yShares;
-
+    
     /*parentProtocolId not used for testing*/
     //int parentProtocolId;   
     int bitLength;
@@ -44,8 +38,7 @@ public class BitDecomposition extends CompositeProtocol implements Callable<List
     /**
      * Constructor
      *
-     * @param a_decimal
-     * @param b_decimal
+     * @param input
      * @param tiShares
      * @param oneShare
      * @param bitLength
@@ -55,44 +48,41 @@ public class BitDecomposition extends CompositeProtocol implements Callable<List
      * @param prime
      * @param protocolID
      */
-    public BitDecomposition(Integer a_decimal, Integer b_decimal, List<Triple> tiShares,
+    public BitDecomposition(Integer input, List<Triple> tiShares,
             int oneShare, int bitLength, BlockingQueue<Message> senderQueue,
             BlockingQueue<Message> receiverQueue, int clientId, int prime,
             int protocolID) {
 
-        super(protocolID, senderQueue, receiverQueue, clientId, prime);
+        super(protocolID, senderQueue, receiverQueue, clientId, prime, oneShare);
 
-        this.a_decimal = a_decimal;
-        this.b_decimal = b_decimal;
+        this.input = input;
         this.bitLength = bitLength;
 
-        // convert decimal to binary notation
-        this.a = decimalToBinary(this.a_decimal);
-        this.b = decimalToBinary(this.b_decimal);
-
-        //add padding to  make the number of bits same
-        int diff = Math.abs(bitLength - b.size());
-
-        // add padding to b if a>b
+        // convert decimal to binary notation: TODO - generalize to n parties with a for loop
+        inputShares = new ArrayList<>();
+        List<Integer> temp = decimalToBinary(this.input);
+        List<Integer> temp0 = new ArrayList<>(Collections.nCopies(bitLength, 0));
+        int diff = Math.abs(bitLength - temp.size());
         for (int i = 0; i < diff; i++) {
-            b.add(0);
+            temp.add(0);
+        }
+        
+        // TODO - client ID - change to zero indexed
+        for(int i=0;i<Constants.clientCount;i++) {
+            if(i+1 == clientId) {
+                inputShares.add(temp);
+            } else {
+                inputShares.add(temp0);
+            }
         }
 
-        diff = Math.abs(bitLength - a.size());
-
-        // add padding to a if a<b
-        for (int i = 0; i < diff; i++) {
-            a.add(0);
-        }
-
-        this.oneShare = oneShare;
         this.tiShares = tiShares;
         //this.parentProtocolId = protocolID;
-        eShares = new HashMap<>();
-        dShares = new HashMap<>();
-        cShares = new HashMap<>();
+        eShares = new Integer[bitLength];
+        dShares = new Integer[bitLength];
+        cShares = new Integer[bitLength];
         xShares = new ArrayList<>();
-        yShares = new HashMap<>();
+        yShares = new Integer[bitLength];
 
     }
 
@@ -105,10 +95,10 @@ public class BitDecomposition extends CompositeProtocol implements Callable<List
         initY();
 
         // Initialize c[1] 
-        int first_c_share = computeByBit(a.get(0), b.get(0), 0, 0);
+        int first_c_share = computeByBit(inputShares.get(0).get(0), inputShares.get(1).get(0), 0, 0);
         first_c_share = Math.floorMod(first_c_share, prime);
-        cShares.put(0, first_c_share);
-        System.out.println("the first c share: " + cShares.get(0));
+        cShares[0] = first_c_share;
+        System.out.println("the first c share: " + cShares[0]);
 
         ExecutorService threadService = Executors.newCachedThreadPool();
         Runnable dThread = new Runnable() {
@@ -116,9 +106,7 @@ public class BitDecomposition extends CompositeProtocol implements Callable<List
             public void run() {
                 try {
                     computeDShares();
-                } catch (InterruptedException ex) {
-                    Logger.getLogger(Comparison.class.getName()).log(Level.SEVERE, null, ex);
-                } catch (ExecutionException ex) {
+                } catch (InterruptedException | ExecutionException ex) {
                     Logger.getLogger(Comparison.class.getName()).log(Level.SEVERE, null, ex);
                 }
             }
@@ -132,7 +120,6 @@ public class BitDecomposition extends CompositeProtocol implements Callable<List
         // once we have d and e, we can compute c and x Sequentially
         if (threadsCompleted) {
             computeVariables();
-//            System.out.println("Values for xShares: [" + xShares+"]"); 
         }
 
         tearDownHandlers();
@@ -142,15 +129,14 @@ public class BitDecomposition extends CompositeProtocol implements Callable<List
     public void initY() {
 
         for (int i = 0; i < bitLength; i++) {
-
-            int y = a.get(i) + b.get(i);
+            int y = inputShares.get(0).get(i) + inputShares.get(1).get(i);
             y = Math.floorMod(y, prime);
-            yShares.put(i, y);
+            yShares[i] = y;
         }
-        System.out.println("Y shares: " + yShares);
+        System.out.println("Y shares: " + Arrays.toString(yShares));
 
         // set x[1] <- y[1]
-        int y0 = yShares.get(0);
+        int y0 = yShares[0];
         xShares.add(0, y0);
         System.out.println("LSB for x: " + xShares);
     }
@@ -181,9 +167,7 @@ public class BitDecomposition extends CompositeProtocol implements Callable<List
         try {
             multiplication_result = multiplicationTask.get();
 
-        } catch (InterruptedException ex) {
-            Logger.getLogger(Comparison.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (ExecutionException ex) {
+        } catch (InterruptedException | ExecutionException ex) {
             Logger.getLogger(Comparison.class.getName()).log(Level.SEVERE, null, ex);
         }
 
@@ -215,8 +199,8 @@ public class BitDecomposition extends CompositeProtocol implements Callable<List
                     ? (i + Constants.batchSize) : bitLength;
 
             BatchMultiplication batchMultiplication = new BatchMultiplication(
-                    a.subList(i, toIndex),
-                    b.subList(i, toIndex),
+                    inputShares.get(0).subList(i, toIndex),
+                    inputShares.get(1).subList(i, toIndex),
                     tiShares.subList(i, toIndex),
                     sendQueues.get(startpid), recQueues.get(startpid),
                     clientID, prime, startpid, oneShare, protocolId);
@@ -247,12 +231,11 @@ public class BitDecomposition extends CompositeProtocol implements Callable<List
                     //add the oneShare to each d
                     d = d + oneShare;
                     d = Math.floorMod(d, prime);
-                    dShares.put(globalIndex, d);
+                    dShares[globalIndex] = d;
                 }
             } catch (InterruptedException | ExecutionException ex) {
                 ex.printStackTrace();
             }
-            Logging.logShares("dShares", dShares);
         }
 
     }
@@ -292,8 +275,8 @@ public class BitDecomposition extends CompositeProtocol implements Callable<List
             boolean threadsCompleted = threadService.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
             // once we have d and e, we can compute c and x Sequentially
             if (threadsCompleted) {
-                int x_result = yShares.get(i);
-                x_result = x_result + cShares.get(i - 1);
+                int x_result = yShares[i];
+                x_result = x_result + cShares[i-1];
                 x_result = Math.floorMod(x_result, prime);
                 xShares.add(i, x_result);
 
@@ -314,23 +297,21 @@ public class BitDecomposition extends CompositeProtocol implements Callable<List
         public void run() {
 
             try {
-                int e_result = computeByBit(yShares.get(protocolId), 
-                        cShares.get(protocolId - 1), protocolId, bitLength);
+                int e_result = computeByBit(yShares[protocolId], 
+                        cShares[protocolId - 1], protocolId, bitLength);
                 e_result = e_result + oneShare;
                 e_result = Math.floorMod(e_result, prime);
-                eShares.put(protocolId, e_result);
+                eShares[protocolId] = e_result;
                 System.out.println("e result for id: " + e_result);
 
-                int c_result = computeByBit(eShares.get(protocolId), 
-                        dShares.get(protocolId), protocolId, bitLength * 2);
+                int c_result = computeByBit(eShares[protocolId], 
+                        dShares[protocolId], protocolId, bitLength * 2);
                 c_result = c_result + oneShare;
                 c_result = Math.floorMod(c_result, prime);
-                cShares.put(protocolId, c_result);
+                cShares[protocolId] = c_result;
                 System.out.println("c result for id: " + c_result);
 
-            } catch (InterruptedException ex) {
-                Logger.getLogger(BitDecomposition.class.getName()).log(Level.SEVERE, null, ex);
-            } catch (ExecutionException ex) {
+            } catch (InterruptedException | ExecutionException ex) {
                 Logger.getLogger(BitDecomposition.class.getName()).log(Level.SEVERE, null, ex);
             }
         }

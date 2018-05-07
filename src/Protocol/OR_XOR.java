@@ -5,6 +5,7 @@
  */
 package Protocol;
 
+import Protocol.Utility.BatchMultiplication;
 import Communication.Message;
 import TrustedInitializer.Triple;
 import Utility.Constants;
@@ -24,7 +25,7 @@ import java.util.concurrent.Future;
 public class OR_XOR extends CompositeProtocol implements Callable<Integer[]> {
     
     List<Integer> xShares, yShares;
-    int oneShare, constantMultiplier;
+    int constantMultiplier;
     List<Triple> tiShares;
     int bitLength;
     
@@ -33,11 +34,10 @@ public class OR_XOR extends CompositeProtocol implements Callable<Integer[]> {
             BlockingQueue<Message> receiverQueue, int clientId, int prime,
             int protocolID) {
         
-        super(protocolID, senderQueue, receiverQueue, clientId, prime);
+        super(protocolID, senderQueue, receiverQueue, clientId, prime, oneShare);
         
         this.xShares = x;
         this.yShares = y;
-        this.oneShare = oneShare;
         bitLength = xShares.size(); 
         this.constantMultiplier = constantMultiplier;
         this.tiShares = tiShares;

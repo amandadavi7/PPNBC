@@ -3,9 +3,11 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package Protocol;
+package Protocol.Utility;
 
 import Communication.Message;
+import Protocol.Multiplication;
+import Protocol.Protocol;
 import TrustedInitializer.Triple;
 import Utility.Constants;
 import java.util.ArrayList;
@@ -25,9 +27,6 @@ public class BatchMultiplication extends Protocol implements Callable<Integer[]>
     List<Integer> x;
     List<Integer> y;
     List<Triple> tiShares;
-    int clientID;
-    int prime;
-    int oneShare;
     int parentID;
 
     /**
@@ -49,13 +48,10 @@ public class BatchMultiplication extends Protocol implements Callable<Integer[]>
             BlockingQueue<Message> receiverQueue, int clientId, int prime,
             int protocolID, int oneShare, int parentID) {
 
-        super(protocolID, senderQueue, receiverQueue);
+        super(protocolID, senderQueue, receiverQueue, clientId, prime, oneShare);
         this.x = x;
         this.y = y;
         this.tiShares = tiShares;
-        this.clientID = clientId;
-        this.prime = prime;
-        this.oneShare = oneShare;
         this.parentID = parentID;
     }
 

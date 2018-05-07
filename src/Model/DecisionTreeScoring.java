@@ -6,7 +6,7 @@
 package Model;
 
 import Communication.Message;
-import Protocol.BatchMultiplication;
+import Protocol.Utility.BatchMultiplication;
 import Protocol.BitDecomposition;
 import Protocol.Comparison;
 import Protocol.OIS;
@@ -313,11 +313,11 @@ public class DecisionTreeScoring extends Model {
         List<Future<List<Integer>>> taskList = new ArrayList<>();
         
         
-        //Need to handle tishares sublist
+        //Need to handle tishares sublist TODO - bitdecomposition change w.r.t protocol
         if(partyHasTree) {
             for(int i=0;i<leafNodes-1;i++) {
                 initQueueMap(recQueues, sendQueues, i+startpid);
-                BitDecomposition bitD = new BitDecomposition(attributeThresholds[i], 0, binaryTiShares, oneShares, Constants.bitLength,
+                BitDecomposition bitD = new BitDecomposition(attributeThresholds[i], binaryTiShares, oneShares, Constants.bitLength,
                         sendQueues.get(i+startpid), recQueues.get(i+startpid), clientId, Constants.binaryPrime, i+startpid);
                 Future<List<Integer>> task = es.submit(bitD);
                 taskList.add(task);
@@ -325,7 +325,7 @@ public class DecisionTreeScoring extends Model {
         } else {
             for(int i=0;i<leafNodes-1;i++) {
                 initQueueMap(recQueues, sendQueues, i+startpid);
-                BitDecomposition bitD = new BitDecomposition(0, 0, binaryTiShares, oneShares, Constants.bitLength,
+                BitDecomposition bitD = new BitDecomposition(0, binaryTiShares, oneShares, Constants.bitLength,
                         sendQueues.get(i+startpid), recQueues.get(i+startpid), clientId, Constants.binaryPrime, i+startpid);
                 Future<List<Integer>> task = es.submit(bitD);
                 taskList.add(task);
