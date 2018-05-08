@@ -26,7 +26,7 @@ public class OR_XOR extends CompositeProtocol implements Callable<Integer[]> {
     
     List<Integer> xShares, yShares;
     int constantMultiplier;
-    List<Triple> tiShares;
+    List<Triple> decimalTiShares;
     int bitLength;
     
     public OR_XOR(List<Integer> x, List<Integer> y, List<Triple> tiShares,
@@ -40,7 +40,7 @@ public class OR_XOR extends CompositeProtocol implements Callable<Integer[]> {
         this.yShares = y;
         bitLength = xShares.size(); 
         this.constantMultiplier = constantMultiplier;
-        this.tiShares = tiShares;
+        this.decimalTiShares = tiShares;
         
     }
     
@@ -65,7 +65,7 @@ public class OR_XOR extends CompositeProtocol implements Callable<Integer[]> {
             BatchMultiplication batchMultiplication = new BatchMultiplication(
                     xShares.subList(i, toIndex),
                     yShares.subList(i, toIndex),
-                    tiShares.subList(i, toIndex),
+                    decimalTiShares.subList(i, toIndex),
                     sendQueues.get(startpid), recQueues.get(startpid),
                     clientID, prime, startpid, oneShare, protocolId);
 
