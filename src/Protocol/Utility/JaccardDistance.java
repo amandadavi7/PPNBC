@@ -31,13 +31,8 @@ import java.util.logging.Logger;
 public class JaccardDistance extends CompositeProtocol implements Callable<List<List<Integer>>>{
     
     List<List<Integer>> trainingShares;
-    //List<Integer> firstTrainShare;
-    //List<Integer> secondTrainShare;
     List<Integer> testShare;
     List<Triple> decimalTiShares;
-    //List<Triple> binaryTiShares;
-    //int bitLength;
-   
 
     /**
      * 
@@ -62,12 +57,7 @@ public class JaccardDistance extends CompositeProtocol implements Callable<List<
         this.trainingShares = trainingShares;
         this.testShare = testShare;
         this.decimalTiShares = tiShares;
-        //this.binaryTiShares = binaryTiShares;
         //bitLength = firstTrainShare.size(); 
-        
-//        System.out.println("First train share: " + firstTrainShare);
-//        System.out.println("Second train share: " + secondTrainShare);
-//        System.out.println("Test share: " + testShare);
     }
     
     @Override
@@ -75,7 +65,6 @@ public class JaccardDistance extends CompositeProtocol implements Callable<List<
         
        startHandlers();
        List<List<Integer>> result = new ArrayList<>();
-       //int result = -1;
        int startpid = 0;
        int attrLength = testShare.size(), tiStartIndex = 0;
        ExecutorService es = Executors.newFixedThreadPool(Constants.threadCount);
@@ -105,45 +94,6 @@ public class JaccardDistance extends CompositeProtocol implements Callable<List<
             startpid++;
             tiStartIndex += attrLength;
        }
-       
-       // or module for train 1 - test distance 
-//       initQueueMap(recQueues, sendQueues, startpid);
-//       OR_XOR orModule = new OR_XOR(firstTrainShare, testShare
-//                                    ,tiShares, oneShare, 1,
-//                        sendQueues.get(startpid), recQueues.get(startpid), clientID, prime, startpid);
-//       startpid++;
-//       
-//       //xor module for train 1 - test distance
-//       initQueueMap(recQueues, sendQueues, startpid);
-//       OR_XOR xorModule = new OR_XOR(firstTrainShare, testShare, 
-//                                     tiShares, oneShare, 2,
-//                                    sendQueues.get(startpid), 
-//                                    recQueues.get(startpid), 
-//                                    clientID, prime, startpid);
-//       startpid++;
-//       
-//       // or module for train 2 - test distance
-//       initQueueMap(recQueues, sendQueues, startpid);
-//       OR_XOR orModule2 = new OR_XOR(secondTrainShare, testShare
-//                                    ,tiShares, oneShare, 1,
-//                                     sendQueues.get(startpid), 
-//                                     recQueues.get(startpid), clientID,
-//                                     prime, startpid);
-//       startpid++;
-//       
-//       //xor module for train 2 - test distance
-//       initQueueMap(recQueues, sendQueues, startpid);
-//       OR_XOR xorModule2 = new OR_XOR(secondTrainShare, testShare, 
-//                                     tiShares, oneShare, 2,
-//                                     sendQueues.get(startpid), recQueues.get(startpid),
-//                                     clientID, prime, startpid);
-//       startpid++;
-//       
-//       //Submit all tasks for execution
-//       Future<Integer[]> orTask = es.submit(orModule);
-//       Future<Integer[]> xorTask = es.submit(xorModule);
-//       Future<Integer[]> orTask2 = es.submit(orModule2);
-//       Future<Integer[]> xorTask2 = es.submit(xorModule2);
 
        es.shutdown();
        
@@ -164,35 +114,6 @@ public class JaccardDistance extends CompositeProtocol implements Callable<List<
                         row.add(getScoreFromList(xorOutput));
                         result.add(row);
                     }
-//                    Integer[] orResult = orTask.get();
-//                    Integer[] xorResult = xorTask.get();    
-//                    Integer[] orResult2 = orTask2.get();
-//                    Integer[] xorResult2 = xorTask2.get();
-//                  
-//                    System.out.println("or 1");
-//                    printScoreList(orResult);
-//                    
-//                    System.out.println("xor 1");
-//                    printScoreList(xorResult);
-//                    
-//                    System.out.println("or 2");
-//                    printScoreList(orResult2);
-//                    
-//                    System.out.println("xor 2");
-//                    printScoreList(xorResult2);
-//
-//                    int orScore = getScoreFromList(orResult);
-//                    int xorScore = getScoreFromList(xorResult);         
-//                    int orScore2 = getScoreFromList(orResult2);
-//                    int xorScore2 = getScoreFromList(xorResult2);
-//                    
-//                    System.out.println("or Score:" + orScore);
-//                    System.out.println("xor Score:" + xorScore);
-//                    System.out.println("or2 Score:" + orScore2);
-//                    System.out.println("xor2 Score:" + xorScore2);
-//                    
-//                    result = crossMultiplyAndCompare(orScore, xorScore, orScore2, 
-//                             xorScore2, startpid);
                     
             } catch (InterruptedException ex) {
                 Logger.getLogger(JaccardDistance.class.getName()).log(Level.SEVERE, null, ex);
@@ -334,14 +255,4 @@ public class JaccardDistance extends CompositeProtocol implements Callable<List<
             System.out.println("["+element+"]");
         }
     }
-//    public static void main(String[] args) {
-//        
-//        Integer[] scoreList = new Integer[3];
-//        scoreList[0] = 0;
-//        scoreList[1] = 1;
-//        scoreList[2] = 1;
-//        
-//        int score = getScoreFromList(scoreList);
-//        System.out.println("Score: " + score);
-//    }
 }
