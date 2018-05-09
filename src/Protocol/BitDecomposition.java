@@ -7,6 +7,7 @@ package Protocol;
 
 import Protocol.Utility.BatchMultiplication;
 import Communication.Message;
+import Protocol.Utility.BatchMultiplicationNumber;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
@@ -34,6 +35,7 @@ public class BitDecomposition extends CompositeProtocol implements Callable<List
     /*parentProtocolId not used for testing*/
     //int parentProtocolId;   
     int bitLength;
+    int prime;
 
     /**
      * Constructor
@@ -53,10 +55,11 @@ public class BitDecomposition extends CompositeProtocol implements Callable<List
             BlockingQueue<Message> receiverQueue, int clientId, int prime,
             int protocolID) {
 
-        super(protocolID, senderQueue, receiverQueue, clientId, prime, oneShare);
+        super(protocolID, senderQueue, receiverQueue, clientId, oneShare);
 
         this.input = input;
         this.bitLength = bitLength;
+        this.prime = prime;
 
         // convert decimal to binary notation: TODO - generalize to n parties with a for loop
         inputShares = new ArrayList<>();
@@ -198,7 +201,7 @@ public class BitDecomposition extends CompositeProtocol implements Callable<List
             int toIndex = (i + Constants.batchSize < bitLength)
                     ? (i + Constants.batchSize) : bitLength;
 
-            BatchMultiplication batchMultiplication = new BatchMultiplication(
+            BatchMultiplicationNumber batchMultiplication = new BatchMultiplicationNumber(
                     inputShares.get(0).subList(i, toIndex),
                     inputShares.get(1).subList(i, toIndex),
                     tiShares.subList(i, toIndex),

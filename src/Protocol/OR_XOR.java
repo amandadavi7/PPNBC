@@ -7,6 +7,7 @@ package Protocol;
 
 import Protocol.Utility.BatchMultiplication;
 import Communication.Message;
+import Protocol.Utility.BatchMultiplicationNumber;
 import TrustedInitializer.Triple;
 import Utility.Constants;
 import java.util.ArrayList;
@@ -28,16 +29,18 @@ public class OR_XOR extends CompositeProtocol implements Callable<Integer[]> {
     int constantMultiplier;
     List<Triple> tiShares;
     int bitLength;
+    int prime;
     
     public OR_XOR(List<Integer> x, List<Integer> y, List<Triple> tiShares,
             int oneShare, int constantMultiplier, BlockingQueue<Message> senderQueue,
             BlockingQueue<Message> receiverQueue, int clientId, int prime,
             int protocolID) {
         
-        super(protocolID, senderQueue, receiverQueue, clientId, prime, oneShare);
+        super(protocolID, senderQueue, receiverQueue, clientId, oneShare);
         
         this.xShares = x;
         this.yShares = y;
+        this.prime = prime;
         bitLength = xShares.size(); 
         this.constantMultiplier = constantMultiplier;
         this.tiShares = tiShares;
@@ -61,7 +64,7 @@ public class OR_XOR extends CompositeProtocol implements Callable<Integer[]> {
 
             int toIndex = Math.min(i + Constants.batchSize, bitLength);
 
-            BatchMultiplication batchMultiplication = new BatchMultiplication(
+            BatchMultiplicationNumber batchMultiplication = new BatchMultiplicationNumber(
                     xShares.subList(i, toIndex),
                     yShares.subList(i, toIndex),
                     tiShares.subList(i, toIndex),

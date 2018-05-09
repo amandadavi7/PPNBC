@@ -10,6 +10,7 @@ import Protocol.Utility.BatchMultiplication;
 import Protocol.BitDecomposition;
 import Protocol.Comparison;
 import Protocol.OIS;
+import Protocol.Utility.BatchMultiplicationNumber;
 import TrustedInitializer.Triple;
 import Utility.Constants;
 import java.util.ArrayList;
@@ -89,7 +90,7 @@ class PolynomialComputing implements Callable<Integer[]> {
                 recQueues.putIfAbsent(startpid, new LinkedBlockingQueue<>());
                 sendQueues.putIfAbsent(startpid, new LinkedBlockingQueue<>());
                 
-                BatchMultiplication mults = new BatchMultiplication(yj.subList(i, toIndex), z_u, 
+                BatchMultiplicationNumber mults = new BatchMultiplicationNumber(yj.subList(i, toIndex), z_u, 
                         tiShares.subList(i, toIndex), sendQueues.get(startpid), recQueues.get(startpid), clientId, 
                         Constants.binaryPrime, startpid, oneShare, protocolId);
 

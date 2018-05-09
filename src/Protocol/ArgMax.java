@@ -27,7 +27,7 @@ public class ArgMax extends CompositeProtocol implements Callable<Integer[]> {
 
     List<List<Integer>> vShares;
     List<Triple> tiShares;    
-    int bitLength, numberCount;
+    int bitLength, numberCount, prime;
 
     HashMap<Integer, ArrayList<Integer>> wIntermediate;
     Integer[] wOutput;
@@ -50,10 +50,11 @@ public class ArgMax extends CompositeProtocol implements Callable<Integer[]> {
             BlockingQueue<Message> receiverQueue, int clientId, int prime,
             int protocolID) {
         
-        super(protocolID, senderQueue, receiverQueue, clientId, prime, oneShare);
+        super(protocolID, senderQueue, receiverQueue, clientId, oneShare);
         
         this.vShares = vShares;
         this.tiShares = tiShares;
+        this.prime = prime;
 
         numberCount = vShares.size();
         bitLength = 0;

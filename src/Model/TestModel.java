@@ -10,6 +10,7 @@ import Protocol.ArgMax;
 import Protocol.BitDecomposition;
 import Protocol.Comparison;
 import Protocol.DotProduct;
+import Protocol.DotProductNumber;
 import Protocol.Multiplication;
 import Protocol.OIS;
 import Protocol.OR_XOR;
@@ -236,7 +237,7 @@ public class TestModel extends Model{
                     recQueues.putIfAbsent(i, new LinkedBlockingQueue<>());
                     sendQueues.putIfAbsent(i, new LinkedBlockingQueue<>());
                     
-                    DotProduct DPModule = new DotProduct(x.get(i),
+                    DotProductNumber DPModule = new DotProductNumber(x.get(i),
                     y.get(i), decimalTiShares, sendQueues.get(i), recQueues.get(i),
                     clientId, Constants.prime, i, oneShares);  
                 

@@ -27,7 +27,7 @@ public class OIS extends CompositeProtocol implements Callable<Integer[]>{
     List<List<Integer>> featureVectorTransposed;
     List<Integer> yShares;
     List<Triple> tiShares;
-    int numberCount,bitLength;
+    int numberCount,bitLength, prime;
     
     /**
      * Constructor
@@ -49,10 +49,11 @@ public class OIS extends CompositeProtocol implements Callable<Integer[]>{
             BlockingQueue<Message> receiverQueue, int clientId, int prime,
             int protocolID, int bitLength, int k, int numberCount){
         
-        super(protocolID, senderQueue, receiverQueue, clientId, prime, oneShare);
+        super(protocolID, senderQueue, receiverQueue, clientId, oneShare);
         this.numberCount = numberCount;
         this.bitLength = bitLength;
         this.tiShares = tiShares;
+        this.prime = prime;
         
         
         featureVectorTransposed = new ArrayList<>();
@@ -108,7 +109,7 @@ public class OIS extends CompositeProtocol implements Callable<Integer[]>{
             
             //System.out.println("parentID-"+ protocolId +", dp with pid "+ i + " - " +featureVectorTransposed.get(i)+" and "+yShares);
             
-            DotProduct dp = new DotProduct(featureVectorTransposed.get(i), yShares, 
+            DotProductNumber dp = new DotProductNumber(featureVectorTransposed.get(i), yShares, 
                     tiShares.subList(tiStartIndex, tiStartIndex+numberCount), sendQueues.get(i), recQueues.get(i), 
                     clientID, prime, i, oneShare);
             

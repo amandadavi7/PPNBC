@@ -48,12 +48,14 @@ public class Party {
     private static String peerIP;
     private static int peerPort;
 
-    private static List<List<Integer> > xShares;
-    private static List<List<Integer> > yShares;
+    private static List<List<Integer>> xShares;
+    private static List<List<Integer>> yShares;
+    private static List<BigInteger[]> xSharesBigInt;
     private static List<BigInteger[]> ySharesBigInt;
-    
+
     private static List<List<List<Integer>>> vShares;
-    private static int oneShares; 
+    private static int oneShares;
+    private static BigInteger Zq;
 
     /**
      * Initialize class variables
@@ -69,6 +71,9 @@ public class Party {
         partySocketEs = Executors.newFixedThreadPool(2);
         tiShares = new TIShare();
         partyId = -1;
+
+        Zq = BigInteger.valueOf(2).pow(Constants.integer_precision 
+                + 2 * Constants.decimal_precision + 1).nextProbablePrime();  //Zq must be a prime field
 
         for (String arg : args) {
             String[] currInput = arg.split("=");
@@ -95,33 +100,30 @@ public class Party {
                     partyId = Integer.parseInt(value);
                     break;
                 case "xShares":
-                    String csvFile = value; 
-                    BufferedReader buf;
-                    try {
-                        buf = new BufferedReader(new FileReader(csvFile));
-                        String line = null;
-                        while((line = buf.readLine()) != null){
-                            int lineInt[] = Arrays.stream(line.split(",")).mapToInt(Integer::parseInt).toArray();
-                            List<Integer> xline = Arrays.stream(lineInt).boxed().collect(Collectors.toList());
-                            xShares.add(xline);
-                        }
-                    } catch (FileNotFoundException ex) {
-                        Logger.getLogger(Party.class.getName()).log(Level.SEVERE, null, ex);
-                    } catch (IOException ex) {
-                        Logger.getLogger(Party.class.getName()).log(Level.SEVERE, null, ex);
-                    }
+                    String csvFile = value;
+                    xSharesBigInt = FileIO.loadCSVFromFile(csvFile, Zq);
+//                    
+//                    BufferedReader buf;
+//                    try {
+//                        buf = new BufferedReader(new FileReader(csvFile));
+//                        String line = null;
+//                        while ((line = buf.readLine()) != null) {
+//                            int lineInt[] = Arrays.stream(line.split(",")).mapToInt(Integer::parseInt).toArray();
+//                            List<Integer> xline = Arrays.stream(lineInt).boxed().collect(Collectors.toList());
+//                            xShares.add(xline);
+//                        }
+//                    } catch (FileNotFoundException ex) {
+//                        Logger.getLogger(Party.class.getName()).log(Level.SEVERE, null, ex);
+//                    } catch (IOException ex) {
+//                        Logger.getLogger(Party.class.getName()).log(Level.SEVERE, null, ex);
+//                    }
                     break;
                 case "oneShares":
                     oneShares = Integer.parseInt(value);
                     break;
                 case "yShares":
-                    csvFile = value; 
+                    csvFile = value;
                     //TODO generalize it
-                    BigInteger Zq = BigInteger.valueOf(2).pow(
-                            Constants.integer_precision + 
-                                    2 * Constants.decimal_precision + 1)
-                            .nextProbablePrime();  //Zq must be a prime field
-                    
                     ySharesBigInt = FileIO.loadCSVFromFile(csvFile, Zq);
 //                    try {
 //                        buf = new BufferedReader(new FileReader(csvFile));
@@ -140,17 +142,17 @@ public class Party {
                 case "vShares":
                     csvFile = value;
                     try {
-                        buf = new BufferedReader(new FileReader(csvFile));
+                        BufferedReader buf = new BufferedReader(new FileReader(csvFile));
                         String line = null;
-                        while((line = buf.readLine()) != null){
+                        while ((line = buf.readLine()) != null) {
                             String[] vListShares = line.split(";");
-                            List<List<Integer> > vline = new ArrayList<>();
-                            for(String str: vListShares) { 
+                            List<List<Integer>> vline = new ArrayList<>();
+                            for (String str : vListShares) {
                                 int lineInt[] = Arrays.stream(str.split(",")).mapToInt(Integer::parseInt).toArray();
                                 vline.add(Arrays.stream(lineInt).boxed().collect(Collectors.toList()));
                             }
                             vShares.add(vline);
-                        }                        
+                        }
                     } catch (FileNotFoundException ex) {
                         Logger.getLogger(Party.class.getName()).log(Level.SEVERE, null, ex);
                     } catch (IOException ex) {
@@ -183,11 +185,11 @@ public class Party {
         startClient();
 
         //TODO change the variable name here
-        LinearRegressionEvaluation regressionModel = 
-                new LinearRegressionEvaluation(xShares, yShares.get(0), 
-                        tiShares.decimalShares,oneShares, senderQueue, 
-                        receiverQueue, partyId);
-        
+        LinearRegressionEvaluation regressionModel
+                = new LinearRegressionEvaluation(xShares, ySharesBigInt,
+                        tiShares.decimalShares, oneShares, senderQueue,
+                        receiverQueue, partyId, Zq);
+
         regressionModel.predictValues();
 
         /*
@@ -195,7 +197,7 @@ public class Party {
               tiShares.binaryShares, tiShares.decimalShares,oneShares, senderQueue, receiverQueue, partyId);
         
         testModel.compute();
-        */
+         */
 //        if(partyId==1) {
 //            
 //            int[] leafToClassIndexMapping = new int[5];
@@ -223,7 +225,6 @@ public class Party {
 //            
 //            DScore.ScoreDecisionTree();
 //        }
-        
     }
 
     /**
@@ -265,7 +266,7 @@ public class Party {
         System.out.println("Server thread starting");
         PartyServer partyServer = new PartyServer(socketServer, senderQueue);
         partySocketEs.submit(partyServer);
-        
+
     }
 
     /**
@@ -277,7 +278,7 @@ public class Party {
         System.out.println("Client thread starting");
         PartyClient partyClient = new PartyClient(receiverQueue, peerIP, peerPort);
         partySocketEs.submit(partyClient);
-        
+
     }
 
 }

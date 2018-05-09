@@ -29,6 +29,7 @@ public class ParallelMultiplication extends Protocol implements Callable<Integer
     List<Integer> wRow;
     List<Triple> tishares;
     int startProtocolID;
+    int prime;
     ConcurrentHashMap<Integer, BlockingQueue<Message>> sendQueues;
     ConcurrentHashMap<Integer, BlockingQueue<Message>> recQueues;
     
@@ -38,12 +39,13 @@ public class ParallelMultiplication extends Protocol implements Callable<Integer
             ConcurrentHashMap<Integer, BlockingQueue<Message>> recQueues,
             BlockingQueue<Message> senderQueue, BlockingQueue<Message> receiverQueue) {
         
-        super(protocolID,senderQueue,receiverQueue,clientID,prime, oneShare);
+        super(protocolID,senderQueue,receiverQueue,clientID,oneShare);
         this.wRow = row;
         this.tishares = tishares;
         this.startProtocolID = startProtocolID;
         this.sendQueues = sendQueues;
         this.recQueues = recQueues;
+        this.prime = prime;
     }
     
     /**
@@ -84,7 +86,7 @@ public class ParallelMultiplication extends Protocol implements Callable<Integer
                 sendQueues.putIfAbsent(startpid, new LinkedBlockingQueue<>());
                 //System.out.println("calling batchmult with pid:"+startpid+",indices:"+tempIndex1+","+tempIndex2);
                 
-                multCompletionService.submit(new BatchMultiplication(products.subList(i1, tempIndex1), 
+                multCompletionService.submit(new BatchMultiplicationNumber(products.subList(i1, tempIndex1), 
                     products.subList(i2, tempIndex2), tishares.subList(tiStartIndex, tiStartIndex+tempIndex1), 
                     sendQueues.get(startpid), recQueues.get(startpid), clientID, prime, startpid, oneShare, protocolId));
                 

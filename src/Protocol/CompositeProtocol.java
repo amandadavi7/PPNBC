@@ -27,6 +27,7 @@ public class CompositeProtocol extends Protocol {
     SenderQueueHandler senderThread;
     ReceiverQueueHandler receiverThread;
 
+    int prime;
     
     /**
      * 
@@ -38,10 +39,11 @@ public class CompositeProtocol extends Protocol {
      * @param oneShare 
      */
     public CompositeProtocol(int protocolId, BlockingQueue<Message> senderQueue,
-            BlockingQueue<Message> receiverQueue, int clientId, int prime, int oneShare) {
+            BlockingQueue<Message> receiverQueue, int clientId, int oneShare) {
         
-        super(protocolId, senderQueue, receiverQueue, clientId, prime, oneShare);
+        super(protocolId, senderQueue, receiverQueue, clientId, oneShare);
         
+        this.prime = prime;
         recQueues = new ConcurrentHashMap<>();
         sendQueues = new ConcurrentHashMap<>();
 
