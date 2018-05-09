@@ -7,6 +7,7 @@ package Party;
 
 import Communication.Message;
 import Model.DecisionTreeScoring;
+import Model.KNN;
 import Utility.Connection;
 import Model.TestModel;
 import TrustedInitializer.TIShare;
@@ -169,11 +170,16 @@ public class Party {
         startServer();
         startClient();
 
-        TestModel testModel = new TestModel(xShares, yShares, vShares, 
-              tiShares.binaryShares, tiShares.decimalShares,oneShares, senderQueue, receiverQueue, partyId);
+        KNN knnModel = new KNN(oneShares, senderQueue, receiverQueue, partyId, 
+                tiShares.binaryShares, tiShares.decimalShares, xShares, yShares.get(0), 
+                yShares.get(1), 4);
         
-        testModel.compute();
-        
+        knnModel.KNN_Model();
+//        TestModel testModel = new TestModel(xShares, yShares, vShares, 
+//              tiShares.binaryShares, tiShares.decimalShares,oneShares, senderQueue, receiverQueue, partyId);
+//        
+//        testModel.compute();
+//        
 //        if(partyId==1) {
 //            
 //            int[] leafToClassIndexMapping = new int[5];
