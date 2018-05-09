@@ -26,14 +26,14 @@ import java.util.logging.*;
  */
 public class LinearRegressionEvaluation extends Model {
 
-    List<BigInteger[]> x;
-    List<BigInteger[]> beta;
+    List<List<BigInteger>> x;
+    List<BigInteger> beta;
     List<BigInteger> y;
     int testCases;
     BigInteger prime;
 
-    public LinearRegressionEvaluation(List<BigInteger[]> x,
-            List<BigInteger[]> beta,
+    public LinearRegressionEvaluation(List<List<BigInteger>> x,
+            List<BigInteger> beta,
             List<Triple> decimalTriples,
             int oneShares, BlockingQueue<Message> senderQueue,
             BlockingQueue<Message> receiverQueue, int clientId, BigInteger prime) {

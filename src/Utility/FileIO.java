@@ -61,12 +61,12 @@ public class FileIO {
      * @param Zq
      * @return 
      */
-    public static List<BigInteger[]> loadCSVFromFile(String sourceFile, 
+    public static List<List<BigInteger>> loadMatrixFromFile(String sourceFile, 
             BigInteger Zq) {
         
         File file = new File(sourceFile);
         Scanner inputStream;
-        List<BigInteger[]> x = new ArrayList<>();
+        List<List<BigInteger>> x = new ArrayList<>();
 
         try {
             inputStream = new Scanner(file);
@@ -77,10 +77,10 @@ public class FileIO {
                         .map(Double::valueOf).toArray(Double[]::new);
 
                 int col = doubleValues.length;
-                BigInteger[] bigIntegerlist = new BigInteger[col];
+                List<BigInteger> bigIntegerlist = new ArrayList<>();
                 for (int i = 0; i < col; i++) {
-                    bigIntegerlist[i] = realToZq(doubleValues[i],
-                            Constants.decimal_precision, Zq);
+                    bigIntegerlist.add(realToZq(doubleValues[i],
+                            Constants.decimal_precision, Zq));
                 }
 
                 x.add(bigIntegerlist);
@@ -95,5 +95,43 @@ public class FileIO {
         return x;
 
     }
+    
+    /**
+     * Reads a matrix from a csv and converts it to Zq.
+     * @param sourceFile
+     * @param Zq
+     * @return 
+     */
+    public static List<BigInteger> loadListFromFile(String sourceFile, 
+            BigInteger Zq) {
+        
+        File file = new File(sourceFile);
+        Scanner inputStream;
+        List<BigInteger> x = new ArrayList<>();
+
+        try {
+            inputStream = new Scanner(file);
+            int row = 0;
+            while (inputStream.hasNext()) {
+                String line = inputStream.next();
+                Double[] doubleValues = Stream.of(line.split(","))
+                        .map(Double::valueOf).toArray(Double[]::new);
+
+                int col = doubleValues.length;
+                
+                x.add(realToZq(doubleValues[0],
+                            Constants.decimal_precision, Zq));
+
+            }
+
+            inputStream.close();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+
+        return x;
+
+    }
+    
     
 }

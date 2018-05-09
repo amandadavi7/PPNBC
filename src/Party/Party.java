@@ -50,8 +50,8 @@ public class Party {
 
     private static List<List<Integer>> xShares;
     private static List<List<Integer>> yShares;
-    private static List<BigInteger[]> xSharesBigInt;
-    private static List<BigInteger[]> ySharesBigInt;
+    private static List<List<BigInteger>> xSharesBigInt;
+    private static List<BigInteger> ySharesBigInt;
 
     private static List<List<List<Integer>>> vShares;
     private static int oneShares;
@@ -101,7 +101,7 @@ public class Party {
                     break;
                 case "xShares":
                     String csvFile = value;
-                    xSharesBigInt = FileIO.loadCSVFromFile(csvFile, Zq);
+                    xSharesBigInt = FileIO.loadMatrixFromFile(csvFile, Zq);
 //                    
 //                    BufferedReader buf;
 //                    try {
@@ -124,7 +124,7 @@ public class Party {
                 case "yShares":
                     csvFile = value;
                     //TODO generalize it
-                    ySharesBigInt = FileIO.loadCSVFromFile(csvFile, Zq);
+                    ySharesBigInt = FileIO.loadListFromFile(csvFile, Zq);
 //                    try {
 //                        buf = new BufferedReader(new FileReader(csvFile));
 //                        String line = null;
@@ -186,7 +186,7 @@ public class Party {
 
         //TODO change the variable name here
         LinearRegressionEvaluation regressionModel
-                = new LinearRegressionEvaluation(xShares, ySharesBigInt,
+                = new LinearRegressionEvaluation(xSharesBigInt, ySharesBigInt,
                         tiShares.decimalShares, oneShares, senderQueue,
                         receiverQueue, partyId, Zq);
 

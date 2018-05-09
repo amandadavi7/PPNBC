@@ -9,20 +9,14 @@ import Utility.Constants;
 import Utility.FileIO;
 import Utility.Logging;
 import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.math.RoundingMode;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Scanner;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.stream.Stream;
 
 /**
  *
@@ -31,7 +25,7 @@ import java.util.stream.Stream;
 public class Client {
 
     static String sourceFile;
-    protected static List<BigInteger[]> x;
+    protected static List<List<BigInteger>> x;
     static BigInteger Zq;
     static int row, col;
     static BigInteger[][][] partyInput;
@@ -43,11 +37,11 @@ public class Client {
         }
         initalizeVariables(args);
 
-        x = FileIO.loadCSVFromFile(sourceFile, Zq);
+        x = FileIO.loadMatrixFromFile(sourceFile, Zq);
         
         row = x.size();
         System.out.println("row:"+row);
-        col = x.get(0).length;
+        col = x.get(0).size();
 
         partyInput = new BigInteger[Constants.clientCount][row][col];
         
@@ -77,7 +71,7 @@ public class Client {
                     partyInput[k][i][j] = xK;
                     totalSum = totalSum.add(xK).mod(Zq);
                 }
-                BigInteger xK = x.get(i)[j].subtract(totalSum).mod(Zq);
+                BigInteger xK = x.get(i).get(j).subtract(totalSum).mod(Zq);
                 partyInput[Constants.clientCount - 1][i][j] = xK;
             }
         }
