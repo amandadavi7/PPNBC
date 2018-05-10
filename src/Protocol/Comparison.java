@@ -24,7 +24,10 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 /**
- *
+ * compares two numbers (x and y) (in bits) and returns 1 if x>=y and 0 otherwise
+ * 
+ * uses 2(bitlength) + (bitlength)(bitlength-1)/2 tiShares
+ * 
  * @author anisha
  */
 public class Comparison extends CompositeProtocol implements Callable<Integer> {
@@ -38,7 +41,7 @@ public class Comparison extends CompositeProtocol implements Callable<Integer> {
     int[] multiplicationE;
     int[] cShares;
 
-    int bitLength;
+    int bitLength, tiStartIndex;
     int cProcessId;
 
     /**
@@ -67,6 +70,7 @@ public class Comparison extends CompositeProtocol implements Callable<Integer> {
         this.y = y;
         this.tiShares = tiShares;
 
+        tiStartIndex = bitLength;
         bitLength = Math.max(x.size(), y.size());
         eShares = new int[bitLength];
         dShares = new int[bitLength];
@@ -162,8 +166,7 @@ public class Comparison extends CompositeProtocol implements Callable<Integer> {
             //System.out.println("Protocol " + protocolId + " batch " + startpid);
             initQueueMap(recQueues, sendQueues, startpid);
 
-            int toIndex = (i + Constants.batchSize < bitLength)
-                    ? (i + Constants.batchSize) : bitLength;
+            int toIndex = Math.min(i + Constants.batchSize, bitLength);
 
             BatchMultiplication batchMultiplication = new BatchMultiplication(
                     x.subList(i, toIndex),
@@ -176,7 +179,7 @@ public class Comparison extends CompositeProtocol implements Callable<Integer> {
             taskList.add(multiplicationTask);
 
             startpid++;
-            i += Constants.batchSize;
+            i = toIndex;
         } while (i < bitLength);
 
         es.shutdown();
@@ -227,11 +230,12 @@ public class Comparison extends CompositeProtocol implements Callable<Integer> {
                 initQueueMap(recQueues, sendQueues, startpid);
 
                 int toIndex = Math.min(i+Constants.batchSize, tempMultE.size());
+                int tiCount = toIndex - i;
 
                 BatchMultiplication batchMultiplication = new BatchMultiplication(
                         tempMultE.subList(i, toIndex - 1),
                         tempMultE.subList(i + 1, toIndex),
-                        tiShares.subList(i, toIndex), sendQueues.get(startpid),
+                        tiShares.subList(tiStartIndex, tiStartIndex+tiCount), sendQueues.get(startpid),
                         recQueues.get(startpid), clientID, prime, startpid,
                         oneShare, protocolId);
 
@@ -240,6 +244,7 @@ public class Comparison extends CompositeProtocol implements Callable<Integer> {
 
                 startpid++;
                 i += toIndex-1;
+                tiStartIndex += tiCount;
             } while (i < tempMultE.size()-1);
 
             es.shutdown();
@@ -290,13 +295,13 @@ public class Comparison extends CompositeProtocol implements Callable<Integer> {
             //System.out.println("Protocol " + protocolId + " batch " + startpid);
             initQueueMap(recQueues, sendQueues, startpid);
 
-            int toIndex = (i + Constants.batchSize < bitLength - 1)
-                    ? (i + Constants.batchSize) : (bitLength - 1);
+            int toIndex = Math.min(i + Constants.batchSize, bitLength - 1);
+            int tiCount = toIndex - i;
 
             BatchMultiplication batchMultiplication = new BatchMultiplication(
                     multiplicationEList.subList(i + 1, toIndex + 1),
                     dShareList.subList(i, toIndex),
-                    tiShares.subList(i, toIndex), sendQueues.get(startpid),
+                    tiShares.subList(tiStartIndex, tiStartIndex + tiCount), sendQueues.get(startpid),
                     recQueues.get(startpid), clientID, prime, startpid,
                     oneShare, protocolId);
 
@@ -304,7 +309,8 @@ public class Comparison extends CompositeProtocol implements Callable<Integer> {
             taskList.add(multiplicationTask);
 
             startpid++;
-            i += Constants.batchSize;
+            i = toIndex;
+            tiStartIndex += tiCount;
         } while (i < bitLength - 1);
 
         es.shutdown();
