@@ -54,9 +54,11 @@ public class CrossMultiplyCompare extends CompositeProtocol implements Callable<
     public Integer call() throws Exception {
         
         int decimalTiIndex = 0, binaryTiIndex = 0;
+        startHandlers();
         ExecutorService es = Executors.newFixedThreadPool(Constants.threadCount);
         
         //Crossmultiplications
+        System.out.println("calling mult1");
         initQueueMap(recQueues, sendQueues, pid);
         
         Multiplication multiplicationModule = new Multiplication(numerator1,
@@ -68,6 +70,8 @@ public class CrossMultiplyCompare extends CompositeProtocol implements Callable<
         pid++;
         decimalTiIndex++;
         
+        System.out.println("calling mult2");
+        initQueueMap(recQueues, sendQueues, pid);
         Multiplication multiplicationModule2 = new Multiplication(numerator2,
                     numerator1, decimalTiShares.get(decimalTiIndex),
                     sendQueues.get(pid), recQueues.get(pid), clientID,
@@ -76,8 +80,8 @@ public class CrossMultiplyCompare extends CompositeProtocol implements Callable<
         Future<Integer> secondCrossMultiplication = es.submit(multiplicationModule2);
         pid++;
         decimalTiIndex++;
-        int first = 0, second = 0;
         
+        int first = 0, second = 0;
         try {
             first = firstCrossMultiplication.get();
             second = secondCrossMultiplication.get();
@@ -86,6 +90,7 @@ public class CrossMultiplyCompare extends CompositeProtocol implements Callable<
         }
         
         // TODO - binaryTiShares sublist in bit decompositions
+        System.out.println("calling bitD1");
         initQueueMap(recQueues, sendQueues, pid);
         BitDecomposition firstTask = new BitDecomposition(first, binaryTiShares,
                                         oneShare, Constants.bitLength, sendQueues.get(pid), 
@@ -93,6 +98,7 @@ public class CrossMultiplyCompare extends CompositeProtocol implements Callable<
         pid++;
         Future<List<Integer>> future1 = es.submit(firstTask);
         
+        System.out.println("calling bitD2");
         initQueueMap(recQueues, sendQueues, pid);
         BitDecomposition secondTask = new BitDecomposition(second, binaryTiShares,
                                         oneShare, Constants.bitLength, sendQueues.get(pid), 
@@ -125,6 +131,7 @@ public class CrossMultiplyCompare extends CompositeProtocol implements Callable<
             Logger.getLogger(KNN.class.getName()).log(Level.SEVERE, null, ex);
         }
         
+        tearDownHandlers();
         return result;
     }
     

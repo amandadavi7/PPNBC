@@ -6,9 +6,6 @@
 package Model;
 
 import Communication.Message;
-import Protocol.BitDecomposition;
-import Protocol.Comparison;
-import Protocol.Multiplication;
 import Protocol.Utility.CrossMultiplyCompare;
 import Protocol.Utility.JaccardDistance;
 import TrustedInitializer.Triple;
@@ -65,7 +62,7 @@ public class KNN extends Model {
             ExecutorService es = Executors.newSingleThreadExecutor();
             
             initQueueMap(recQueues, sendQueues, pid);
-            
+            System.out.println("calling crossmultiply and compare");
             //TODO binary shares sublist handling here
             CrossMultiplyCompare ccModule = new CrossMultiplyCompare(jaccardDistances.get(startIndex).get(1), 
                     jaccardDistances.get(startIndex).get(0), jaccardDistances.get(endIndex).get(1), 
