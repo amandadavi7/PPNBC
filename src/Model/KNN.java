@@ -49,6 +49,10 @@ public class KNN extends Model {
         this.binaryTiIndex = 0;
     }
     
+    void swapCircuit(int leftIndex, int rightIndex, int comparisonOutput) {
+        
+    }
+    
     void Sort(int startIndex, int endIndex, int next) {
         //base case
         System.out.println("in sort: startIndex="+startIndex+", endIndex="+endIndex+", next="+next);
@@ -84,7 +88,9 @@ public class KNN extends Model {
             }
             
             System.out.println("comparing indices" + startIndex + " " + endIndex + ", result=" +comparisonresult);
+            
             //circuit to swap
+            swapCircuit(startIndex, endIndex, comparisonresult);
             
             return;
         }
@@ -118,6 +124,7 @@ public class KNN extends Model {
         //Compare adjacent numbers TODO - handle binaryTiShares sublist
         for(int i=startIndex+1;i<endIndex-1;i+=2){
             //compare and swap jd(i) and jd(i+1)
+            System.out.println("calling comparison between adjacent elements: indices - "+i+" and "+ (i+1));
             initQueueMap(recQueues, sendQueues, pid);
             
             CrossMultiplyCompare ccModule = new CrossMultiplyCompare(jaccardDistances.get(i).get(1), 
@@ -144,6 +151,10 @@ public class KNN extends Model {
             } catch (InterruptedException | ExecutionException ex) {
                 Logger.getLogger(KNN.class.getName()).log(Level.SEVERE, null, ex);
             }
+        }
+        
+        for(int i=0;i<n;i++) {
+            swapCircuit(startIndex+2*i, startIndex+2*i+1, comparisonResults[i]);
         }
     }
     

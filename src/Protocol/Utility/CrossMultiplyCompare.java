@@ -89,6 +89,8 @@ public class CrossMultiplyCompare extends CompositeProtocol implements Callable<
             Logger.getLogger(KNN.class.getName()).log(Level.SEVERE, null, ex);
         }
         
+        System.out.println("cross multiplication results: "+first+" and "+second);
+        
         // TODO - binaryTiShares sublist in bit decompositions
         System.out.println("calling bitD1");
         initQueueMap(recQueues, sendQueues, pid);
@@ -114,8 +116,11 @@ public class CrossMultiplyCompare extends CompositeProtocol implements Callable<
             Logger.getLogger(KNN.class.getName()).log(Level.SEVERE, null, ex);
         }
         
+        System.out.println("bitD results: " + firstNumber + " and " + secondNumber);
+        
         // TODO - binaryti index management in Comparison
         initQueueMap(recQueues, sendQueues, pid);
+        System.out.println("calling comparison");
         Comparison comparisonModule = new Comparison(firstNumber,
                                      secondNumber, binaryTiShares, oneShare,
                                     sendQueues.get(pid), recQueues.get(pid), clientID, 

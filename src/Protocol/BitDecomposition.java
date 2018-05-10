@@ -107,7 +107,7 @@ public class BitDecomposition extends CompositeProtocol implements Callable<List
         first_c_share = Math.floorMod(first_c_share, prime);
 
         cShares[0] = first_c_share;
-        System.out.println("the first c share: " + cShares[0]);
+        //System.out.println("the first c share: " + cShares[0]);
 
 
         ExecutorService threadService = Executors.newCachedThreadPool();
@@ -144,7 +144,7 @@ public class BitDecomposition extends CompositeProtocol implements Callable<List
             yShares[i] = y;
         }
 
-        System.out.println("Y shares: " + Arrays.toString(yShares));
+        //System.out.println("Y shares: " + Arrays.toString(yShares));
 
 
         // set x[1] <- y[1]
@@ -159,7 +159,7 @@ public class BitDecomposition extends CompositeProtocol implements Callable<List
         
         int multiplication_result = -1;
 
-        System.out.println("Computing prtocol id: " + (protocol_id + subprotocolId));
+        //System.out.println("Computing prtocol id: " + (protocol_id + subprotocolId));
         // System.out.println("In BitDecomposition -> ComputeInit()");
         ExecutorService es = Executors.newSingleThreadExecutor();
 
@@ -197,14 +197,14 @@ public class BitDecomposition extends CompositeProtocol implements Callable<List
 
         ExecutorService es = Executors.newFixedThreadPool(Constants.threadCount);
         List<Future<Integer[]>> taskList = new ArrayList<>();
-        System.out.println("In D shares");
+        //System.out.println("In D shares");
 
         int i = 1;
         int startpid = 1;
 
         // **** The protocols for computation of d are assigned id 1-bitLength-1 ***
         do {
-            System.out.println("Protocol " + protocolId + " batch " + startpid);
+            //System.out.println("Protocol " + protocolId + " batch " + startpid);
             initQueueMap(recQueues, sendQueues, startpid);
 
             int toIndex = (i + Constants.batchSize < bitLength)
@@ -276,7 +276,7 @@ public class BitDecomposition extends CompositeProtocol implements Callable<List
     private void computeVariables() throws InterruptedException {
 
         for (int i = 1; i < bitLength; i++) {
-            System.out.println("The current index " + i);
+            //System.out.println("The current index " + i);
             ExecutorService threadService = Executors.newSingleThreadExecutor();
 
             ComputeThread compute = new ComputeThread(i);
@@ -314,14 +314,14 @@ public class BitDecomposition extends CompositeProtocol implements Callable<List
                 e_result = e_result + oneShare;
                 e_result = Math.floorMod(e_result, prime);
                 eShares[protocolId] = e_result;
-                System.out.println("e result for id: " + e_result);
+                //System.out.println("e result for id: " + e_result);
 
                 int c_result = computeByBit(eShares[protocolId], 
                         dShares[protocolId], protocolId, bitLength * 2);
                 c_result = c_result + oneShare;
                 c_result = Math.floorMod(c_result, prime);
                 cShares[protocolId] = c_result;
-                System.out.println("c result for id: " + c_result);
+                //System.out.println("c result for id: " + c_result);
 
             } catch (InterruptedException | ExecutionException ex) {
                 Logger.getLogger(BitDecomposition.class.getName()).log(Level.SEVERE, null, ex);
