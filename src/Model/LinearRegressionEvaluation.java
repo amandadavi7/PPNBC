@@ -44,6 +44,7 @@ public class LinearRegressionEvaluation extends Model {
         this.beta = beta;
         this.prime = prime;
         testCases = x.size();
+        y = new ArrayList<>();
 
     }
 
@@ -83,10 +84,13 @@ public class LinearRegressionEvaluation extends Model {
             try {
                 BigInteger result = dWorkerResponse.get();
                 y.add(result);
-                System.out.println("result:" + result + ", #:" + i);
+                System.out.println(" #:" + i);
+                //System.out.println("result:" + result + ", #:" + i);
             } catch (InterruptedException ex) {
+                System.out.println("EXCEPTION: id:"+i);
                 Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
             } catch (ExecutionException ex) {
+                System.out.println("EXCEPTION: id:"+i);
                 Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
             }
         }

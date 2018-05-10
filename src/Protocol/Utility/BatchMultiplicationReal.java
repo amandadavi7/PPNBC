@@ -86,16 +86,16 @@ public class BatchMultiplicationReal extends BatchMultiplication
             // TODO convert TI share to BigInteger
             BigInteger d = x.get(i)
                     .subtract(BigInteger.valueOf(tiShares.get(i).u))
-                    .add(diffList.get(i).get(0)).modInverse(prime);
+                    .add(diffList.get(i).get(0)).mod(prime);
             BigInteger e = y.get(i)
                     .subtract(BigInteger.valueOf(tiShares.get(i).v))
-                    .add(diffList.get(i).get(1)).modInverse(prime);
+                    .add(diffList.get(i).get(1)).mod(prime);
             
             BigInteger product = BigInteger.valueOf(tiShares.get(i).w)
                     .add(d.multiply(BigInteger.valueOf(tiShares.get(i).v)))
                     .add(e.multiply(BigInteger.valueOf(tiShares.get(i).u)))
                     .add(d.multiply(e).multiply(BigInteger.valueOf(oneShare)))
-                    .modInverse(prime);
+                    .mod(prime);
             
             products[i] = product;
         }
@@ -116,9 +116,9 @@ public class BatchMultiplicationReal extends BatchMultiplication
         for(int i=0;i<batchSize;i++){
             List<BigInteger> newRow = new ArrayList<>();
             newRow.add(x.get(i).subtract(BigInteger.valueOf(tiShares.get(i).u))
-                    .modInverse(prime));
+                    .mod(prime));
             newRow.add(y.get(i).subtract(BigInteger.valueOf(tiShares.get(i).v))
-                    .modInverse(prime));
+                    .mod(prime));
             diffList.add(newRow);
         }
         

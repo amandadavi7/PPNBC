@@ -78,7 +78,6 @@ public class DotProductReal extends DotProduct implements Callable<BigInteger> {
         do {
             int toIndex = Math.min(i+Constants.batchSize,vectorLength);
             
-            System.out.println("Protocol "+protocolId+" batch "+startpid);
             initQueueMap(recQueues, sendQueues, startpid);
             
             multCompletionService.submit(new BatchMultiplicationReal(xShares.subList(i, toIndex), 
@@ -106,8 +105,7 @@ public class DotProductReal extends DotProduct implements Callable<BigInteger> {
 
         tearDownHandlers();
         
-        dotProduct = dotProduct.modInverse(prime);
-        System.out.println("dot product:" + dotProduct + ", protocol id:" + protocolId);
+        dotProduct = dotProduct.mod(prime);
         return dotProduct;
 
     }
