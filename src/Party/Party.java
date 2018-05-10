@@ -101,7 +101,7 @@ public class Party {
                     break;
                 case "xShares":
                     String csvFile = value;
-                    xSharesBigInt = FileIO.loadMatrixFromFile(csvFile, Zq);
+                    xSharesBigInt = FileIO.loadMatrixFromFile(csvFile);
 //                    
 //                    BufferedReader buf;
 //                    try {
