@@ -52,7 +52,7 @@ public class TestModel extends Model{
 //                recQueues.get(1), clientId, Constants.binaryPrime, 1);
         
         BitDecomposition bitTest = new BitDecomposition(2, binaryTiShares, 
-                oneShares, Constants.bitLength, sendQueues.get(1),
+                oneShare, Constants.bitLength, sendQueues.get(1),
                 recQueues.get(1), clientId, Constants.binaryPrime, 1);
         
         
@@ -82,7 +82,7 @@ public class TestModel extends Model{
             recQueues.putIfAbsent(i, new LinkedBlockingQueue<>());
             sendQueues.putIfAbsent(i, new LinkedBlockingQueue<>());
 
-            ArgMax argmaxModule = new ArgMax(v.get(i), binaryTiShares, oneShares, sendQueues.get(i), 
+            ArgMax argmaxModule = new ArgMax(v.get(i), binaryTiShares, oneShare, sendQueues.get(i), 
                 recQueues.get(i), clientId, Constants.binaryPrime, i);
             
             System.out.println("submitted " + i + " argmax");
@@ -129,7 +129,7 @@ public class TestModel extends Model{
         for(int i=0;i<totalCases;i++) {
             
             initQueueMap(recQueues, sendQueues, i);
-            OR_XOR or_xor = new OR_XOR(x.get(i), y.get(i), decimalTiShares, oneShares, 1, sendQueues.get(i), 
+            OR_XOR or_xor = new OR_XOR(x.get(i), y.get(i), decimalTiShares, oneShare, 1, sendQueues.get(i), 
                     recQueues.get(i), clientId, Constants.prime, i);
 
             Future<Integer[]> task = es.submit(or_xor);
@@ -175,11 +175,11 @@ public class TestModel extends Model{
         
         if(v.isEmpty()){
             System.out.println("v is null");
-            ois = new OIS(null,binaryTiShares, oneShares, sendQueues.get(0), recQueues.get(0), clientId,
+            ois = new OIS(null,binaryTiShares, oneShare, sendQueues.get(0), recQueues.get(0), clientId,
             Constants.binaryPrime, 0, 4, 1, 3);
         } else {
             System.out.println("v is not null");
-            ois = new OIS(v.get(0),binaryTiShares, oneShares, sendQueues.get(0), recQueues.get(0), clientId,
+            ois = new OIS(v.get(0),binaryTiShares, oneShare, sendQueues.get(0), recQueues.get(0), clientId,
             Constants.binaryPrime, 0, 4, -1, 3);
         }
            
@@ -222,7 +222,7 @@ public class TestModel extends Model{
                     sendQueues.putIfAbsent(i, new LinkedBlockingQueue<>());
                     
                     Multiplication multiplicationModule = new Multiplication(x.get(i).get(0),y.get(i).get(0),decimalTiShares.get(i)
-                    ,sendQueues.get(i),recQueues.get(i),clientId,Constants.prime,i,oneShares,0);
+                    ,sendQueues.get(i),recQueues.get(i),clientId,Constants.prime,i,oneShare,0);
                 
                     System.out.println("Submitted " + i + " multiplication");
                 
@@ -238,7 +238,7 @@ public class TestModel extends Model{
                     
                     DotProduct DPModule = new DotProduct(x.get(i),
                     y.get(i), decimalTiShares, sendQueues.get(i), recQueues.get(i),
-                    clientId, Constants.prime, i, oneShares);  
+                    clientId, Constants.prime, i, oneShare);  
                 
                     System.out.println("Submitted " + i + " dotproduct");
                     
@@ -253,7 +253,7 @@ public class TestModel extends Model{
                     sendQueues.putIfAbsent(i, new LinkedBlockingQueue<>());
                     
                     Comparison comparisonModule = new Comparison(x.get(i), y.get(i), 
-                    binaryTiShares, oneShares, sendQueues.get(i),
+                    binaryTiShares, oneShare, sendQueues.get(i),
                     recQueues.get(i), clientId, Constants.binaryPrime, i); 
                 
                     System.out.println("submitted " + i + " comparison");

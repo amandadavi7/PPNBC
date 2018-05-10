@@ -34,14 +34,14 @@ public class Model {
 
     int clientId;
     List<Triple> binaryTiShares,decimalTiShares;
-    int oneShares;
+    int oneShare;
     
     public Model(BlockingQueue<Message> senderQueue, BlockingQueue<Message> receiverQueue, 
             int clientId, int oneShares, List<Triple> binaryTiShares, List<Triple> decimalTiShares) {
         
         this.binaryTiShares = binaryTiShares;
         this.decimalTiShares = decimalTiShares;
-        this.oneShares = oneShares;
+        this.oneShare = oneShares;
         this.commonSender = senderQueue;
         this.commonReceiver = receiverQueue;
         this.clientId = clientId;
