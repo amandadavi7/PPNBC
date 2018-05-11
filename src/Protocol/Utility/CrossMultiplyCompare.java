@@ -73,7 +73,7 @@ public class CrossMultiplyCompare extends CompositeProtocol implements Callable<
         System.out.println("calling mult2");
         initQueueMap(recQueues, sendQueues, pid);
         Multiplication multiplicationModule2 = new Multiplication(numerator2,
-                    numerator1, decimalTiShares.get(decimalTiIndex),
+                    denominator1, decimalTiShares.get(decimalTiIndex),
                     sendQueues.get(pid), recQueues.get(pid), clientID,
                     Constants.prime, pid, oneShare,0);
         

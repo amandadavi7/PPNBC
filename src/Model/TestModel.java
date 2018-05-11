@@ -272,9 +272,7 @@ public class TestModel extends Model{
             try {
                 Integer result = dWorkerResponse.get();
                 System.out.println("result:" + result + ", #:" + i);
-            } catch (InterruptedException ex) {
-                Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
-            } catch (ExecutionException ex) {
+            } catch (InterruptedException | ExecutionException ex) {
                 Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
@@ -296,7 +294,7 @@ public class TestModel extends Model{
 //                binaryTiShares, oneShares, Constants.bitLength, sendQueues.get(1),
 //                recQueues.get(1), clientId, Constants.binaryPrime, 1);
 
-          JaccardDistance jdistance = new JaccardDistance(x, y.get(0), oneShares, 
+          JaccardDistance jdistance = new JaccardDistance(x, y.get(0), oneShare, 
                                       decimalTiShares, sendQueues.get(0), 
                                       recQueues.get(0), clientId, Constants.prime, 0);
         
