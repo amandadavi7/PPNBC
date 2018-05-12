@@ -24,7 +24,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 public class Model {
     
     ConcurrentHashMap<Integer, BlockingQueue<Message>> recQueues;
-    protected Queue<Integer> protocolQueue;
+    protected Queue<Integer> protocolIdQueue;
     
     ExecutorService queueHandlers;
     ReceiverQueueHandler receiverThread;
@@ -48,8 +48,8 @@ public class Model {
         this.clientId = clientId;
 
         recQueues = new ConcurrentHashMap<>(50, 0.9f, 1);
-        this.protocolQueue = new LinkedList<>();
-        this.protocolQueue.add(1);
+        this.protocolIdQueue = new LinkedList<>();
+        this.protocolIdQueue.add(1);
         
         queueHandlers = Executors.newSingleThreadExecutor();
         receiverThread = new ReceiverQueueHandler(1, commonReceiver, recQueues);

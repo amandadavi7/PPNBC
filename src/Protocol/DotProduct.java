@@ -25,17 +25,17 @@ public abstract class DotProduct extends CompositeProtocol {
      * @param tiShares
      * @param senderqueue
      * @param receiverqueue
-     * @param protocolQueue
+     * @param protocolIdQueue
      * @param clientID
      * @param protocolID
      * @param oneShare
      */
     public DotProduct(List<Triple> tiShares,
             BlockingQueue<Message> senderqueue, BlockingQueue<Message> receiverqueue,
-            Queue<Integer> protocolQueue,
+            Queue<Integer> protocolIdQueue,
             int clientID, int protocolID, int oneShare) {
 
-        super(protocolID, senderqueue, receiverqueue, protocolQueue,clientID, oneShare);
+        super(protocolID, senderqueue, receiverqueue, protocolIdQueue,clientID, oneShare);
         this.tiShares = tiShares;
 
     }

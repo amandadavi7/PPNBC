@@ -54,7 +54,7 @@ public class TestModel extends Model {
 
         BitDecomposition bitTest = new BitDecomposition(2, binaryTiShares,
                 oneShare, Constants.bitLength, commonSender,
-                recQueues.get(1), new LinkedList<>(protocolQueue), clientId, Constants.binaryPrime, 1);
+                recQueues.get(1), new LinkedList<>(protocolIdQueue), clientId, Constants.binaryPrime, 1);
 
         Future<List<Integer>> bitdecompositionTask = es.submit(bitTest);
 
@@ -84,7 +84,7 @@ public class TestModel extends Model {
             initQueueMap(recQueues, i);
 
             ArgMax argmaxModule = new ArgMax(v.get(i), binaryTiShares, oneShare, commonSender,
-                    recQueues.get(i), new LinkedList<>(protocolQueue), clientId, Constants.binaryPrime, i);
+                    recQueues.get(i), new LinkedList<>(protocolIdQueue), clientId, Constants.binaryPrime, i);
 
             System.out.println("submitted " + i + " argmax");
 
@@ -129,7 +129,7 @@ public class TestModel extends Model {
 
             initQueueMap(recQueues, i);
             OR_XOR or_xor = new OR_XOR(x.get(i), y.get(i), decimalTiShares, oneShare, 1, commonSender,
-                    recQueues.get(i), new LinkedList<>(protocolQueue), clientId, Constants.prime, i);
+                    recQueues.get(i), new LinkedList<>(protocolIdQueue), clientId, Constants.prime, i);
 
             Future<Integer[]> task = es.submit(or_xor);
             taskList.add(task);
@@ -171,11 +171,11 @@ public class TestModel extends Model {
 
         if (v.isEmpty()) {
             System.out.println("v is null");
-            ois = new OIS(null, binaryTiShares, oneShare, commonSender, recQueues.get(0), new LinkedList<>(protocolQueue), clientId,
+            ois = new OIS(null, binaryTiShares, oneShare, commonSender, recQueues.get(0), new LinkedList<>(protocolIdQueue), clientId,
                     Constants.binaryPrime, 0, 4, 1, 3);
         } else {
             System.out.println("v is not null");
-            ois = new OIS(v.get(0), binaryTiShares, oneShare, commonSender, recQueues.get(0), new LinkedList<>(protocolQueue), clientId,
+            ois = new OIS(v.get(0), binaryTiShares, oneShare, commonSender, recQueues.get(0), new LinkedList<>(protocolIdQueue), clientId,
                     Constants.binaryPrime, 0, 4, -1, 3);
         }
 
@@ -215,7 +215,7 @@ public class TestModel extends Model {
                     Multiplication multiplicationModule = new Multiplication(
                             x.get(i).get(0), y.get(i).get(0), 
                             decimalTiShares.get(i), commonSender, recQueues.get(i), 
-                            new LinkedList<>(protocolQueue), clientId, Constants.prime, i, oneShare, 0);
+                            new LinkedList<>(protocolIdQueue), clientId, Constants.prime, i, oneShare, 0);
 
                     System.out.println("Submitted " + i + " multiplication");
 
@@ -230,7 +230,7 @@ public class TestModel extends Model {
 
                     DotProductNumber DPModule = new DotProductNumber(x.get(i),
                             y.get(i), decimalTiShares, commonSender, recQueues.get(i),
-                            new LinkedList<>(protocolQueue),clientId, Constants.prime, i, oneShare);
+                            new LinkedList<>(protocolIdQueue),clientId, Constants.prime, i, oneShare);
 
                     System.out.println("Submitted " + i + " dotproduct");
 
@@ -245,7 +245,7 @@ public class TestModel extends Model {
 
                     Comparison comparisonModule = new Comparison(x.get(i), y.get(i),
                             binaryTiShares, oneShare, commonSender,
-                            recQueues.get(i), new LinkedList<>(protocolQueue), clientId, Constants.binaryPrime, i);
+                            recQueues.get(i), new LinkedList<>(protocolIdQueue), clientId, Constants.binaryPrime, i);
 
                     System.out.println("submitted " + i + " comparison");
 

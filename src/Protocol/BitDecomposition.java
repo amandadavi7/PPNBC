@@ -54,11 +54,11 @@ public class BitDecomposition extends CompositeProtocol implements Callable<List
      */
     public BitDecomposition(Integer input, List<Triple> tiShares,
             int oneShare, int bitLength, BlockingQueue<Message> senderQueue,
-            BlockingQueue<Message> receiverQueue, Queue<Integer> protocolQueue,
+            BlockingQueue<Message> receiverQueue, Queue<Integer> protocolIdQueue,
             int clientId, int prime,
             int protocolID) {
 
-        super(protocolID, senderQueue, receiverQueue, protocolQueue, clientId, oneShare);
+        super(protocolID, senderQueue, receiverQueue, protocolIdQueue, clientId, oneShare);
 
         this.input = input;
         this.bitLength = bitLength;
@@ -168,7 +168,7 @@ public class BitDecomposition extends CompositeProtocol implements Callable<List
                 second_bit,
                 tiShares.get(protocol_id + subprotocolId),
                 senderQueue, 
-                recQueues.get(protocol_id + subprotocolId), new LinkedList<>(protocolQueue),
+                recQueues.get(protocol_id + subprotocolId), new LinkedList<>(protocolIdQueue),
                 clientID,
                 prime, subprotocolId + protocol_id, oneShare, 1);
 
@@ -213,7 +213,7 @@ public class BitDecomposition extends CompositeProtocol implements Callable<List
                     inputShares.get(0).subList(i, toIndex),
                     inputShares.get(1).subList(i, toIndex),
                     tiShares.subList(i, toIndex),
-                    senderQueue, recQueues.get(startpid), new LinkedList<>(protocolQueue),
+                    senderQueue, recQueues.get(startpid), new LinkedList<>(protocolIdQueue),
                     clientID, prime, startpid, oneShare, protocolId);
 
             Future<Integer[]> multiplicationTask = es.submit(batchMultiplication);

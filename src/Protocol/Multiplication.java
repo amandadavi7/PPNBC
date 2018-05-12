@@ -45,11 +45,11 @@ public class Multiplication extends Protocol implements Callable {
      */
     public Multiplication(int x, int y, Triple tiShares,
             BlockingQueue<Message> senderQueue,
-            BlockingQueue<Message> receiverQueue, Queue<Integer> protocolQueue,
+            BlockingQueue<Message> receiverQueue, Queue<Integer> protocolIdQueue,
             int clientId, int prime,
             int protocolID, int oneShare, int parentID) {
 
-        super(protocolID, senderQueue, receiverQueue, protocolQueue,
+        super(protocolID, senderQueue, receiverQueue, protocolIdQueue,
                 clientId, oneShare);
         this.x = x;
         this.y = y;
@@ -96,7 +96,7 @@ public class Multiplication extends Protocol implements Callable {
         diffList.add(Math.floorMod(y - tiShares.v, prime));
 
         Message senderMessage = new Message(Constants.localShares, diffList,
-                clientID, protocolQueue);
+                clientID, protocolIdQueue);
         try {
             senderQueue.put(senderMessage);
             //System.out.println("sending message for protocol id:"+ protocolID);

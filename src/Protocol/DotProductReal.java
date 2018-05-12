@@ -5,7 +5,6 @@
  */
 package Protocol;
 
-import Protocol.Utility.BatchMultiplication;
 import Communication.Message;
 import Protocol.Utility.BatchMultiplicationReal;
 import TrustedInitializer.Triple;
@@ -46,11 +45,11 @@ public class DotProductReal extends DotProduct implements Callable<BigInteger> {
      */
     public DotProductReal(List<BigInteger> xShares, List<BigInteger> yShares, 
             List<Triple> tiShares, BlockingQueue<Message> senderqueue, 
-            BlockingQueue<Message> receiverqueue, Queue<Integer> protocolQueue,
+            BlockingQueue<Message> receiverqueue, Queue<Integer> protocolIdQueue,
             int clientID, BigInteger prime, 
             int protocolID, int oneShare) {
         
-        super(tiShares, senderqueue, receiverqueue, protocolQueue,clientID, protocolID, oneShare);
+        super(tiShares, senderqueue, receiverqueue, protocolIdQueue,clientID, protocolID, oneShare);
         
         this.xShares = xShares;
         this.yShares = yShares;
@@ -83,7 +82,7 @@ public class DotProductReal extends DotProduct implements Callable<BigInteger> {
             
             multCompletionService.submit(new BatchMultiplicationReal(xShares.subList(i, toIndex), 
                     yShares.subList(i, toIndex), tiShares.subList(i, toIndex), senderQueue, 
-                    recQueues.get(startpid), new LinkedList<>(protocolQueue),
+                    recQueues.get(startpid), new LinkedList<>(protocolIdQueue),
                     clientID, prime, startpid, oneShare, protocolId));
             
             startpid++;

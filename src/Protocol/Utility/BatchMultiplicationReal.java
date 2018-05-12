@@ -46,11 +46,11 @@ public class BatchMultiplicationReal extends BatchMultiplication
     public BatchMultiplicationReal(List<BigInteger> x, List<BigInteger> y, 
             List<Triple> tiShares, 
             BlockingQueue<Message> senderQueue,
-            BlockingQueue<Message> receiverQueue, Queue<Integer> protocolQueue,
+            BlockingQueue<Message> receiverQueue, Queue<Integer> protocolIdQueue,
             int clientId, BigInteger prime,
             int protocolID, int oneShare, int parentID) {
 
-        super(tiShares, senderQueue, receiverQueue, protocolQueue, clientId, protocolID, 
+        super(tiShares, senderQueue, receiverQueue, protocolIdQueue, clientId, protocolID, 
                 oneShare, parentID);
         this.x = x;
         this.y = y;
@@ -121,7 +121,7 @@ public class BatchMultiplicationReal extends BatchMultiplication
         }
         
         Message senderMessage = new Message(Constants.localShares, diffList,
-                clientID, protocolQueue);
+                clientID, protocolIdQueue);
         
         try {
             senderQueue.put(senderMessage);

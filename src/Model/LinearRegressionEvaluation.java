@@ -80,18 +80,22 @@ public class LinearRegressionEvaluation extends Model {
         ExecutorService es = Executors.newFixedThreadPool(Constants.threadCount);
         List<Future<BigInteger>> taskList = new ArrayList<>();
 
+        int tiStartIndex = 0;
         long startTime = System.currentTimeMillis();
         for (int i = 0; i < testCases; i++) {
 
             initQueueMap(recQueues,i);
-        
+            
             DotProductReal DPModule = new DotProductReal(x.get(i),
-                    beta, decimalTiShares, commonSender, recQueues.get(i), 
-                    new LinkedList<>(protocolQueue),
+                    beta, decimalTiShares.subList(
+                            tiStartIndex, tiStartIndex+x.get(i).size()), 
+                    commonSender, recQueues.get(i), 
+                    new LinkedList<>(protocolIdQueue),
                     clientId, prime, i, oneShare);
 
             Future<BigInteger> DPTask = es.submit(DPModule);
             taskList.add(DPTask);
+            tiStartIndex += tiStartIndex+x.get(i).size();
         }
 
         es.shutdown();

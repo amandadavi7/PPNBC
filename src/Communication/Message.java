@@ -30,11 +30,11 @@ public class Message implements Serializable {
      */
     //TODO - variableName - obsolete, clientId??
     public Message(String name, Object value, int clientId,
-            Queue<Integer> protocolQueue) {
+            Queue<Integer> protocolIdQueue) {
         variableName = name;
         this.value = value;
         this.clientId = clientId;
-        protocolIds = protocolQueue;
+        protocolIds = protocolIdQueue;
     }
 
     /**

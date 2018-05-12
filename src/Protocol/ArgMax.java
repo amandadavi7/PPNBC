@@ -49,11 +49,11 @@ public class ArgMax extends CompositeProtocol implements Callable<Integer[]> {
      */
     public ArgMax(List<List<Integer>> vShares, List<Triple> tiShares,
             int oneShare, BlockingQueue<Message> senderQueue,
-            BlockingQueue<Message> receiverQueue, Queue<Integer> protocolQueue,
+            BlockingQueue<Message> receiverQueue, Queue<Integer> protocolIdQueue,
             int clientId, int prime,
             int protocolID) {
         
-        super(protocolID, senderQueue, receiverQueue, protocolQueue, clientId, oneShare);
+        super(protocolID, senderQueue, receiverQueue, protocolIdQueue, clientId, oneShare);
         
         this.vShares = vShares;
         this.tiShares = tiShares;
@@ -122,7 +122,7 @@ public class ArgMax extends CompositeProtocol implements Callable<Integer[]> {
                     List<Triple> tiComparsion = tiShares.subList(tiIndex, tiIndex + tiCount);
                     tiIndex += tiCount;
                     Comparison comparisonModule = new Comparison(vShares.get(i), vShares.get(j), tiComparsion,
-                            oneShare, senderQueue, recQueues.get(key), new LinkedList<>(protocolQueue),clientID, prime, key);
+                            oneShare, senderQueue, recQueues.get(key), new LinkedList<>(protocolIdQueue),clientID, prime, key);
                     Future<Integer> comparisonTask = es.submit(comparisonModule);
                     taskList.add(comparisonTask);
                 }
@@ -168,7 +168,7 @@ public class ArgMax extends CompositeProtocol implements Callable<Integer[]> {
             ParallelMultiplication rowMultiplication = new ParallelMultiplication(
                     wIntermediate.get(i), tishares, clientID, prime, protocolId, 
                     startProtocolID, oneShare, recQueues, 
-                    senderQueue, receiverQueue, new LinkedList<>(protocolQueue));
+                    senderQueue, receiverQueue, new LinkedList<>(protocolIdQueue));
             
             startProtocolID+=IDSizePerRow;
             

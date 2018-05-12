@@ -66,11 +66,11 @@ public class Comparison extends CompositeProtocol implements Callable<Integer> {
      */
     public Comparison(List<Integer> x, List<Integer> y, List<Triple> tiShares,
             int oneShare, BlockingQueue<Message> senderQueue,
-            BlockingQueue<Message> receiverQueue, Queue<Integer> protocolQueue,
+            BlockingQueue<Message> receiverQueue, Queue<Integer> protocolIdQueue,
             int clientId, int prime,
             int protocolID) {
 
-        super(protocolID, senderQueue, receiverQueue, protocolQueue,clientId, oneShare);
+        super(protocolID, senderQueue, receiverQueue, protocolIdQueue,clientId, oneShare);
         this.x = x;
         this.y = y;
         this.tiShares = tiShares;
@@ -178,7 +178,7 @@ public class Comparison extends CompositeProtocol implements Callable<Integer> {
                     x.subList(i, toIndex),
                     y.subList(i, toIndex),
                     tiShares.subList(i, toIndex),
-                    senderQueue, recQueues.get(startpid), new LinkedList<>(protocolQueue),
+                    senderQueue, recQueues.get(startpid), new LinkedList<>(protocolIdQueue),
                     clientID, prime, startpid, oneShare, protocolId);
 
             Future<Integer[]> multiplicationTask = es.submit(batchMultiplication);
@@ -242,7 +242,7 @@ public class Comparison extends CompositeProtocol implements Callable<Integer> {
                         tempMultE.subList(i, toIndex - 1),
                         tempMultE.subList(i + 1, toIndex),
                         tiShares.subList(tiStartIndex, tiStartIndex+tiCount), senderQueue,
-                        recQueues.get(startpid), new LinkedList<>(protocolQueue),clientID, prime, startpid,
+                        recQueues.get(startpid), new LinkedList<>(protocolIdQueue),clientID, prime, startpid,
                         oneShare, protocolId);
 
                 Future<Integer[]> multiplicationTask = es.submit(batchMultiplication);
@@ -308,7 +308,7 @@ public class Comparison extends CompositeProtocol implements Callable<Integer> {
                     multiplicationEList.subList(i + 1, toIndex + 1),
                     dShareList.subList(i, toIndex),
                     tiShares.subList(tiStartIndex, tiStartIndex + tiCount), senderQueue,
-                    recQueues.get(startpid), new LinkedList<>(protocolQueue),clientID, prime, startpid,
+                    recQueues.get(startpid), new LinkedList<>(protocolIdQueue),clientID, prime, startpid,
                     oneShare, protocolId);
 
             Future<Integer[]> multiplicationTask = es.submit(batchMultiplication);

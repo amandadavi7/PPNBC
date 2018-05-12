@@ -51,11 +51,11 @@ public class OIS extends CompositeProtocol implements Callable<Integer[]>{
      */
     public OIS(List<List<Integer>> features, List<Triple> tiShares,
             int oneShare, BlockingQueue<Message> senderQueue,
-            BlockingQueue<Message> receiverQueue, Queue<Integer> protocolQueue,
+            BlockingQueue<Message> receiverQueue, Queue<Integer> protocolIdQueue,
             int clientId, int prime,
             int protocolID, int bitLength, int k, int numberCount){
         
-        super(protocolID, senderQueue, receiverQueue, protocolQueue,clientId, oneShare);
+        super(protocolID, senderQueue, receiverQueue, protocolIdQueue,clientId, oneShare);
         this.numberCount = numberCount;
         this.bitLength = bitLength;
         this.tiShares = tiShares;
@@ -116,7 +116,7 @@ public class OIS extends CompositeProtocol implements Callable<Integer[]>{
             //System.out.println("parentID-"+ protocolId +", dp with pid "+ i + " - " +featureVectorTransposed.get(i)+" and "+yShares);
             
             DotProductNumber dp = new DotProductNumber(featureVectorTransposed.get(i), yShares, 
-                    tiShares.subList(tiStartIndex, tiStartIndex+numberCount), senderQueue, recQueues.get(i), new LinkedList<>(protocolQueue),
+                    tiShares.subList(tiStartIndex, tiStartIndex+numberCount), senderQueue, recQueues.get(i), new LinkedList<>(protocolIdQueue),
                     clientID, prime, i, oneShare);
             
             Future<Integer> dpTask = es.submit(dp);

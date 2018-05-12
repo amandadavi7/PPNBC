@@ -39,9 +39,9 @@ public class ParallelMultiplication extends Protocol implements Callable<Integer
             int oneShare,  
             ConcurrentHashMap<Integer, BlockingQueue<Message>> recQueues,
             BlockingQueue<Message> senderQueue, BlockingQueue<Message> receiverQueue,
-            Queue<Integer> protocolQueue) {
+            Queue<Integer> protocolIdQueue) {
         
-        super(protocolID,senderQueue,receiverQueue,protocolQueue,clientID,oneShare);
+        super(protocolID,senderQueue,receiverQueue,protocolIdQueue,clientID,oneShare);
         this.wRow = row;
         this.tishares = tishares;
         this.startProtocolID = startProtocolID;
@@ -88,7 +88,7 @@ public class ParallelMultiplication extends Protocol implements Callable<Integer
                 
                 multCompletionService.submit(new BatchMultiplicationNumber(products.subList(i1, tempIndex1), 
                     products.subList(i2, tempIndex2), tishares.subList(tiStartIndex, tiStartIndex+tempIndex1), 
-                    senderQueue, recQueues.get(startpid), new LinkedList<>(protocolQueue),clientID, prime, startpid, oneShare, protocolId));
+                    senderQueue, recQueues.get(startpid), new LinkedList<>(protocolIdQueue),clientID, prime, startpid, oneShare, protocolId));
                 
                 tiStartIndex += tempIndex1;
                 startpid++;

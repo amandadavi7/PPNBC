@@ -35,10 +35,10 @@ public class CompositeProtocol extends Protocol {
      * @param oneShare 
      */
     public CompositeProtocol(int protocolId, BlockingQueue<Message> senderQueue,
-            BlockingQueue<Message> receiverQueue, Queue<Integer> protocolQueue,
+            BlockingQueue<Message> receiverQueue, Queue<Integer> protocolIdQueue,
             int clientId, int oneShare) {
         
-        super(protocolId, senderQueue, receiverQueue, protocolQueue, clientId, 
+        super(protocolId, senderQueue, receiverQueue, protocolIdQueue, clientId, 
                 oneShare);
         
         recQueues = new ConcurrentHashMap<>();
