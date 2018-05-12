@@ -172,7 +172,7 @@ public class Party {
 
         KNN knnModel = new KNN(oneShares, senderQueue, receiverQueue, partyId, 
                 tiShares.binaryShares, tiShares.decimalShares, xShares, yShares.get(0), 
-                yShares.get(1), 4);
+                yShares.get(1), 8);
         
         knnModel.KNN_Model();
 //        TestModel testModel = new TestModel(xShares, yShares, vShares, 
