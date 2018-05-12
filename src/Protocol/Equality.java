@@ -10,6 +10,7 @@ import TrustedInitializer.Triple;
 import Utility.Constants;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.logging.Level;
@@ -21,20 +22,21 @@ import java.util.logging.Logger;
  * @author keerthanaa
  */
 public class Equality extends Protocol implements Callable<Integer> {
-    int xShare, yShare, rShare;
+    int xShare, yShare, rShare, prime;
     Triple tiShare;
     
     public Equality(int xShare, int yShare, int rShare,
             Triple tiShare, int oneShare, BlockingQueue<Message> senderQueue,
             BlockingQueue<Message> receiverQueue, int clientId, int prime,
-            int protocolID) {
+            int protocolID, Queue<Integer> protocolIdQueue) {
         
-        super(protocolID, senderQueue, receiverQueue, clientId, prime, oneShare);
+        super(protocolID, senderQueue, receiverQueue, protocolIdQueue, clientId, oneShare);
         
         this.xShare = xShare;
         this.yShare = yShare;
         this.rShare = rShare;
         this.tiShare = tiShare;
+        this.prime = prime;
         
     }
     
@@ -43,16 +45,12 @@ public class Equality extends Protocol implements Callable<Integer> {
     public Integer call() throws Exception {
         int diff = Math.floorMod(this.xShare - this.yShare, prime);
         
-        //To be verified.......
-        //Repetition of multiplication.......It does not make sense to create an 
-        //unnecessary thread here by calling a multiplication protocol (will create concurrent hashmap etc etc)
-        
         List<Integer> diffList = new ArrayList<>();
         diffList.add(Math.floorMod(diff - tiShare.u, prime));
         diffList.add(Math.floorMod(rShare - tiShare.v, prime));
 
         Message senderMessage = new Message(Constants.localShares, diffList,
-                clientID, protocolId);
+                clientID, protocolIdQueue);
         try {
             senderQueue.put(senderMessage);
             //System.out.println("sending message for protocol id:"+ protocolID);

@@ -5,13 +5,15 @@
  */
 package Protocol;
 
-import Protocol.Utility.BatchMultiplication;
 import Communication.Message;
+import Protocol.Utility.BatchMultiplicationNumber;
 import TrustedInitializer.Triple;
 import Utility.Constants;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -24,7 +26,10 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 /**
- *
+ * compares two numbers (x and y) (in bits) and returns 1 if x>=y and 0 otherwise
+ * 
+ * uses 2(bitlength) + (bitlength)(bitlength-1)/2 tiShares
+ * 
  * @author anisha
  */
 public class Comparison extends CompositeProtocol implements Callable<Integer> {
@@ -38,14 +43,14 @@ public class Comparison extends CompositeProtocol implements Callable<Integer> {
     int[] multiplicationE;
     int[] cShares;
 
-    int bitLength;
+    int bitLength, tiStartIndex;
     int cProcessId;
+    int prime;
 
     /**
      * Constructor
      *
-     * A comparison of two numbers with bit length L requires 3L-3 tiShares L
-     * for computing dShares L-2 for computing eShares L-1 for computing cShares
+     * A comparison of two numbers with bit length L requires 2(L) + (L)(L-1)/2 tiShares
      *
      * @param x List of bits of shares of x
      * @param y List of bits of shares of y
@@ -59,14 +64,17 @@ public class Comparison extends CompositeProtocol implements Callable<Integer> {
      */
     public Comparison(List<Integer> x, List<Integer> y, List<Triple> tiShares,
             int oneShare, BlockingQueue<Message> senderQueue,
-            BlockingQueue<Message> receiverQueue, int clientId, int prime,
+            BlockingQueue<Message> receiverQueue, Queue<Integer> protocolIdQueue,
+            int clientId, int prime,
             int protocolID) {
 
-        super(protocolID, senderQueue, receiverQueue, clientId, prime, oneShare);
+        super(protocolID, senderQueue, receiverQueue, protocolIdQueue,clientId, oneShare);
         this.x = x;
         this.y = y;
         this.tiShares = tiShares;
+        this.prime = prime;
 
+        tiStartIndex = bitLength;
         bitLength = Math.max(x.size(), y.size());
         eShares = new int[bitLength];
         dShares = new int[bitLength];
@@ -160,23 +168,22 @@ public class Comparison extends CompositeProtocol implements Callable<Integer> {
         // The protocols for computation of d are assigned id 0-bitLength-1
         do {
             //System.out.println("Protocol " + protocolId + " batch " + startpid);
-            initQueueMap(recQueues, sendQueues, startpid);
+            initQueueMap(recQueues, startpid);
 
-            int toIndex = (i + Constants.batchSize < bitLength)
-                    ? (i + Constants.batchSize) : bitLength;
+            int toIndex = Math.min(i + Constants.batchSize, bitLength);
 
-            BatchMultiplication batchMultiplication = new BatchMultiplication(
+            BatchMultiplicationNumber batchMultiplication = new BatchMultiplicationNumber(
                     x.subList(i, toIndex),
                     y.subList(i, toIndex),
                     tiShares.subList(i, toIndex),
-                    sendQueues.get(startpid), recQueues.get(startpid),
+                    senderQueue, recQueues.get(startpid), new LinkedList<>(protocolIdQueue),
                     clientID, prime, startpid, oneShare, protocolId);
 
             Future<Integer[]> multiplicationTask = es.submit(batchMultiplication);
             taskList.add(multiplicationTask);
 
             startpid++;
-            i += Constants.batchSize;
+            i = toIndex;
         } while (i < bitLength);
 
         es.shutdown();
@@ -224,15 +231,16 @@ public class Comparison extends CompositeProtocol implements Callable<Integer> {
             // batch multiply each pair of tempMultE[i], tempMult[i+1]
             do {
                 //System.out.println("Protocol " + protocolId + " batch " + startpid);
-                initQueueMap(recQueues, sendQueues, startpid);
+                initQueueMap(recQueues, startpid);
 
                 int toIndex = Math.min(i+Constants.batchSize, tempMultE.size());
+                int tiCount = toIndex - i;
 
-                BatchMultiplication batchMultiplication = new BatchMultiplication(
+                BatchMultiplicationNumber batchMultiplication = new BatchMultiplicationNumber(
                         tempMultE.subList(i, toIndex - 1),
                         tempMultE.subList(i + 1, toIndex),
-                        tiShares.subList(i, toIndex), sendQueues.get(startpid),
-                        recQueues.get(startpid), clientID, prime, startpid,
+                        tiShares.subList(tiStartIndex, tiStartIndex+tiCount), senderQueue,
+                        recQueues.get(startpid), new LinkedList<>(protocolIdQueue),clientID, prime, startpid,
                         oneShare, protocolId);
 
                 Future<Integer[]> multiplicationTask = es.submit(batchMultiplication);
@@ -240,6 +248,7 @@ public class Comparison extends CompositeProtocol implements Callable<Integer> {
 
                 startpid++;
                 i += toIndex-1;
+                tiStartIndex += tiCount;
             } while (i < tempMultE.size()-1);
 
             es.shutdown();
@@ -288,23 +297,24 @@ public class Comparison extends CompositeProtocol implements Callable<Integer> {
 
         do {
             //System.out.println("Protocol " + protocolId + " batch " + startpid);
-            initQueueMap(recQueues, sendQueues, startpid);
+            initQueueMap(recQueues, startpid);
 
-            int toIndex = (i + Constants.batchSize < bitLength - 1)
-                    ? (i + Constants.batchSize) : (bitLength - 1);
+            int toIndex = Math.min(i + Constants.batchSize, bitLength - 1);
+            int tiCount = toIndex - i;
 
-            BatchMultiplication batchMultiplication = new BatchMultiplication(
+            BatchMultiplicationNumber batchMultiplication = new BatchMultiplicationNumber(
                     multiplicationEList.subList(i + 1, toIndex + 1),
                     dShareList.subList(i, toIndex),
-                    tiShares.subList(i, toIndex), sendQueues.get(startpid),
-                    recQueues.get(startpid), clientID, prime, startpid,
+                    tiShares.subList(tiStartIndex, tiStartIndex + tiCount), senderQueue,
+                    recQueues.get(startpid), new LinkedList<>(protocolIdQueue),clientID, prime, startpid,
                     oneShare, protocolId);
 
             Future<Integer[]> multiplicationTask = es.submit(batchMultiplication);
             taskList.add(multiplicationTask);
 
             startpid++;
-            i += Constants.batchSize;
+            i = toIndex;
+            tiStartIndex += tiCount;
         } while (i < bitLength - 1);
 
         es.shutdown();

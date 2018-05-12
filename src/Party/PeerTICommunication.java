@@ -6,7 +6,6 @@
 package Party;
 
 import TrustedInitializer.TIShare;
-import TrustedInitializer.Triple;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -51,6 +50,7 @@ public class PeerTICommunication implements Callable<TIShare> {
             Logger.getLogger(PeerTICommunication.class.getName()).log(Level.SEVERE, null, ex);
         }
 
+        /*
         System.out.println("tiSharesReceived:");
         for(Triple t: tiShares.decimalShares){
             System.out.println("u : " + t.u + ",v : " + t.v + ",w : " + t.w);
@@ -61,6 +61,7 @@ public class PeerTICommunication implements Callable<TIShare> {
         for(int i: tiShares.equalityShares) {
             System.out.println("r : " + i);
         }
+*/
         
         return tiShares;
     }

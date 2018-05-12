@@ -6,6 +6,7 @@
 package Protocol;
 
 import Communication.Message;
+import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
 
 /**
@@ -13,21 +14,23 @@ import java.util.concurrent.BlockingQueue;
  * @author anisha
  */
 public class Protocol {
-    //ExecutorService queueHandlers;
     
 
     protected BlockingQueue<Message> senderQueue;
     protected BlockingQueue<Message> receiverQueue;
-    protected int protocolId, clientID, prime, oneShare;
+    protected int protocolId, clientID, oneShare;
+    protected Queue<Integer> protocolIdQueue;
 
 
     public Protocol(int protocolId, BlockingQueue<Message> senderQueue,
-            BlockingQueue<Message> receiverQueue, int clientID, int prime, int oneShare) {
+            BlockingQueue<Message> receiverQueue, Queue<Integer> protocolIdQueue,
+            int clientID, int oneShare) {
         this.protocolId = protocolId;
         this.senderQueue = senderQueue;
         this.receiverQueue = receiverQueue;
         this.clientID = clientID;
-        this.prime = prime;
         this.oneShare = oneShare;
+        this.protocolIdQueue = protocolIdQueue;
+        this.protocolIdQueue.add(protocolId);
     }
 }

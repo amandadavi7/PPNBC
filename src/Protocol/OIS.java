@@ -11,7 +11,9 @@ import Utility.Constants;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -21,13 +23,16 @@ import java.util.concurrent.Future;
 /**
  * Takes a feature vector, k (index (0 index) of the feature that needs to be selected and returns shares of xk
  * asymmetric computation one party sends k=-1 and feature vector, another party sends k and featurevector = null
+ * 
+ * Uses bitlength*count no. of binartTiShares
+ * 
  * @author keerthanaa
  */
 public class OIS extends CompositeProtocol implements Callable<Integer[]>{
     List<List<Integer>> featureVectorTransposed;
     List<Integer> yShares;
     List<Triple> tiShares;
-    int numberCount,bitLength;
+    int numberCount,bitLength, prime;
     
     /**
      * Constructor
@@ -46,13 +51,15 @@ public class OIS extends CompositeProtocol implements Callable<Integer[]>{
      */
     public OIS(List<List<Integer>> features, List<Triple> tiShares,
             int oneShare, BlockingQueue<Message> senderQueue,
-            BlockingQueue<Message> receiverQueue, int clientId, int prime,
+            BlockingQueue<Message> receiverQueue, Queue<Integer> protocolIdQueue,
+            int clientId, int prime,
             int protocolID, int bitLength, int k, int numberCount){
         
-        super(protocolID, senderQueue, receiverQueue, clientId, prime, oneShare);
+        super(protocolID, senderQueue, receiverQueue, protocolIdQueue,clientId, oneShare);
         this.numberCount = numberCount;
         this.bitLength = bitLength;
         this.tiShares = tiShares;
+        this.prime = prime;
         
         
         featureVectorTransposed = new ArrayList<>();
@@ -104,12 +111,12 @@ public class OIS extends CompositeProtocol implements Callable<Integer[]>{
         
         for(int i=0;i<bitLength;i++){
             
-            initQueueMap(recQueues, sendQueues, i);
+            initQueueMap(recQueues, i);
             
             //System.out.println("parentID-"+ protocolId +", dp with pid "+ i + " - " +featureVectorTransposed.get(i)+" and "+yShares);
             
-            DotProduct dp = new DotProduct(featureVectorTransposed.get(i), yShares, 
-                    tiShares.subList(tiStartIndex, tiStartIndex+numberCount), sendQueues.get(i), recQueues.get(i), 
+            DotProductNumber dp = new DotProductNumber(featureVectorTransposed.get(i), yShares, 
+                    tiShares.subList(tiStartIndex, tiStartIndex+numberCount), senderQueue, recQueues.get(i), new LinkedList<>(protocolIdQueue),
                     clientID, prime, i, oneShare);
             
             Future<Integer> dpTask = es.submit(dp);
