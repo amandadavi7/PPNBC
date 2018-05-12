@@ -37,6 +37,7 @@ public class Party {
     private static ServerSocket socketServer;       // The socket connection for Peer acting as server
 
     private static ExecutorService partySocketEs;
+    private static List<Future<?>> socketFutureList;
     private static TIShare tiShares;
 
     private static BlockingQueue<Message> senderQueue;
@@ -69,6 +70,7 @@ public class Party {
         senderQueue = new LinkedBlockingQueue<>();
         receiverQueue = new LinkedBlockingQueue<>();
         partySocketEs = Executors.newFixedThreadPool(2);
+        socketFutureList = new ArrayList<>();
         tiShares = new TIShare();
         partyId = -1;
 
@@ -264,10 +266,10 @@ public class Party {
     private static void startServer() {
         System.out.println("Server thread starting");
         PartyServer partyServer = new PartyServer(socketServer, senderQueue);
-        partySocketEs.submit(partyServer);
+        socketFutureList.add(partySocketEs.submit(partyServer));
 
     }
-
+    
     /**
      * Creates a client thread that receives data from socket and saves it to
      * the corresponding receiver queue
@@ -276,7 +278,7 @@ public class Party {
     private static void startClient() {
         System.out.println("Client thread starting");
         PartyClient partyClient = new PartyClient(receiverQueue, peerIP, peerPort);
-        partySocketEs.submit(partyClient);
+        socketFutureList.add(partySocketEs.submit(partyClient));
 
     }
 
