@@ -23,6 +23,7 @@ public class ReceiverQueueHandler implements Runnable {
     /**
      * Constructor
      *
+     * @param protocolId
      * @param commonQueue
      * @param subQueues
      */

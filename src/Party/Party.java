@@ -103,48 +103,46 @@ public class Party {
                     break;
                 case "xShares":
                     String csvFile = value;
-                    xSharesBigInt = FileIO.loadMatrixFromFile(csvFile);
-//                    
-//                    BufferedReader buf;
-//                    try {
-//                        buf = new BufferedReader(new FileReader(csvFile));
-//                        String line = null;
-//                        while ((line = buf.readLine()) != null) {
-//                            int lineInt[] = Arrays.stream(line.split(",")).mapToInt(Integer::parseInt).toArray();
-//                            List<Integer> xline = Arrays.stream(lineInt).boxed().collect(Collectors.toList());
-//                            xShares.add(xline);
-//                        }
-//                    } catch (FileNotFoundException ex) {
-//                        Logger.getLogger(Party.class.getName()).log(Level.SEVERE, null, ex);
-//                    } catch (IOException ex) {
-//                        Logger.getLogger(Party.class.getName()).log(Level.SEVERE, null, ex);
-//                    }
+
+                    BufferedReader buf;
+                    try {
+                        buf = new BufferedReader(new FileReader(csvFile));
+                        String line = null;
+                        while ((line = buf.readLine()) != null) {
+                            int lineInt[] = Arrays.stream(line.split(",")).mapToInt(Integer::parseInt).toArray();
+                            List<Integer> xline = Arrays.stream(lineInt).boxed().collect(Collectors.toList());
+                            xShares.add(xline);
+                        }
+                    } catch (FileNotFoundException ex) {
+                        Logger.getLogger(Party.class.getName()).log(Level.SEVERE, null, ex);
+                    } catch (IOException ex) {
+                        Logger.getLogger(Party.class.getName()).log(Level.SEVERE, null, ex);
+                    }
                     break;
                 case "oneShares":
                     oneShares = Integer.parseInt(value);
                     break;
                 case "yShares":
                     csvFile = value;
-                    //TODO generalize it
-                    ySharesBigInt = FileIO.loadListFromFile(csvFile, Zq);
-//                    try {
-//                        buf = new BufferedReader(new FileReader(csvFile));
-//                        String line = null;
-//                        while((line = buf.readLine()) != null){
-//                            int lineInt[] = Arrays.stream(line.split(",")).mapToInt(Integer::parseInt).toArray();
-//                            List<Integer> yline = Arrays.stream(lineInt).boxed().collect(Collectors.toList());
-//                            yShares.add(yline);
-//                        }
-//                    } catch (FileNotFoundException ex) {
-//                        Logger.getLogger(Party.class.getName()).log(Level.SEVERE, null, ex);
-//                    } catch (IOException ex) {
-//                        Logger.getLogger(Party.class.getName()).log(Level.SEVERE, null, ex);
-//                    }
+
+                    try {
+                        buf = new BufferedReader(new FileReader(csvFile));
+                        String line = null;
+                        while((line = buf.readLine()) != null){
+                            int lineInt[] = Arrays.stream(line.split(",")).mapToInt(Integer::parseInt).toArray();
+                            List<Integer> yline = Arrays.stream(lineInt).boxed().collect(Collectors.toList());
+                            yShares.add(yline);
+                        }
+                    } catch (FileNotFoundException ex) {
+                        Logger.getLogger(Party.class.getName()).log(Level.SEVERE, null, ex);
+                    } catch (IOException ex) {
+                        Logger.getLogger(Party.class.getName()).log(Level.SEVERE, null, ex);
+                    }
                     break;
                 case "vShares":
                     csvFile = value;
                     try {
-                        BufferedReader buf = new BufferedReader(new FileReader(csvFile));
+                        buf = new BufferedReader(new FileReader(csvFile));
                         String line = null;
                         while ((line = buf.readLine()) != null) {
                             String[] vListShares = line.split(";");
@@ -160,6 +158,15 @@ public class Party {
                     } catch (IOException ex) {
                         Logger.getLogger(Party.class.getName()).log(Level.SEVERE, null, ex);
                     }
+                    break;
+                case "xCsv":
+                    csvFile = value;
+                    xSharesBigInt = FileIO.loadMatrixFromFile(csvFile);
+                    break;
+                case "yCsv":
+                    csvFile = value;
+                    //TODO generalize it
+                    ySharesBigInt = FileIO.loadListFromFile(csvFile, Zq);
                     break;
             }
 
@@ -186,19 +193,29 @@ public class Party {
         startServer();
         startClient();
 
+        /*
         LinearRegressionEvaluation regressionModel
                 = new LinearRegressionEvaluation(xSharesBigInt, ySharesBigInt,
                         tiShares.decimalShares, oneShares, senderQueue,
                         receiverQueue, partyId, Zq);
 
-        regressionModel.predictValues();
+        regressionModel.predictValues();*/
 
         /*
+        KNN knnModel = new KNN(oneShares, senderQueue, receiverQueue, partyId, 
+                tiShares.binaryShares, tiShares.decimalShares, xShares, yShares.get(0), 
+                yShares.get(1), 8);
+        
+        knnModel.KNN_Model();
+        */
+        
+        
         TestModel testModel = new TestModel(xShares, yShares, vShares, 
               tiShares.binaryShares, tiShares.decimalShares,oneShares, senderQueue, receiverQueue, partyId);
         
         testModel.compute();
-         */
+         
+//DTSCORING:
 //        if(partyId==1) {
 //            
 //            int[] leafToClassIndexMapping = new int[5];

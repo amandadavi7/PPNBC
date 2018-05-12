@@ -7,7 +7,6 @@ package Protocol.Utility;
 
 import Communication.Message;
 import Protocol.Multiplication;
-import Protocol.Protocol;
 import TrustedInitializer.Triple;
 import Utility.Constants;
 import java.util.ArrayList;

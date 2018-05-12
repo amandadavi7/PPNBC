@@ -20,7 +20,7 @@ import java.util.concurrent.LinkedBlockingQueue;
  */
 public class CompositeProtocol extends Protocol {
 
-    ConcurrentHashMap<Integer, BlockingQueue<Message>> recQueues;
+    protected ConcurrentHashMap<Integer, BlockingQueue<Message>> recQueues;
     
     ExecutorService queueHandlers;
     ReceiverQueueHandler receiverThread;
@@ -30,8 +30,8 @@ public class CompositeProtocol extends Protocol {
      * @param protocolId
      * @param senderQueue
      * @param receiverQueue
-     * @param clientId
-     * @param prime 
+     * @param protocolIdQueue
+     * @param clientId 
      * @param oneShare 
      */
     public CompositeProtocol(int protocolId, BlockingQueue<Message> senderQueue,

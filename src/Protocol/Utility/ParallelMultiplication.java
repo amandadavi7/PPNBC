@@ -6,7 +6,7 @@
 package Protocol.Utility;
 
 import Communication.Message;
-import Protocol.Protocol;
+import Protocol.CompositeProtocol;
 import TrustedInitializer.Triple;
 import Utility.Constants;
 import java.util.ArrayList;
@@ -15,37 +15,43 @@ import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingQueue;
 
 /**
- * Class to take care of multiplying all numbers in list in parallel
+ * Class to take care of multiplying all numbers in a list in parallel
  * @author keerthanaa
  */
-public class ParallelMultiplication extends Protocol implements Callable<Integer> {
+public class ParallelMultiplication extends CompositeProtocol implements Callable<Integer> {
     
     List<Integer> wRow;
     List<Triple> tishares;
-    int startProtocolID;
     int prime;
-    ConcurrentHashMap<Integer, BlockingQueue<Message>> recQueues;
     
+    /**
+     * Uses n-1 tiShares
+     * 
+     * @param row
+     * @param tishares
+     * @param clientID
+     * @param prime
+     * @param protocolID
+     * @param oneShare
+     * @param senderQueue
+     * @param receiverQueue
+     * @param protocolIdQueue 
+     */
     public ParallelMultiplication(List<Integer> row, List<Triple> tishares, 
-            int clientID, int prime, int protocolID, int startProtocolID, 
-            int oneShare,  
-            ConcurrentHashMap<Integer, BlockingQueue<Message>> recQueues,
-            BlockingQueue<Message> senderQueue, BlockingQueue<Message> receiverQueue,
+            int clientID, int prime, int protocolID, 
+            int oneShare, BlockingQueue<Message> senderQueue, 
+            BlockingQueue<Message> receiverQueue,
             Queue<Integer> protocolIdQueue) {
         
         super(protocolID,senderQueue,receiverQueue,protocolIdQueue,clientID,oneShare);
         this.wRow = row;
         this.tishares = tishares;
-        this.startProtocolID = startProtocolID;
-        this.recQueues = recQueues;
         this.prime = prime;
     }
     
@@ -58,7 +64,9 @@ public class ParallelMultiplication extends Protocol implements Callable<Integer
     public Integer call() throws Exception {
         List<Integer> products = new ArrayList<>(wRow);
         int tiStartIndex = 0;
+        startHandlers();
         
+        //iteratively multiply the first half of the list with the second half
         while(products.size()>1){
             int size = products.size();
             int push = -1;
@@ -76,19 +84,21 @@ public class ParallelMultiplication extends Protocol implements Callable<Integer
             
             int i1=0;
             int i2=toIndex1;
-            int startpid = startProtocolID;
+            int startpid = 0;
             
             do {
                 
                 int tempIndex1 = Math.min(i1+Constants.batchSize, toIndex1);
                 int tempIndex2 = Math.min(i2+Constants.batchSize, toIndex2);
               
-                recQueues.putIfAbsent(startpid, new LinkedBlockingQueue<>());
                 //System.out.println("calling batchmult with pid:"+startpid+",indices:"+tempIndex1+","+tempIndex2);
+                
+                initQueueMap(recQueues, startpid);
                 
                 multCompletionService.submit(new BatchMultiplicationNumber(products.subList(i1, tempIndex1), 
                     products.subList(i2, tempIndex2), tishares.subList(tiStartIndex, tiStartIndex+tempIndex1), 
-                    senderQueue, recQueues.get(startpid), new LinkedList<>(protocolIdQueue),clientID, prime, startpid, oneShare, protocolId));
+                    senderQueue, recQueues.get(startpid), new LinkedList<>(protocolIdQueue),
+                        clientID, prime, startpid, oneShare, protocolId));
                 
                 tiStartIndex += tempIndex1;
                 startpid++;
@@ -99,7 +109,7 @@ public class ParallelMultiplication extends Protocol implements Callable<Integer
             
             batchmults.shutdown();
             List<Integer> newProducts = new ArrayList<>();
-            for(int i=0;i<startpid-startProtocolID;i++) {
+            for(int i=0;i<startpid;i++) {
                     Future<Integer[]> prodFuture = multCompletionService.take();
                     Integer[] newProds = prodFuture.get();
                     for(int j: newProds){
@@ -116,21 +126,9 @@ public class ParallelMultiplication extends Protocol implements Callable<Integer
             
         }
         System.out.println("returning "+products.get(0));
+        tearDownHandlers();
         return products.get(0);
-        
-        
-        /*
-        int product = wRow.get(0);
-
-        for (int i = 0; i < wRow.size() - 1; i++) {
-            Multiplication multiplicationTask = new Multiplication(product, wRow.get(i + 1),
-                    tishares.get(i), senderQueue, receiverQueue,
-                    clientID, prime, startProtocolID, oneShare,protocolId);
-            product = (int) multiplicationTask.call();
-
-        }
-        //System.out.println("returning "+product);
-        return product;   */     
+            
     }
     
 }

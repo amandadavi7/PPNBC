@@ -11,8 +11,8 @@ package Utility;
  */
 public class Constants {
 
-    //public static final int prime = 10007;             // Prime 
-    public static final int prime = 11;
+    public static final int prime = 10007;             // Prime 
+    //public static final int prime = 11;
     public static final int binaryPrime = 2;             // Prime for bit calculation
     public static final int clientCount = 2;        // No of parties computing a function
     public static final int bitLength = 5;

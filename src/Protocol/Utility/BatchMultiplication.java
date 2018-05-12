@@ -24,6 +24,8 @@ public abstract class BatchMultiplication extends Protocol {
 
     /**
      * Constructor
+     * 
+     * TODO - parent ID is only for testing - to be removed in the future
      *
      * @param tiShares
      * @param senderQueue
@@ -32,6 +34,7 @@ public abstract class BatchMultiplication extends Protocol {
      * @param clientId
      * @param protocolID
      * @param oneShare
+     * @param parentID
      */
     public BatchMultiplication(List<Triple> tiShares,
             BlockingQueue<Message> senderQueue,

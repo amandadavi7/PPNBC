@@ -26,7 +26,7 @@ public class Message implements Serializable {
      * @param name
      * @param value
      * @param clientId
-     * @param protocolId
+     * @param protocolIdQueue
      */
     //TODO - variableName - obsolete, clientId??
     public Message(String name, Object value, int clientId,
