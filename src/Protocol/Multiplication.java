@@ -10,6 +10,7 @@ import TrustedInitializer.Triple;
 import Utility.Constants;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.logging.Level;
@@ -44,10 +45,12 @@ public class Multiplication extends Protocol implements Callable {
      */
     public Multiplication(int x, int y, Triple tiShares,
             BlockingQueue<Message> senderQueue,
-            BlockingQueue<Message> receiverQueue, int clientId, int prime,
+            BlockingQueue<Message> receiverQueue, Queue<Integer> protocolQueue,
+            int clientId, int prime,
             int protocolID, int oneShare, int parentID) {
 
-        super(protocolID, senderQueue, receiverQueue, clientId, oneShare);
+        super(protocolID, senderQueue, receiverQueue, protocolQueue,
+                clientId, oneShare);
         this.x = x;
         this.y = y;
         this.tiShares = tiShares;
@@ -94,7 +97,7 @@ public class Multiplication extends Protocol implements Callable {
         diffList.add(Math.floorMod(y - tiShares.v, prime));
 
         Message senderMessage = new Message(Constants.localShares, diffList,
-                clientID, protocolId);
+                clientID, protocolQueue);
         try {
             senderQueue.put(senderMessage);
             //System.out.println("sending message for protocol id:"+ protocolID);

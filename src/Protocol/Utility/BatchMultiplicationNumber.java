@@ -12,6 +12,7 @@ import TrustedInitializer.Triple;
 import Utility.Constants;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.logging.Level;
@@ -46,10 +47,11 @@ public class BatchMultiplicationNumber extends BatchMultiplication
     public BatchMultiplicationNumber(List<Integer> x, List<Integer> y, 
             List<Triple> tiShares, 
             BlockingQueue<Message> senderQueue,
-            BlockingQueue<Message> receiverQueue, int clientId, int prime,
+            BlockingQueue<Message> receiverQueue, Queue<Integer> protocolQueue,
+            int clientId, int prime,
             int protocolID, int oneShare, int parentID) {
 
-        super(tiShares, senderQueue, receiverQueue, clientId, protocolID, 
+        super(tiShares, senderQueue, receiverQueue, protocolQueue,clientId, protocolID, 
                 oneShare, parentID);
         this.x = x;
         this.y = y;
@@ -110,7 +112,7 @@ public class BatchMultiplicationNumber extends BatchMultiplication
         }
         
         Message senderMessage = new Message(Constants.localShares, diffList,
-                clientID, protocolId);
+                clientID, protocolQueue);
         
         try {
             senderQueue.put(senderMessage);

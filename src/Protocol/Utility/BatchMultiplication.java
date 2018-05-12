@@ -13,6 +13,7 @@ import TrustedInitializer.Triple;
 import Utility.Constants;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.logging.Level;
@@ -43,10 +44,11 @@ public abstract class BatchMultiplication extends Protocol {
      */
     public BatchMultiplication(List<Triple> tiShares,
             BlockingQueue<Message> senderQueue,
-            BlockingQueue<Message> receiverQueue, int clientId, 
+            BlockingQueue<Message> receiverQueue, Queue<Integer> protocolQueue,
+            int clientId, 
             int protocolID, int oneShare, int parentID) {
 
-        super(protocolID, senderQueue, receiverQueue, clientId, oneShare);
+        super(protocolID, senderQueue, receiverQueue, protocolQueue, clientId, oneShare);
         this.tiShares = tiShares;
         this.parentID = parentID;
     }

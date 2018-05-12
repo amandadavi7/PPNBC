@@ -11,6 +11,7 @@ import Protocol.Utility.BatchMultiplicationNumber;
 import TrustedInitializer.Triple;
 import Utility.Constants;
 import java.util.List;
+import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -44,9 +45,10 @@ public class DotProductNumber extends DotProduct implements Callable<Integer> {
      */
     public DotProductNumber(List<Integer> xShares, List<Integer> yShares, List<Triple> tiShares,
             BlockingQueue<Message> senderqueue, BlockingQueue<Message> receiverqueue,
+            Queue<Integer> protocolQueue,
             int clientID, int prime, int protocolID, int oneShare) {
         
-        super(tiShares,senderqueue, receiverqueue, clientID, protocolID, oneShare);
+        super(tiShares,senderqueue, receiverqueue, protocolQueue,clientID, protocolID, oneShare);
         
         this.xShares = xShares;
         this.yShares = yShares;
@@ -78,11 +80,11 @@ public class DotProductNumber extends DotProduct implements Callable<Integer> {
             int toIndex = Math.min(i+Constants.batchSize,vectorLength);
             
             System.out.println("Protocol "+protocolId+" batch "+startpid);
-            initQueueMap(recQueues, sendQueues, startpid);
+            initQueueMap(recQueues, startpid);
             
             multCompletionService.submit(new BatchMultiplicationNumber(xShares.subList(i, toIndex), 
-                    yShares.subList(i, toIndex), tiShares.subList(i, toIndex), sendQueues.get(startpid), 
-                    recQueues.get(startpid), clientID, prime, startpid, oneShare, protocolId));
+                    yShares.subList(i, toIndex), tiShares.subList(i, toIndex), senderQueue, 
+                    recQueues.get(startpid), protocolQueue,clientID, prime, startpid, oneShare, protocolId));
             
             startpid++;
             i = toIndex;

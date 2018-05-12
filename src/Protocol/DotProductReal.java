@@ -11,7 +11,9 @@ import Protocol.Utility.BatchMultiplicationReal;
 import TrustedInitializer.Triple;
 import Utility.Constants;
 import java.math.BigInteger;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -45,10 +47,11 @@ public class DotProductReal extends DotProduct implements Callable<BigInteger> {
      */
     public DotProductReal(List<BigInteger> xShares, List<BigInteger> yShares, 
             List<Triple> tiShares, BlockingQueue<Message> senderqueue, 
-            BlockingQueue<Message> receiverqueue, int clientID, BigInteger prime, 
+            BlockingQueue<Message> receiverqueue, Queue<Integer> protocolQueue,
+            int clientID, BigInteger prime, 
             int protocolID, int oneShare) {
         
-        super(tiShares, senderqueue, receiverqueue, clientID, protocolID, oneShare);
+        super(tiShares, senderqueue, receiverqueue, protocolQueue,clientID, protocolID, oneShare);
         
         this.xShares = xShares;
         this.yShares = yShares;
@@ -78,11 +81,12 @@ public class DotProductReal extends DotProduct implements Callable<BigInteger> {
         do {
             int toIndex = Math.min(i+Constants.batchSize,vectorLength);
             
-            initQueueMap(recQueues, sendQueues, startpid);
+            initQueueMap(recQueues, startpid);
             
             multCompletionService.submit(new BatchMultiplicationReal(xShares.subList(i, toIndex), 
-                    yShares.subList(i, toIndex), tiShares.subList(i, toIndex), sendQueues.get(startpid), 
-                    recQueues.get(startpid), clientID, prime, startpid, oneShare, protocolId));
+                    yShares.subList(i, toIndex), tiShares.subList(i, toIndex), senderQueue, 
+                    recQueues.get(startpid), new LinkedList<>(protocolQueue),
+                    clientID, prime, startpid, oneShare, protocolId));
             
             startpid++;
             i = toIndex;

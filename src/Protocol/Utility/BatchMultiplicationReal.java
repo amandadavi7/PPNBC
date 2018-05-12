@@ -13,6 +13,7 @@ import Utility.Constants;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.logging.Level;
@@ -47,10 +48,11 @@ public class BatchMultiplicationReal extends BatchMultiplication
     public BatchMultiplicationReal(List<BigInteger> x, List<BigInteger> y, 
             List<Triple> tiShares, 
             BlockingQueue<Message> senderQueue,
-            BlockingQueue<Message> receiverQueue, int clientId, BigInteger prime,
+            BlockingQueue<Message> receiverQueue, Queue<Integer> protocolQueue,
+            int clientId, BigInteger prime,
             int protocolID, int oneShare, int parentID) {
 
-        super(tiShares, senderQueue, receiverQueue, clientId, protocolID, 
+        super(tiShares, senderQueue, receiverQueue, protocolQueue, clientId, protocolID, 
                 oneShare, parentID);
         this.x = x;
         this.y = y;
@@ -100,7 +102,6 @@ public class BatchMultiplicationReal extends BatchMultiplication
             products[i] = product;
         }
 
-        //System.out.println("parent ID=" + parentID + " mult ID=" + protocolID + " successful, product returned");
         return products;
 
     }
@@ -123,11 +124,12 @@ public class BatchMultiplicationReal extends BatchMultiplication
         }
         
         Message senderMessage = new Message(Constants.localShares, diffList,
-                clientID, protocolId);
+                clientID, protocolQueue);
         
         try {
             senderQueue.put(senderMessage);
-            //System.out.println("sending message for protocol id:"+ protocolID);
+            //senderMessage.logProtocolQueue();
+            //System.out.println("sending message for protocol id:"+ protocolId);
         } catch (InterruptedException ex) {
             ex.printStackTrace();
             Logger.getLogger(Multiplication.class.getName()).log(Level.SEVERE, null, ex);

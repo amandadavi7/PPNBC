@@ -8,6 +8,7 @@ package Protocol;
 import Communication.Message;
 import TrustedInitializer.Triple;
 import java.util.List;
+import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 
@@ -34,9 +35,10 @@ public abstract class DotProduct extends CompositeProtocol {
      */
     public DotProduct(List<Triple> tiShares,
             BlockingQueue<Message> senderqueue, BlockingQueue<Message> receiverqueue,
+            Queue<Integer> protocolQueue,
             int clientID, int protocolID, int oneShare) {
 
-        super(protocolID, senderqueue, receiverqueue, clientID, oneShare);
+        super(protocolID, senderqueue, receiverqueue, protocolQueue,clientID, oneShare);
         this.tiShares = tiShares;
 
     }

@@ -11,6 +11,7 @@ import TrustedInitializer.Triple;
 import Utility.Constants;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
@@ -30,20 +31,19 @@ public class ParallelMultiplication extends Protocol implements Callable<Integer
     List<Triple> tishares;
     int startProtocolID;
     int prime;
-    ConcurrentHashMap<Integer, BlockingQueue<Message>> sendQueues;
     ConcurrentHashMap<Integer, BlockingQueue<Message>> recQueues;
     
     public ParallelMultiplication(List<Integer> row, List<Triple> tishares, 
             int clientID, int prime, int protocolID, int startProtocolID, 
-            int oneShare, ConcurrentHashMap<Integer, BlockingQueue<Message>> sendQueues, 
+            int oneShare,  
             ConcurrentHashMap<Integer, BlockingQueue<Message>> recQueues,
-            BlockingQueue<Message> senderQueue, BlockingQueue<Message> receiverQueue) {
+            BlockingQueue<Message> senderQueue, BlockingQueue<Message> receiverQueue,
+            Queue<Integer> protocolQueue) {
         
-        super(protocolID,senderQueue,receiverQueue,clientID,oneShare);
+        super(protocolID,senderQueue,receiverQueue,protocolQueue,clientID,oneShare);
         this.wRow = row;
         this.tishares = tishares;
         this.startProtocolID = startProtocolID;
-        this.sendQueues = sendQueues;
         this.recQueues = recQueues;
         this.prime = prime;
     }
@@ -83,12 +83,11 @@ public class ParallelMultiplication extends Protocol implements Callable<Integer
                 int tempIndex2 = Math.min(i2+Constants.batchSize, toIndex2);
               
                 recQueues.putIfAbsent(startpid, new LinkedBlockingQueue<>());
-                sendQueues.putIfAbsent(startpid, new LinkedBlockingQueue<>());
                 //System.out.println("calling batchmult with pid:"+startpid+",indices:"+tempIndex1+","+tempIndex2);
                 
                 multCompletionService.submit(new BatchMultiplicationNumber(products.subList(i1, tempIndex1), 
                     products.subList(i2, tempIndex2), tishares.subList(tiStartIndex, tiStartIndex+tempIndex1), 
-                    sendQueues.get(startpid), recQueues.get(startpid), clientID, prime, startpid, oneShare, protocolId));
+                    senderQueue, recQueues.get(startpid), protocolQueue,clientID, prime, startpid, oneShare, protocolId));
                 
                 tiStartIndex += tempIndex1;
                 startpid++;

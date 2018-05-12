@@ -12,6 +12,7 @@ import TrustedInitializer.Triple;
 import Utility.Constants;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -33,10 +34,10 @@ public class OR_XOR extends CompositeProtocol implements Callable<Integer[]> {
     
     public OR_XOR(List<Integer> x, List<Integer> y, List<Triple> tiShares,
             int oneShare, int constantMultiplier, BlockingQueue<Message> senderQueue,
-            BlockingQueue<Message> receiverQueue, int clientId, int prime,
+            BlockingQueue<Message> receiverQueue, Queue<Integer> protocolQueue, int clientId, int prime,
             int protocolID) {
         
-        super(protocolID, senderQueue, receiverQueue, clientId, oneShare);
+        super(protocolID, senderQueue, receiverQueue, protocolQueue,clientId, oneShare);
         
         this.xShares = x;
         this.yShares = y;
@@ -60,7 +61,7 @@ public class OR_XOR extends CompositeProtocol implements Callable<Integer[]> {
 
         do {
             System.out.println("Protocol " + protocolId + " batch " + startpid);
-            initQueueMap(recQueues, sendQueues, startpid);
+            initQueueMap(recQueues, startpid);
 
             int toIndex = Math.min(i + Constants.batchSize, bitLength);
 
@@ -68,7 +69,7 @@ public class OR_XOR extends CompositeProtocol implements Callable<Integer[]> {
                     xShares.subList(i, toIndex),
                     yShares.subList(i, toIndex),
                     tiShares.subList(i, toIndex),
-                    sendQueues.get(startpid), recQueues.get(startpid),
+                    senderQueue, recQueues.get(startpid), protocolQueue,
                     clientID, prime, startpid, oneShare, protocolId);
 
             Future<Integer[]> multiplicationTask = es.submit(batchMultiplication);

@@ -14,6 +14,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.*;
 import java.util.logging.*;
@@ -67,10 +68,11 @@ public class LinearRegressionEvaluation extends Model {
         // totalcases number of protocols are submitted to the executorservice
         for (int i = 0; i < testCases; i++) {
 
-            initQueueMap(recQueues,sendQueues,i);
+            initQueueMap(recQueues,i);
             
             DotProductReal DPModule = new DotProductReal(x.get(i),
-                    beta, decimalTiShares, sendQueues.get(i), recQueues.get(i),
+                    beta, decimalTiShares, commonSender, recQueues.get(i), 
+                    new LinkedList<>(protocolQueue),
                     clientId, prime, i, oneShares);
 
             Future<BigInteger> DPTask = es.submit(DPModule);
