@@ -184,7 +184,6 @@ public class Party {
         startServer();
         startClient();
 
-        //TODO change the variable name here
         LinearRegressionEvaluation regressionModel
                 = new LinearRegressionEvaluation(xSharesBigInt, ySharesBigInt,
                         tiShares.decimalShares, oneShares, senderQueue,

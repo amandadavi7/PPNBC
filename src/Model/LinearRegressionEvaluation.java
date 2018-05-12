@@ -6,7 +6,6 @@
 package Model;
 
 import Communication.Message;
-import Protocol.DotProduct;
 import Protocol.DotProductReal;
 import TrustedInitializer.Triple;
 import Utility.Constants;
@@ -33,13 +32,25 @@ public class LinearRegressionEvaluation extends Model {
     int testCases;
     BigInteger prime;
 
+    /**
+     * Constructor
+     * @param x     data matrix 
+     * @param beta  co-efficient array
+     * @param decimalTriples
+     * @param oneShares
+     * @param senderQueue
+     * @param receiverQueue 
+     * @param clientId
+     * @param prime 
+     */
     public LinearRegressionEvaluation(List<List<BigInteger>> x,
-            List<BigInteger> beta,
-            List<Triple> decimalTriples,
+            List<BigInteger> beta, List<Triple> decimalTriples,
             int oneShares, BlockingQueue<Message> senderQueue,
-            BlockingQueue<Message> receiverQueue, int clientId, BigInteger prime) {
+            BlockingQueue<Message> receiverQueue, int clientId, 
+            BigInteger prime) {
 
-        super(senderQueue, receiverQueue, clientId, oneShares, null, decimalTriples);
+        super(senderQueue, receiverQueue, clientId, oneShares, null, 
+                decimalTriples);
 
         this.x = x;
         this.beta = beta;
@@ -49,27 +60,31 @@ public class LinearRegressionEvaluation extends Model {
 
     }
 
+    /**
+     * Compute shares of the prediction for each entry of the dataset:x
+     */
     public void predictValues() {
 
         startModelHandlers();
-
         computeDotProduct();
-        //Dot product for each row
         teardownModelHandlers();
         writeToCSV();
         
     }
 
+    /**
+     * Compute the shares of the prediction using secure dot product such that
+     * y[i] = x[i].beta
+     */
     public void computeDotProduct() {
         ExecutorService es = Executors.newFixedThreadPool(Constants.threadCount);
         List<Future<BigInteger>> taskList = new ArrayList<>();
 
         long startTime = System.currentTimeMillis();
-        // totalcases number of protocols are submitted to the executorservice
         for (int i = 0; i < testCases; i++) {
 
             initQueueMap(recQueues,i);
-            
+        
             DotProductReal DPModule = new DotProductReal(x.get(i),
                     beta, decimalTiShares, commonSender, recQueues.get(i), 
                     new LinkedList<>(protocolQueue),
@@ -87,21 +102,24 @@ public class LinearRegressionEvaluation extends Model {
                 BigInteger result = dWorkerResponse.get();
                 y.add(result);
                 System.out.println(" #:" + i);
-                //System.out.println("result:" + result + ", #:" + i);
             } catch (InterruptedException ex) {
-                System.out.println("EXCEPTION: id:"+i);
                 Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
             } catch (ExecutionException ex) {
-                System.out.println("EXCEPTION: id:"+i);
                 Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
 
         long stopTime = System.currentTimeMillis();
         long elapsedTime = stopTime - startTime;
+        //TODO: push time to a csv file
         System.out.println("Avg time duration:" + elapsedTime);
     }
 
+    /**
+     * Push results of the prediction (shares) to a csv to send it to the client
+     * 
+     * TODO: Move this to FileIO Utility
+     */
     private void writeToCSV() {
         try {
             FileWriter writer = new FileWriter("y_"+clientId+".csv");

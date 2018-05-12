@@ -18,7 +18,8 @@ import java.util.Scanner;
 import java.util.stream.Stream;
 
 /**
- *
+ * The class deals with all input/ output utils. Have functions related to 
+ * reading from files, saving to files, and converting data to relevant forms.
  * @author anisha
  */
 public class FileIO {

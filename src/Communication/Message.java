@@ -7,11 +7,9 @@ package Communication;
 
 import java.io.Serializable;
 import java.util.Queue;
-import java.util.Stack;
 
 /**
- * The interface encapsulates the DataMessage and the ProtocolMessage from the
- * communication layers
+ * The class wraps the data with headers for communication between parties
  *
  * @author anisha
  */
@@ -20,7 +18,6 @@ public class Message implements Serializable {
     String variableName;
     Object value;
     int clientId;
-    // TODO change stack to queue
     Queue<Integer> protocolIds;
 
     /**
@@ -38,7 +35,6 @@ public class Message implements Serializable {
         this.value = value;
         this.clientId = clientId;
         protocolIds = protocolQueue;
-        //protocolIds.push(protocolId);
     }
 
     /**
@@ -64,7 +60,7 @@ public class Message implements Serializable {
      *
      * @return
      */
-    public int popProtocolID() {
+    public int pollProtocolID() {
         return protocolIds.poll();
     }
 
@@ -103,14 +99,4 @@ public class Message implements Serializable {
                 + ", clientId-" + clientId);
     }
 
-    /**
-     * Log values for the message
-     */
-    public void logProtocolQueue() {
-        for (Integer s : protocolIds) {
-            System.out.print(s +",");
-        }
-
-        System.out.println();
-    }
 }

@@ -28,7 +28,6 @@ public class BatchMultiplicationNumber extends BatchMultiplication
     
     List<Integer> x;
     List<Integer> y;
-    List<Triple> tiShares;
     int prime;
     
     /**
@@ -55,7 +54,6 @@ public class BatchMultiplicationNumber extends BatchMultiplication
                 oneShare, parentID);
         this.x = x;
         this.y = y;
-        this.tiShares = tiShares;
         this.prime = prime;
     }
 

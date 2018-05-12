@@ -24,12 +24,11 @@ import java.util.concurrent.Future;
 
 /**
  *
- * @author keerthanaa
+ * @author anisha
  */
 public class DotProductReal extends DotProduct implements Callable<BigInteger> {
 
     List<BigInteger> xShares, yShares;
-    List<Triple> tiShares;
     BigInteger prime;
 
     /**
@@ -55,7 +54,6 @@ public class DotProductReal extends DotProduct implements Callable<BigInteger> {
         
         this.xShares = xShares;
         this.yShares = yShares;
-        this.tiShares = tiShares;
         this.prime = prime;
         
     }

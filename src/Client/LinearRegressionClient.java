@@ -19,10 +19,11 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- *
+ * The client is responsible to split the dataset among n parties over Zq. 
+ * The shares are then sent to the parties to evaluate the model
  * @author anisha
  */
-public class Client {
+public class LinearRegressionClient {
 
     static String sourceFile;
     protected static List<List<BigInteger>> x;
@@ -78,6 +79,7 @@ public class Client {
     }
 
     private static void saveToCSV() {
+        // TODO: add proper directory location
         String baseFileName = "thetaPower_";
         for (int partyId = 0; partyId < Constants.clientCount; partyId++) {
             try (BufferedWriter br = new BufferedWriter(new FileWriter(baseFileName + partyId+".csv"))) {
@@ -91,7 +93,7 @@ public class Client {
                 br.close();
 
             } catch (IOException ex) {
-                Logger.getLogger(Client.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(LinearRegressionClient.class.getName()).log(Level.SEVERE, null, ex);
             }
 
         }

@@ -63,7 +63,6 @@ public class Multiplication extends Protocol implements Callable {
      * the value
      *
      * @return shares of product
-     * @throws Exception
      */
     @Override
     public Object call() {

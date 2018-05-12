@@ -51,7 +51,7 @@ public class ReceiverQueueHandler implements Runnable {
             if (!commonQueue.isEmpty()) {
                 try {
                     Message strippedObj = commonQueue.take();
-                    int parentID = strippedObj.popProtocolID();
+                    int parentID = strippedObj.pollProtocolID();
                     int ID = strippedObj.getProtocolID();
                     //System.out.println("adding to receiverqueue from " + 
                     //        parentID + " to subqueue " + ID + " message " + 

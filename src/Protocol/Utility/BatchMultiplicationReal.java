@@ -7,7 +7,6 @@ package Protocol.Utility;
 
 import Communication.Message;
 import Protocol.Multiplication;
-import Protocol.Protocol;
 import TrustedInitializer.Triple;
 import Utility.Constants;
 import java.math.BigInteger;
@@ -29,7 +28,6 @@ public class BatchMultiplicationReal extends BatchMultiplication
     
     List<BigInteger> x;
     List<BigInteger> y;
-    List<Triple> tiShares;
     BigInteger prime;
     
     /**
@@ -56,7 +54,6 @@ public class BatchMultiplicationReal extends BatchMultiplication
                 oneShare, parentID);
         this.x = x;
         this.y = y;
-        this.tiShares = tiShares;
         this.prime = prime;
     }
 

@@ -7,7 +7,6 @@ package Protocol;
 
 import Communication.Message;
 import Communication.ReceiverQueueHandler;
-import Communication.SenderQueueHandler;
 import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
@@ -26,8 +25,6 @@ public class CompositeProtocol extends Protocol {
     ExecutorService queueHandlers;
     ReceiverQueueHandler receiverThread;
 
-    int prime;
-    
     /**
      * 
      * @param protocolId
@@ -44,9 +41,7 @@ public class CompositeProtocol extends Protocol {
         super(protocolId, senderQueue, receiverQueue, protocolQueue, clientId, 
                 oneShare);
         
-        this.prime = prime;
         recQueues = new ConcurrentHashMap<>();
-        
         queueHandlers = Executors.newSingleThreadExecutor();
         receiverThread = new ReceiverQueueHandler(protocolId, super.receiverQueue, recQueues);
 

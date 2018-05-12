@@ -10,7 +10,6 @@ import TrustedInitializer.Triple;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.Callable;
 
 /**
  *
@@ -23,13 +22,11 @@ public abstract class DotProduct extends CompositeProtocol {
     /**
      * Constructor
      *
-     * @param xShares
-     * @param yShares
      * @param tiShares
      * @param senderqueue
      * @param receiverqueue
+     * @param protocolQueue
      * @param clientID
-     * @param prime
      * @param protocolID
      * @param oneShare
      */

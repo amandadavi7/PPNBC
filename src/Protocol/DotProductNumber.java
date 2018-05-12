@@ -27,7 +27,6 @@ import java.util.concurrent.Future;
 public class DotProductNumber extends DotProduct implements Callable<Integer> {
 
     List<Integer> xShares, yShares;
-    List<Triple> tiShares;
     int prime;
 
     /**
@@ -52,7 +51,6 @@ public class DotProductNumber extends DotProduct implements Callable<Integer> {
         
         this.xShares = xShares;
         this.yShares = yShares;
-        this.tiShares = tiShares;
         this.prime = prime;
         
     }

@@ -14,7 +14,6 @@ import java.util.concurrent.BlockingQueue;
  * @author anisha
  */
 public class Protocol {
-    //ExecutorService queueHandlers;
     
     protected BlockingQueue<Message> senderQueue;
     protected BlockingQueue<Message> receiverQueue;

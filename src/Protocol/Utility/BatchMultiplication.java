@@ -6,18 +6,11 @@
 package Protocol.Utility;
 
 import Communication.Message;
-import Protocol.CompositeProtocol;
-import Protocol.Multiplication;
 import Protocol.Protocol;
 import TrustedInitializer.Triple;
-import Utility.Constants;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.Callable;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * Batch multiplication of list of xshares with yshares
@@ -32,13 +25,11 @@ public abstract class BatchMultiplication extends Protocol {
     /**
      * Constructor
      *
-     * @param x share of x
-     * @param y share of y
      * @param tiShares
      * @param senderQueue
      * @param receiverQueue
+     * @param protocolQueue
      * @param clientId
-     * @param prime
      * @param protocolID
      * @param oneShare
      */

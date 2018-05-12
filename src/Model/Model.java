@@ -7,7 +7,6 @@ package Model;
 
 import Communication.Message;
 import Communication.ReceiverQueueHandler;
-import Communication.SenderQueueHandler;
 import TrustedInitializer.Triple;
 import java.util.LinkedList;
 import java.util.List;
@@ -25,6 +24,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 public class Model {
     
     ConcurrentHashMap<Integer, BlockingQueue<Message>> recQueues;
+    protected Queue<Integer> protocolQueue;
     
     ExecutorService queueHandlers;
     ReceiverQueueHandler receiverThread;
@@ -35,10 +35,10 @@ public class Model {
     int clientId;
     List<Triple> binaryTiShares,decimalTiShares;
     int oneShare;
-    protected Queue<Integer> protocolQueue;
     
-    public Model(BlockingQueue<Message> senderQueue, BlockingQueue<Message> receiverQueue, 
-            int clientId, int oneShares, List<Triple> binaryTiShares, List<Triple> decimalTiShares) {
+    public Model(BlockingQueue<Message> senderQueue, 
+            BlockingQueue<Message> receiverQueue, int clientId, int oneShares, 
+            List<Triple> binaryTiShares, List<Triple> decimalTiShares) {
         
         this.binaryTiShares = binaryTiShares;
         this.decimalTiShares = decimalTiShares;
@@ -67,9 +67,7 @@ public class Model {
     public void initQueueMap(
             ConcurrentHashMap<Integer, BlockingQueue<Message>> recQueues,
             int key) {
-
         recQueues.putIfAbsent(key, new LinkedBlockingQueue<>());
-        
     }
     
 }
