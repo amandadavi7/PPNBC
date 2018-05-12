@@ -22,6 +22,9 @@ import java.util.concurrent.Future;
 /**
  * Takes a feature vector, k (index (0 index) of the feature that needs to be selected and returns shares of xk
  * asymmetric computation one party sends k=-1 and feature vector, another party sends k and featurevector = null
+ * 
+ * Uses bitlength*count no. of binartTiShares
+ * 
  * @author keerthanaa
  */
 public class OIS extends CompositeProtocol implements Callable<Integer[]>{

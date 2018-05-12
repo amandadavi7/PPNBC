@@ -49,11 +49,11 @@ public class TestModel extends Model {
         initQueueMap(recQueues, 1);
         //TODO: change this to just take integers instead of wasting memory on List<Integer> 
 //        BitDecomposition bitTest = new BitDecomposition(x.get(0).get(0), y.get(0).get(0),
-//                binaryTiShares, oneShares, Constants.bitLength, sendQueues.get(1),
+//                binaryTiShares, oneShare, Constants.bitLength, sendQueues.get(1),
 //                recQueues.get(1), clientId, Constants.binaryPrime, 1);
 
         BitDecomposition bitTest = new BitDecomposition(2, binaryTiShares,
-                oneShares, Constants.bitLength, commonSender,
+                oneShare, Constants.bitLength, commonSender,
                 recQueues.get(1), protocolQueue, clientId, Constants.binaryPrime, 1);
 
         Future<List<Integer>> bitdecompositionTask = es.submit(bitTest);
@@ -83,7 +83,7 @@ public class TestModel extends Model {
 
             initQueueMap(recQueues, i);
 
-            ArgMax argmaxModule = new ArgMax(v.get(i), binaryTiShares, oneShares, commonSender,
+            ArgMax argmaxModule = new ArgMax(v.get(i), binaryTiShares, oneShare, commonSender,
                     recQueues.get(i), protocolQueue, clientId, Constants.binaryPrime, i);
 
             System.out.println("submitted " + i + " argmax");
@@ -128,7 +128,7 @@ public class TestModel extends Model {
         for (int i = 0; i < totalCases; i++) {
 
             initQueueMap(recQueues, i);
-            OR_XOR or_xor = new OR_XOR(x.get(i), y.get(i), decimalTiShares, oneShares, 1, commonSender,
+            OR_XOR or_xor = new OR_XOR(x.get(i), y.get(i), decimalTiShares, oneShare, 1, commonSender,
                     recQueues.get(i), protocolQueue, clientId, Constants.prime, i);
 
             Future<Integer[]> task = es.submit(or_xor);
@@ -171,11 +171,11 @@ public class TestModel extends Model {
 
         if (v.isEmpty()) {
             System.out.println("v is null");
-            ois = new OIS(null, binaryTiShares, oneShares, commonSender, recQueues.get(0), protocolQueue, clientId,
+            ois = new OIS(null, binaryTiShares, oneShare, commonSender, recQueues.get(0), protocolQueue, clientId,
                     Constants.binaryPrime, 0, 4, 1, 3);
         } else {
             System.out.println("v is not null");
-            ois = new OIS(v.get(0), binaryTiShares, oneShares, commonSender, recQueues.get(0), protocolQueue, clientId,
+            ois = new OIS(v.get(0), binaryTiShares, oneShare, commonSender, recQueues.get(0), protocolQueue, clientId,
                     Constants.binaryPrime, 0, 4, -1, 3);
         }
 
@@ -215,7 +215,7 @@ public class TestModel extends Model {
                     Multiplication multiplicationModule = new Multiplication(
                             x.get(i).get(0), y.get(i).get(0), 
                             decimalTiShares.get(i), commonSender, recQueues.get(i), 
-                            protocolQueue, clientId, Constants.prime, i, oneShares, 0);
+                            protocolQueue, clientId, Constants.prime, i, oneShare, 0);
 
                     System.out.println("Submitted " + i + " multiplication");
 
@@ -230,7 +230,7 @@ public class TestModel extends Model {
 
                     DotProductNumber DPModule = new DotProductNumber(x.get(i),
                             y.get(i), decimalTiShares, commonSender, recQueues.get(i),
-                            protocolQueue,clientId, Constants.prime, i, oneShares);
+                            protocolQueue,clientId, Constants.prime, i, oneShare);
 
                     System.out.println("Submitted " + i + " dotproduct");
 
@@ -244,7 +244,7 @@ public class TestModel extends Model {
                     initQueueMap(recQueues, i);
 
                     Comparison comparisonModule = new Comparison(x.get(i), y.get(i),
-                            binaryTiShares, oneShares, commonSender,
+                            binaryTiShares, oneShare, commonSender,
                             recQueues.get(i), protocolQueue, clientId, Constants.binaryPrime, i);
 
                     System.out.println("submitted " + i + " comparison");

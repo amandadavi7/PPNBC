@@ -25,7 +25,7 @@ import java.util.Queue;
  */
 public class BitDecomposition extends CompositeProtocol implements Callable<List<Integer>> {
 
-    int input;
+    int input, tiStartIndex;
     List<List<Integer>> inputShares;
     List<Triple> tiShares;
 
@@ -83,6 +83,7 @@ public class BitDecomposition extends CompositeProtocol implements Callable<List
 
         this.tiShares = tiShares;
         //this.parentProtocolId = protocolID;
+        tiStartIndex = 0;
         eShares = new Integer[bitLength];
         dShares = new Integer[bitLength];
         cShares = new Integer[bitLength];
@@ -131,6 +132,9 @@ public class BitDecomposition extends CompositeProtocol implements Callable<List
         return xShares;
     }
 
+    /**
+     * computes y locally
+     */
     public void initY() {
 
         for (int i = 0; i < bitLength; i++) {

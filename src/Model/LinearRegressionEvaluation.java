@@ -73,7 +73,7 @@ public class LinearRegressionEvaluation extends Model {
             DotProductReal DPModule = new DotProductReal(x.get(i),
                     beta, decimalTiShares, commonSender, recQueues.get(i), 
                     new LinkedList<>(protocolQueue),
-                    clientId, prime, i, oneShares);
+                    clientId, prime, i, oneShare);
 
             Future<BigInteger> DPTask = es.submit(DPModule);
             taskList.add(DPTask);

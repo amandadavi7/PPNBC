@@ -34,7 +34,7 @@ public class Model {
 
     int clientId;
     List<Triple> binaryTiShares,decimalTiShares;
-    int oneShares;
+    int oneShare;
     protected Queue<Integer> protocolQueue;
     
     public Model(BlockingQueue<Message> senderQueue, BlockingQueue<Message> receiverQueue, 
@@ -42,7 +42,7 @@ public class Model {
         
         this.binaryTiShares = binaryTiShares;
         this.decimalTiShares = decimalTiShares;
-        this.oneShares = oneShares;
+        this.oneShare = oneShares;
         this.commonSender = senderQueue;
         this.commonReceiver = receiverQueue;
         this.clientId = clientId;
