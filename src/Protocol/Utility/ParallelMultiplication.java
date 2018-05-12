@@ -10,6 +10,7 @@ import Protocol.Protocol;
 import TrustedInitializer.Triple;
 import Utility.Constants;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
@@ -87,7 +88,7 @@ public class ParallelMultiplication extends Protocol implements Callable<Integer
                 
                 multCompletionService.submit(new BatchMultiplicationNumber(products.subList(i1, tempIndex1), 
                     products.subList(i2, tempIndex2), tishares.subList(tiStartIndex, tiStartIndex+tempIndex1), 
-                    senderQueue, recQueues.get(startpid), protocolQueue,clientID, prime, startpid, oneShare, protocolId));
+                    senderQueue, recQueues.get(startpid), new LinkedList<>(protocolQueue),clientID, prime, startpid, oneShare, protocolId));
                 
                 tiStartIndex += tempIndex1;
                 startpid++;

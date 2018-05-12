@@ -11,6 +11,7 @@ import Protocol.Utility.BatchMultiplicationNumber;
 import TrustedInitializer.Triple;
 import Utility.Constants;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
@@ -69,7 +70,7 @@ public class OR_XOR extends CompositeProtocol implements Callable<Integer[]> {
                     xShares.subList(i, toIndex),
                     yShares.subList(i, toIndex),
                     tiShares.subList(i, toIndex),
-                    senderQueue, recQueues.get(startpid), protocolQueue,
+                    senderQueue, recQueues.get(startpid), new LinkedList<>(protocolQueue),
                     clientID, prime, startpid, oneShare, protocolId);
 
             Future<Integer[]> multiplicationTask = es.submit(batchMultiplication);

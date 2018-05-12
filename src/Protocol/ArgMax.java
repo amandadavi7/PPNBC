@@ -11,6 +11,7 @@ import TrustedInitializer.Triple;
 import Utility.Constants;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
@@ -121,7 +122,7 @@ public class ArgMax extends CompositeProtocol implements Callable<Integer[]> {
                     List<Triple> tiComparsion = tiShares.subList(tiIndex, tiIndex + tiCount);
                     tiIndex += tiCount;
                     Comparison comparisonModule = new Comparison(vShares.get(i), vShares.get(j), tiComparsion,
-                            oneShare, senderQueue, recQueues.get(key), protocolQueue,clientID, prime, key);
+                            oneShare, senderQueue, recQueues.get(key), new LinkedList<>(protocolQueue),clientID, prime, key);
                     Future<Integer> comparisonTask = es.submit(comparisonModule);
                     taskList.add(comparisonTask);
                 }
@@ -167,7 +168,7 @@ public class ArgMax extends CompositeProtocol implements Callable<Integer[]> {
             ParallelMultiplication rowMultiplication = new ParallelMultiplication(
                     wIntermediate.get(i), tishares, clientID, prime, protocolId, 
                     startProtocolID, oneShare, recQueues, 
-                    senderQueue, receiverQueue, protocolQueue);
+                    senderQueue, receiverQueue, new LinkedList<>(protocolQueue));
             
             startProtocolID+=IDSizePerRow;
             

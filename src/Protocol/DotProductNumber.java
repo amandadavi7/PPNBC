@@ -10,6 +10,7 @@ import Communication.Message;
 import Protocol.Utility.BatchMultiplicationNumber;
 import TrustedInitializer.Triple;
 import Utility.Constants;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
@@ -82,7 +83,7 @@ public class DotProductNumber extends DotProduct implements Callable<Integer> {
             
             multCompletionService.submit(new BatchMultiplicationNumber(xShares.subList(i, toIndex), 
                     yShares.subList(i, toIndex), tiShares.subList(i, toIndex), senderQueue, 
-                    recQueues.get(startpid), protocolQueue,clientID, prime, startpid, oneShare, protocolId));
+                    recQueues.get(startpid), new LinkedList<>(protocolQueue),clientID, prime, startpid, oneShare, protocolId));
             
             startpid++;
             i = toIndex;

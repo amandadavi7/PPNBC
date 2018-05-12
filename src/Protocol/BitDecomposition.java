@@ -17,6 +17,7 @@ import TrustedInitializer.Triple;
 import Utility.Constants;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.Queue;
 
 /**
@@ -167,7 +168,7 @@ public class BitDecomposition extends CompositeProtocol implements Callable<List
                 second_bit,
                 tiShares.get(protocol_id + subprotocolId),
                 senderQueue, 
-                recQueues.get(protocol_id + subprotocolId), protocolQueue,
+                recQueues.get(protocol_id + subprotocolId), new LinkedList<>(protocolQueue),
                 clientID,
                 prime, subprotocolId + protocol_id, oneShare, 1);
 
@@ -212,7 +213,7 @@ public class BitDecomposition extends CompositeProtocol implements Callable<List
                     inputShares.get(0).subList(i, toIndex),
                     inputShares.get(1).subList(i, toIndex),
                     tiShares.subList(i, toIndex),
-                    senderQueue, recQueues.get(startpid), protocolQueue,
+                    senderQueue, recQueues.get(startpid), new LinkedList<>(protocolQueue),
                     clientID, prime, startpid, oneShare, protocolId);
 
             Future<Integer[]> multiplicationTask = es.submit(batchMultiplication);

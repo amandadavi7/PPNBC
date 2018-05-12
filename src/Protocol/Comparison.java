@@ -12,6 +12,7 @@ import TrustedInitializer.Triple;
 import Utility.Constants;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
@@ -177,7 +178,7 @@ public class Comparison extends CompositeProtocol implements Callable<Integer> {
                     x.subList(i, toIndex),
                     y.subList(i, toIndex),
                     tiShares.subList(i, toIndex),
-                    senderQueue, recQueues.get(startpid), protocolQueue,
+                    senderQueue, recQueues.get(startpid), new LinkedList<>(protocolQueue),
                     clientID, prime, startpid, oneShare, protocolId);
 
             Future<Integer[]> multiplicationTask = es.submit(batchMultiplication);
@@ -241,7 +242,7 @@ public class Comparison extends CompositeProtocol implements Callable<Integer> {
                         tempMultE.subList(i, toIndex - 1),
                         tempMultE.subList(i + 1, toIndex),
                         tiShares.subList(tiStartIndex, tiStartIndex+tiCount), senderQueue,
-                        recQueues.get(startpid), protocolQueue,clientID, prime, startpid,
+                        recQueues.get(startpid), new LinkedList<>(protocolQueue),clientID, prime, startpid,
                         oneShare, protocolId);
 
                 Future<Integer[]> multiplicationTask = es.submit(batchMultiplication);
@@ -307,7 +308,7 @@ public class Comparison extends CompositeProtocol implements Callable<Integer> {
                     multiplicationEList.subList(i + 1, toIndex + 1),
                     dShareList.subList(i, toIndex),
                     tiShares.subList(tiStartIndex, tiStartIndex + tiCount), senderQueue,
-                    recQueues.get(startpid), protocolQueue,clientID, prime, startpid,
+                    recQueues.get(startpid), new LinkedList<>(protocolQueue),clientID, prime, startpid,
                     oneShare, protocolId);
 
             Future<Integer[]> multiplicationTask = es.submit(batchMultiplication);

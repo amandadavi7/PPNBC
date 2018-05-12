@@ -11,6 +11,7 @@ import Utility.Constants;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
@@ -115,7 +116,7 @@ public class OIS extends CompositeProtocol implements Callable<Integer[]>{
             //System.out.println("parentID-"+ protocolId +", dp with pid "+ i + " - " +featureVectorTransposed.get(i)+" and "+yShares);
             
             DotProductNumber dp = new DotProductNumber(featureVectorTransposed.get(i), yShares, 
-                    tiShares.subList(tiStartIndex, tiStartIndex+numberCount), senderQueue, recQueues.get(i), protocolQueue,
+                    tiShares.subList(tiStartIndex, tiStartIndex+numberCount), senderQueue, recQueues.get(i), new LinkedList<>(protocolQueue),
                     clientID, prime, i, oneShare);
             
             Future<Integer> dpTask = es.submit(dp);

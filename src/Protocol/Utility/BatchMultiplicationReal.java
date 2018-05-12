@@ -125,7 +125,6 @@ public class BatchMultiplicationReal extends BatchMultiplication
         
         try {
             senderQueue.put(senderMessage);
-            //senderMessage.logProtocolQueue();
             //System.out.println("sending message for protocol id:"+ protocolId);
         } catch (InterruptedException ex) {
             ex.printStackTrace();
