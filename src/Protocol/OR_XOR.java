@@ -5,7 +5,6 @@
  */
 package Protocol;
 
-import Protocol.Utility.BatchMultiplication;
 import Communication.Message;
 import Protocol.Utility.BatchMultiplicationNumber;
 import TrustedInitializer.Triple;
@@ -33,6 +32,22 @@ public class OR_XOR extends CompositeProtocol implements Callable<Integer[]> {
     int bitLength;
     int prime;
     
+    /**
+     * constantMultiplier = 1 for OR
+     * constantMultiplier = 2 for XOR
+     * 
+     * @param x
+     * @param y
+     * @param tiShares
+     * @param oneShare
+     * @param constantMultiplier
+     * @param senderQueue
+     * @param receiverQueue
+     * @param protocolIdQueue
+     * @param clientId
+     * @param prime
+     * @param protocolID 
+     */
     public OR_XOR(List<Integer> x, List<Integer> y, List<Triple> tiShares,
             int oneShare, int constantMultiplier, BlockingQueue<Message> senderQueue,
             BlockingQueue<Message> receiverQueue, Queue<Integer> protocolIdQueue, int clientId, int prime,

@@ -5,7 +5,6 @@
  */
 package Protocol;
 
-import Protocol.Utility.BatchMultiplication;
 import Communication.Message;
 import Protocol.Utility.BatchMultiplicationNumber;
 import TrustedInitializer.Triple;
@@ -51,8 +50,7 @@ public class Comparison extends CompositeProtocol implements Callable<Integer> {
     /**
      * Constructor
      *
-     * A comparison of two numbers with bit length L requires 3L-3 tiShares L
-     * for computing dShares L-2 for computing eShares L-1 for computing cShares
+     * A comparison of two numbers with bit length L requires 2(L) + (L)(L-1)/2 tiShares
      *
      * @param x List of bits of shares of x
      * @param y List of bits of shares of y

@@ -6,7 +6,6 @@
 package Model;
 
 import Communication.Message;
-import Protocol.Utility.BatchMultiplication;
 import Protocol.BitDecomposition;
 import Protocol.Comparison;
 import Protocol.OIS;

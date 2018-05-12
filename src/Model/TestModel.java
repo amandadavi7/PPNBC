@@ -9,7 +9,6 @@ import Communication.Message;
 import Protocol.ArgMax;
 import Protocol.BitDecomposition;
 import Protocol.Comparison;
-import Protocol.DotProduct;
 import Protocol.DotProductNumber;
 import Protocol.Multiplication;
 import Protocol.OIS;
@@ -61,10 +60,7 @@ public class TestModel extends Model {
         try {
             List<Integer> result = bitdecompositionTask.get();
             System.out.println("result of bitDecomposition: " + result);
-        } catch (InterruptedException ex) {
-            Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (ExecutionException ex) {
-
+        } catch (InterruptedException | ExecutionException ex) {
             Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
         }
 
@@ -78,6 +74,7 @@ public class TestModel extends Model {
         long startTime = System.currentTimeMillis();
 
         int totalCases = v.size();
+        
         // totalcases number of protocols are submitted to the executorservice
         for (int i = 0; i < totalCases; i++) {
 
@@ -100,9 +97,7 @@ public class TestModel extends Model {
             try {
                 Integer[] result = dWorkerResponse.get();
                 System.out.println("result:" + Arrays.toString(result) + ", #:" + i);
-            } catch (InterruptedException ex) {
-                Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
-            } catch (ExecutionException ex) {
+            } catch (InterruptedException | ExecutionException ex) {
                 Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
@@ -142,9 +137,7 @@ public class TestModel extends Model {
                 Future<Integer[]> task = taskList.get(i);
                 Integer[] result = task.get();
                 System.out.println("result: " + i + ": " + Arrays.toString(result));
-            } catch (InterruptedException ex) {
-                Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
-            } catch (ExecutionException ex) {
+            } catch (InterruptedException | ExecutionException ex) {
                 Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
@@ -186,9 +179,7 @@ public class TestModel extends Model {
         try {
             Integer[] result = task.get();
             System.out.println("result:" + Arrays.toString(result));
-        } catch (InterruptedException ex) {
-            Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (ExecutionException ex) {
+        } catch (InterruptedException | ExecutionException ex) {
             Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
         }
 

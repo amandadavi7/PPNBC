@@ -5,7 +5,6 @@
  */
 package Protocol;
 
-import Protocol.Utility.BatchMultiplication;
 import Communication.Message;
 import Protocol.Utility.BatchMultiplicationNumber;
 import TrustedInitializer.Triple;
@@ -38,6 +37,7 @@ public class DotProductNumber extends DotProduct implements Callable<Integer> {
      * @param tiShares
      * @param senderqueue
      * @param receiverqueue
+     * @param protocolIdQueue
      * @param clientID
      * @param prime
      * @param protocolID
@@ -58,7 +58,7 @@ public class DotProductNumber extends DotProduct implements Callable<Integer> {
 
     /**
      * Do a batch multiplication on chunks of vector, collate the results and 
-     * return (10 mults per batch)
+     * return
      * 
      * @return
      */
