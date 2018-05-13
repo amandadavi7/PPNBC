@@ -6,8 +6,8 @@
 package Protocol;
 
 import Communication.Message;
-import Protocol.Utility.BatchMultiplicationNumber;
-import TrustedInitializer.Triple;
+import Protocol.Utility.BatchMultiplicationByte;
+import TrustedInitializer.TripleByte;
 import Utility.Constants;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -36,7 +36,7 @@ public class Comparison extends CompositeProtocol implements Callable<Integer> {
 
     List<Integer> x;
     List<Integer> y;
-    List<Triple> tiShares;
+    List<TripleByte> tiShares;
 
     int[] dShares;
     int[] eShares;
@@ -58,11 +58,12 @@ public class Comparison extends CompositeProtocol implements Callable<Integer> {
      * @param oneShare [[1]] with the Party
      * @param senderQueue
      * @param receiverQueue
+     * @param protocolIdQueue
      * @param clientId
      * @param prime
      * @param protocolID
      */
-    public Comparison(List<Integer> x, List<Integer> y, List<Triple> tiShares,
+    public Comparison(List<Integer> x, List<Integer> y, List<TripleByte> tiShares,
             int oneShare, BlockingQueue<Message> senderQueue,
             BlockingQueue<Message> receiverQueue, Queue<Integer> protocolIdQueue,
             int clientId, int prime,
@@ -172,7 +173,7 @@ public class Comparison extends CompositeProtocol implements Callable<Integer> {
 
             int toIndex = Math.min(i + Constants.batchSize, bitLength);
 
-            BatchMultiplicationNumber batchMultiplication = new BatchMultiplicationNumber(
+            BatchMultiplicationByte batchMultiplication = new BatchMultiplicationByte(
                     x.subList(i, toIndex),
                     y.subList(i, toIndex),
                     tiShares.subList(i, toIndex),
@@ -236,7 +237,7 @@ public class Comparison extends CompositeProtocol implements Callable<Integer> {
                 int toIndex = Math.min(i+Constants.batchSize, tempMultE.size());
                 int tiCount = toIndex - i;
 
-                BatchMultiplicationNumber batchMultiplication = new BatchMultiplicationNumber(
+                BatchMultiplicationByte batchMultiplication = new BatchMultiplicationByte(
                         tempMultE.subList(i, toIndex - 1),
                         tempMultE.subList(i + 1, toIndex),
                         tiShares.subList(tiStartIndex, tiStartIndex+tiCount), senderQueue,
@@ -302,12 +303,12 @@ public class Comparison extends CompositeProtocol implements Callable<Integer> {
             int toIndex = Math.min(i + Constants.batchSize, bitLength - 1);
             int tiCount = toIndex - i;
 
-            BatchMultiplicationNumber batchMultiplication = new BatchMultiplicationNumber(
+            BatchMultiplicationByte batchMultiplication = new BatchMultiplicationByte(
                     multiplicationEList.subList(i + 1, toIndex + 1),
                     dShareList.subList(i, toIndex),
                     tiShares.subList(tiStartIndex, tiStartIndex + tiCount), senderQueue,
-                    recQueues.get(startpid), new LinkedList<>(protocolIdQueue),clientID, prime, startpid,
-                    oneShare, protocolId);
+                    recQueues.get(startpid), new LinkedList<>(protocolIdQueue),
+                    clientID, prime, startpid, oneShare, protocolId);
 
             Future<Integer[]> multiplicationTask = es.submit(batchMultiplication);
             taskList.add(multiplicationTask);

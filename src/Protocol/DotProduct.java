@@ -6,8 +6,6 @@
 package Protocol;
 
 import Communication.Message;
-import TrustedInitializer.Triple;
-import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
 
@@ -17,7 +15,6 @@ import java.util.concurrent.BlockingQueue;
  */
 public abstract class DotProduct extends CompositeProtocol {
 
-    List<Triple> tiShares;
 
     /**
      * Constructor
@@ -30,13 +27,11 @@ public abstract class DotProduct extends CompositeProtocol {
      * @param protocolID
      * @param oneShare
      */
-    public DotProduct(List<Triple> tiShares,
-            BlockingQueue<Message> senderqueue, BlockingQueue<Message> receiverqueue,
+    public DotProduct(BlockingQueue<Message> senderqueue, BlockingQueue<Message> receiverqueue,
             Queue<Integer> protocolIdQueue,
             int clientID, int protocolID, int oneShare) {
 
         super(protocolID, senderqueue, receiverqueue, protocolIdQueue,clientID, oneShare);
-        this.tiShares = tiShares;
 
     }
 

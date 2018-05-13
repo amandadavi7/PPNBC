@@ -3,11 +3,10 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package Protocol.Utility;
+package Protocol;
 
 import Communication.Message;
-import Protocol.Multiplication;
-import TrustedInitializer.Triple;
+import TrustedInitializer.TripleInteger;
 import Utility.Constants;
 import java.util.ArrayList;
 import java.util.List;
@@ -18,17 +17,19 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Batch multiplication of list of xshares with yshares
- * 
- * @author keerthanaa
+ * The protocol computes the multiplication of shares of x and y and returns the
+ * share of the product
+ *
+ * @author anisha
  */
-public class BatchMultiplicationNumber extends BatchMultiplication 
-        implements Callable<Integer[]> {
-    
-    List<Integer> x;
-    List<Integer> y;
+public class MultiplicationInteger extends Protocol implements Callable {
+
+    int x;
+    int y;
+    TripleInteger tiShares;
+    int parentID;
     int prime;
-    
+
     /**
      * Constructor
      *
@@ -37,22 +38,25 @@ public class BatchMultiplicationNumber extends BatchMultiplication
      * @param tiShares
      * @param senderQueue
      * @param receiverQueue
+     * @param protocolIdQueue
      * @param clientId
      * @param prime
      * @param protocolID
      * @param oneShare
+     * @param parentID
      */
-    public BatchMultiplicationNumber(List<Integer> x, List<Integer> y, 
-            List<Triple> tiShares, 
+    public MultiplicationInteger(int x, int y, TripleInteger tiShares,
             BlockingQueue<Message> senderQueue,
             BlockingQueue<Message> receiverQueue, Queue<Integer> protocolIdQueue,
             int clientId, int prime,
             int protocolID, int oneShare, int parentID) {
 
-        super(tiShares, senderQueue, receiverQueue, protocolIdQueue,clientId, protocolID, 
-                oneShare, parentID);
+        super(protocolID, senderQueue, receiverQueue, protocolIdQueue,
+                clientId, oneShare);
         this.x = x;
         this.y = y;
+        this.tiShares = tiShares;
+        this.parentID = parentID;
         this.prime = prime;
     }
 
@@ -61,64 +65,48 @@ public class BatchMultiplicationNumber extends BatchMultiplication
      * the value
      *
      * @return shares of product
-     * @throws Exception
      */
     @Override
-    public Integer[] call() throws Exception{
-        
-        int batchSize = x.size();
-        Integer[] products = new Integer[batchSize];
-        
+    public Object call() {
         initProtocol();
         //System.out.println("Waiting for receiver. parentID=" + parentID + " mult ID=" + protocolID);
         Message receivedMessage = null;
-        List<List<Integer>> diffList = null;
+        List<Integer> diffList = null;
         try {
             receivedMessage = receiverQueue.take();
-            diffList = (List<List<Integer>>) receivedMessage.getValue();
+            diffList = (List<Integer>) receivedMessage.getValue();
         } catch (InterruptedException ex) {
             ex.printStackTrace();
         }
-        
-        for(int i=0;i<batchSize;i++){
-            int d = Math.floorMod((x.get(i) - tiShares.get(i).u) + diffList.get(i).get(0), prime);
-            int e = Math.floorMod((y.get(i) - tiShares.get(i).v) + diffList.get(i).get(1), prime);
-            int product = tiShares.get(i).w + (d * tiShares.get(i).v) + (tiShares.get(i).u * e) + (d * e * oneShare);
-            product = Math.floorMod(product, prime);
-            products[i] = product;
-        }
 
+        int d = Math.floorMod((x - tiShares.u) + diffList.get(0), prime);
+        int e = Math.floorMod((y - tiShares.v) + diffList.get(1), prime);
+        int product = tiShares.w + (d * tiShares.v) + (tiShares.u * e) + (d * e * oneShare);
+        product = Math.floorMod(product, prime);
+        //System.out.println("ti("+tiShares.u+","+tiShares.v+","+tiShares.w+"), "+"x*y("+x+","+y+"):"+product);
         //System.out.println("parent ID=" + parentID + " mult ID=" + protocolID + " successful, product returned");
-        return products;
+        return product;
 
     }
 
     /**
      * Bundle the d and e values and add to the sender queue
      */
-    @Override
-    void initProtocol() {
-        List<List<Integer>> diffList = new ArrayList<>();
-        int batchSize = x.size();
-        
-        for(int i=0;i<batchSize;i++){
-            List<Integer> newRow = new ArrayList<>();
-            newRow.add(Math.floorMod(x.get(i) - tiShares.get(i).u, prime));
-            newRow.add(Math.floorMod(y.get(i) - tiShares.get(i).v, prime));
-            diffList.add(newRow);
-        }
-        
+    private void initProtocol() {
+        List<Integer> diffList = new ArrayList<>();
+        diffList.add(Math.floorMod(x - tiShares.u, prime));
+        diffList.add(Math.floorMod(y - tiShares.v, prime));
+
         Message senderMessage = new Message(Constants.localShares, diffList,
                 clientID, protocolIdQueue);
-        
         try {
             senderQueue.put(senderMessage);
             //System.out.println("sending message for protocol id:"+ protocolID);
         } catch (InterruptedException ex) {
             ex.printStackTrace();
-            Logger.getLogger(Multiplication.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(MultiplicationInteger.class.getName()).log(Level.SEVERE, null, ex);
         }
 
     }
-    
+
 }

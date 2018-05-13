@@ -6,8 +6,8 @@
 package Protocol;
 
 import Communication.Message;
-import Protocol.Utility.BatchMultiplicationNumber;
-import TrustedInitializer.Triple;
+import Protocol.Utility.BatchMultiplicationInteger;
+import TrustedInitializer.TripleInteger;
 import Utility.Constants;
 import java.util.LinkedList;
 import java.util.List;
@@ -24,9 +24,10 @@ import java.util.concurrent.Future;
  *
  * @author keerthanaa
  */
-public class DotProductNumber extends DotProduct implements Callable<Integer> {
+public class DotProductInteger extends DotProduct implements Callable<Integer> {
 
     List<Integer> xShares, yShares;
+    List<TripleInteger> tiShares;
     int prime;
 
     /**
@@ -43,16 +44,17 @@ public class DotProductNumber extends DotProduct implements Callable<Integer> {
      * @param protocolID
      * @param oneShare
      */
-    public DotProductNumber(List<Integer> xShares, List<Integer> yShares, List<Triple> tiShares,
+    public DotProductInteger(List<Integer> xShares, List<Integer> yShares, List<TripleInteger> tiShares,
             BlockingQueue<Message> senderqueue, BlockingQueue<Message> receiverqueue,
             Queue<Integer> protocolIdQueue,
             int clientID, int prime, int protocolID, int oneShare) {
         
-        super(tiShares,senderqueue, receiverqueue, protocolIdQueue,clientID, protocolID, oneShare);
+        super(senderqueue, receiverqueue, protocolIdQueue,clientID, protocolID, oneShare);
         
         this.xShares = xShares;
         this.yShares = yShares;
         this.prime = prime;
+        this.tiShares = tiShares;
         
     }
 
@@ -81,7 +83,7 @@ public class DotProductNumber extends DotProduct implements Callable<Integer> {
             System.out.println("Protocol "+protocolId+" batch "+startpid);
             initQueueMap(recQueues, startpid);
             
-            multCompletionService.submit(new BatchMultiplicationNumber(xShares.subList(i, toIndex), 
+            multCompletionService.submit(new BatchMultiplicationInteger(xShares.subList(i, toIndex), 
                     yShares.subList(i, toIndex), tiShares.subList(i, toIndex), senderQueue, 
                     recQueues.get(startpid), new LinkedList<>(protocolIdQueue),clientID, prime, startpid, oneShare, protocolId));
             

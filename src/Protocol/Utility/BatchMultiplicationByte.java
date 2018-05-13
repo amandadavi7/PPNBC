@@ -7,10 +7,8 @@ package Protocol.Utility;
 
 import Communication.Message;
 import Protocol.MultiplicationInteger;
-import TrustedInitializer.Triple;
-import TrustedInitializer.TripleReal;
+import TrustedInitializer.TripleByte;
 import Utility.Constants;
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
@@ -24,13 +22,13 @@ import java.util.logging.Logger;
  * 
  * @author keerthanaa
  */
-public class BatchMultiplicationReal extends BatchMultiplication 
-        implements Callable<BigInteger[]> {
+public class BatchMultiplicationByte extends BatchMultiplication 
+        implements Callable<Integer[]> {
     
-    List<BigInteger> x;
-    List<BigInteger> y;
-    List<TripleReal> tiShares;
-    BigInteger prime;
+    List<Integer> x;
+    List<Integer> y;
+    List<TripleByte> tiShares;
+    int prime;
     
     /**
      * Constructor
@@ -40,19 +38,21 @@ public class BatchMultiplicationReal extends BatchMultiplication
      * @param tiShares
      * @param senderQueue
      * @param receiverQueue
+     * @param protocolIdQueue
      * @param clientId
      * @param prime
      * @param protocolID
      * @param oneShare
+     * @param parentID
      */
-    public BatchMultiplicationReal(List<BigInteger> x, List<BigInteger> y, 
-            List<TripleReal> tiShares, 
+    public BatchMultiplicationByte(List<Integer> x, List<Integer> y, 
+            List<TripleByte> tiShares, 
             BlockingQueue<Message> senderQueue,
             BlockingQueue<Message> receiverQueue, Queue<Integer> protocolIdQueue,
-            int clientId, BigInteger prime,
+            int clientId, int prime,
             int protocolID, int oneShare, int parentID) {
 
-        super(senderQueue, receiverQueue, protocolIdQueue, clientId, protocolID, 
+        super(senderQueue, receiverQueue, protocolIdQueue,clientId, protocolID, 
                 oneShare, parentID);
         this.x = x;
         this.y = y;
@@ -68,40 +68,31 @@ public class BatchMultiplicationReal extends BatchMultiplication
      * @throws Exception
      */
     @Override
-    public BigInteger[] call() throws Exception{
+    public Integer[] call() throws Exception{
         
         int batchSize = x.size();
-        BigInteger[] products = new BigInteger[batchSize];
+        Integer[] products = new Integer[batchSize];
         
         initProtocol();
         //System.out.println("Waiting for receiver. parentID=" + parentID + " mult ID=" + protocolID);
         Message receivedMessage = null;
-        List<List<BigInteger>> diffList = null;
+        List<List<Integer>> diffList = null;
         try {
             receivedMessage = receiverQueue.take();
-            diffList = (List<List<BigInteger>>) receivedMessage.getValue();
+            diffList = (List<List<Integer>>) receivedMessage.getValue();
         } catch (InterruptedException ex) {
             ex.printStackTrace();
         }
         
         for(int i=0;i<batchSize;i++){
-            // TODO convert TI share to BigInteger
-            BigInteger d = x.get(i)
-                    .subtract(tiShares.get(i).u)
-                    .add(diffList.get(i).get(0)).mod(prime);
-            BigInteger e = y.get(i)
-                    .subtract(tiShares.get(i).v)
-                    .add(diffList.get(i).get(1)).mod(prime);
-            
-            BigInteger product = tiShares.get(i).w
-                    .add(d.multiply(tiShares.get(i).v))
-                    .add(e.multiply(tiShares.get(i).u))
-                    .add(d.multiply(e).multiply(BigInteger.valueOf(oneShare)))
-                    .mod(prime);
-            
+            int d = Math.floorMod((x.get(i) - tiShares.get(i).u) + diffList.get(i).get(0), prime);
+            int e = Math.floorMod((y.get(i) - tiShares.get(i).v) + diffList.get(i).get(1), prime);
+            int product = tiShares.get(i).w + (d * tiShares.get(i).v) + (tiShares.get(i).u * e) + (d * e * oneShare);
+            product = Math.floorMod(product, prime);
             products[i] = product;
         }
 
+        //System.out.println("parent ID=" + parentID + " mult ID=" + protocolID + " successful, product returned");
         return products;
 
     }
@@ -111,13 +102,13 @@ public class BatchMultiplicationReal extends BatchMultiplication
      */
     @Override
     void initProtocol() {
-        List<List<BigInteger>> diffList = new ArrayList<>();
+        List<List<Integer>> diffList = new ArrayList<>();
         int batchSize = x.size();
         
         for(int i=0;i<batchSize;i++){
-            List<BigInteger> newRow = new ArrayList<>();
-            newRow.add(x.get(i).subtract(tiShares.get(i).u).mod(prime));
-            newRow.add(y.get(i).subtract(tiShares.get(i).v).mod(prime));
+            List<Integer> newRow = new ArrayList<>();
+            newRow.add(Math.floorMod(x.get(i) - tiShares.get(i).u, prime));
+            newRow.add(Math.floorMod(y.get(i) - tiShares.get(i).v, prime));
             diffList.add(newRow);
         }
         
@@ -126,7 +117,7 @@ public class BatchMultiplicationReal extends BatchMultiplication
         
         try {
             senderQueue.put(senderMessage);
-            //System.out.println("sending message for protocol id:"+ protocolId);
+            //System.out.println("sending message for protocol id:"+ protocolID);
         } catch (InterruptedException ex) {
             ex.printStackTrace();
             Logger.getLogger(MultiplicationInteger.class.getName()).log(Level.SEVERE, null, ex);

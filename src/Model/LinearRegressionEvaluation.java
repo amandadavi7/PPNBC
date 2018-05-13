@@ -7,7 +7,7 @@ package Model;
 
 import Communication.Message;
 import Protocol.DotProductReal;
-import TrustedInitializer.Triple;
+import TrustedInitializer.TripleReal;
 import Utility.Constants;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -36,7 +36,7 @@ public class LinearRegressionEvaluation extends Model {
      * Constructor
      * @param x     data matrix 
      * @param beta  co-efficient array
-     * @param decimalTriples
+     * @param realTriples
      * @param oneShares
      * @param senderQueue
      * @param receiverQueue 
@@ -44,13 +44,13 @@ public class LinearRegressionEvaluation extends Model {
      * @param prime 
      */
     public LinearRegressionEvaluation(List<List<BigInteger>> x,
-            List<BigInteger> beta, List<Triple> decimalTriples,
+            List<BigInteger> beta, List<TripleReal> realTriples,
             int oneShares, BlockingQueue<Message> senderQueue,
             BlockingQueue<Message> receiverQueue, int clientId, 
             BigInteger prime) {
 
         super(senderQueue, receiverQueue, clientId, oneShares, null, 
-                decimalTriples);
+                null, realTriples);
 
         this.x = x;
         this.beta = beta;
@@ -87,7 +87,7 @@ public class LinearRegressionEvaluation extends Model {
             initQueueMap(recQueues,i);
             
             DotProductReal DPModule = new DotProductReal(x.get(i),
-                    beta, decimalTiShares.subList(
+                    beta, realTiShares.subList(
                             tiStartIndex, tiStartIndex+x.get(i).size()), 
                     commonSender, recQueues.get(i), 
                     new LinkedList<>(protocolIdQueue),

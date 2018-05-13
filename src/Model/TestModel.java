@@ -9,11 +9,13 @@ import Communication.Message;
 import Protocol.ArgMax;
 import Protocol.BitDecomposition;
 import Protocol.Comparison;
-import Protocol.DotProductNumber;
-import Protocol.Multiplication;
+import Protocol.DotProductInteger;
+import Protocol.MultiplicationInteger;
 import Protocol.OIS;
 import Protocol.OR_XOR;
-import TrustedInitializer.Triple;
+import TrustedInitializer.TripleByte;
+import TrustedInitializer.TripleInteger;
+import TrustedInitializer.TripleReal;
 import Utility.Constants;
 import java.util.*;
 import java.util.concurrent.*;
@@ -30,11 +32,11 @@ public class TestModel extends Model {
     List<List<List<Integer>>> v;
 
     public TestModel(List<List<Integer>> x, List<List<Integer>> y,
-            List<List<List<Integer>>> v, List<Triple> binaryTriples, List<Triple> decimalTriples,
-            int oneShares, BlockingQueue<Message> senderQueue,
+            List<List<List<Integer>>> v, List<TripleByte> binaryTriples, List<TripleInteger> decimalTriples,
+            List<TripleReal> realTiShares, int oneShares, BlockingQueue<Message> senderQueue,
             BlockingQueue<Message> receiverQueue, int clientId) {
 
-        super(senderQueue, receiverQueue, clientId, oneShares, binaryTriples, decimalTriples);
+        super(senderQueue, receiverQueue, clientId, oneShares, binaryTriples, decimalTriples, realTiShares);
 
         this.x = x;
         this.y = y;
@@ -164,11 +166,13 @@ public class TestModel extends Model {
 
         if (v.isEmpty()) {
             System.out.println("v is null");
-            ois = new OIS(null, binaryTiShares, oneShare, commonSender, recQueues.get(0), new LinkedList<>(protocolIdQueue), clientId,
+            ois = new OIS(null, binaryTiShares, oneShare, commonSender, recQueues.get(0), 
+                    new LinkedList<>(protocolIdQueue), clientId,
                     Constants.binaryPrime, 0, 4, 1, 3);
         } else {
             System.out.println("v is not null");
-            ois = new OIS(v.get(0), binaryTiShares, oneShare, commonSender, recQueues.get(0), new LinkedList<>(protocolIdQueue), clientId,
+            ois = new OIS(v.get(0), binaryTiShares, oneShare, commonSender, recQueues.get(0), 
+                    new LinkedList<>(protocolIdQueue), clientId,
                     Constants.binaryPrime, 0, 4, -1, 3);
         }
 
@@ -203,7 +207,7 @@ public class TestModel extends Model {
 
                     initQueueMap(recQueues, i);
 
-                    Multiplication multiplicationModule = new Multiplication(
+                    MultiplicationInteger multiplicationModule = new MultiplicationInteger(
                             x.get(i).get(0), y.get(i).get(0), 
                             decimalTiShares.get(i), commonSender, recQueues.get(i), 
                             new LinkedList<>(protocolIdQueue), clientId, Constants.prime, i, oneShare, 0);
@@ -219,7 +223,7 @@ public class TestModel extends Model {
 
                     initQueueMap(recQueues, i);
 
-                    DotProductNumber DPModule = new DotProductNumber(x.get(i),
+                    DotProductInteger DPModule = new DotProductInteger(x.get(i),
                             y.get(i), decimalTiShares, commonSender, recQueues.get(i),
                             new LinkedList<>(protocolIdQueue),clientId, Constants.prime, i, oneShare);
 

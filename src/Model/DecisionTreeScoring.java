@@ -9,8 +9,9 @@ import Communication.Message;
 import Protocol.BitDecomposition;
 import Protocol.Comparison;
 import Protocol.OIS;
-import Protocol.Utility.BatchMultiplicationNumber;
-import TrustedInitializer.Triple;
+import Protocol.Utility.BatchMultiplicationByte;
+import TrustedInitializer.TripleByte;
+import TrustedInitializer.TripleInteger;
 import Utility.Constants;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -37,7 +38,7 @@ class PolynomialComputing implements Callable<Integer[]> {
     int s, u, alpha;
     int[] comparisonOutputs;
     Integer[] y_j, jBinary;
-    List<Triple> tiShares;
+    List<TripleByte> tiShares;
     int startpid, clientId, protocolId, oneShare;
     
     ConcurrentHashMap<Integer, BlockingQueue<Message>> recQueues;
@@ -46,7 +47,8 @@ class PolynomialComputing implements Callable<Integer[]> {
     BlockingQueue<Message> commonSender;
     BlockingQueue<Message> commonReceiver;
     
-    public PolynomialComputing(Integer[] y_j, Integer[] jBinary, int alpha, int depth, int[] zOutputs, List<Triple> tiShares, 
+    public PolynomialComputing(Integer[] y_j, Integer[] jBinary, int alpha, int depth,
+            int[] zOutputs, List<TripleByte> tiShares, 
             Queue<Integer> protocolIdQueue, 
             ConcurrentHashMap<Integer, BlockingQueue<Message>> recQueues,
             BlockingQueue<Message> senderQueue, BlockingQueue<Message> receiverQueue, 
@@ -90,7 +92,7 @@ class PolynomialComputing implements Callable<Integer[]> {
                 
                 recQueues.putIfAbsent(startpid, new LinkedBlockingQueue<>());
                 
-                BatchMultiplicationNumber mults = new BatchMultiplicationNumber(yj.subList(i, toIndex), z_u, 
+                BatchMultiplicationByte mults = new BatchMultiplicationByte(yj.subList(i, toIndex), z_u, 
                         tiShares.subList(i, toIndex), commonSender, recQueues.get(startpid), new LinkedList<>(protocolIdQueue),clientId, 
                         Constants.binaryPrime, startpid, oneShare, protocolId);
 
@@ -165,11 +167,12 @@ public class DecisionTreeScoring extends Model {
      * @param classValueCount 
      */
     public DecisionTreeScoring(int oneShare, BlockingQueue<Message> senderQueue,
-            BlockingQueue<Message> receiverQueue, int clientId, List<Triple> binaryTriples, List<Triple> decimalTriple, 
+            BlockingQueue<Message> receiverQueue, int clientId, List<TripleByte> binaryTriples, 
+            List<TripleInteger> decimalTriple, 
             int depth, int attributeCount, int bitLength, int[] leafToClassIndexMapping, 
             int[] nodeToAttributeIndexMapping, int[] attributeThresholds, int classValueCount) {
         
-        super(senderQueue, receiverQueue, clientId, oneShare, binaryTriples, decimalTriple);
+        super(senderQueue, receiverQueue, clientId, oneShare, binaryTriples, decimalTriple, null);
         
         this.depth = depth;
         partyHasTree = true;
@@ -199,10 +202,10 @@ public class DecisionTreeScoring extends Model {
      * @param classValueCount 
      */
     public DecisionTreeScoring(int oneShares, BlockingQueue<Message> senderQueue,
-            BlockingQueue<Message> receiverQueue, int clientId, List<Triple> binaryTriples, List<Triple> decimalTriple,
+            BlockingQueue<Message> receiverQueue, int clientId, List<TripleByte> binaryTriples, List<TripleInteger> decimalTriple,
             int depth, int attributeCount, int bitLength, List<List<Integer>> testVector, int classValueCount){
         
-        super(senderQueue, receiverQueue, clientId, oneShares, binaryTriples, decimalTriple);
+        super(senderQueue, receiverQueue, clientId, oneShares, binaryTriples, decimalTriple, null);
         
         partyHasTree = false;
         this.depth = depth;

@@ -5,15 +5,14 @@
  */
 package Protocol;
 
-import Protocol.Utility.BatchMultiplication;
 import Communication.Message;
-import Protocol.Utility.BatchMultiplicationNumber;
+import Protocol.Utility.BatchMultiplicationByte;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import TrustedInitializer.Triple;
+import TrustedInitializer.TripleByte;
 import Utility.Constants;
 import java.util.Arrays;
 import java.util.Collections;
@@ -28,7 +27,7 @@ public class BitDecomposition extends CompositeProtocol implements Callable<List
 
     int input, tiStartIndex;
     List<List<Integer>> inputShares;
-    List<Triple> tiShares;
+    List<TripleByte> tiShares;
 
     Integer[] dShares, eShares, cShares, yShares;
     
@@ -48,11 +47,12 @@ public class BitDecomposition extends CompositeProtocol implements Callable<List
      * @param bitLength
      * @param senderQueue
      * @param receiverQueue
+     * @param protocolIdQueue
      * @param clientId
      * @param prime
      * @param protocolID
      */
-    public BitDecomposition(Integer input, List<Triple> tiShares,
+    public BitDecomposition(Integer input, List<TripleByte> tiShares,
             int oneShare, int bitLength, BlockingQueue<Message> senderQueue,
             BlockingQueue<Message> receiverQueue, Queue<Integer> protocolIdQueue,
             int clientId, int prime,
@@ -164,7 +164,7 @@ public class BitDecomposition extends CompositeProtocol implements Callable<List
         //compute local shares of d and e and add to the message queue
         initQueueMap(recQueues, subprotocolId + protocol_id);
         
-        Multiplication multiplicationModule = new Multiplication(first_bit,
+        MultiplicationByte multiplicationModule = new MultiplicationByte(first_bit,
                 second_bit,
                 tiShares.get(protocol_id + subprotocolId),
                 senderQueue, 
@@ -209,7 +209,7 @@ public class BitDecomposition extends CompositeProtocol implements Callable<List
             int toIndex = (i + Constants.batchSize < bitLength)
                     ? (i + Constants.batchSize) : bitLength;
 
-            BatchMultiplicationNumber batchMultiplication = new BatchMultiplicationNumber(
+            BatchMultiplicationByte batchMultiplication = new BatchMultiplicationByte(
                     inputShares.get(0).subList(i, toIndex),
                     inputShares.get(1).subList(i, toIndex),
                     tiShares.subList(i, toIndex),

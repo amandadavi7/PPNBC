@@ -7,7 +7,7 @@ package Protocol;
 
 import Communication.Message;
 import Protocol.Utility.ParallelMultiplication;
-import TrustedInitializer.Triple;
+import TrustedInitializer.TripleByte;
 import Utility.Constants;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -28,7 +28,7 @@ import java.util.concurrent.Future;
 public class ArgMax extends CompositeProtocol implements Callable<Integer[]> {
 
     List<List<Integer>> vShares;
-    List<Triple> tiShares;    
+    List<TripleByte> tiShares;    
     int bitLength, numberCount, prime;
 
     HashMap<Integer, ArrayList<Integer>> wIntermediate;
@@ -48,7 +48,7 @@ public class ArgMax extends CompositeProtocol implements Callable<Integer[]> {
      * @param prime
      * @param protocolID
      */
-    public ArgMax(List<List<Integer>> vShares, List<Triple> tiShares,
+    public ArgMax(List<List<Integer>> vShares, List<TripleByte> tiShares,
             int oneShare, BlockingQueue<Message> senderQueue,
             BlockingQueue<Message> receiverQueue, Queue<Integer> protocolIdQueue,
             int clientId, int prime,
@@ -121,10 +121,12 @@ public class ArgMax extends CompositeProtocol implements Callable<Integer[]> {
                     
                     //Extract the required number of tiShares and pass it to comparison protocol
                     //each comparison needs tiCount shares
-                    List<Triple> tiComparsion = tiShares.subList(tiIndex, tiIndex + tiCount);
+                    
+                    Comparison comparisonModule = new Comparison(vShares.get(i), vShares.get(j), 
+                            tiShares.subList(tiIndex, tiIndex+tiCount), oneShare, 
+                            senderQueue, recQueues.get(key), new LinkedList<>(protocolIdQueue),
+                            clientID, prime, key);
                     tiIndex += tiCount;
-                    Comparison comparisonModule = new Comparison(vShares.get(i), vShares.get(j), tiComparsion,
-                            oneShare, senderQueue, recQueues.get(key), new LinkedList<>(protocolIdQueue),clientID, prime, key);
                     Future<Integer> comparisonTask = es.submit(comparisonModule);
                     taskList.add(comparisonTask);
                 }
@@ -162,15 +164,13 @@ public class ArgMax extends CompositeProtocol implements Callable<Integer[]> {
         
         for (int i = 0; i < numberCount; i++) {
             
-            List<Triple> tishares = tiShares.subList(tiIndex, tiIndex + tiCount);
-            tiIndex += tiCount;
-            
             initQueueMap(recQueues, i);
             
             ParallelMultiplication rowMultiplication = new ParallelMultiplication(
-                    wIntermediate.get(i), tishares, clientID, prime, i, 
+                    wIntermediate.get(i), tiShares.subList(tiIndex, tiIndex+tiCount), clientID, prime, i, 
                     oneShare, senderQueue, recQueues.get(i), 
                     new LinkedList<>(protocolIdQueue));
+            tiIndex += tiCount;
             
             Future<Integer> wRowProduct = es.submit(rowMultiplication);
             taskList.add(wRowProduct);

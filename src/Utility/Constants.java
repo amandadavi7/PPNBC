@@ -16,7 +16,7 @@ public class Constants {
     public static final int binaryPrime = 2;             // Prime for bit calculation
     public static final int clientCount = 2;        // No of parties computing a function
     public static final int bitLength = 5;
-
+    
     public static final String x = "x";
     public static final String y = "y";
     public static final String u = "u";

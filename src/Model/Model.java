@@ -8,6 +8,9 @@ package Model;
 import Communication.Message;
 import Communication.ReceiverQueueHandler;
 import TrustedInitializer.Triple;
+import TrustedInitializer.TripleByte;
+import TrustedInitializer.TripleInteger;
+import TrustedInitializer.TripleReal;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
@@ -33,15 +36,29 @@ public class Model {
     BlockingQueue<Message> commonReceiver;
 
     int clientId;
-    List<Triple> binaryTiShares,decimalTiShares;
+    List<TripleByte> binaryTiShares;
+    List<TripleInteger> decimalTiShares;
+    List<TripleReal> realTiShares;
     int oneShare;
     
+    /**
+     * 
+     * @param senderQueue
+     * @param receiverQueue
+     * @param clientId
+     * @param oneShares
+     * @param binaryTiShares
+     * @param decimalTiShares
+     * @param realTiShares 
+     */
     public Model(BlockingQueue<Message> senderQueue, 
             BlockingQueue<Message> receiverQueue, int clientId, int oneShares, 
-            List<Triple> binaryTiShares, List<Triple> decimalTiShares) {
+            List<TripleByte> binaryTiShares, List<TripleInteger> decimalTiShares,
+            List<TripleReal> realTiShares) {
         
         this.binaryTiShares = binaryTiShares;
         this.decimalTiShares = decimalTiShares;
+        this.realTiShares = realTiShares;
         this.oneShare = oneShares;
         this.commonSender = senderQueue;
         this.commonReceiver = receiverQueue;

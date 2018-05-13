@@ -6,12 +6,9 @@
 package Party;
 
 import Communication.Message;
-import Model.DecisionTreeScoring;
-import Model.LinearRegressionEvaluation;
 import Utility.Connection;
 import Model.TestModel;
 import TrustedInitializer.TIShare;
-import TrustedInitializer.Triple;
 import Utility.Constants;
 import Utility.FileIO;
 import Utility.Logging;
@@ -211,7 +208,8 @@ public class Party {
         
         
         TestModel testModel = new TestModel(xShares, yShares, vShares, 
-              tiShares.binaryShares, tiShares.decimalShares,oneShares, senderQueue, receiverQueue, partyId);
+              tiShares.binaryShares, tiShares.decimalShares, tiShares.bigIntShares, 
+                oneShares, senderQueue, receiverQueue, partyId);
         
         testModel.compute();
          
