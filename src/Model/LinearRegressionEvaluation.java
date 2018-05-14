@@ -80,6 +80,7 @@ public class LinearRegressionEvaluation extends Model {
         ExecutorService es = Executors.newFixedThreadPool(Constants.threadCount);
         List<Future<BigInteger>> taskList = new ArrayList<>();
 
+        System.out.println("realTiShares recieved:"+ realTiShares.size());
         int tiStartIndex = 0;
         long startTime = System.currentTimeMillis();
         for (int i = 0; i < testCases; i++) {
@@ -95,7 +96,7 @@ public class LinearRegressionEvaluation extends Model {
 
             Future<BigInteger> DPTask = es.submit(DPModule);
             taskList.add(DPTask);
-            tiStartIndex += tiStartIndex+x.get(i).size();
+            tiStartIndex += x.get(i).size();
         }
 
         es.shutdown();

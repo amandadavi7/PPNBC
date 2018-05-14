@@ -6,6 +6,7 @@
 package Party;
 
 import Communication.Message;
+import Model.LinearRegressionEvaluation;
 import Utility.Connection;
 import Model.TestModel;
 import TrustedInitializer.TIShare;
@@ -190,13 +191,13 @@ public class Party {
         startServer();
         startClient();
 
-        /*
+        
         LinearRegressionEvaluation regressionModel
                 = new LinearRegressionEvaluation(xSharesBigInt, ySharesBigInt,
-                        tiShares.decimalShares, oneShares, senderQueue,
+                        tiShares.bigIntShares, oneShares, senderQueue,
                         receiverQueue, partyId, Zq);
 
-        regressionModel.predictValues();*/
+        regressionModel.predictValues();
 
         /*
         KNN knnModel = new KNN(oneShares, senderQueue, receiverQueue, partyId, 
@@ -204,15 +205,15 @@ public class Party {
                 yShares.get(1), 8);
         
         knnModel.KNN_Model();
-        */
         
         
+        /*
         TestModel testModel = new TestModel(xShares, yShares, vShares, 
               tiShares.binaryShares, tiShares.decimalShares, tiShares.bigIntShares, 
                 oneShares, senderQueue, receiverQueue, partyId);
         
         testModel.compute();
-         
+        */ 
 //DTSCORING:
 //        if(partyId==1) {
 //            
@@ -265,6 +266,8 @@ public class Party {
         }
 
         tiEs.shutdown();
+        
+        System.out.println("Recieved tiShares:"+ tiShares.bigIntShares.size());
 
         try {
             socketTI.close();
