@@ -11,48 +11,66 @@ import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.concurrent.BlockingQueue;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
  * @author keerthanaa
  */
-public class PartyServer implements Runnable{
-    
+public class PartyServer implements Runnable {
+
     ServerSocket socketServer;
     BlockingQueue<Message> senderQueue;
 
     /**
-     * Constructor 
+     * Constructor
+     *
      * @param socketserver
-     * @param queue 
+     * @param queue
      */
-    public PartyServer(ServerSocket socketserver, BlockingQueue<Message> queue){
+    public PartyServer(ServerSocket socketserver, BlockingQueue<Message> queue) {
         this.socketServer = socketserver;
         this.senderQueue = queue;
     }
-    
+
     /**
-     * Continuously running thread that takes entries from senderqueue and 
-     * send them to other parties
+     * Continuously running thread that takes entries from senderqueue and send
+     * them to other parties
      */
     @Override
-    public void run(){
-        
+    public void run() {
+
+        Socket clientSocket = null;
+        ObjectOutputStream oStream = null;
         try {
-            Socket clientSocket = socketServer.accept();
+            clientSocket = socketServer.accept();
             System.out.println("Connected to:" + clientSocket);
-            ObjectOutputStream oStream = new ObjectOutputStream(clientSocket.getOutputStream());
-            
-            while(true){
-                Message msg = senderQueue.take();
+            oStream = new ObjectOutputStream(clientSocket.getOutputStream());
+        } catch (IOException ex) {
+            Logger.getLogger(PartyServer.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
+        while (!(Thread.currentThread().isInterrupted())) {
+            Message msg;
+            try {
+                msg = senderQueue.take();
                 oStream.writeObject(msg);
                 //oStream.flush();
-                
-            }
-            
-        } catch (IOException | InterruptedException ex){
-            ex.printStackTrace();
-        } 
+            } catch (InterruptedException | IOException ex) {
+                break;
+            } 
+        }
         
+        try {
+            oStream.close();
+            clientSocket.close();
+            socketServer.close();
+        } catch (IOException ex) {
+            Logger.getLogger(PartyServer.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        
+        System.out.println("Server closed");
+
     }
 }

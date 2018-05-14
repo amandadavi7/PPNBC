@@ -242,6 +242,7 @@ public class Party {
 //            
 //            DScore.ScoreDecisionTree();
 //        }
+        tearDownSocket();
     }
 
     /**
@@ -298,6 +299,10 @@ public class Party {
         PartyClient partyClient = new PartyClient(receiverQueue, peerIP, peerPort);
         socketFutureList.add(partySocketEs.submit(partyClient));
 
+    }
+
+    private static void tearDownSocket() {
+        partySocketEs.shutdownNow();
     }
 
 }
