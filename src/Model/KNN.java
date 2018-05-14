@@ -283,7 +283,7 @@ public class KNN extends Model {
     public int KNN_Model(){
         //Jaccard Computation
         ExecutorService es = Executors.newFixedThreadPool(Constants.threadCount);
-        
+        startModelHandlers();
         long startTime = System.currentTimeMillis();
         initQueueMap(recQueues, pid);
         
@@ -315,7 +315,7 @@ public class KNN extends Model {
         
         System.out.println("jaccarddistances:" + jaccardDistances);
         System.out.println("Time taken:" + elapsedTime + "ms");
-        
+        teardownModelHandlers();
         return 0;
     }
     

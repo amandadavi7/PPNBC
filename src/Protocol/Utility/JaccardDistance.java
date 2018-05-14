@@ -11,6 +11,7 @@ import Protocol.OR_XOR;
 import TrustedInitializer.Triple;
 import Utility.Constants;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
@@ -110,7 +111,7 @@ public class JaccardDistance extends CompositeProtocol implements Callable<List<
                         Integer[] orOutput = orTask.get();
                         Integer[] xorOutput = xorTask.get();
                         
-
+                        
                         //row stores or, xor outputs for a training example
                         List<Integer> row = new ArrayList<>();
                         row.add(getScoreFromList(orOutput));

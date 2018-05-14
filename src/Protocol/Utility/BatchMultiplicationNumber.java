@@ -37,10 +37,12 @@ public class BatchMultiplicationNumber extends BatchMultiplication
      * @param tiShares
      * @param senderQueue
      * @param receiverQueue
+     * @param protocolIdQueue
      * @param clientId
      * @param prime
      * @param protocolID
      * @param oneShare
+     * @param parentID
      */
     public BatchMultiplicationNumber(List<Integer> x, List<Integer> y, 
             List<Triple> tiShares, 
@@ -113,7 +115,7 @@ public class BatchMultiplicationNumber extends BatchMultiplication
         
         try {
             senderQueue.put(senderMessage);
-            //System.out.println("sending message for protocol id:"+ protocolID);
+            //System.out.println("sending message for protocol id:"+ protocolIdQueue);
         } catch (InterruptedException ex) {
             ex.printStackTrace();
             Logger.getLogger(Multiplication.class.getName()).log(Level.SEVERE, null, ex);

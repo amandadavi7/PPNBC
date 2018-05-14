@@ -31,7 +31,7 @@ public class Constants {
     public static final String localE = "localE";
     public static final String product = "product";
     
-    public static final int threadCount = 5; 
+    public static final int threadCount = 10; 
     public static final int batchSize = 10;
     
     public static final int decimal_precision = 64;
