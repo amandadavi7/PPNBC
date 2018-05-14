@@ -7,7 +7,7 @@ package Protocol;
 
 import Communication.Message;
 import Communication.ReceiverQueueHandler;
-import Communication.SenderQueueHandler;
+import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -21,50 +21,42 @@ import java.util.concurrent.LinkedBlockingQueue;
 public class CompositeProtocol extends Protocol {
 
     protected ConcurrentHashMap<Integer, BlockingQueue<Message>> recQueues;
-    protected ConcurrentHashMap<Integer, BlockingQueue<Message>> sendQueues;
-
     ExecutorService queueHandlers;
-    SenderQueueHandler senderThread;
     ReceiverQueueHandler receiverThread;
 
-    
     /**
      * 
      * @param protocolId
      * @param senderQueue
      * @param receiverQueue
-     * @param clientId
-     * @param prime 
+     * @param protocolIdQueue
+     * @param clientId 
      * @param oneShare 
      */
     public CompositeProtocol(int protocolId, BlockingQueue<Message> senderQueue,
-            BlockingQueue<Message> receiverQueue, int clientId, int prime, int oneShare) {
+            BlockingQueue<Message> receiverQueue, Queue<Integer> protocolIdQueue,
+            int clientId, int oneShare) {
         
-        super(protocolId, senderQueue, receiverQueue, clientId, prime, oneShare);
+        super(protocolId, senderQueue, receiverQueue, protocolIdQueue, clientId, 
+                oneShare);
         
         recQueues = new ConcurrentHashMap<>();
-        sendQueues = new ConcurrentHashMap<>();
-
-        queueHandlers = Executors.newFixedThreadPool(2);
-        senderThread = new SenderQueueHandler(protocolId, super.senderQueue, sendQueues);
+        queueHandlers = Executors.newSingleThreadExecutor();
         receiverThread = new ReceiverQueueHandler(protocolId, super.receiverQueue, recQueues);
 
     }
     
     public void initQueueMap(
             ConcurrentHashMap<Integer, BlockingQueue<Message>> recQueues,
-            ConcurrentHashMap<Integer, BlockingQueue<Message>> sendQueues,
             int key) {
 
         recQueues.putIfAbsent(key, new LinkedBlockingQueue<>());
-        sendQueues.putIfAbsent(key, new LinkedBlockingQueue<>());
     }
 
     /**
      * Start the local threads for queue handlers
      */
     public void startHandlers() {
-        queueHandlers.submit(senderThread);
         queueHandlers.submit(receiverThread);
     }
     
@@ -72,7 +64,6 @@ public class CompositeProtocol extends Protocol {
      * Teardown all local threads
      */
     public void tearDownHandlers() {
-        senderThread.setProtocolStatus();
         receiverThread.setProtocolStatus();
         queueHandlers.shutdown();
     }

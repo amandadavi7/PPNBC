@@ -5,12 +5,14 @@
  */
 package Protocol;
 
-import Protocol.Utility.BatchMultiplication;
 import Communication.Message;
+import Protocol.Utility.BatchMultiplicationNumber;
 import TrustedInitializer.Triple;
 import Utility.Constants;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -28,16 +30,34 @@ public class OR_XOR extends CompositeProtocol implements Callable<Integer[]> {
     int constantMultiplier;
     List<Triple> decimalTiShares;
     int bitLength;
+    int prime;
     
+    /**
+     * constantMultiplier = 1 for OR
+     * constantMultiplier = 2 for XOR
+     * 
+     * @param x
+     * @param y
+     * @param tiShares
+     * @param oneShare
+     * @param constantMultiplier
+     * @param senderQueue
+     * @param receiverQueue
+     * @param protocolIdQueue
+     * @param clientId
+     * @param prime
+     * @param protocolID 
+     */
     public OR_XOR(List<Integer> x, List<Integer> y, List<Triple> tiShares,
             int oneShare, int constantMultiplier, BlockingQueue<Message> senderQueue,
-            BlockingQueue<Message> receiverQueue, int clientId, int prime,
+            BlockingQueue<Message> receiverQueue, Queue<Integer> protocolIdQueue, int clientId, int prime,
             int protocolID) {
         
-        super(protocolID, senderQueue, receiverQueue, clientId, prime, oneShare);
+        super(protocolID, senderQueue, receiverQueue, protocolIdQueue, clientId, oneShare);
         
         this.xShares = x;
         this.yShares = y;
+        this.prime = prime;
         bitLength = xShares.size(); 
         this.constantMultiplier = constantMultiplier;
         this.decimalTiShares = tiShares;
@@ -57,16 +77,16 @@ public class OR_XOR extends CompositeProtocol implements Callable<Integer[]> {
 
         do {
             System.out.println("Protocol " + protocolId + " batch " + startpid);
-            initQueueMap(recQueues, sendQueues, startpid);
+            initQueueMap(recQueues, startpid);
 
             int toIndex = Math.min(i + Constants.batchSize, bitLength);
-            
-       
-            BatchMultiplication batchMultiplication = new BatchMultiplication(
+
+
+            BatchMultiplicationNumber batchMultiplication = new BatchMultiplicationNumber(
                     xShares.subList(i, toIndex),
                     yShares.subList(i, toIndex),
                     decimalTiShares.subList(i, toIndex),
-                    sendQueues.get(startpid), recQueues.get(startpid),
+                    senderQueue, recQueues.get(startpid), new LinkedList<>(protocolIdQueue),
                     clientID, prime, startpid, oneShare, protocolId);
 
             Future<Integer[]> multiplicationTask = es.submit(batchMultiplication);

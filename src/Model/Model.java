@@ -7,9 +7,10 @@ package Model;
 
 import Communication.Message;
 import Communication.ReceiverQueueHandler;
-import Communication.SenderQueueHandler;
 import TrustedInitializer.Triple;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -23,10 +24,9 @@ import java.util.concurrent.LinkedBlockingQueue;
 public class Model {
     
     ConcurrentHashMap<Integer, BlockingQueue<Message>> recQueues;
-    ConcurrentHashMap<Integer, BlockingQueue<Message>> sendQueues;
-
+    protected Queue<Integer> protocolIdQueue;
+    
     ExecutorService queueHandlers;
-    SenderQueueHandler senderThread;
     ReceiverQueueHandler receiverThread;
 
     BlockingQueue<Message> commonSender;
@@ -36,8 +36,9 @@ public class Model {
     List<Triple> binaryTiShares,decimalTiShares;
     int oneShare;
     
-    public Model(BlockingQueue<Message> senderQueue, BlockingQueue<Message> receiverQueue, 
-            int clientId, int oneShares, List<Triple> binaryTiShares, List<Triple> decimalTiShares) {
+    public Model(BlockingQueue<Message> senderQueue, 
+            BlockingQueue<Message> receiverQueue, int clientId, int oneShares, 
+            List<Triple> binaryTiShares, List<Triple> decimalTiShares) {
         
         this.binaryTiShares = binaryTiShares;
         this.decimalTiShares = decimalTiShares;
@@ -47,33 +48,26 @@ public class Model {
         this.clientId = clientId;
 
         recQueues = new ConcurrentHashMap<>(50, 0.9f, 1);
-        sendQueues = new ConcurrentHashMap<>(50, 0.9f, 1);
-
-        queueHandlers = Executors.newFixedThreadPool(2);
-        senderThread = new SenderQueueHandler(1, commonSender, sendQueues);
+        this.protocolIdQueue = new LinkedList<>();
+        this.protocolIdQueue.add(1);
+        
+        queueHandlers = Executors.newSingleThreadExecutor();
         receiverThread = new ReceiverQueueHandler(1, commonReceiver, recQueues);
-        queueHandlers.submit(senderThread);
-        queueHandlers.submit(receiverThread);
     }
     
     public void startModelHandlers(){
-        queueHandlers.submit(senderThread);
         queueHandlers.submit(receiverThread);
     }
     
     public void teardownModelHandlers(){
-        senderThread.setProtocolStatus();
         receiverThread.setProtocolStatus();
         queueHandlers.shutdown();
     }
     
     public void initQueueMap(
             ConcurrentHashMap<Integer, BlockingQueue<Message>> recQueues,
-            ConcurrentHashMap<Integer, BlockingQueue<Message>> sendQueues,
             int key) {
-
         recQueues.putIfAbsent(key, new LinkedBlockingQueue<>());
-        sendQueues.putIfAbsent(key, new LinkedBlockingQueue<>());
     }
     
 }

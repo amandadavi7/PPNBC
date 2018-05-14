@@ -9,8 +9,8 @@ import Communication.Message;
 import Protocol.ArgMax;
 import Protocol.BitDecomposition;
 import Protocol.Comparison;
-import Protocol.DotProduct;
 import Protocol.Utility.JaccardDistance;
+import Protocol.DotProductNumber;
 import Protocol.Multiplication;
 import Protocol.OIS;
 import Protocol.OR_XOR;
@@ -24,70 +24,68 @@ import java.util.logging.*;
  *
  * @author anisha
  */
-public class TestModel extends Model{
+public class TestModel extends Model {
 
     List<List<Integer>> x;
     List<List<Integer>> y;
     List<List<List<Integer>>> v;
-    
+
     public TestModel(List<List<Integer>> x, List<List<Integer>> y,
             List<List<List<Integer>>> v, List<Triple> binaryTriples, List<Triple> decimalTriples,
             int oneShares, BlockingQueue<Message> senderQueue,
             BlockingQueue<Message> receiverQueue, int clientId) {
-        
+
         super(senderQueue, receiverQueue, clientId, oneShares, binaryTriples, decimalTriples);
-        
+
         this.x = x;
         this.y = y;
         this.v = v;
-        
+
     }
-    
-     public void callBitDecomposition(){
-        
+
+    public void callBitDecomposition() {
+
         ExecutorService es = Executors.newFixedThreadPool(1);
-        initQueueMap(recQueues, sendQueues, 1);
+        initQueueMap(recQueues, 1);
         //TODO: change this to just take integers instead of wasting memory on List<Integer> 
 //        BitDecomposition bitTest = new BitDecomposition(x.get(0).get(0), y.get(0).get(0),
-//                binaryTiShares, oneShares, Constants.bitLength, sendQueues.get(1),
+//                binaryTiShares, oneShare, Constants.bitLength, sendQueues.get(1),
 //                recQueues.get(1), clientId, Constants.binaryPrime, 1);
-        
-        BitDecomposition bitTest = new BitDecomposition(2, binaryTiShares, 
-                oneShare, Constants.bitLength, sendQueues.get(1),
-                recQueues.get(1), clientId, Constants.binaryPrime, 1);
-        
-        
+
+        BitDecomposition bitTest = new BitDecomposition(2, binaryTiShares,
+                oneShare, Constants.bitLength, commonSender,
+                recQueues.get(1), new LinkedList<>(protocolIdQueue), clientId, Constants.binaryPrime, 1);
+
         Future<List<Integer>> bitdecompositionTask = es.submit(bitTest);
-        
+
         try {
             List<Integer> result = bitdecompositionTask.get();
             System.out.println("result of bitDecomposition: " + result);
-        } catch (InterruptedException ex) {
-            Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (ExecutionException ex) {
-
+        } catch (InterruptedException | ExecutionException ex) {
             Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
         }
+
+        teardownModelHandlers();
     }
-    
+
     public void callArgMax() {
-        
+
         ExecutorService es = Executors.newFixedThreadPool(100);
         List<Future<Integer[]>> taskList = new ArrayList<>();
         long startTime = System.currentTimeMillis();
-        
+
         int totalCases = v.size();
+        
         // totalcases number of protocols are submitted to the executorservice
         for (int i = 0; i < totalCases; i++) {
 
-            recQueues.putIfAbsent(i, new LinkedBlockingQueue<>());
-            sendQueues.putIfAbsent(i, new LinkedBlockingQueue<>());
+            initQueueMap(recQueues, i);
 
-            ArgMax argmaxModule = new ArgMax(v.get(i), binaryTiShares, oneShare, sendQueues.get(i), 
-                recQueues.get(i), clientId, Constants.binaryPrime, i);
-            
+            ArgMax argmaxModule = new ArgMax(v.get(i), binaryTiShares, oneShare, commonSender,
+                    recQueues.get(i), new LinkedList<>(protocolIdQueue), clientId, Constants.binaryPrime, i);
+
             System.out.println("submitted " + i + " argmax");
-            
+
             Future<Integer[]> argmaxTask = es.submit(argmaxModule);
             taskList.add(argmaxTask);
 
@@ -100,114 +98,99 @@ public class TestModel extends Model{
             try {
                 Integer[] result = dWorkerResponse.get();
                 System.out.println("result:" + Arrays.toString(result) + ", #:" + i);
-            } catch (InterruptedException ex) {
-                Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
-            } catch (ExecutionException ex) {
+            } catch (InterruptedException | ExecutionException ex) {
                 Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
-        
-        receiverThread.setProtocolStatus();
-        senderThread.setProtocolStatus();
-        queueHandlers.shutdown();
+
+        teardownModelHandlers();
 
         long stopTime = System.currentTimeMillis();
         long elapsedTime = stopTime - startTime;
         System.out.println("Avg time duration:" + elapsedTime);
-        
+
     }
-    
-    public void callOR_XOR(){
-        
-        System.out.println("calling or_xor with x="+x+" y="+y);
-        
+
+    public void callOR_XOR() {
+
+        System.out.println("calling or_xor with x=" + x + " y=" + y);
+
         ExecutorService es = Executors.newFixedThreadPool(Constants.threadCount);
         List<Future<Integer[]>> taskList = new ArrayList<>();
-        
+
         long startTime = System.currentTimeMillis();
         int totalCases = x.size();
-        
-        for(int i=0;i<totalCases;i++) {
-            
-            initQueueMap(recQueues, sendQueues, i);
-            OR_XOR or_xor = new OR_XOR(x.get(i), y.get(i), decimalTiShares, oneShare, 1, sendQueues.get(i), 
-                    recQueues.get(i), clientId, Constants.prime, i);
+
+        for (int i = 0; i < totalCases; i++) {
+
+            initQueueMap(recQueues, i);
+            OR_XOR or_xor = new OR_XOR(x.get(i), y.get(i), decimalTiShares, oneShare, 1, commonSender,
+                    recQueues.get(i), new LinkedList<>(protocolIdQueue), clientId, Constants.prime, i);
 
             Future<Integer[]> task = es.submit(or_xor);
             taskList.add(task);
         }
-        
+
         es.shutdown();
 
-        for(int i=0;i<totalCases;i++) {
+        for (int i = 0; i < totalCases; i++) {
             try {
                 Future<Integer[]> task = taskList.get(i);
                 Integer[] result = task.get();
-                System.out.println("result: "+i+": " + Arrays.toString(result));
-            } catch (InterruptedException ex) {
-                Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
-            } catch (ExecutionException ex) {
+                System.out.println("result: " + i + ": " + Arrays.toString(result));
+            } catch (InterruptedException | ExecutionException ex) {
                 Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
-        
-        receiverThread.setProtocolStatus();
-        senderThread.setProtocolStatus();
-        queueHandlers.shutdown();
+
+        teardownModelHandlers();
 
         long stopTime = System.currentTimeMillis();
         long elapsedTime = stopTime - startTime;
         System.out.println("Avg time duration:" + elapsedTime);
-        
+
     }
-    
-    public void callOIS(){
-        
-        System.out.println("calling OIS with v"+v);
-        
+
+    public void callOIS() {
+
+        System.out.println("calling OIS with v" + v);
+
         ExecutorService es = Executors.newSingleThreadExecutor();
-        
+
         long startTime = System.currentTimeMillis();
-        
-        recQueues.putIfAbsent(0, new LinkedBlockingQueue<>());
-        sendQueues.putIfAbsent(0, new LinkedBlockingQueue<>());
+
+        initQueueMap(recQueues, clientId);
 
         OIS ois;
-        
-        if(v.isEmpty()){
+
+        if (v.isEmpty()) {
             System.out.println("v is null");
-            ois = new OIS(null,binaryTiShares, oneShare, sendQueues.get(0), recQueues.get(0), clientId,
-            Constants.binaryPrime, 0, 4, 1, 3);
+            ois = new OIS(null, binaryTiShares, oneShare, commonSender, recQueues.get(0), new LinkedList<>(protocolIdQueue), clientId,
+                    Constants.binaryPrime, 0, 4, 1, 3);
         } else {
             System.out.println("v is not null");
-            ois = new OIS(v.get(0),binaryTiShares, oneShare, sendQueues.get(0), recQueues.get(0), clientId,
-            Constants.binaryPrime, 0, 4, -1, 3);
+            ois = new OIS(v.get(0), binaryTiShares, oneShare, commonSender, recQueues.get(0), new LinkedList<>(protocolIdQueue), clientId,
+                    Constants.binaryPrime, 0, 4, -1, 3);
         }
-           
-            
+
         Future<Integer[]> task = es.submit(ois);
-        
+
         es.shutdown();
 
         try {
             Integer[] result = task.get();
             System.out.println("result:" + Arrays.toString(result));
-        } catch (InterruptedException ex) {
-            Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (ExecutionException ex) {
+        } catch (InterruptedException | ExecutionException ex) {
             Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
         }
-    
-        
-        receiverThread.setProtocolStatus();
-        senderThread.setProtocolStatus();
-        queueHandlers.shutdown();
+
+        teardownModelHandlers();
 
         long stopTime = System.currentTimeMillis();
         long elapsedTime = stopTime - startTime;
         System.out.println("Avg time duration:" + elapsedTime);
     }
-    
+
     public void callProtocol(int protocolType) {
         ExecutorService es = Executors.newFixedThreadPool(100);
         List<Future<Integer>> taskList = new ArrayList<>();
@@ -215,18 +198,19 @@ public class TestModel extends Model{
         long startTime = System.currentTimeMillis();
         int totalCases = x.size();
         // totalcases number of protocols are submitted to the executorservice
-        switch(protocolType) {
+        switch (protocolType) {
             case 1:
                 for (int i = 0; i < totalCases; i++) {
 
-                    recQueues.putIfAbsent(i, new LinkedBlockingQueue<>());
-                    sendQueues.putIfAbsent(i, new LinkedBlockingQueue<>());
-                    
-                    Multiplication multiplicationModule = new Multiplication(x.get(i).get(0),y.get(i).get(0),decimalTiShares.get(i)
-                    ,sendQueues.get(i),recQueues.get(i),clientId,Constants.prime,i,oneShare,0);
-                
+                    initQueueMap(recQueues, i);
+
+                    Multiplication multiplicationModule = new Multiplication(
+                            x.get(i).get(0), y.get(i).get(0), 
+                            decimalTiShares.get(i), commonSender, recQueues.get(i), 
+                            new LinkedList<>(protocolIdQueue), clientId, Constants.prime, i, oneShare, 0);
+
                     System.out.println("Submitted " + i + " multiplication");
-                
+
                     Future<Integer> multiplicationTask = es.submit(multiplicationModule);
                     taskList.add(multiplicationTask);
                 }
@@ -234,15 +218,14 @@ public class TestModel extends Model{
             case 2:
                 for (int i = 0; i < totalCases; i++) {
 
-                    recQueues.putIfAbsent(i, new LinkedBlockingQueue<>());
-                    sendQueues.putIfAbsent(i, new LinkedBlockingQueue<>());
-                    
-                    DotProduct DPModule = new DotProduct(x.get(i),
-                    y.get(i), decimalTiShares, sendQueues.get(i), recQueues.get(i),
-                    clientId, Constants.prime, i, oneShare);  
-                
+                    initQueueMap(recQueues, i);
+
+                    DotProductNumber DPModule = new DotProductNumber(x.get(i),
+                            y.get(i), decimalTiShares, commonSender, recQueues.get(i),
+                            new LinkedList<>(protocolIdQueue),clientId, Constants.prime, i, oneShare);
+
                     System.out.println("Submitted " + i + " dotproduct");
-                    
+
                     Future<Integer> DPTask = es.submit(DPModule);
                     taskList.add(DPTask);
                 }
@@ -250,21 +233,20 @@ public class TestModel extends Model{
             case 3:
                 for (int i = 0; i < totalCases; i++) {
 
-                    recQueues.putIfAbsent(i, new LinkedBlockingQueue<>());
-                    sendQueues.putIfAbsent(i, new LinkedBlockingQueue<>());
-                    
-                    Comparison comparisonModule = new Comparison(x.get(i), y.get(i), 
-                    binaryTiShares, oneShare, sendQueues.get(i),
-                    recQueues.get(i), clientId, Constants.binaryPrime, i); 
-                
+                    initQueueMap(recQueues, i);
+
+                    Comparison comparisonModule = new Comparison(x.get(i), y.get(i),
+                            binaryTiShares, oneShare, commonSender,
+                            recQueues.get(i), new LinkedList<>(protocolIdQueue), clientId, Constants.binaryPrime, i);
+
                     System.out.println("submitted " + i + " comparison");
-                    
+
                     Future<Integer> comparisonTask = es.submit(comparisonModule);
                     taskList.add(comparisonTask);
                 }
                 break;
         }
-        
+
         es.shutdown();
 
         for (int i = 0; i < totalCases; i++) {
@@ -277,9 +259,7 @@ public class TestModel extends Model{
             }
         }
 
-        receiverThread.setProtocolStatus();
-        senderThread.setProtocolStatus();
-        queueHandlers.shutdown();
+        teardownModelHandlers();
 
         long stopTime = System.currentTimeMillis();
         long elapsedTime = stopTime - startTime;
@@ -288,15 +268,17 @@ public class TestModel extends Model{
     
     public void callJaccard(){
         ExecutorService es = Executors.newFixedThreadPool(1);
-        initQueueMap(recQueues, sendQueues, 0);
+        initQueueMap(recQueues, 0);
        
 //        BitDecomposition bitTest = new BitDecomposition(x.get(0).get(0), y.get(0).get(0),
 //                binaryTiShares, oneShares, Constants.bitLength, sendQueues.get(1),
 //                recQueues.get(1), clientId, Constants.binaryPrime, 1);
 
+
           JaccardDistance jdistance = new JaccardDistance(x, y.get(0), oneShare, 
-                                      decimalTiShares, sendQueues.get(0), 
-                                      recQueues.get(0), clientId, Constants.prime, 0);
+                                    decimalTiShares, commonSender, 
+                                    recQueues.get(0), clientId, Constants.prime, 0, 
+                                    new LinkedList<>(protocolIdQueue));
         
         Future<List<List<Integer>>> jaccardTask = es.submit(jdistance);
         es.shutdown();
@@ -312,12 +294,11 @@ public class TestModel extends Model{
         }
         
         receiverThread.setProtocolStatus();
-        senderThread.setProtocolStatus();
         queueHandlers.shutdown();
         
     }
     public void compute() {
-        
+
         startModelHandlers();
         
         //callArgMax();
@@ -329,7 +310,7 @@ public class TestModel extends Model{
         //callProtocol(3);
         
         teardownModelHandlers();
-        
+
     }
-         
+
 }

@@ -8,6 +8,7 @@ package Protocol;
 
 import Protocol.Utility.BatchMultiplication;
 import Communication.Message;
+import Protocol.Utility.BatchMultiplicationNumber;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
@@ -17,6 +18,8 @@ import TrustedInitializer.Triple;
 import Utility.Constants;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.LinkedList;
+import java.util.Queue;
 
 /**
  *
@@ -35,6 +38,7 @@ public class BitDecomposition extends CompositeProtocol implements Callable<List
     /*parentProtocolId not used for testing*/
     //int parentProtocolId;   
     int bitLength;
+    int prime;
 
     /**
      * Constructor
@@ -51,13 +55,15 @@ public class BitDecomposition extends CompositeProtocol implements Callable<List
      */
     public BitDecomposition(Integer input, List<Triple> tiShares,
             int oneShare, int bitLength, BlockingQueue<Message> senderQueue,
-            BlockingQueue<Message> receiverQueue, int clientId, int prime,
+            BlockingQueue<Message> receiverQueue, Queue<Integer> protocolIdQueue,
+            int clientId, int prime,
             int protocolID) {
 
-        super(protocolID, senderQueue, receiverQueue, clientId, prime, oneShare);
+        super(protocolID, senderQueue, receiverQueue, protocolIdQueue, clientId, oneShare);
 
         this.input = input;
         this.bitLength = bitLength;
+        this.prime = prime;
 
 
         // convert decimal to binary notation: TODO - generalize to n parties with a for loop
@@ -168,13 +174,14 @@ public class BitDecomposition extends CompositeProtocol implements Callable<List
         ExecutorService es = Executors.newSingleThreadExecutor();
 
         //compute local shares of d and e and add to the message queue
-        initQueueMap(recQueues, sendQueues, subprotocolId + protocol_id);
+        initQueueMap(recQueues, subprotocolId + protocol_id);
         
         Multiplication multiplicationModule = new Multiplication(first_bit,
                 second_bit,
                 tiShares.get(protocol_id + subprotocolId),
-                sendQueues.get(protocol_id + subprotocolId), 
-                recQueues.get(protocol_id + subprotocolId), clientID,
+                senderQueue, 
+                recQueues.get(protocol_id + subprotocolId), new LinkedList<>(protocolIdQueue),
+                clientID,
                 prime, subprotocolId + protocol_id, oneShare, 1);
 
         // Assign the multiplication task to ExecutorService object.
@@ -208,17 +215,19 @@ public class BitDecomposition extends CompositeProtocol implements Callable<List
 
         // **** The protocols for computation of d are assigned id 1-bitLength-1 ***
         do {
+
             //System.out.println("Protocol " + protocolId + " batch " + startpid);
-            initQueueMap(recQueues, sendQueues, startpid);
+            initQueueMap(recQueues, startpid);
+
 
             int toIndex = (i + Constants.batchSize < bitLength)
                     ? (i + Constants.batchSize) : bitLength;
 
-            BatchMultiplication batchMultiplication = new BatchMultiplication(
+            BatchMultiplicationNumber batchMultiplication = new BatchMultiplicationNumber(
                     inputShares.get(0).subList(i, toIndex),
                     inputShares.get(1).subList(i, toIndex),
                     tiShares.subList(i, toIndex),
-                    sendQueues.get(startpid), recQueues.get(startpid),
+                    senderQueue, recQueues.get(startpid), new LinkedList<>(protocolIdQueue),
                     clientID, prime, startpid, oneShare, protocolId);
 
             Future<Integer[]> multiplicationTask = es.submit(batchMultiplication);

@@ -6,18 +6,19 @@
 package Communication;
 
 import java.io.Serializable;
-import java.util.Stack;
+import java.util.Queue;
 
 /**
- * The interface encapsulates the DataMessage and the ProtocolMessage 
- * from the communication layers
+ * The class wraps the data with headers for communication between parties
+ *
  * @author anisha
  */
 public class Message implements Serializable {
+
     String variableName;
     Object value;
     int clientId;
-    Stack<Integer> protocolIds;
+    Queue<Integer> protocolIds;
 
     /**
      * Constructor
@@ -25,15 +26,15 @@ public class Message implements Serializable {
      * @param name
      * @param value
      * @param clientId
-     * @param protocolId
+     * @param protocolIdQueue
      */
     //TODO - variableName - obsolete, clientId??
-    public Message(String name, Object value, int clientId, int protocolId) {
+    public Message(String name, Object value, int clientId,
+            Queue<Integer> protocolIdQueue) {
         variableName = name;
         this.value = value;
         this.clientId = clientId;
-        protocolIds = new Stack<>();
-        protocolIds.push(protocolId);
+        protocolIds = protocolIdQueue;
     }
 
     /**
@@ -44,32 +45,32 @@ public class Message implements Serializable {
     public String getName() {
         return variableName;
     }
-    
+
     /**
      * Get protocol ID
-     * 
-     * @return 
+     *
+     * @return
      */
-    public int getProtocolID(){
-        return protocolIds.peek();  
+    public int getProtocolID() {
+        return protocolIds.peek();
     }
-    
+
     /**
      * remove the top protocol ID and return
-     * 
-     * @return 
+     *
+     * @return
      */
-    public int popProtocolID(){
-        return protocolIds.pop();
+    public int pollProtocolID() {
+        return protocolIds.poll();
     }
-    
+
     /**
      * Add protocol ID to the stack
-     * 
-     * @param pid 
+     *
+     * @param pid
      */
-    public void addProtocolID(int pid){
-        protocolIds.push(pid);
+    public void addProtocolID(int pid) {
+        protocolIds.add(pid);
     }
 
     /**
@@ -80,7 +81,6 @@ public class Message implements Serializable {
     public Object getValue() {
         return value;
     }
-
 
     /**
      * Get client id
@@ -98,4 +98,5 @@ public class Message implements Serializable {
         System.out.println("Message: Name-" + variableName + ", Value-" + value
                 + ", clientId-" + clientId);
     }
+
 }

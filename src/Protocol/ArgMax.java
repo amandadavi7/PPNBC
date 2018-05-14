@@ -11,7 +11,9 @@ import TrustedInitializer.Triple;
 import Utility.Constants;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -27,7 +29,7 @@ public class ArgMax extends CompositeProtocol implements Callable<Integer[]> {
 
     List<List<Integer>> vShares;
     List<Triple> tiShares;    
-    int bitLength, numberCount;
+    int bitLength, numberCount, prime;
 
     HashMap<Integer, ArrayList<Integer>> wIntermediate;
     Integer[] wOutput;
@@ -41,19 +43,22 @@ public class ArgMax extends CompositeProtocol implements Callable<Integer[]> {
      * @param oneShare
      * @param senderQueue
      * @param receiverQueue
+     * @param protocolIdQueue
      * @param clientId
      * @param prime
      * @param protocolID
      */
     public ArgMax(List<List<Integer>> vShares, List<Triple> tiShares,
             int oneShare, BlockingQueue<Message> senderQueue,
-            BlockingQueue<Message> receiverQueue, int clientId, int prime,
+            BlockingQueue<Message> receiverQueue, Queue<Integer> protocolIdQueue,
+            int clientId, int prime,
             int protocolID) {
         
-        super(protocolID, senderQueue, receiverQueue, clientId, prime, oneShare);
+        super(protocolID, senderQueue, receiverQueue, protocolIdQueue, clientId, oneShare);
         
         this.vShares = vShares;
         this.tiShares = tiShares;
+        this.prime = prime;
 
         numberCount = vShares.size();
         bitLength = 0;
@@ -105,20 +110,21 @@ public class ArgMax extends CompositeProtocol implements Callable<Integer[]> {
         ExecutorService es = Executors.newFixedThreadPool(Constants.threadCount);
         List<Future<Integer>> taskList = new ArrayList<>();
         int tiIndex = 0;
-        int tiCount = 3 * bitLength - 3;
+        //int tiCount = 3 * bitLength - 3;
+        int tiCount = 2*bitLength + bitLength*(bitLength-1)/2;
         for (int i = 0; i < numberCount; i++) {
             for (int j = 0; j < numberCount; j++) {
                 if (i != j) {
                     int key = (i * numberCount) + j;
                     
-                    initQueueMap(recQueues, sendQueues, key);
+                    initQueueMap(recQueues, key);
                     
                     //Extract the required number of tiShares and pass it to comparison protocol
-                    //each comparison needs 3(bitlength)-3 shares
+                    //each comparison needs tiCount shares
                     List<Triple> tiComparsion = tiShares.subList(tiIndex, tiIndex + tiCount);
                     tiIndex += tiCount;
                     Comparison comparisonModule = new Comparison(vShares.get(i), vShares.get(j), tiComparsion,
-                            oneShare, sendQueues.get(key), recQueues.get(key), clientID, prime, key);
+                            oneShare, senderQueue, recQueues.get(key), new LinkedList<>(protocolIdQueue),clientID, prime, key);
                     Future<Integer> comparisonTask = es.submit(comparisonModule);
                     taskList.add(comparisonTask);
                 }
@@ -151,22 +157,20 @@ public class ArgMax extends CompositeProtocol implements Callable<Integer[]> {
         ExecutorService es = Executors.newFixedThreadPool(Constants.threadCount);
         List<Future<Integer>> taskList = new ArrayList<>();
 
-        //Each row has n-2 sequential multiplications to do for n-1 numbers
+        //Each row has n-2 multiplications to do for n-1 numbers
         int tiCount = numberCount - 2;
-        int startProtocolID = numberCount * numberCount + 1;
-        int IDSizePerRow = (int) Math.ceil(((double)numberCount-1)/10.0);
         
         for (int i = 0; i < numberCount; i++) {
             
             List<Triple> tishares = tiShares.subList(tiIndex, tiIndex + tiCount);
             tiIndex += tiCount;
             
-            ParallelMultiplication rowMultiplication = new ParallelMultiplication(
-                    wIntermediate.get(i), tishares, clientID, prime, protocolId, 
-                    startProtocolID, oneShare, sendQueues, recQueues, 
-                    senderQueue, receiverQueue);
+            initQueueMap(recQueues, i);
             
-            startProtocolID+=IDSizePerRow;
+            ParallelMultiplication rowMultiplication = new ParallelMultiplication(
+                    wIntermediate.get(i), tishares, clientID, prime, i, 
+                    oneShare, senderQueue, recQueues.get(i), 
+                    new LinkedList<>(protocolIdQueue));
             
             Future<Integer> wRowProduct = es.submit(rowMultiplication);
             taskList.add(wRowProduct);

@@ -51,6 +51,7 @@ public class PeerTICommunication implements Callable<TIShare> {
             Logger.getLogger(PeerTICommunication.class.getName()).log(Level.SEVERE, null, ex);
         }
 
+        /*
         System.out.println("tiSharesReceived:");
         for(Triple t: tiShares.decimalShares){
             System.out.println("u : " + t.u + ",v : " + t.v + ",w : " + t.w);
@@ -58,6 +59,7 @@ public class PeerTICommunication implements Callable<TIShare> {
         for(Triple t: tiShares.binaryShares){
             System.out.println("u : " + t.u + ",v : " + t.v + ",w : " + t.w);
         }
+*/
         
         return tiShares;
     }
