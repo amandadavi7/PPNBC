@@ -10,6 +10,7 @@ import Protocol.MultiplicationInteger;
 import TrustedInitializer.TripleByte;
 import Utility.Constants;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
@@ -76,18 +77,26 @@ public class BatchMultiplicationByte extends BatchMultiplication
         initProtocol();
         //System.out.println("Waiting for receiver. parentID=" + parentID + " mult ID=" + protocolID);
         Message receivedMessage = null;
+        List<Integer> d = new ArrayList<>(Collections.nCopies(batchSize, 0));
+        List<Integer> e = new ArrayList<>(Collections.nCopies(batchSize, 0));
         List<List<Integer>> diffList = null;
-        try {
-            receivedMessage = receiverQueue.take();
-            diffList = (List<List<Integer>>) receivedMessage.getValue();
-        } catch (InterruptedException ex) {
-            ex.printStackTrace();
+        for(int i=0;i<Constants.clientCount;i++) {
+            try {
+                receivedMessage = receiverQueue.take();
+                diffList = (List<List<Integer>>) receivedMessage.getValue();
+                for(int j=0;j<batchSize;j++) {
+                    d.set(j, d.get(j)+diffList.get(j).get(0));
+                    e.set(j, e.get(j)+diffList.get(j).get(1));
+                }
+            } catch (InterruptedException ex) {
+                ex.printStackTrace();
+            }
         }
         
         for(int i=0;i<batchSize;i++){
-            int d = Math.floorMod((x.get(i) - tiShares.get(i).u) + diffList.get(i).get(0), prime);
-            int e = Math.floorMod((y.get(i) - tiShares.get(i).v) + diffList.get(i).get(1), prime);
-            int product = tiShares.get(i).w + (d * tiShares.get(i).v) + (tiShares.get(i).u * e) + (d * e * oneShare);
+            int D = Math.floorMod(x.get(i) - tiShares.get(i).u + d.get(i), prime);
+            int E = Math.floorMod(y.get(i) - tiShares.get(i).v + e.get(i), prime);
+            int product = tiShares.get(i).w + (D * tiShares.get(i).v) + (tiShares.get(i).u * E) + (D * E * oneShare);
             product = Math.floorMod(product, prime);
             products[i] = product;
         }

@@ -45,8 +45,8 @@ public class Party {
     private static int port;
     private static String tiIP;
     private static int tiPort;
-    private static String peerIP;
-    private static int peerPort;
+    private static String baIP;
+    private static int baPort;
 
     private static List<List<Integer>> xShares;
     private static List<List<Integer>> yShares;
@@ -95,9 +95,9 @@ public class Party {
                 case "party_port":
                     port = Integer.parseInt(value);
                     break;
-                case "peer_port":
-                    peerIP = value.split(":")[0];
-                    peerPort = Integer.parseInt(value.split(":")[1]);
+                case "ba_port":
+                    baIP = value.split(":")[0];
+                    baPort = Integer.parseInt(value.split(":")[1]);
                     break;
                 case "party_id":
                     partyId = Integer.parseInt(value);
@@ -253,7 +253,7 @@ public class Party {
      */
     private static void startClient() {
         System.out.println("Client thread starting");
-        PartyClient partyClient = new PartyClient(receiverQueue, peerIP, peerPort);
+        PartyClient partyClient = new PartyClient(receiverQueue, baIP, baPort);
         socketFutureList.add(partySocketEs.submit(partyClient));
 
     }

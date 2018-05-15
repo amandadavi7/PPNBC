@@ -7,11 +7,11 @@ package Protocol.Utility;
 
 import Communication.Message;
 import Protocol.MultiplicationInteger;
-import TrustedInitializer.Triple;
 import TrustedInitializer.TripleReal;
 import Utility.Constants;
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
@@ -40,10 +40,12 @@ public class BatchMultiplicationReal extends BatchMultiplication
      * @param tiShares
      * @param senderQueue
      * @param receiverQueue
+     * @param protocolIdQueue
      * @param clientId
      * @param prime
      * @param protocolID
      * @param oneShare
+     * @param parentID
      */
     public BatchMultiplicationReal(List<BigInteger> x, List<BigInteger> y, 
             List<TripleReal> tiShares, 
@@ -76,27 +78,35 @@ public class BatchMultiplicationReal extends BatchMultiplication
         initProtocol();
         //System.out.println("Waiting for receiver. parentID=" + parentID + " mult ID=" + protocolID);
         Message receivedMessage = null;
+        List<BigInteger> d = new ArrayList<>(Collections.nCopies(batchSize, BigInteger.ZERO));
+        List<BigInteger> e = new ArrayList<>(Collections.nCopies(batchSize, BigInteger.ZERO));
         List<List<BigInteger>> diffList = null;
-        try {
-            receivedMessage = receiverQueue.take();
-            diffList = (List<List<BigInteger>>) receivedMessage.getValue();
-        } catch (InterruptedException ex) {
-            ex.printStackTrace();
+        for(int i=0;i<Constants.clientCount-1;i++) {
+            try {
+                receivedMessage = receiverQueue.take();
+                diffList = (List<List<BigInteger>>) receivedMessage.getValue();
+                for(int j=0;j<batchSize;j++) {
+                    d.set(j, d.get(j).add(diffList.get(j).get(0)));
+                    e.set(j, e.get(j).add(diffList.get(j).get(1)));
+                }
+            } catch (InterruptedException ex) {
+                ex.printStackTrace();
+            }
         }
         
         for(int i=0;i<batchSize;i++){
             // TODO convert TI share to BigInteger
-            BigInteger d = x.get(i)
+            BigInteger D = x.get(i)
                     .subtract(tiShares.get(i).u)
-                    .add(diffList.get(i).get(0)).mod(prime);
-            BigInteger e = y.get(i)
+                    .add(d.get(i)).mod(prime);
+            BigInteger E = y.get(i)
                     .subtract(tiShares.get(i).v)
-                    .add(diffList.get(i).get(1)).mod(prime);
+                    .add(e.get(i)).mod(prime);
             
             BigInteger product = tiShares.get(i).w
-                    .add(d.multiply(tiShares.get(i).v))
-                    .add(e.multiply(tiShares.get(i).u))
-                    .add(d.multiply(e).multiply(BigInteger.valueOf(oneShare)))
+                    .add(D.multiply(tiShares.get(i).v))
+                    .add(E.multiply(tiShares.get(i).u))
+                    .add(D.multiply(E).multiply(BigInteger.valueOf(oneShare)))
                     .mod(prime);
             
             products[i] = product;

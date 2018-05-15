@@ -71,16 +71,21 @@ public class MultiplicationInteger extends Protocol implements Callable {
         initProtocol();
         //System.out.println("Waiting for receiver. parentID=" + parentID + " mult ID=" + protocolID);
         Message receivedMessage = null;
+        int d = 0,e = 0;
         List<Integer> diffList = null;
-        try {
-            receivedMessage = receiverQueue.take();
-            diffList = (List<Integer>) receivedMessage.getValue();
-        } catch (InterruptedException ex) {
-            ex.printStackTrace();
+        for(int i=0;i<Constants.clientCount-1;i++) {
+            try {
+                receivedMessage = receiverQueue.take();
+                diffList = (List<Integer>) receivedMessage.getValue();
+                d += diffList.get(0);
+                e += diffList.get(1);
+            } catch (InterruptedException ex) {
+                ex.printStackTrace();
+            }
         }
 
-        int d = Math.floorMod((x - tiShares.u) + diffList.get(0), prime);
-        int e = Math.floorMod((y - tiShares.v) + diffList.get(1), prime);
+        d = Math.floorMod(x - tiShares.u + d, prime);
+        e = Math.floorMod(y - tiShares.v + e, prime);
         int product = tiShares.w + (d * tiShares.v) + (tiShares.u * e) + (d * e * oneShare);
         product = Math.floorMod(product, prime);
         //System.out.println("ti("+tiShares.u+","+tiShares.v+","+tiShares.w+"), "+"x*y("+x+","+y+"):"+product);
