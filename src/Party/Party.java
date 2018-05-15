@@ -6,6 +6,7 @@
 package Party;
 
 import Communication.Message;
+import Model.DecisionTreeScoring;
 import Model.LinearRegressionEvaluation;
 import Utility.Connection;
 import Model.TestModel;
@@ -56,6 +57,8 @@ public class Party {
     private static int oneShares;
     private static BigInteger Zq;
 
+    private static int modelId;
+
     /**
      * Initialize class variables
      *
@@ -72,7 +75,7 @@ public class Party {
         tiShares = new TIShare();
         partyId = -1;
 
-        Zq = BigInteger.valueOf(2).pow(Constants.integer_precision 
+        Zq = BigInteger.valueOf(2).pow(Constants.integer_precision
                 + 2 * Constants.decimal_precision + 1).nextProbablePrime();  //Zq must be a prime field
 
         for (String arg : args) {
@@ -126,7 +129,7 @@ public class Party {
                     try {
                         buf = new BufferedReader(new FileReader(csvFile));
                         String line = null;
-                        while((line = buf.readLine()) != null){
+                        while ((line = buf.readLine()) != null) {
                             int lineInt[] = Arrays.stream(line.split(",")).mapToInt(Integer::parseInt).toArray();
                             List<Integer> yline = Arrays.stream(lineInt).boxed().collect(Collectors.toList());
                             yShares.add(yline);
@@ -166,6 +169,9 @@ public class Party {
                     //TODO generalize it
                     ySharesBigInt = FileIO.loadListFromFile(csvFile, Zq);
                     break;
+                case "model":
+                    modelId = Integer.parseInt(value);
+                    break;
             }
 
         }
@@ -191,57 +197,8 @@ public class Party {
         startServer();
         startClient();
 
-        
-        LinearRegressionEvaluation regressionModel
-                = new LinearRegressionEvaluation(xSharesBigInt, ySharesBigInt,
-                        tiShares.bigIntShares, oneShares, senderQueue,
-                        receiverQueue, partyId, Zq);
+        callModel();
 
-        regressionModel.predictValues();
-
-        /*
-        KNN knnModel = new KNN(oneShares, senderQueue, receiverQueue, partyId, 
-                tiShares.binaryShares, tiShares.decimalShares, xShares, yShares.get(0), 
-                yShares.get(1), 8);
-        
-        knnModel.KNN_Model();
-        
-        
-        /*
-        TestModel testModel = new TestModel(xShares, yShares, vShares, 
-              tiShares.binaryShares, tiShares.decimalShares, tiShares.bigIntShares, 
-                oneShares, senderQueue, receiverQueue, partyId);
-        
-        testModel.compute();
-        */ 
-//DTSCORING:
-//        if(partyId==1) {
-//            
-//            int[] leafToClassIndexMapping = new int[5];
-//            leafToClassIndexMapping[1] = 1;
-//            leafToClassIndexMapping[2] = 2;
-//            leafToClassIndexMapping[3] = 3;
-//            leafToClassIndexMapping[4] = 1;
-//            int[] nodeToAttributeIndexMapping = new int[3];
-//            nodeToAttributeIndexMapping[0] = 0;
-//            nodeToAttributeIndexMapping[1] = 1;
-//            nodeToAttributeIndexMapping[2] = 2;
-//            int[] attributeThresholds = new int[3];
-//            attributeThresholds[0] = 10;
-//            attributeThresholds[1] = 5;
-//            attributeThresholds[2] = 20;
-//            DecisionTreeScoring DTree = new DecisionTreeScoring(oneShares, senderQueue, receiverQueue, partyId, tiShares.binaryShares, 
-//                    tiShares.decimalShares, 2, 3, 5, leafToClassIndexMapping, nodeToAttributeIndexMapping, attributeThresholds, 3);
-//            DTree.ScoreDecisionTree();
-//        
-//        } else if(partyId==2) {
-//            
-//            DecisionTreeScoring DScore = new DecisionTreeScoring(oneShares, senderQueue, receiverQueue, partyId, tiShares.binaryShares, 
-//                    tiShares.decimalShares, 2, 3, 5, vShares.get(0), 3);
-//            
-//            
-//            DScore.ScoreDecisionTree();
-//        }
         tearDownSocket();
     }
 
@@ -267,8 +224,8 @@ public class Party {
         }
 
         tiEs.shutdown();
-        
-        System.out.println("Recieved tiShares:"+ tiShares.bigIntShares.size());
+
+        System.out.println("Recieved tiShares:" + tiShares.bigIntShares.size());
 
         try {
             socketTI.close();
@@ -288,7 +245,7 @@ public class Party {
         socketFutureList.add(partySocketEs.submit(partyServer));
 
     }
-    
+
     /**
      * Creates a client thread that receives data from socket and saves it to
      * the corresponding receiver queue
@@ -303,6 +260,58 @@ public class Party {
 
     private static void tearDownSocket() {
         partySocketEs.shutdownNow();
+    }
+
+    private static void callModel() {
+        switch (modelId) {
+            case 1:
+                // DT Scoring
+                if (partyId == 1) {
+                    int[] leafToClassIndexMapping = new int[5];
+                    leafToClassIndexMapping[1] = 1;
+                    leafToClassIndexMapping[2] = 2;
+                    leafToClassIndexMapping[3] = 3;
+                    leafToClassIndexMapping[4] = 1;
+                    int[] nodeToAttributeIndexMapping = new int[3];
+                    nodeToAttributeIndexMapping[0] = 0;
+                    nodeToAttributeIndexMapping[1] = 1;
+                    nodeToAttributeIndexMapping[2] = 2;
+                    int[] attributeThresholds = new int[3];
+                    attributeThresholds[0] = 10;
+                    attributeThresholds[1] = 5;
+                    attributeThresholds[2] = 20;
+                    DecisionTreeScoring DTree = new DecisionTreeScoring(oneShares, senderQueue, receiverQueue, partyId, tiShares.binaryShares,
+                            tiShares.decimalShares, 2, 3, 5, leafToClassIndexMapping, nodeToAttributeIndexMapping, attributeThresholds, 3);
+                    DTree.ScoreDecisionTree();
+
+                } else if (partyId == 2) {
+
+                    DecisionTreeScoring DScore = new DecisionTreeScoring(oneShares, senderQueue, receiverQueue, partyId, tiShares.binaryShares,
+                            tiShares.decimalShares, 2, 3, 5, vShares.get(0), 3);
+
+                    DScore.ScoreDecisionTree();
+                }
+                break;
+
+            case 2:
+                // LR Evaluation
+                LinearRegressionEvaluation regressionModel
+                        = new LinearRegressionEvaluation(xSharesBigInt, ySharesBigInt,
+                                tiShares.bigIntShares, oneShares, senderQueue,
+                                receiverQueue, partyId, Zq);
+
+                regressionModel.predictValues();
+                break;
+            
+            default:
+                // test model
+                TestModel testModel = new TestModel(xShares, yShares, vShares,
+                        tiShares.binaryShares, tiShares.decimalShares, tiShares.bigIntShares,
+                        oneShares, senderQueue, receiverQueue, partyId);
+
+                testModel.compute();
+                break;
+        }
     }
 
 }

@@ -62,7 +62,8 @@ public class Logging {
         System.out.println("java Party.Party party_port=<port> ti=<TI IP:port> "
                 + "peer_port=<peer IP:port> "
                 + "party_id=<Party Id> "
-                + "values=<secret share>");
+                + "model=<Model Id(1: DT Scoring 2:LR Evaluation 3:KNN "
+                + "4:DT Learning default:TestModel)> ");
     }
 
     /**
