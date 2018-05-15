@@ -273,54 +273,50 @@ public class BitDecomposition extends CompositeProtocol implements Callable<List
      * @throws InterruptedException
      */
     private void computeVariables() throws InterruptedException {
-
+        ExecutorService threadService = Executors.newSingleThreadExecutor();
         for (int i = 1; i < bitLength; i++) {
             System.out.println("The current index " + i);
-            ExecutorService threadService = Executors.newSingleThreadExecutor();
-
+            
             ComputeThread compute = new ComputeThread(i);
             threadService.submit(compute);
-
-            threadService.shutdown();
 
             boolean threadsCompleted = threadService.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
             // once we have d and e, we can compute c and x Sequentially
             if (threadsCompleted) {
-                int x_result = yShares[i];
-                x_result = x_result + cShares[i-1];
-                x_result = Math.floorMod(x_result, prime);
-                xShares.add(i, x_result);
-
+                continue;
             }
 
         }
+        threadService.shutdown();
     }
 
     private class ComputeThread implements Runnable {
 
-        int protocolId;
+        int index;
 
-        public ComputeThread(int protocolId) {
-            this.protocolId = protocolId;
+        public ComputeThread(int index) {
+            this.index = index;
         }
 
         @Override
         public void run() {
 
             try {
-                int e_result = computeByBit(yShares[protocolId], 
-                        cShares[protocolId - 1], protocolId, bitLength);
-                e_result = e_result + oneShare;
+                int e_result = computeByBit(yShares[index], 
+                        cShares[index - 1], index, bitLength) + oneShare;
                 e_result = Math.floorMod(e_result, prime);
-                eShares[protocolId] = e_result;
+                eShares[index] = e_result;
                 System.out.println("e result for id: " + e_result);
 
-                int c_result = computeByBit(eShares[protocolId], 
-                        dShares[protocolId], protocolId, bitLength * 2);
-                c_result = c_result + oneShare;
+                int c_result = computeByBit(eShares[index], 
+                        dShares[index], index, bitLength * 2) + oneShare;
                 c_result = Math.floorMod(c_result, prime);
-                cShares[protocolId] = c_result;
+                cShares[index] = c_result;
                 System.out.println("c result for id: " + c_result);
+                
+                int x_result = yShares[index] + cShares[index-1];
+                x_result = Math.floorMod(x_result, prime);
+                xShares.add(index, x_result);
 
             } catch (InterruptedException | ExecutionException ex) {
                 Logger.getLogger(BitDecomposition.class.getName()).log(Level.SEVERE, null, ex);
