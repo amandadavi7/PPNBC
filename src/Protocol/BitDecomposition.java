@@ -105,7 +105,7 @@ public class BitDecomposition extends CompositeProtocol implements Callable<List
         initY();
 
         // Initialize c[1] 
-        int first_c_share = computeByBit(inputShares.get(0).get(0), 
+        int first_c_share = bitMultiplication(inputShares.get(0).get(0), 
                 inputShares.get(1).get(0), 0, 0);
         cShares[0] = Math.floorMod(first_c_share, prime);
         System.out.println("the first c share: " + cShares[0]);
@@ -132,7 +132,7 @@ public class BitDecomposition extends CompositeProtocol implements Callable<List
     }
 
     // Calculate step (2)  [c1] = [a1][b1] 
-    public int computeByBit(int first_bit, int second_bit, int protocol_id, 
+    public int bitMultiplication(int first_bit, int second_bit, int protocol_id, 
             int subprotocolId) throws InterruptedException, ExecutionException {
         
         int multiplication_result = -1;
@@ -280,13 +280,13 @@ public class BitDecomposition extends CompositeProtocol implements Callable<List
         public void run() {
 
             try {
-                int e_result = computeByBit(yShares[index], 
+                int e_result = bitMultiplication(yShares[index], 
                         cShares[index - 1], index, bitLength) + oneShare;
                 e_result = Math.floorMod(e_result, prime);
                 eShares[index] = e_result;
                 System.out.println("e result for id: " + e_result);
 
-                int c_result = computeByBit(eShares[index], 
+                int c_result = bitMultiplication(eShares[index], 
                         dShares[index], index, bitLength * 2) + oneShare;
                 c_result = Math.floorMod(c_result, prime);
                 cShares[index] = c_result;
