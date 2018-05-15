@@ -37,6 +37,7 @@ public class BitDecomposition extends CompositeProtocol implements Callable<List
     //int parentProtocolId;   
     int bitLength;
     int prime;
+    int tiIndex, globalPid;
 
     /**
      * Constructor
@@ -63,6 +64,8 @@ public class BitDecomposition extends CompositeProtocol implements Callable<List
         this.input = input;
         this.bitLength = bitLength;
         this.prime = prime;
+        this.tiIndex = 0;
+        this.globalPid = 0;
 
         // convert decimal to binary notation: TODO - generalize to n parties with a for loop
         inputShares = new ArrayList<>();
@@ -176,29 +179,30 @@ public class BitDecomposition extends CompositeProtocol implements Callable<List
         System.out.println("In D shares");
 
         int i = 1;
-        int startpid = 1;
+        //int startpid = 1;
 
         // **** The protocols for computation of d are assigned id 1-bitLength-1 ***
         do {
-            System.out.println("Protocol " + protocolId + " batch " + startpid);
-            initQueueMap(recQueues, startpid);
+            //System.out.println("Protocol " + protocolId);
+            initQueueMap(recQueues, globalPid);
 
-            int toIndex = (i + Constants.batchSize < bitLength)
-                    ? (i + Constants.batchSize) : bitLength;
+            int toIndex = Math.min(i+Constants.batchSize, bitLength);
 
             BatchMultiplicationByte batchMultiplication = new BatchMultiplicationByte(
                     inputShares.get(0).subList(i, toIndex),
                     inputShares.get(1).subList(i, toIndex),
                     tiShares.subList(i, toIndex),
-                    senderQueue, recQueues.get(startpid), new LinkedList<>(protocolIdQueue),
-                    clientID, prime, startpid, oneShare, protocolId);
+                    senderQueue, recQueues.get(globalPid), new LinkedList<>(protocolIdQueue),
+                    clientID, prime, globalPid, oneShare, protocolId);
 
             Future<Integer[]> multiplicationTask = es.submit(batchMultiplication);
             taskList.add(multiplicationTask);
 
-            startpid++;
-            i += Constants.batchSize;
+            globalPid++;
+            i = toIndex;
         } while (i < bitLength);
+        
+        tiIndex = tiIndex + bitLength;
 
         es.shutdown();
 
@@ -206,6 +210,7 @@ public class BitDecomposition extends CompositeProtocol implements Callable<List
         int taskLength = taskList.size();
 
         // Save d[i] to dShares
+        int globalIndex = 1;
         for (int j = 0; j < taskLength; j++) {
             try {
                 Future<Integer[]> dWorkerResponse = taskList.get(j);
@@ -213,13 +218,9 @@ public class BitDecomposition extends CompositeProtocol implements Callable<List
 
                 // Iterate through each batch to do computations and save values in dShares
                 for (int index = 0; index < d_batch.length; index++) {
-
-                    int globalIndex = j * 10 + index + 1; // + 1 signifies satring point is bit 1
-                    int d = d_batch[index];
-                    //add the oneShare to each d
-                    d = d + oneShare;
-                    d = Math.floorMod(d, prime);
-                    dShares[globalIndex] = d;
+                    int d = d_batch[index] + oneShare;
+                    dShares[globalIndex] = Math.floorMod(d, prime);
+                    globalIndex++;
                 }
             } catch (InterruptedException | ExecutionException ex) {
                 ex.printStackTrace();
