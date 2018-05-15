@@ -102,32 +102,13 @@ public class BitDecomposition extends CompositeProtocol implements Callable<List
         initY();
 
         // Initialize c[1] 
-        int first_c_share = computeByBit(inputShares.get(0).get(0), inputShares.get(1).get(0), 0, 0);
-        first_c_share = Math.floorMod(first_c_share, prime);
-        cShares[0] = first_c_share;
+        int first_c_share = computeByBit(inputShares.get(0).get(0), 
+                inputShares.get(1).get(0), 0, 0);
+        cShares[0] = Math.floorMod(first_c_share, prime);
         System.out.println("the first c share: " + cShares[0]);
 
-        ExecutorService threadService = Executors.newCachedThreadPool();
-        Runnable dThread = new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    computeDShares();
-                } catch (InterruptedException | ExecutionException ex) {
-                    Logger.getLogger(Comparison.class.getName()).log(Level.SEVERE, null, ex);
-                }
-            }
-        };
-
-        threadService.submit(dThread);
-
-        threadService.shutdown();
-
-        boolean threadsCompleted = threadService.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
-        // once we have d and e, we can compute c and x Sequentially
-        if (threadsCompleted) {
-            computeVariables();
-        }
+        computeDShares();
+        computeVariables();
 
         tearDownHandlers();
         return xShares;
@@ -137,17 +118,13 @@ public class BitDecomposition extends CompositeProtocol implements Callable<List
      * computes y locally
      */
     public void initY() {
-
         for (int i = 0; i < bitLength; i++) {
             int y = inputShares.get(0).get(i) + inputShares.get(1).get(i);
-            y = Math.floorMod(y, prime);
-            yShares[i] = y;
+            yShares[i] = Math.floorMod(y, prime);
         }
         System.out.println("Y shares: " + Arrays.toString(yShares));
-
         // set x[1] <- y[1]
-        int y0 = yShares[0];
-        xShares.add(0, y0);
+        xShares.add(0, yShares[0]);
         System.out.println("LSB for x: " + xShares);
     }
 
