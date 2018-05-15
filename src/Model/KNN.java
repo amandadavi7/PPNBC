@@ -13,6 +13,7 @@ import Protocol.Utility.JaccardDistance;
 import TrustedInitializer.Triple;
 import Utility.Constants;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
@@ -174,14 +175,15 @@ public class KNN extends Model {
         
     }
     
-    void Sort(int startIndex, int endIndex, int next) {
+    void Sort(int[] indices, int next) {
         //base case
-        System.out.println("in sort: startIndex="+startIndex+", endIndex="+endIndex+", next="+next);
-        if(startIndex == endIndex) {
+        int startIndex = 0, endIndex = indices.length - 1;
+        System.out.println("in sort: startIndex="+indices[0]+", endIndex="+indices[endIndex] + ",next:" + next);
+        if(indices[startIndex] == indices[endIndex]) {
             return;
         }
         
-        if(startIndex+next==endIndex) {
+        if(indices[startIndex] + next == indices[endIndex]) {
             //comparison
             
             ExecutorService es = Executors.newSingleThreadExecutor();
@@ -189,9 +191,9 @@ public class KNN extends Model {
             initQueueMap(recQueues, pid);
             System.out.println("calling crossmultiply and compare");
             //TODO binary shares sublist handling here
-            CrossMultiplyCompare ccModule = new CrossMultiplyCompare(jaccardDistances.get(startIndex).get(1), 
-                    jaccardDistances.get(startIndex).get(0), jaccardDistances.get(endIndex).get(1), 
-                    jaccardDistances.get(endIndex).get(0), oneShare, 
+            CrossMultiplyCompare ccModule = new CrossMultiplyCompare(jaccardDistances.get(indices[startIndex]).get(1), 
+                    jaccardDistances.get(indices[startIndex]).get(0), jaccardDistances.get(indices[endIndex]).get(1), 
+                    jaccardDistances.get(indices[endIndex]).get(0), oneShare, 
                     decimalTiShares.subList(decimalTiIndex, decimalTiIndex+2), 
                     binaryTiShares, commonSender, recQueues.get(pid), 
                     clientId, Constants.prime, Constants.binaryPrime, pid, new LinkedList<>(protocolIdQueue));
@@ -208,36 +210,41 @@ public class KNN extends Model {
                 Logger.getLogger(KNN.class.getName()).log(Level.SEVERE, null, ex);
             }
             
-            System.out.println("comparing indices" + startIndex + " " + endIndex + ", result=" +comparisonresult);
+            System.out.println("comparing indices " + indices[startIndex] + " " + indices[endIndex] + ", result=" +comparisonresult);
             
             //circuit to swap
-            swapCircuit(startIndex, endIndex, comparisonresult);
+            swapCircuit(indices[startIndex], indices[endIndex], comparisonresult);
             
             return;
         }
         
-        Sort(startIndex, startIndex + (endIndex-startIndex)/2, 1);
-        Sort(startIndex + (endIndex-startIndex)/2 + 1, endIndex, 1);
+        int mid = (endIndex - startIndex)/2;
+        int[] firstArray = Arrays.copyOfRange(indices, startIndex, mid+1);
+        int[] secondArray = Arrays.copyOfRange(indices, mid+1, endIndex+1);
+        Sort(firstArray, next);
+        Sort(secondArray, next);
         
-        Merge(startIndex, endIndex);
+        Merge(indices, next);
     }
     
-    void Merge(int startIndex, int endIndex) {
+    void Merge(int[] indices, int next) {
         
-        System.out.println("In merge: startIndex=" + startIndex + " endIndex=" + endIndex);
+        int startIndex = 0, endIndex = indices.length-1;
+        System.out.println("In merge: startIndex=" + indices[startIndex] + " endIndex=" + indices[endIndex]);
+        
         //Sort even indexed
-        if(endIndex%2==0){
-            Sort(startIndex, endIndex, 2);
-        } else {
-            Sort(startIndex, endIndex-1, 2);
+        int[] evenIndices = new int[indices.length/2 + indices.length%2];
+        int[] oddIndices = new int[indices.length/2];
+        
+        int j=0;
+        for(int i=startIndex;i<indices.length;i+=2) {
+            evenIndices[j] = indices[i];
+            oddIndices[j] = indices[i+1];
+            j++;
         }
         
-        //Sort odd indexed
-        if(endIndex%2==0){
-            Sort(startIndex+1, endIndex-1, 2);
-        } else {
-            Sort(startIndex+1, endIndex, 2);
-        }
+        Sort(evenIndices, 2*next);
+        Sort(oddIndices, 2*next);
         
         ExecutorService es = Executors.newFixedThreadPool(Constants.threadCount);
         List<Future<Integer>> taskList = new ArrayList<>();
@@ -245,12 +252,12 @@ public class KNN extends Model {
         //Compare adjacent numbers TODO - handle binaryTiShares sublist
         for(int i=startIndex+1;i<endIndex-1;i+=2){
             //compare and swap jd(i) and jd(i+1)
-            System.out.println("calling comparison between adjacent elements: indices - "+i+" and "+ (i+1));
+            System.out.println("calling comparison between adjacent elements: indices - "+indices[i]+" and "+ indices[i+1]);
             initQueueMap(recQueues, pid);
             
-            CrossMultiplyCompare ccModule = new CrossMultiplyCompare(jaccardDistances.get(i).get(1), 
-                    jaccardDistances.get(i).get(0), jaccardDistances.get(i+1).get(1), 
-                    jaccardDistances.get(i+1).get(0), oneShare, 
+            CrossMultiplyCompare ccModule = new CrossMultiplyCompare(jaccardDistances.get(indices[i]).get(1), 
+                    jaccardDistances.get(indices[i]).get(0), jaccardDistances.get(indices[i+1]).get(1), 
+                    jaccardDistances.get(indices[i+1]).get(0), oneShare, 
                     decimalTiShares.subList(decimalTiIndex, decimalTiIndex+2), 
                     binaryTiShares, commonSender, recQueues.get(pid), 
                     clientId, Constants.prime, Constants.binaryPrime, pid, new LinkedList<>(protocolIdQueue));
@@ -274,9 +281,11 @@ public class KNN extends Model {
             }
         }
         
-        for(int i=0;i<n;i++) {
-            swapCircuit(startIndex+2*i+1, startIndex+2*i+2, comparisonResults[i]);
+        j=0;
+        for(int i=startIndex+1;i<endIndex-1;i+=2,j++){
+            swapCircuit(indices[i], indices[i+1], comparisonResults[j]);
         }
+        
     }
     
     
@@ -307,8 +316,11 @@ public class KNN extends Model {
         }
         
         System.out.println("jaccarddistances:" + jaccardDistances);
-        
-        Sort(0, K-1, 1);
+        int[] indices = new int[K];
+        for(int i=0;i<K;i++){
+            indices[i] = i;
+        }
+        Sort(indices, 1);
         
         long stopTime = System.currentTimeMillis();
         long elapsedTime = stopTime - startTime;

@@ -3,20 +3,22 @@
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group>
-<<<<<<< HEAD
+            <file>file:/home/keerthanaa/bitbucket_repo/ppml-framework/src/Protocol/Utility/BatchMultiplicationNumber.java</file>
             <file>file:/home/keerthanaa/bitbucket_repo/ppml-framework/src/Communication/ReceiverQueueHandler.java</file>
             <file>file:/home/keerthanaa/bitbucket_repo/ppml-framework/src/Protocol/Protocol.java</file>
             <file>file:/home/keerthanaa/bitbucket_repo/ppml-framework/src/Protocol/Comparison.java</file>
             <file>file:/home/keerthanaa/bitbucket_repo/ppml-framework/src/Communication/Message.java</file>
+            <file>file:/home/keerthanaa/bitbucket_repo/ppml-framework/src/Protocol/Utility/ParallelMultiplication.java</file>
             <file>file:/home/keerthanaa/bitbucket_repo/ppml-framework/src/TrustedInitializer/TItoPeerCommunication.java</file>
+            <file>file:/home/keerthanaa/bitbucket_repo/ppml-framework/src/Model/LinearRegressionEvaluation.java</file>
             <file>file:/home/keerthanaa/bitbucket_repo/ppml-framework/src/Protocol/BitDecomposition.java</file>
             <file>file:/home/keerthanaa/bitbucket_repo/ppml-framework/src/Protocol/OIS.java</file>
             <file>file:/home/keerthanaa/bitbucket_repo/ppml-framework/src/Party/Party.java</file>
             <file>file:/home/keerthanaa/bitbucket_repo/ppml-framework/src/Party/PartyClient.java</file>
+            <file>file:/home/keerthanaa/bitbucket_repo/ppml-framework/src/Protocol/Utility/BatchMultiplicationReal.java</file>
             <file>file:/home/keerthanaa/bitbucket_repo/ppml-framework/src/Protocol/ArgMax.java</file>
             <file>file:/home/keerthanaa/bitbucket_repo/ppml-framework/src/Utility/Connection.java</file>
             <file>file:/home/keerthanaa/bitbucket_repo/ppml-framework/src/Model/DecisionTreeScoring.java</file>
-            <file>file:/home/keerthanaa/bitbucket_repo/ppml-framework/src/Protocol/Multiplication.java</file>
             <file>file:/home/keerthanaa/bitbucket_repo/ppml-framework/src/TrustedInitializer/TIShare.java</file>
             <file>file:/home/keerthanaa/bitbucket_repo/ppml-framework/src/Protocol/DotProduct.java</file>
             <file>file:/home/keerthanaa/bitbucket_repo/ppml-framework/src/Protocol/Utility/JaccardDistance.java</file>
@@ -24,9 +26,10 @@
             <file>file:/home/keerthanaa/bitbucket_repo/ppml-framework/src/Model/TestModel.java</file>
             <file>file:/home/keerthanaa/bitbucket_repo/ppml-framework/src/Model/Model.java</file>
             <file>file:/home/keerthanaa/bitbucket_repo/ppml-framework/src/Protocol/Utility/BatchMultiplication.java</file>
-            <file>file:/home/keerthanaa/bitbucket_repo/ppml-framework/src/Communication/SenderQueueHandler.java</file>
+            <file>file:/home/keerthanaa/bitbucket_repo/ppml-framework/src/Protocol/DotProductReal.java</file>
             <file>file:/home/keerthanaa/bitbucket_repo/ppml-framework/src/Model/KNN.java</file>
             <file>file:/home/keerthanaa/bitbucket_repo/ppml-framework/src/Utility/Constants.java</file>
+            <file>file:/home/keerthanaa/bitbucket_repo/ppml-framework/src/Party/package-info.java</file>
             <file>file:/home/keerthanaa/bitbucket_repo/ppml-framework/src/Protocol/OR_XOR.java</file>
             <file>file:/home/keerthanaa/bitbucket_repo/ppml-framework/src/Protocol/CompositeProtocol.java</file>
             <file>file:/home/keerthanaa/bitbucket_repo/ppml-framework/src/Protocol/Utility/CrossMultiplyCompare.java</file>
@@ -34,24 +37,6 @@
             <file>file:/home/keerthanaa/bitbucket_repo/ppml-framework/src/TrustedInitializer/TI.java</file>
             <file>file:/home/keerthanaa/bitbucket_repo/ppml-framework/src/Party/PartyServer.java</file>
             <file>file:/home/keerthanaa/bitbucket_repo/ppml-framework/src/Utility/Logging.java</file>
-=======
-            <file>file:/home/anisha/PPML%20Framework/src/Protocol/Comparison.java</file>
-            <file>file:/home/anisha/PPML%20Framework/src/Model/TestModel.java</file>
-            <file>file:/home/anisha/PPML%20Framework/src/Model/LinearRegressionEvaluation.java</file>
-            <file>file:/home/anisha/PPML%20Framework/src/Client/Client.java</file>
-            <file>file:/home/anisha/PPML%20Framework/src/Protocol/Utility/BatchMultiplicationReal.java</file>
-            <file>file:/home/anisha/PPML%20Framework/src/Utility/FileIO.java</file>
-            <file>file:/home/anisha/PPML%20Framework/src/Protocol/DotProductReal.java</file>
-            <file>file:/home/anisha/PPML%20Framework/src/Utility/Constants.java</file>
-            <file>file:/home/anisha/PPML%20Framework/src/Protocol/Utility/BatchMultiplicationNumber.java</file>
-            <file>file:/home/anisha/PPML%20Framework/src/Party/Party.java</file>
-            <file>file:/home/anisha/PPML%20Framework/src/Protocol/OIS.java</file>
-            <file>file:/home/anisha/PPML%20Framework/src/Model/Model.java</file>
-            <file>file:/home/anisha/PPML%20Framework/src/Protocol/Utility/BatchMultiplication.java</file>
-            <file>file:/home/anisha/PPML%20Framework/src/Protocol/ArgMax.java</file>
-            <file>file:/home/anisha/PPML%20Framework/src/Protocol/BitDecomposition.java</file>
-            <file>file:/home/anisha/PPML%20Framework/src/Model/DecisionTreeScoring.java</file>
->>>>>>> master
         </group>
     </open-files>
 </project-private>
