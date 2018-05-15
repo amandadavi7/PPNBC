@@ -75,6 +75,14 @@ public class Logging {
     }
     
     /**
+     * Guideline to use the BA class
+     */
+    public static void baUsage() {
+        System.out.println("java BA port=<port> partyCount=<no. of parties> "
+                + "partyIP=<party IP:port>;<party IP:port>...(semi-colon separated)");
+    }
+    
+    /**
      * Guideline to use the Client class
      */
     public static void clientUsage() {
