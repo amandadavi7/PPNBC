@@ -106,7 +106,7 @@ public class BitDecomposition extends CompositeProtocol implements Callable<List
 
         // Initialize c[1] 
         int first_c_share = bitMultiplication(inputShares.get(0).get(0), 
-                inputShares.get(1).get(0), 0, 0);
+                inputShares.get(1).get(0));
         cShares[0] = Math.floorMod(first_c_share, prime);
         System.out.println("the first c share: " + cShares[0]);
 
@@ -132,26 +132,28 @@ public class BitDecomposition extends CompositeProtocol implements Callable<List
     }
 
     // Calculate step (2)  [c1] = [a1][b1] 
-    public int bitMultiplication(int first_bit, int second_bit, int protocol_id, 
-            int subprotocolId) throws InterruptedException, ExecutionException {
+    public int bitMultiplication(int first_bit, int second_bit) 
+            throws InterruptedException, ExecutionException {
 
         int multiplication_result = -1;
 
-        System.out.println("Computing prtocol id: " + (protocol_id + subprotocolId));
+        //System.out.println("Computing prtocol id: " + (protocol_id + subprotocolId));
         // System.out.println("In BitDecomposition -> ComputeInit()");
         ExecutorService es = Executors.newSingleThreadExecutor();
 
         //compute local shares of d and e and add to the message queue
-        initQueueMap(recQueues, subprotocolId + protocol_id);
+        initQueueMap(recQueues, globalPid);
 
         MultiplicationByte multiplicationModule = new MultiplicationByte(first_bit,
                 second_bit,
-                tiShares.get(protocol_id + subprotocolId),
+                tiShares.get(tiIndex),
                 senderQueue,
-                recQueues.get(protocol_id + subprotocolId), new LinkedList<>(protocolIdQueue),
+                recQueues.get(globalPid), new LinkedList<>(protocolIdQueue),
                 clientID,
-                prime, subprotocolId + protocol_id, oneShare, 1);
+                prime, globalPid, oneShare, 1);
 
+        tiIndex++;
+        globalPid++;
         // Assign the multiplication task to ExecutorService object.
         Future<Integer> multiplicationTask = es.submit(multiplicationModule);
         es.shutdown();
@@ -187,11 +189,12 @@ public class BitDecomposition extends CompositeProtocol implements Callable<List
             initQueueMap(recQueues, globalPid);
 
             int toIndex = Math.min(i+Constants.batchSize, bitLength);
+            int tiCount = toIndex - i;
 
             BatchMultiplicationByte batchMultiplication = new BatchMultiplicationByte(
                     inputShares.get(0).subList(i, toIndex),
                     inputShares.get(1).subList(i, toIndex),
-                    tiShares.subList(i, toIndex),
+                    tiShares.subList(tiIndex, tiIndex+tiCount),
                     senderQueue, recQueues.get(globalPid), new LinkedList<>(protocolIdQueue),
                     clientID, prime, globalPid, oneShare, protocolId);
 
@@ -200,9 +203,8 @@ public class BitDecomposition extends CompositeProtocol implements Callable<List
 
             globalPid++;
             i = toIndex;
+            tiIndex += tiCount;
         } while (i < bitLength);
-        
-        tiIndex = tiIndex + bitLength;
 
         es.shutdown();
 
@@ -253,12 +255,12 @@ public class BitDecomposition extends CompositeProtocol implements Callable<List
     private void computeVariables() throws InterruptedException {
         for (int i = 1; i < bitLength; i++) {
             System.out.println("The current index " + i);
-            computeSubVariable(i);
+            computeSubVariables(i);
         }
 
     }
 
-    private void computeSubVariable(int index) {
+    private void computeSubVariables(int index) {
         ExecutorService es = Executors.newFixedThreadPool(3);
 
         Runnable eThread = new Runnable() {
@@ -266,7 +268,7 @@ public class BitDecomposition extends CompositeProtocol implements Callable<List
             public void run() {
                 try {
                     int e_result = bitMultiplication(yShares[index],
-                            cShares[index - 1], index, bitLength) + oneShare;
+                            cShares[index - 1]) + oneShare;
                     e_result = Math.floorMod(e_result, prime);
                     eShares[index] = e_result;
                     System.out.println("e result for id: " + e_result);
@@ -299,14 +301,12 @@ public class BitDecomposition extends CompositeProtocol implements Callable<List
             threadsCompleted = es.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
             if (threadsCompleted) {
                 int c_result = bitMultiplication(eShares[index],
-                        dShares[index], index, bitLength * 2) + oneShare;
+                        dShares[index]) + oneShare;
                 c_result = Math.floorMod(c_result, prime);
                 cShares[index] = c_result;
                 System.out.println("c result for id: " + c_result);
             }
-        } catch (InterruptedException ex) {
-            Logger.getLogger(BitDecomposition.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (ExecutionException ex) {
+        } catch (InterruptedException | ExecutionException ex) {
             Logger.getLogger(BitDecomposition.class.getName()).log(Level.SEVERE, null, ex);
         }
 
