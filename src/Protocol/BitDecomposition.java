@@ -30,9 +30,9 @@ public class BitDecomposition extends CompositeProtocol implements Callable<List
     List<TripleByte> tiShares;
 
     Integer[] dShares, eShares, cShares, yShares;
-    
+
     List<Integer> xShares;
-    
+
     /*parentProtocolId not used for testing*/
     //int parentProtocolId;   
     int bitLength;
@@ -72,10 +72,10 @@ public class BitDecomposition extends CompositeProtocol implements Callable<List
         for (int i = 0; i < diff; i++) {
             temp.add(0);
         }
-        
+
         // TODO - client ID - change to zero indexed
-        for(int i=0;i<Constants.clientCount;i++) {
-            if(i+1 == clientId) {
+        for (int i = 0; i < Constants.clientCount; i++) {
+            if (i + 1 == clientId) {
                 inputShares.add(temp);
             } else {
                 inputShares.add(temp0);
@@ -102,7 +102,7 @@ public class BitDecomposition extends CompositeProtocol implements Callable<List
         initY();
 
         // Initialize c[1] 
-        int first_c_share = computeByBit(inputShares.get(0).get(0), 
+        int first_c_share = computeByBit(inputShares.get(0).get(0),
                 inputShares.get(1).get(0), 0, 0);
         cShares[0] = Math.floorMod(first_c_share, prime);
         System.out.println("the first c share: " + cShares[0]);
@@ -129,9 +129,9 @@ public class BitDecomposition extends CompositeProtocol implements Callable<List
     }
 
     // Calculate step (2)  [c1] = [a1][b1] 
-    public int computeByBit(int first_bit, int second_bit, int protocol_id, 
+    public int computeByBit(int first_bit, int second_bit, int protocol_id,
             int subprotocolId) throws InterruptedException, ExecutionException {
-        
+
         int multiplication_result = -1;
 
         System.out.println("Computing prtocol id: " + (protocol_id + subprotocolId));
@@ -140,11 +140,11 @@ public class BitDecomposition extends CompositeProtocol implements Callable<List
 
         //compute local shares of d and e and add to the message queue
         initQueueMap(recQueues, subprotocolId + protocol_id);
-        
+
         MultiplicationByte multiplicationModule = new MultiplicationByte(first_bit,
                 second_bit,
                 tiShares.get(protocol_id + subprotocolId),
-                senderQueue, 
+                senderQueue,
                 recQueues.get(protocol_id + subprotocolId), new LinkedList<>(protocolIdQueue),
                 clientID,
                 prime, subprotocolId + protocol_id, oneShare, 1);
@@ -250,54 +250,63 @@ public class BitDecomposition extends CompositeProtocol implements Callable<List
      * @throws InterruptedException
      */
     private void computeVariables() throws InterruptedException {
-        ExecutorService threadService = Executors.newSingleThreadExecutor();
         for (int i = 1; i < bitLength; i++) {
             System.out.println("The current index " + i);
-            
-            ComputeThread compute = new ComputeThread(i);
-            threadService.submit(compute);
-
-            boolean threadsCompleted = threadService.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
-            // once we have d and e, we can compute c and x Sequentially
-            if (threadsCompleted) {
-                continue;
-            }
-
+            computeSubVariable(i);
         }
-        threadService.shutdown();
+
     }
 
-    private class ComputeThread implements Runnable {
+    private void computeSubVariable(int index) {
+        ExecutorService es = Executors.newFixedThreadPool(3);
 
-        int index;
+        Runnable eThread = new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    int e_result = computeByBit(yShares[index],
+                            cShares[index - 1], index, bitLength) + oneShare;
+                    e_result = Math.floorMod(e_result, prime);
+                    eShares[index] = e_result;
+                    System.out.println("e result for id: " + e_result);
+                } catch (InterruptedException ex) {
+                    Logger.getLogger(Comparison.class.getName()).log(Level.SEVERE, null, ex);
+                } catch (ExecutionException ex) {
+                    Logger.getLogger(BitDecomposition.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+        };
 
-        public ComputeThread(int index) {
-            this.index = index;
-        }
+        es.submit(eThread);
 
-        @Override
-        public void run() {
+        Runnable xThread = new Runnable() {
+            @Override
+            public void run() {
+                int x_result = yShares[index] + cShares[index - 1];
+                x_result = Math.floorMod(x_result, prime);
+                xShares.add(index, x_result);
+            }
+        };
 
-            try {
-                int e_result = computeByBit(yShares[index], 
-                        cShares[index - 1], index, bitLength) + oneShare;
-                e_result = Math.floorMod(e_result, prime);
-                eShares[index] = e_result;
-                System.out.println("e result for id: " + e_result);
+        es.submit(xThread);
 
-                int c_result = computeByBit(eShares[index], 
+        es.shutdown();
+
+        // Compute c and w sequentially when both threads end
+        boolean threadsCompleted;
+        try {
+            threadsCompleted = es.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+            if (threadsCompleted) {
+                int c_result = computeByBit(eShares[index],
                         dShares[index], index, bitLength * 2) + oneShare;
                 c_result = Math.floorMod(c_result, prime);
                 cShares[index] = c_result;
                 System.out.println("c result for id: " + c_result);
-                
-                int x_result = yShares[index] + cShares[index-1];
-                x_result = Math.floorMod(x_result, prime);
-                xShares.add(index, x_result);
-
-            } catch (InterruptedException | ExecutionException ex) {
-                Logger.getLogger(BitDecomposition.class.getName()).log(Level.SEVERE, null, ex);
             }
+        } catch (InterruptedException ex) {
+            Logger.getLogger(BitDecomposition.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (ExecutionException ex) {
+            Logger.getLogger(BitDecomposition.class.getName()).log(Level.SEVERE, null, ex);
         }
 
     }
