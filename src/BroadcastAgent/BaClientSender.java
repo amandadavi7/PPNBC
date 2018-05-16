@@ -49,8 +49,7 @@ public class BaClientSender implements Runnable {
         while (!(Thread.currentThread().isInterrupted())) {
             try {
                 msg = senderQueue.take();
-                oStream.writeObject(msg);
-                
+                oStream.writeObject(msg);                
             } catch (InterruptedException | IOException ex) {
                 break;
             } 

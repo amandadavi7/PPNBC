@@ -23,7 +23,7 @@ import java.util.logging.Logger;
 public class BaClientReceiver implements Runnable {
 
     Socket clientSocket;
-    BlockingQueue<Message> receiverQueue;
+    BlockingQueue<BaMessagePacket> receiverQueue;
     ObjectInputStream iStream = null;
     int clientId;
 
@@ -34,7 +34,7 @@ public class BaClientReceiver implements Runnable {
      * @param queue
      */
     BaClientReceiver(Socket socket, ObjectInputStream iStream, 
-            BlockingQueue<Message> receiverQueue, int clientId) {
+            BlockingQueue<BaMessagePacket> receiverQueue, int clientId) {
         this.clientSocket = socket;
         this.receiverQueue = receiverQueue;
         this.iStream = iStream;
@@ -52,9 +52,8 @@ public class BaClientReceiver implements Runnable {
         Message msg;
         while (!(Thread.currentThread().isInterrupted())) {
             try {
-                //TODO packet the message with the client id
                 msg = (Message) iStream.readObject();
-                receiverQueue.add(msg);
+                receiverQueue.add(new BaMessagePacket(msg, clientId));
             } catch (IOException ex) {
                 Logger.getLogger(BaClientReceiver.class.getName()).log(Level.SEVERE, null, ex);
             } catch (ClassNotFoundException ex) {

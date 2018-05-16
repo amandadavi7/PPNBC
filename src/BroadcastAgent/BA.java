@@ -37,7 +37,7 @@ public class BA {
 
     static int baPort, partyCount;
     static List<String[]> partyAddress;
-    private static BlockingQueue<Message> receiverQueue;
+    private static BlockingQueue<BaMessagePacket> receiverQueue;
     protected static ConcurrentHashMap<Integer, BlockingQueue<Message>> senderQueues;
     private static int clientId;
 

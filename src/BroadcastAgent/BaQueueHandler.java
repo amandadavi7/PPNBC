@@ -19,10 +19,10 @@ import java.util.logging.Logger;
 public class BaQueueHandler implements Runnable {
 
     int partyCount;
-    BlockingQueue<Message> receiverQueue;
+    BlockingQueue<BaMessagePacket> receiverQueue;
     ConcurrentHashMap<Integer, BlockingQueue<Message>> senderQueues;
 
-    BaQueueHandler(int n, BlockingQueue<Message> receiverQueue,
+    BaQueueHandler(int n, BlockingQueue<BaMessagePacket> receiverQueue,
             ConcurrentHashMap<Integer, BlockingQueue<Message>> senderQueues) {
         this.partyCount = n;
         this.receiverQueue = receiverQueue;
@@ -33,13 +33,12 @@ public class BaQueueHandler implements Runnable {
     public void run() {
         while (!(Thread.currentThread().isInterrupted())) {
             try {
-                Message msg = receiverQueue.take();
-                // TODO message index = receiver client id
-                int msgIndex = 1;
+                BaMessagePacket msg = receiverQueue.take();
+                int msgIndex = msg.clientId;
                 for (int i = 0; i < partyCount; i++) {
                     if (i != msgIndex) {
                         senderQueues.putIfAbsent(i, new LinkedBlockingQueue<>());
-                        senderQueues.get(i).put(msg);
+                        senderQueues.get(i).put(msg.message);
                     }
                 }
             } catch (InterruptedException ex) {
