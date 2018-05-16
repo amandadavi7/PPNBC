@@ -25,6 +25,7 @@ public class BaClientReceiver implements Runnable {
     Socket clientSocket;
     BlockingQueue<Message> receiverQueue;
     ObjectInputStream iStream = null;
+    int clientId;
 
     /**
      * Constructor
@@ -33,10 +34,11 @@ public class BaClientReceiver implements Runnable {
      * @param queue
      */
     BaClientReceiver(Socket socket, ObjectInputStream iStream, 
-            BlockingQueue<Message> receiverQueue) {
+            BlockingQueue<Message> receiverQueue, int clientId) {
         this.clientSocket = socket;
         this.receiverQueue = receiverQueue;
         this.iStream = iStream;
+        this.clientId = clientId;
         
     }
 
@@ -50,6 +52,7 @@ public class BaClientReceiver implements Runnable {
         Message msg;
         while (!(Thread.currentThread().isInterrupted())) {
             try {
+                //TODO packet the message with the client id
                 msg = (Message) iStream.readObject();
                 receiverQueue.add(msg);
             } catch (IOException ex) {

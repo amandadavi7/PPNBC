@@ -39,6 +39,7 @@ public class BA {
     static List<String[]> partyAddress;
     private static BlockingQueue<Message> receiverQueue;
     protected static ConcurrentHashMap<Integer, BlockingQueue<Message>> senderQueues;
+    private static int clientId;
 
     public static void main(String[] args) {
         if (args.length < 3) {
@@ -55,6 +56,7 @@ public class BA {
     }
 
     private static void initializeVariables(String[] args) {
+        clientId = 0;
         partyAddress = new ArrayList<>();
         receiverQueue = new LinkedBlockingQueue<>();
         senderQueues = new ConcurrentHashMap<>();
@@ -104,10 +106,8 @@ public class BA {
                 ObjectInputStream iStream = new ObjectInputStream(socket.getInputStream());
                 // Start BaServerHandler thread for this client
                 BaClientReceiver receiverHandler = new BaClientReceiver(socket, 
-                        iStream, receiverQueue);
+                        iStream, receiverQueue, clientId);
                 
-                int clientId = 1;
-                // TODO assign proper client id
                 senderQueues.putIfAbsent(clientId, new LinkedBlockingQueue<>());
                 BaClientSender senderHandler = new BaClientSender(socket, 
                         oStream, senderQueues.get(clientId));
@@ -115,6 +115,8 @@ public class BA {
                 
                 socketFutureList.add(clientHandlerThreads.submit(receiverHandler));
                 socketFutureList.add(clientHandlerThreads.submit(senderHandler));
+                
+                clientId++;
 
             } catch (IOException ex) {
                 Logger.getLogger(BA.class.getName()).log(Level.SEVERE, null, ex);
