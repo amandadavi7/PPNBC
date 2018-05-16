@@ -193,7 +193,7 @@ public class Party {
         initalizeVariables(args);
 
         getSharesFromTI();  // This is a blocking call
-
+        
         startServer();
         startClient();
 

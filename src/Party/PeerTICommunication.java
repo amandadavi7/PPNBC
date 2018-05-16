@@ -22,7 +22,6 @@ import java.util.logging.Logger;
 public class PeerTICommunication implements Callable<TIShare> {
 
     Socket socket = null;
-    ObjectOutputStream oStream = null;
     ObjectInputStream iStream = null;
     TIShare tiShares;
     
@@ -31,7 +30,6 @@ public class PeerTICommunication implements Callable<TIShare> {
         this.tiShares = tiShares;
         try {
 
-            oStream = new ObjectOutputStream(socket.getOutputStream());
             iStream = new ObjectInputStream(socket.getInputStream());
 
         } catch (IOException ex) {
