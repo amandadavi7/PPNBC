@@ -34,7 +34,23 @@ public class CrossMultiplyCompare extends CompositeProtocol implements Callable<
     int numerator1, denominator1, numerator2, denominator2, pid, decimalPrime, binaryPrime;
     List<Triple> decimalTiShares, binaryTiShares;
     
-    // TODO - take 2 primes / the prime here is currently dummy
+    /**
+     * Takes 2 decimal TI Shares and 
+     * @param numerator1
+     * @param denominator1
+     * @param numerator2
+     * @param denominator2
+     * @param oneShare
+     * @param decimaltiShares
+     * @param binaryTiShares
+     * @param senderQueue
+     * @param receiverQueue
+     * @param clientId
+     * @param decimalPrime
+     * @param binaryPrime
+     * @param protocolID
+     * @param protocolIdQueue 
+     */
     public CrossMultiplyCompare(int numerator1, int denominator1, int numerator2, 
             int denominator2, int oneShare, List<Triple> decimaltiShares, 
             List<Triple> binaryTiShares, BlockingQueue<Message> senderQueue,
