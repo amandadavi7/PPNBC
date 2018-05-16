@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -22,8 +23,8 @@ import java.util.logging.Logger;
 public class PartyClient implements Runnable {
 
     BlockingQueue<Message> receiverQueue;
-    String peerServerIP;
-    int peerServerPort;
+    String baServerIP;
+    int baServerPort;
     ObjectOutputStream oStream = null;
     ObjectInputStream iStream = null;
     Socket receiveSocket = null;
@@ -37,8 +38,8 @@ public class PartyClient implements Runnable {
      */
     public PartyClient(BlockingQueue<Message> queue, String ip, int port) {
         this.receiverQueue = queue;
-        this.peerServerIP = ip;
-        this.peerServerPort = port;
+        this.baServerIP = ip;
+        this.baServerPort = port;
     }
 
     /**
@@ -50,7 +51,7 @@ public class PartyClient implements Runnable {
             while ((receiveSocket == null || !receiveSocket.isConnected())
                     && !(Thread.currentThread().isInterrupted())) {
                 receiveSocket = Connection.initializeClientConnection(
-                        peerServerIP, peerServerPort);
+                        baServerIP, baServerPort);
             }
             try {
                 iStream = new ObjectInputStream(receiveSocket.getInputStream());
@@ -61,10 +62,12 @@ public class PartyClient implements Runnable {
 
             while (!(Thread.currentThread().isInterrupted())) {
                 if (receiveSocket != null && receiveSocket.isConnected()) {
-                    Message msg;
+                    List<Message> msgs;
                     try {
-                        msg = (Message) iStream.readObject();
-                        receiverQueue.put(msg);
+                        msgs = (List<Message>) iStream.readObject();
+                        for(Message msg: msgs) {
+                            receiverQueue.put(msg);
+                        }
                     } catch (InterruptedException | IOException ex) {
                         try {
                             oStream.close();

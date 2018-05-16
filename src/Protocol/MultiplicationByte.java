@@ -72,15 +72,18 @@ public class MultiplicationByte extends Protocol implements Callable {
         //System.out.println("Waiting for receiver. parentID=" + parentID + " mult ID=" + protocolID);
         Message receivedMessage = null;
         List<Integer> diffList = null;
+        int d = 0, e = 0;
         try {
             receivedMessage = receiverQueue.take();
             diffList = (List<Integer>) receivedMessage.getValue();
+            d += diffList.get(0);
+            e += diffList.get(1);
         } catch (InterruptedException ex) {
             ex.printStackTrace();
         }
 
-        int d = Math.floorMod((x - tiShares.u) + diffList.get(0), prime);
-        int e = Math.floorMod((y - tiShares.v) + diffList.get(1), prime);
+        d = Math.floorMod(x - tiShares.u + d, prime);
+        e = Math.floorMod(y - tiShares.v + e, prime);
         int product = tiShares.w + (d * tiShares.v) + (tiShares.u * e) + (d * e * oneShare);
         product = Math.floorMod(product, prime);
         //System.out.println("ti("+tiShares.u+","+tiShares.v+","+tiShares.w+"), "+"x*y("+x+","+y+"):"+product);
