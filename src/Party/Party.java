@@ -47,6 +47,7 @@ public class Party {
     private static int tiPort;
     private static String baIP;
     private static int baPort;
+    private static String outputDir;
 
     private static List<List<Integer>> xShares;
     private static List<List<Integer>> yShares;
@@ -102,72 +103,8 @@ public class Party {
                 case "party_id":
                     partyId = Integer.parseInt(value);
                     break;
-                case "xShares":
-                    String csvFile = value;
-
-                    BufferedReader buf;
-                    try {
-                        buf = new BufferedReader(new FileReader(csvFile));
-                        String line = null;
-                        while ((line = buf.readLine()) != null) {
-                            int lineInt[] = Arrays.stream(line.split(",")).mapToInt(Integer::parseInt).toArray();
-                            List<Integer> xline = Arrays.stream(lineInt).boxed().collect(Collectors.toList());
-                            xShares.add(xline);
-                        }
-                    } catch (FileNotFoundException ex) {
-                        Logger.getLogger(Party.class.getName()).log(Level.SEVERE, null, ex);
-                    } catch (IOException ex) {
-                        Logger.getLogger(Party.class.getName()).log(Level.SEVERE, null, ex);
-                    }
-                    break;
                 case "oneShares":
                     oneShares = Integer.parseInt(value);
-                    break;
-                case "yShares":
-                    csvFile = value;
-
-                    try {
-                        buf = new BufferedReader(new FileReader(csvFile));
-                        String line = null;
-                        while ((line = buf.readLine()) != null) {
-                            int lineInt[] = Arrays.stream(line.split(",")).mapToInt(Integer::parseInt).toArray();
-                            List<Integer> yline = Arrays.stream(lineInt).boxed().collect(Collectors.toList());
-                            yShares.add(yline);
-                        }
-                    } catch (FileNotFoundException ex) {
-                        Logger.getLogger(Party.class.getName()).log(Level.SEVERE, null, ex);
-                    } catch (IOException ex) {
-                        Logger.getLogger(Party.class.getName()).log(Level.SEVERE, null, ex);
-                    }
-                    break;
-                case "vShares":
-                    csvFile = value;
-                    try {
-                        buf = new BufferedReader(new FileReader(csvFile));
-                        String line = null;
-                        while ((line = buf.readLine()) != null) {
-                            String[] vListShares = line.split(";");
-                            List<List<Integer>> vline = new ArrayList<>();
-                            for (String str : vListShares) {
-                                int lineInt[] = Arrays.stream(str.split(",")).mapToInt(Integer::parseInt).toArray();
-                                vline.add(Arrays.stream(lineInt).boxed().collect(Collectors.toList()));
-                            }
-                            vShares.add(vline);
-                        }
-                    } catch (FileNotFoundException ex) {
-                        Logger.getLogger(Party.class.getName()).log(Level.SEVERE, null, ex);
-                    } catch (IOException ex) {
-                        Logger.getLogger(Party.class.getName()).log(Level.SEVERE, null, ex);
-                    }
-                    break;
-                case "xCsv":
-                    csvFile = value;
-                    xSharesBigInt = FileIO.loadMatrixFromFile(csvFile);
-                    break;
-                case "yCsv":
-                    csvFile = value;
-                    //TODO generalize it
-                    ySharesBigInt = FileIO.loadListFromFile(csvFile, Zq);
                     break;
                 case "model":
                     modelId = Integer.parseInt(value);
@@ -192,8 +129,10 @@ public class Party {
 
         initalizeVariables(args);
 
+        initalizeModelVariables(args);
+
         getSharesFromTI();  // This is a blocking call
-        
+
         startServer();
         startClient();
 
@@ -298,13 +237,164 @@ public class Party {
                 LinearRegressionEvaluation regressionModel
                         = new LinearRegressionEvaluation(xSharesBigInt, ySharesBigInt,
                                 tiShares.bigIntShares, oneShares, senderQueue,
-                                receiverQueue, partyId, Zq);
+                                receiverQueue, partyId, Zq, outputDir);
 
                 regressionModel.predictValues();
                 break;
-            
+
             default:
                 // test model
+                TestModel testModel = new TestModel(xShares, yShares, vShares,
+                        tiShares.binaryShares, tiShares.decimalShares, tiShares.bigIntShares,
+                        oneShares, senderQueue, receiverQueue, partyId);
+
+                testModel.compute();
+                break;
+        }
+    }
+
+    private static void initalizeModelVariables(String[] args) {
+
+        switch (modelId) {
+            case 1:
+                // DT Scoring
+                for (String arg : args) {
+                    String[] currInput = arg.split("=");
+                    if (currInput.length < 2) {
+                        Logging.partyUsage();
+                        System.exit(0);
+                    }
+                    String command = currInput[0];
+                    String value = currInput[1];
+
+                    switch (command) {
+                        case "vShares":
+                            try {
+                                BufferedReader buf = new BufferedReader(new FileReader(value));
+                                String line = null;
+                                while ((line = buf.readLine()) != null) {
+                                    String[] vListShares = line.split(";");
+                                    List<List<Integer>> vline = new ArrayList<>();
+                                    for (String str : vListShares) {
+                                        int lineInt[] = Arrays.stream(str.split(",")).mapToInt(Integer::parseInt).toArray();
+                                        vline.add(Arrays.stream(lineInt).boxed().collect(Collectors.toList()));
+                                    }
+                                    vShares.add(vline);
+                                }
+                            } catch (FileNotFoundException ex) {
+                                Logger.getLogger(Party.class.getName()).log(Level.SEVERE, null, ex);
+                            } catch (IOException ex) {
+                                Logger.getLogger(Party.class.getName()).log(Level.SEVERE, null, ex);
+                            }
+                            break;
+                    }
+
+                }
+
+                break;
+
+            case 2:
+                // LR Evaluation
+                for (String arg : args) {
+                    String[] currInput = arg.split("=");
+                    if (currInput.length < 2) {
+                        Logging.partyUsage();
+                        System.exit(0);
+                    }
+                    String command = currInput[0];
+                    String value = currInput[1];
+
+                    switch (command) {
+                        case "xCsv":
+                            xSharesBigInt = FileIO.loadMatrixFromFile(value);
+                            break;
+                        case "yCsv":
+                            //TODO generalize it
+                            ySharesBigInt = FileIO.loadListFromFile(value, Zq);
+                            break;
+                        case "output":
+                            outputDir = value;
+                            break;
+
+                    }
+
+                }
+                break;
+
+            default:
+                // test model
+                for (String arg : args) {
+                    String[] currInput = arg.split("=");
+                    if (currInput.length < 2) {
+                        Logging.partyUsage();
+                        System.exit(0);
+                    }
+                    String command = currInput[0];
+                    String value = currInput[1];
+
+                    switch (command) {
+                        case "xShares":
+                            String csvFile = value;
+
+                            BufferedReader buf;
+                            try {
+                                buf = new BufferedReader(new FileReader(csvFile));
+                                String line = null;
+                                while ((line = buf.readLine()) != null) {
+                                    int lineInt[] = Arrays.stream(line.split(",")).mapToInt(Integer::parseInt).toArray();
+                                    List<Integer> xline = Arrays.stream(lineInt).boxed().collect(Collectors.toList());
+                                    xShares.add(xline);
+                                }
+                            } catch (FileNotFoundException ex) {
+                                Logger.getLogger(Party.class.getName()).log(Level.SEVERE, null, ex);
+                            } catch (IOException ex) {
+                                Logger.getLogger(Party.class.getName()).log(Level.SEVERE, null, ex);
+                            }
+                            break;
+                        case "oneShares":
+                            oneShares = Integer.parseInt(value);
+                            break;
+                        case "yShares":
+                            csvFile = value;
+
+                            try {
+                                buf = new BufferedReader(new FileReader(csvFile));
+                                String line = null;
+                                while ((line = buf.readLine()) != null) {
+                                    int lineInt[] = Arrays.stream(line.split(",")).mapToInt(Integer::parseInt).toArray();
+                                    List<Integer> yline = Arrays.stream(lineInt).boxed().collect(Collectors.toList());
+                                    yShares.add(yline);
+                                }
+                            } catch (FileNotFoundException ex) {
+                                Logger.getLogger(Party.class.getName()).log(Level.SEVERE, null, ex);
+                            } catch (IOException ex) {
+                                Logger.getLogger(Party.class.getName()).log(Level.SEVERE, null, ex);
+                            }
+                            break;
+                        case "vShares":
+                            csvFile = value;
+                            try {
+                                buf = new BufferedReader(new FileReader(csvFile));
+                                String line = null;
+                                while ((line = buf.readLine()) != null) {
+                                    String[] vListShares = line.split(";");
+                                    List<List<Integer>> vline = new ArrayList<>();
+                                    for (String str : vListShares) {
+                                        int lineInt[] = Arrays.stream(str.split(",")).mapToInt(Integer::parseInt).toArray();
+                                        vline.add(Arrays.stream(lineInt).boxed().collect(Collectors.toList()));
+                                    }
+                                    vShares.add(vline);
+                                }
+                            } catch (FileNotFoundException ex) {
+                                Logger.getLogger(Party.class.getName()).log(Level.SEVERE, null, ex);
+                            } catch (IOException ex) {
+                                Logger.getLogger(Party.class.getName()).log(Level.SEVERE, null, ex);
+                            }
+                            break;
+                        
+                    }
+
+                }
                 TestModel testModel = new TestModel(xShares, yShares, vShares,
                         tiShares.binaryShares, tiShares.decimalShares, tiShares.bigIntShares,
                         oneShares, senderQueue, receiverQueue, partyId);

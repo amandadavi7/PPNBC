@@ -31,6 +31,7 @@ public class LinearRegressionEvaluation extends Model {
     List<BigInteger> y;
     int testCases;
     BigInteger prime;
+    String outputPath;
 
     /**
      * Constructor
@@ -47,7 +48,7 @@ public class LinearRegressionEvaluation extends Model {
             List<BigInteger> beta, List<TripleReal> realTriples,
             int oneShares, BlockingQueue<Message> senderQueue,
             BlockingQueue<Message> receiverQueue, int clientId, 
-            BigInteger prime) {
+            BigInteger prime, String outputPath) {
 
         super(senderQueue, receiverQueue, clientId, oneShares, null, 
                 null, realTriples);
@@ -55,6 +56,7 @@ public class LinearRegressionEvaluation extends Model {
         this.x = x;
         this.beta = beta;
         this.prime = prime;
+        this.outputPath = outputPath;
         testCases = x.size();
         y = new ArrayList<>();
 
@@ -127,7 +129,7 @@ public class LinearRegressionEvaluation extends Model {
      */
     private void writeToCSV() {
         try {
-            FileWriter writer = new FileWriter("y_"+clientId+".csv");
+            FileWriter writer = new FileWriter(outputPath+"y_"+clientId+".csv");
             for(int i=0;i<testCases;i++) {
                 writer.write(y.get(i).toString());
                 writer.write("\n");
