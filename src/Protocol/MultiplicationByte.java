@@ -73,13 +73,15 @@ public class MultiplicationByte extends Protocol implements Callable {
         Message receivedMessage = null;
         List<Integer> diffList = null;
         int d = 0, e = 0;
-        try {
-            receivedMessage = receiverQueue.take();
-            diffList = (List<Integer>) receivedMessage.getValue();
-            d += diffList.get(0);
-            e += diffList.get(1);
-        } catch (InterruptedException ex) {
-            ex.printStackTrace();
+        for(int i=0;i<Constants.clientCount-1;i++) {
+            try {
+                receivedMessage = receiverQueue.take();
+                diffList = (List<Integer>) receivedMessage.getValue();
+                d += diffList.get(0);
+                e += diffList.get(1);
+            } catch (InterruptedException ex) {
+                ex.printStackTrace();
+            }
         }
 
         d = Math.floorMod(x - tiShares.u + d, prime);
