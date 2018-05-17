@@ -80,7 +80,7 @@ public class BatchMultiplicationByte extends BatchMultiplication
         List<Integer> d = new ArrayList<>(Collections.nCopies(batchSize, 0));
         List<Integer> e = new ArrayList<>(Collections.nCopies(batchSize, 0));
         List<List<Integer>> diffList = null;
-        for(int i=0;i<Constants.clientCount;i++) {
+        for(int i=0;i<Constants.clientCount-1;i++) {
             try {
                 receivedMessage = receiverQueue.take();
                 diffList = (List<List<Integer>>) receivedMessage.getValue();
