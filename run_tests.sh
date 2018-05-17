@@ -1,12 +1,13 @@
 #!/bin/bash
 
 #TODO this is for lr-test now Do it for damf too 
+unset -x
 
 totaltests=$1
-cwd=$(pwd)
-baseoutputpath=$cwd"/test/pax-test-"
-clientPath=$cwd"/test/client_data/"
+baseoutputpath="test/pax-test-"
+clientPath="test/client_data/"
 
+echo $baseoutputpath
 #STEP 1: run the client job
 START=$(date +'%s')
 #. "scripts/lr_client.sh"
@@ -20,7 +21,7 @@ for (( i=2 ; i <= $totaltests; i++ ))
   do  
       for ((j=0; j < $i; j++))
 	do
-            cp "../SMPCEngine/SMPCEngine/tests/lr-pax-test/"$i"-pax/"$j"/results/BETA.csv" $baseoutputpath$i"/BETA_"$j".csv"
+            cp "../SMPCEngine/SMPCEngine/tests/lr-pax-test/$i-pax/$j/results/BETA.csv" "$baseoutputpath$i/BETA_$j.csv"
 	done
     
   done
@@ -41,14 +42,19 @@ for (( i=2 ; i <= $totaltests; i++ ))
     java -cp build/classes/ BroadcastAgent.BA port=4000 partyCount=2 > /dev/null &
     pids[1]=$!
     echo "Started ba; process id:"$pids[1]
+    
 
     # run n parties
     startPort=5000
-    for (( j=0; j <= $i; j++ ))
+    for (( j=0; j < $i; j++ ))
 	do
-            xCsvFile=$outputpath"thetaPower_"$j".csv"
-            yCsvFile=$outputpath"BETA_"$j".csv"
-            java -cp build/classes/ Party.Party party_port=$(($startPort+100)) ti=127.0.0.1:3000 ba=127.0.0.1:4000 party_id=$j yCsv=$yCsvFile xCsv="$xCsvFile" oneShares=0 output=$outputpath model=2 > /dev/null &
+            xFileName="thetaPower_"
+            yFileName="BETA_"
+            xCsvFile="$outputpath$xFileName$j.csv"
+            yCsvFile="$outputpath$yFileName$j.csv"
+            echo $xCsvFile
+            echo $yCsvFile
+            java -cp build/classes/ Party.Party party_port=$(($startPort+100)) ti=127.0.0.1:3000 ba=127.0.0.1:4000 party_id=$j yCsv="$yCsvFile" xCsv="$xCsvFile" oneShares=0 output=$outputpath model=2 &
 	    pids[$((2+$j))]=$!
             echo "Started party$j; process id:"$pids[$((2+$j))]
 	done
