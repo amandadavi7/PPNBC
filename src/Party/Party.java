@@ -407,11 +407,6 @@ public class Party {
                     }
 
                 }
-                TestModel testModel = new TestModel(xShares, yShares, vShares,
-                        tiShares.binaryShares, tiShares.decimalShares, tiShares.bigIntShares,
-                        oneShares, senderQueue, receiverQueue, partyId);
-
-                testModel.compute();
                 break;
         }
     }
