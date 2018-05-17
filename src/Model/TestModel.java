@@ -275,13 +275,13 @@ public class TestModel extends Model {
 
         startModelHandlers();
 
-        callArgMax();
+        //callArgMax();
         //callOIS();
         //callOR_XOR();
         //callBitDecomposition();
 
         // pass 1 - multiplication, 2 - dot product and 3 - comparison
-        //callProtocol(3);
+        callProtocol(2);
         teardownModelHandlers();
 
     }

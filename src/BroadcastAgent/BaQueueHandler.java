@@ -38,6 +38,7 @@ public class BaQueueHandler implements Runnable {
                 for (int i = 0; i < partyCount; i++) {
                     if (i != msgIndex) {
                         senderQueues.putIfAbsent(i, new LinkedBlockingQueue<>());
+                        System.out.println("adding message to senderQueue "+i);
                         senderQueues.get(i).put(msg.message);
                     }
                 }

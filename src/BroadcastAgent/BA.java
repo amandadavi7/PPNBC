@@ -115,7 +115,7 @@ public class BA {
                 
                 socketFutureList.add(clientHandlerThreads.submit(receiverHandler));
                 socketFutureList.add(clientHandlerThreads.submit(senderHandler));
-                
+                System.out.println("client ID:"+clientId+" connected to BA");
                 clientId++;
 
             } catch (IOException ex) {

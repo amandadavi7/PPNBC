@@ -8,8 +8,6 @@ package BroadcastAgent;
 import Communication.Message;
 import java.io.IOException;
 import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.concurrent.BlockingQueue;
 import java.util.logging.Level;
@@ -43,8 +41,8 @@ public class BaClientReceiver implements Runnable {
     }
 
     /**
-     * Continuously running thread that takes entries from senderqueue and send
-     * them to other parties
+     * Continuously running thread that takes entries from socket and adds
+     * to the receiver queue
      */
     @Override
     public void run() {
@@ -53,6 +51,7 @@ public class BaClientReceiver implements Runnable {
         while (!(Thread.currentThread().isInterrupted())) {
             try {
                 msg = (Message) iStream.readObject();
+                System.out.println("received message from client " + clientId);
                 receiverQueue.add(new BaMessagePacket(msg, clientId));
             } catch (IOException ex) {
                 Logger.getLogger(BaClientReceiver.class.getName()).log(Level.SEVERE, null, ex);

@@ -18,6 +18,8 @@ import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.math.BigInteger;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -58,6 +60,8 @@ public class Party {
     private static BigInteger Zq;
 
     private static int modelId;
+    private static Socket clientSocket;
+        
 
     /**
      * Initialize class variables
@@ -95,7 +99,7 @@ public class Party {
                 case "party_port":
                     port = Integer.parseInt(value);
                     break;
-                case "ba_port":
+                case "ba":
                     baIP = value.split(":")[0];
                     baPort = Integer.parseInt(value.split(":")[1]);
                     break;
@@ -194,8 +198,7 @@ public class Party {
 
         getSharesFromTI();  // This is a blocking call
         
-        startServer();
-        startClient();
+        startPartyConnections();
 
         callModel();
 
@@ -225,7 +228,8 @@ public class Party {
 
         tiEs.shutdown();
 
-        System.out.println("Recieved tiShares:" + tiShares.bigIntShares.size());
+        System.out.println("Recieved tiShares:" + tiShares.decimalShares.size() 
+                + "," + tiShares.binaryShares.size() + "," + tiShares.bigIntShares.size());
 
         try {
             socketTI.close();
@@ -235,31 +239,37 @@ public class Party {
 
     }
 
-    /**
-     * Creates a server thread that sends data from sender queue to the given
-     * peer/ set of peers
-     */
-    private static void startServer() {
-        System.out.println("Server thread starting");
-        PartyServer partyServer = new PartyServer(socketServer, senderQueue);
-        socketFutureList.add(partySocketEs.submit(partyServer));
-
-    }
-
-    /**
-     * Creates a client thread that receives data from socket and saves it to
-     * the corresponding receiver queue
-     *
-     */
-    private static void startClient() {
+    
+    private static void startPartyConnections() {
+        System.out.println("creating a party socket");
+        clientSocket = Connection.initializeClientConnection(
+                        baIP, baPort);
+        ObjectOutputStream oStream = null;
+        ObjectInputStream iStream = null;
+    
+        try {
+            oStream = new ObjectOutputStream(clientSocket.getOutputStream());
+            iStream = new ObjectInputStream(clientSocket.getInputStream());
+        } catch (IOException ex) {
+            Logger.getLogger(Party.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        
         System.out.println("Client thread starting");
-        PartyClient partyClient = new PartyClient(receiverQueue, baIP, baPort);
+        PartyClient partyClient = new PartyClient(receiverQueue, clientSocket, iStream);
         socketFutureList.add(partySocketEs.submit(partyClient));
-
+        
+        System.out.println("Server thread starting");
+        PartyServer partyServer = new PartyServer(clientSocket, senderQueue, oStream);
+        socketFutureList.add(partySocketEs.submit(partyServer));
     }
 
     private static void tearDownSocket() {
         partySocketEs.shutdownNow();
+//        try {
+//            clientSocket.close();
+//        } catch (IOException ex) {
+//            Logger.getLogger(Party.class.getName()).log(Level.SEVERE, null, ex);
+//        }
     }
 
     private static void callModel() {

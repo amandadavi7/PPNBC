@@ -6,12 +6,9 @@
 package Party;
 
 import Communication.Message;
-import Utility.Connection;
 import java.io.IOException;
 import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.net.Socket;
-import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -23,9 +20,9 @@ import java.util.logging.Logger;
 public class PartyClient implements Runnable {
 
     BlockingQueue<Message> receiverQueue;
-    String baServerIP;
-    int baServerPort;
-    ObjectOutputStream oStream = null;
+    //String baServerIP;
+    //int baServerPort;
+    //ObjectOutputStream oStream = null;
     ObjectInputStream iStream = null;
     Socket receiveSocket = null;
 
@@ -33,13 +30,15 @@ public class PartyClient implements Runnable {
      * Constructor
      *
      * @param queue
-     * @param ip
-     * @param port
+     * @param socket
+     * @param iStream
      */
-    public PartyClient(BlockingQueue<Message> queue, String ip, int port) {
+    public PartyClient(BlockingQueue<Message> queue, Socket socket, ObjectInputStream iStream) {
         this.receiverQueue = queue;
-        this.baServerIP = ip;
-        this.baServerPort = port;
+        //this.baServerIP = ip;
+        //this.baServerPort = port;
+        this.receiveSocket = socket;
+        this.iStream = iStream;
     }
 
     /**
@@ -47,32 +46,17 @@ public class PartyClient implements Runnable {
      */
     @Override
     public void run() {
-        while (!(Thread.currentThread().isInterrupted())) {
-            while ((receiveSocket == null || !receiveSocket.isConnected())
-                    && !(Thread.currentThread().isInterrupted())) {
-                receiveSocket = Connection.initializeClientConnection(
-                        baServerIP, baServerPort);
-            }
-            try {
-                iStream = new ObjectInputStream(receiveSocket.getInputStream());
-                oStream = new ObjectOutputStream(receiveSocket.getOutputStream());
-            } catch (IOException ex) {
-                break;
-            }
 
             while (!(Thread.currentThread().isInterrupted())) {
-                if (receiveSocket != null && receiveSocket.isConnected()) {
-                    List<Message> msgs;
+                    Message msgs;
                     try {
-                        msgs = (List<Message>) iStream.readObject();
-                        for(Message msg: msgs) {
-                            receiverQueue.put(msg);
-                        }
+                        msgs = (Message) iStream.readObject();
+                        //for(Message msg: msgs) {
+                        receiverQueue.put(msgs);
+                        //}
                     } catch (InterruptedException | IOException ex) {
                         try {
-                            oStream.close();
                             iStream.close();
-                            receiveSocket.close();
                         } catch (IOException ex1) {
                             Logger.getLogger(PartyClient.class.getName()).log(Level.SEVERE, null, ex1);
                         }
@@ -81,11 +65,8 @@ public class PartyClient implements Runnable {
                     } catch (ClassNotFoundException ex) {
                         break;
                     } 
-                } else {
-                    break;
-                }
+                
             }
-        }
 
     }
 }
