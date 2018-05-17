@@ -39,13 +39,12 @@ public class BA {
     private static List<Future<Boolean>> receiverFutureList;
 
     static int baPort, partyCount;
-    static List<String[]> partyAddress;
     private static BlockingQueue<BaMessagePacket> receiverQueue;
     protected static ConcurrentHashMap<Integer, BlockingQueue<Message>> senderQueues;
     private static int clientId;
     
     public static void main(String[] args) {
-        if (args.length < 3) {
+        if (args.length < 2) {
             Logging.baUsage();
             System.exit(0);
         }
@@ -61,7 +60,6 @@ public class BA {
 
     private static void initializeVariables(String[] args) {
         clientId = 0;
-        partyAddress = new ArrayList<>();
         receiverQueue = new LinkedBlockingQueue<>();
         senderQueues = new ConcurrentHashMap<>();
         clientHandlerThreads = Executors.newFixedThreadPool(Constants.threadCount);
@@ -83,14 +81,7 @@ public class BA {
                 case "partyCount":
                     partyCount = Integer.valueOf(value);
                     break;
-                case "partyIP":
-                    String[] address = value.split(";");
-                    for (String curr : address) {
-                        String[] currAddress = new String[2];
-                        currAddress[0] = curr.split(":")[0];
-                        currAddress[1] = curr.split(":")[1];
-                        partyAddress.add(currAddress);
-                    }
+                
             }
         }
 
@@ -104,7 +95,7 @@ public class BA {
 
     private static void initiateConnections() {
         //start n server threads to broadcast
-        System.out.println("no. of clients:"+partyAddress.size());
+        System.out.println("no. of clients:"+partyCount);
         Socket socket;
         
         for(int i=0;i<partyCount;i++) {

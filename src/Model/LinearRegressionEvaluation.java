@@ -108,7 +108,7 @@ public class LinearRegressionEvaluation extends Model {
             try {
                 BigInteger result = dWorkerResponse.get();
                 y.add(result);
-                System.out.println(" #:" + i);
+                //System.out.println(" #:" + i);
             } catch (InterruptedException ex) {
                 Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
             } catch (ExecutionException ex) {
