@@ -287,6 +287,7 @@ public class BitDecomposition extends CompositeProtocol implements
         es.shutdown();
 
         // Compute c and w sequentially when both threads end
+        // TODO Anisha: Optimize this further
         boolean threadsCompleted;
         try {
             threadsCompleted = es.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);

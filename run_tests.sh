@@ -4,13 +4,14 @@
 
 totaltests=14
 baseoutputpath="test/pax-test-"
+clientPath="test/client_data/"
 
 #STEP 1: run the client job
 for ( i=2 ; i <= $totaltests; i++ )
   do  
     outputpath="test/pax-test-"$i
     mkdir -p $outputpath
-    java -cp build/classes/ Client.LinearRegressionClient $i "test/client_data/subject_14_thetaPower.csv" $outputpath
+    java -cp build/classes/ Client.LinearRegressionClient $i $clientPath"subject_14_thetaPower.csv" $outputpath
   done
 
 #STEP 2: Copy all beta files from SMPC testsuits
@@ -53,6 +54,12 @@ for ( i=2 ; i <= $totaltests; i++ )
     done
 
 #STEP 4: TODO merge outputfiles and calculate rmse
+
+for ( i=2 ; i <= $totaltests; i++ )
+  do  
+    outputpath=$baseoutputpath$i"/"
+    python3 calculate_rmse.py $outputpath $clientPath
+  done
 
   done
 
