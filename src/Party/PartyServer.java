@@ -8,7 +8,6 @@ package Party;
 import Communication.Message;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
-import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.concurrent.BlockingQueue;
 import java.util.logging.Level;
@@ -20,18 +19,21 @@ import java.util.logging.Logger;
  */
 public class PartyServer implements Runnable {
 
-    ServerSocket socketServer;
+    Socket socket;
     BlockingQueue<Message> senderQueue;
+    ObjectOutputStream oStream;
 
     /**
      * Constructor
      *
-     * @param socketserver
+     * @param socket
      * @param queue
+     * @param oStream
      */
-    public PartyServer(ServerSocket socketserver, BlockingQueue<Message> queue) {
-        this.socketServer = socketserver;
+    public PartyServer(Socket socket, BlockingQueue<Message> queue, ObjectOutputStream oStream) {
+        this.socket = socket;
         this.senderQueue = queue;
+        this.oStream = oStream;
     }
 
     /**
@@ -40,16 +42,6 @@ public class PartyServer implements Runnable {
      */
     @Override
     public void run() {
-
-        Socket clientSocket = null;
-        ObjectOutputStream oStream = null;
-        try {
-            clientSocket = socketServer.accept();
-            System.out.println("Connected to:" + clientSocket);
-            oStream = new ObjectOutputStream(clientSocket.getOutputStream());
-        } catch (IOException ex) {
-            Logger.getLogger(PartyServer.class.getName()).log(Level.SEVERE, null, ex);
-        }
 
         while (!(Thread.currentThread().isInterrupted())) {
             Message msg;
@@ -64,8 +56,6 @@ public class PartyServer implements Runnable {
         
         try {
             oStream.close();
-            clientSocket.close();
-            socketServer.close();
         } catch (IOException ex) {
             Logger.getLogger(PartyServer.class.getName()).log(Level.SEVERE, null, ex);
         }

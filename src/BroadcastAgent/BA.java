@@ -15,9 +15,11 @@ import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -32,15 +34,16 @@ import java.util.logging.Logger;
 public class BA {
 
     private static ServerSocket socketServer;       // Server to broadcast messages
-    private static ExecutorService clientHandlerThreads;
-    private static List<Future<?>> socketFutureList;
+    private static ExecutorService clientHandlerThreads, es;
+    private static List<Future<Boolean>> senderFutureList;
+    private static List<Future<Boolean>> receiverFutureList;
 
     static int baPort, partyCount;
     static List<String[]> partyAddress;
     private static BlockingQueue<BaMessagePacket> receiverQueue;
     protected static ConcurrentHashMap<Integer, BlockingQueue<Message>> senderQueues;
     private static int clientId;
-
+    
     public static void main(String[] args) {
         if (args.length < 3) {
             Logging.baUsage();
@@ -52,6 +55,7 @@ public class BA {
         initiateConnections();
         
         //TODO handle teardown flow
+        checkAndTeardownThreads();
 
     }
 
@@ -61,7 +65,8 @@ public class BA {
         receiverQueue = new LinkedBlockingQueue<>();
         senderQueues = new ConcurrentHashMap<>();
         clientHandlerThreads = Executors.newFixedThreadPool(Constants.threadCount);
-        socketFutureList = new ArrayList<>();
+        senderFutureList = new ArrayList<>();
+        receiverFutureList = new ArrayList<>();
 
         for (String arg : args) {
             String[] currInput = arg.split("=");
@@ -84,6 +89,7 @@ public class BA {
                         String[] currAddress = new String[2];
                         currAddress[0] = curr.split(":")[0];
                         currAddress[1] = curr.split(":")[1];
+                        partyAddress.add(currAddress);
                     }
             }
         }
@@ -98,24 +104,26 @@ public class BA {
 
     private static void initiateConnections() {
         //start n server threads to broadcast
+        System.out.println("no. of clients:"+partyAddress.size());
         Socket socket;
-        while (true) {
+        
+        for(int i=0;i<partyCount;i++) {
             try {
                 socket = socketServer.accept();
                 ObjectOutputStream oStream = new ObjectOutputStream(socket.getOutputStream());
                 ObjectInputStream iStream = new ObjectInputStream(socket.getInputStream());
                 // Start BaServerHandler thread for this client
                 BaClientReceiver receiverHandler = new BaClientReceiver(socket, 
-                        iStream, receiverQueue, clientId);
+                        iStream, receiverQueue, clientId, partyCount);
                 
                 senderQueues.putIfAbsent(clientId, new LinkedBlockingQueue<>());
                 BaClientSender senderHandler = new BaClientSender(socket, 
                         oStream, senderQueues.get(clientId));
                 
                 
-                socketFutureList.add(clientHandlerThreads.submit(receiverHandler));
-                socketFutureList.add(clientHandlerThreads.submit(senderHandler));
-                
+                receiverFutureList.add(clientHandlerThreads.submit(receiverHandler));
+                senderFutureList.add(clientHandlerThreads.submit(senderHandler));
+                System.out.println("client ID:"+clientId+" connected to BA");
                 clientId++;
 
             } catch (IOException ex) {
@@ -127,8 +135,25 @@ public class BA {
     }
 
     private static void startQueueMappingThread() {
-        ExecutorService es = Executors.newSingleThreadExecutor();
+        es = Executors.newSingleThreadExecutor();
         BaQueueHandler queueHandler = new BaQueueHandler(partyCount,receiverQueue, senderQueues);
         es.submit(queueHandler);
+    }
+    
+    private static void checkAndTeardownThreads() {
+        System.out.println("checking...");
+        for(int i=0;i<partyCount;i++) {
+            Future<Boolean> recThread = receiverFutureList.get(i);
+            try {
+                Boolean done = recThread.get();
+                System.out.println("cancelling sender");
+                senderFutureList.get(i).cancel(true);
+            } catch (InterruptedException | ExecutionException ex) {
+                Logger.getLogger(BA.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            
+        }
+        
+        es.shutdownNow();
     }
 }
