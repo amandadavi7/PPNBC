@@ -155,5 +155,6 @@ public class BA {
         }
         
         es.shutdownNow();
+        clientHandlerThreads.shutdownNow();
     }
 }
