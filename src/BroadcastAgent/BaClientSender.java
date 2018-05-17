@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Callable;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -18,11 +19,13 @@ import java.util.logging.Logger;
  * over the socket
  * @author anisha
  */
-public class BaClientSender implements Runnable {
+public class BaClientSender implements Callable<Boolean> {
 
     Socket clientSocket;
     BlockingQueue<Message> senderQueue;
     ObjectOutputStream oStream = null;
+    //static AtomicInteger counter = new AtomicInteger();
+    //int totalClients;
     
     /**
      * Constructor
@@ -35,7 +38,7 @@ public class BaClientSender implements Runnable {
         this.clientSocket = socket;
         this.senderQueue = senderQueue;
         this.oStream = oStream;
-        
+        //this.totalClients = totalClients;
     }
 
     /**
@@ -43,15 +46,16 @@ public class BaClientSender implements Runnable {
      * them to other parties
      */
     @Override
-    public void run() {
+    public Boolean call() {
 
         Message msg;
         while (!(Thread.currentThread().isInterrupted())) {
             try {
                 msg = senderQueue.take();
-                System.out.println("sending message..");
+                //System.out.println("sending message..");
                 oStream.writeObject(msg);                
             } catch (InterruptedException | IOException ex) {
+                System.out.println("breaking from sender thread");
                 break;
             } 
         }
@@ -62,6 +66,8 @@ public class BaClientSender implements Runnable {
         } catch (IOException ex) {
             Logger.getLogger(BaClientSender.class.getName()).log(Level.SEVERE, null, ex);
         }
+        
+        return true;
 
     }
 }

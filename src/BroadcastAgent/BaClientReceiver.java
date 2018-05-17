@@ -10,6 +10,8 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.net.Socket;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -18,12 +20,13 @@ import java.util.logging.Logger;
  * broadcasting. There are (partyCount) receiver threads
  * @author anisha
  */
-public class BaClientReceiver implements Runnable {
+public class BaClientReceiver implements Callable<Boolean> {
 
     Socket clientSocket;
     BlockingQueue<BaMessagePacket> receiverQueue;
     ObjectInputStream iStream = null;
-    int clientId;
+    int clientId, totalClients;
+    static AtomicInteger counter = new AtomicInteger();
 
     /**
      * Constructor
@@ -32,12 +35,12 @@ public class BaClientReceiver implements Runnable {
      * @param queue
      */
     BaClientReceiver(Socket socket, ObjectInputStream iStream, 
-            BlockingQueue<BaMessagePacket> receiverQueue, int clientId) {
+            BlockingQueue<BaMessagePacket> receiverQueue, int clientId, int totalCount) {
         this.clientSocket = socket;
         this.receiverQueue = receiverQueue;
         this.iStream = iStream;
         this.clientId = clientId;
-        
+        this.totalClients = totalCount;
     }
 
     /**
@@ -45,16 +48,20 @@ public class BaClientReceiver implements Runnable {
      * to the receiver queue
      */
     @Override
-    public void run() {
+    public Boolean call() {
 
         Message msg;
         while (!(Thread.currentThread().isInterrupted())) {
             try {
                 msg = (Message) iStream.readObject();
-                System.out.println("received message from client " + clientId);
+                //System.out.println("received message from client " + clientId);
                 receiverQueue.add(new BaMessagePacket(msg, clientId));
             } catch (IOException ex) {
-                Logger.getLogger(BaClientReceiver.class.getName()).log(Level.SEVERE, null, ex);
+                if(counter.incrementAndGet() >= totalClients) {
+                    System.out.println("breaking in recv thread "+counter);
+                    break;
+                }
+                //Logger.getLogger(BaClientReceiver.class.getName()).log(Level.SEVERE, null, ex);
             } catch (ClassNotFoundException ex) {
                 Logger.getLogger(BaClientReceiver.class.getName()).log(Level.SEVERE, null, ex);
             }
@@ -67,6 +74,7 @@ public class BaClientReceiver implements Runnable {
         } catch (IOException ex) {
             Logger.getLogger(BaClientReceiver.class.getName()).log(Level.SEVERE, null, ex);
         }
-
+        
+        return true;
     }
 }
