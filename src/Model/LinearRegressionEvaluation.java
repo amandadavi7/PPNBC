@@ -59,6 +59,7 @@ public class LinearRegressionEvaluation extends Model {
         this.prime = prime;
         this.outputPath = outputPath;
         testCases = x.size();
+        System.out.println("Testcases predicting:"+ testCases);
         y = new ArrayList<>();
 
     }
@@ -120,7 +121,7 @@ public class LinearRegressionEvaluation extends Model {
         long stopTime = System.currentTimeMillis();
         long elapsedTime = stopTime - startTime;
         //TODO: push time to a csv file
-        System.out.println("Avg time duration:" + elapsedTime+" for partyId:"+ clientId);
+        System.out.println("Avg time duration:" + elapsedTime+" for partyId:"+ clientId+", for size:"+ y.size());
     }
 
     /**
@@ -135,6 +136,8 @@ public class LinearRegressionEvaluation extends Model {
                 writer.write(y.get(i).toString());
                 writer.write("\n");
             }
+            writer.close();
+            System.out.println("Written all lines");
         } catch (IOException ex) {
             Logger.getLogger(LinearRegressionEvaluation.class.getName()).log(Level.SEVERE, null, ex);
         }

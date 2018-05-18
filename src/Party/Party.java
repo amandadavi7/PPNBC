@@ -114,7 +114,7 @@ public class Party {
                 case "model":
                     modelId = Integer.parseInt(value);
                     break;
-                case "partCount":
+                case "partyCount":
                     partyCount = Integer.parseInt(value);
             }
 
@@ -171,9 +171,6 @@ public class Party {
         }
 
         tiEs.shutdown();
-
-        System.out.println("Recieved tiShares:" + tiShares.decimalShares.size() 
-                + "," + tiShares.binaryShares.size() + "," + tiShares.bigIntShares.size());
 
         try {
             socketTI.close();

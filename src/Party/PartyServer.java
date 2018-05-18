@@ -57,7 +57,7 @@ public class PartyServer implements Runnable {
         try {
             oStream.close();
         } catch (IOException ex) {
-            Logger.getLogger(PartyServer.class.getName()).log(Level.SEVERE, null, ex);
+            //Logger.getLogger(PartyServer.class.getName()).log(Level.SEVERE, null, ex);
         }
         
         System.out.println("Server closed");

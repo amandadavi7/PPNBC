@@ -61,8 +61,8 @@ public class Logging {
     public static void partyUsage() {
         System.out.println("Usage: \n java Party.Party party_port=<port> "
                 + "ti=<TI IP:port> \n"
-                + "peer_port=<peer IP:port> \n"
-                + "partCount=<total number of parties involved> \n"
+                + "ba=<BA IP:port> \n"
+                + "partyCount=<total number of parties involved> \n"
                 + "party_id=<Party Id> \n"
                 + "model=<Model Id(1: DT Scoring 2:LR Evaluation 3:KNN "
                 + "4:DT Learning default:TestModel)> ");

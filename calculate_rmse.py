@@ -19,7 +19,7 @@ def appendData(dataPath, datafile):
                 framesY.append(dfRT)
     if framesY:
         totalY = pd.concat(framesY)
-    return totalY,len(framesY)
+    return totalY
 
 
 # iterate through the files and test for each driver, avg the rmse - evaluation
@@ -28,11 +28,12 @@ outputPath = sys.argv[1]
 clientDataPath = sys.argv[2]
 
 clientY = pd.DataFrame.from_csv(cwd+"/"+clientDataPath+"subject_14_RT.csv", header=None, index_col=None)
-print(clientY.head())
+print(clientY.shape)
 actualYArray = clientY[0].values
 
 for i in range(0,14):
     predictedY = appendData(outputPath,"RT")
+    print(predictedY.shape)
     predictedYArray = predictedY[0].values
     rms_lr.append(sqrt(mean_squared_error(actualYArray, predictedYArray)))
     
