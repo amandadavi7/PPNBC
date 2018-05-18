@@ -9,10 +9,9 @@ import Communication.Message;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
+ * Broadcast a message to all other client sender queue
  *
  * @author anisha
  */
@@ -22,6 +21,13 @@ public class BaQueueHandler implements Runnable {
     BlockingQueue<BaMessagePacket> receiverQueue;
     ConcurrentHashMap<Integer, BlockingQueue<Message>> senderQueues;
 
+    /**
+     * Constructor
+     *
+     * @param n
+     * @param receiverQueue
+     * @param senderQueues
+     */
     BaQueueHandler(int n, BlockingQueue<BaMessagePacket> receiverQueue,
             ConcurrentHashMap<Integer, BlockingQueue<Message>> senderQueues) {
         this.partyCount = n;
@@ -29,6 +35,10 @@ public class BaQueueHandler implements Runnable {
         this.senderQueues = senderQueues;
     }
 
+    /**
+     * Take message from the receiver queue and send it to all other client
+     * sender queues
+     */
     @Override
     public void run() {
         while (!(Thread.currentThread().isInterrupted())) {
@@ -45,7 +55,6 @@ public class BaQueueHandler implements Runnable {
             } catch (InterruptedException ex) {
                 System.out.println("Breaking out of BAQueueHandler");
                 break;
-                //Logger.getLogger(BaQueueHandler.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
     }

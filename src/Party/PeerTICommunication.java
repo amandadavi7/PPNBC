@@ -6,17 +6,15 @@
 package Party;
 
 import TrustedInitializer.TIShare;
-import TrustedInitializer.Triple;
 import java.io.IOException;
 import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.concurrent.Callable;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- *
+ * Receive all Ti shares
  * @author anisha
  */
 public class PeerTICommunication implements Callable<TIShare> {
@@ -29,9 +27,7 @@ public class PeerTICommunication implements Callable<TIShare> {
         this.socket = socket;
         this.tiShares = tiShares;
         try {
-
             iStream = new ObjectInputStream(socket.getInputStream());
-
         } catch (IOException ex) {
             Logger.getLogger(PeerTICommunication.class.getName()).log(Level.SEVERE, null, ex);
         }

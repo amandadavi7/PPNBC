@@ -16,8 +16,9 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Every client receives the message and puts it in the receiver queue for 
+ * Every client receives the message and puts it in the receiver queue for
  * broadcasting. There are (partyCount) receiver threads
+ *
  * @author anisha
  */
 public class BaClientReceiver implements Callable<Boolean> {
@@ -34,8 +35,9 @@ public class BaClientReceiver implements Callable<Boolean> {
      * @param socketserver
      * @param queue
      */
-    BaClientReceiver(Socket socket, ObjectInputStream iStream, 
-            BlockingQueue<BaMessagePacket> receiverQueue, int clientId, int totalCount) {
+    BaClientReceiver(Socket socket, ObjectInputStream iStream,
+            BlockingQueue<BaMessagePacket> receiverQueue, int clientId,
+            int totalCount) {
         this.clientSocket = socket;
         this.receiverQueue = receiverQueue;
         this.iStream = iStream;
@@ -44,8 +46,8 @@ public class BaClientReceiver implements Callable<Boolean> {
     }
 
     /**
-     * Continuously running thread that takes entries from socket and adds
-     * to the receiver queue
+     * Continuously running thread that takes entries from socket and adds to
+     * the receiver queue
      */
     @Override
     public Boolean call() {
@@ -54,16 +56,16 @@ public class BaClientReceiver implements Callable<Boolean> {
         while (!(Thread.currentThread().isInterrupted())) {
             try {
                 msg = (Message) iStream.readObject();
-                //System.out.println("received message from client " + clientId);
                 receiverQueue.add(new BaMessagePacket(msg, clientId));
             } catch (IOException ex) {
-                if(counter.incrementAndGet() >= totalClients) {
-                    System.out.println("breaking in recv thread "+counter);
+                if (counter.incrementAndGet() >= totalClients) {
+                    System.out.println("breaking in BaClientReceiver thread " + 
+                            counter);
                     break;
                 }
-                //Logger.getLogger(BaClientReceiver.class.getName()).log(Level.SEVERE, null, ex);
             } catch (ClassNotFoundException ex) {
-                Logger.getLogger(BaClientReceiver.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(BaClientReceiver.class.getName())
+                        .log(Level.SEVERE, null, ex);
             }
 
         }
@@ -72,9 +74,10 @@ public class BaClientReceiver implements Callable<Boolean> {
             iStream.close();
             clientSocket.close();
         } catch (IOException ex) {
-            Logger.getLogger(BaClientReceiver.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(BaClientReceiver.class.getName())
+                    .log(Level.SEVERE, null, ex);
         }
-        
+
         return true;
     }
 }

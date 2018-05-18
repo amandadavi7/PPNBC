@@ -51,6 +51,11 @@ public class LinearRegressionClient {
         saveToCSV();
     }
 
+    /**
+     * initialize input variables from command line
+     *
+     * @param args command line arguments
+     */
     private static void initalizeVariables(String[] args) {
         noOfParties = Integer.parseInt(args[0]);
         System.out.println("Num of parties:"+ noOfParties);
@@ -62,6 +67,9 @@ public class LinearRegressionClient {
 
     }
 
+    /**
+     * Split input between n parties
+     */
     private static void splitInput() {
         SecureRandom srng = new SecureRandom();
         for (int i = 0; i < row; i++) {
@@ -80,11 +88,15 @@ public class LinearRegressionClient {
         }
     }
 
+    /**
+     * Save shares of input for n parties
+     */
     private static void saveToCSV() {
         // TODO: add proper directory location
         String baseFileName = destDir + "/thetaPower_";
         for (int partyId = 0; partyId < noOfParties; partyId++) {
-            try (BufferedWriter br = new BufferedWriter(new FileWriter(baseFileName + partyId+".csv"))) {
+            try (BufferedWriter br = new BufferedWriter(new FileWriter(
+                    baseFileName + partyId+".csv"))) {
                 for (int rowIndex = 0; rowIndex < row; rowIndex++) {
                     for (int colIndex = 0; colIndex < col; colIndex++) {
                         br.append(partyInput[partyId][rowIndex][colIndex]+",");

@@ -63,7 +63,6 @@ public class Party {
 
     private static int modelId;
     private static Socket clientSocket;
-        
 
     /**
      * Initialize class variables
@@ -140,9 +139,7 @@ public class Party {
 
         getSharesFromTI();  // This is a blocking call
 
-        
         startPartyConnections();
-
 
         callModel();
 
@@ -180,25 +177,24 @@ public class Party {
 
     }
 
-    
     private static void startPartyConnections() {
         System.out.println("creating a party socket");
         clientSocket = Connection.initializeClientConnection(
-                        baIP, baPort);
+                baIP, baPort);
         ObjectOutputStream oStream = null;
         ObjectInputStream iStream = null;
-    
+
         try {
             oStream = new ObjectOutputStream(clientSocket.getOutputStream());
             iStream = new ObjectInputStream(clientSocket.getInputStream());
         } catch (IOException ex) {
             Logger.getLogger(Party.class.getName()).log(Level.SEVERE, null, ex);
         }
-        
+
         System.out.println("Client thread starting");
         PartyClient partyClient = new PartyClient(receiverQueue, clientSocket, iStream);
         socketFutureList.add(partySocketEs.submit(partyClient));
-        
+
         System.out.println("Server thread starting");
         PartyServer partyServer = new PartyServer(clientSocket, senderQueue, oStream);
         socketFutureList.add(partySocketEs.submit(partyServer));
@@ -403,7 +399,7 @@ public class Party {
                                 Logger.getLogger(Party.class.getName()).log(Level.SEVERE, null, ex);
                             }
                             break;
-                        
+
                     }
 
                 }

@@ -15,7 +15,6 @@ import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
@@ -28,6 +27,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
+ * The BA entity works as a bulletin board for the party communications. This
+ * reduces the communication overhead from n^2 to n
  *
  * @author anisha
  */
@@ -42,7 +43,7 @@ public class BA {
     private static BlockingQueue<BaMessagePacket> receiverQueue;
     protected static ConcurrentHashMap<Integer, BlockingQueue<Message>> senderQueues;
     private static int clientId;
-    
+
     public static void main(String[] args) {
         if (args.length < 2) {
             Logging.baUsage();
@@ -52,12 +53,15 @@ public class BA {
         initializeVariables(args);
         startQueueMappingThread();
         initiateConnections();
-        
-        //TODO handle teardown flow
         checkAndTeardownThreads();
 
     }
 
+    /**
+     * initialize input variables from command line
+     *
+     * @param args command line arguments
+     */
     private static void initializeVariables(String[] args) {
         clientId = 0;
         receiverQueue = new LinkedBlockingQueue<>();
@@ -81,7 +85,7 @@ public class BA {
                 case "partyCount":
                     partyCount = Integer.valueOf(value);
                     break;
-                
+
             }
         }
 
@@ -93,28 +97,34 @@ public class BA {
 
     }
 
+    /**
+     * Accept a connection from party and create two threads to send and receive
+     * data
+     */
     private static void initiateConnections() {
         //start n server threads to broadcast
-        System.out.println("no. of clients:"+partyCount);
-        Socket socket;
-        
-        for(int i=0;i<partyCount;i++) {
+        System.out.println("no. of clients:" + partyCount);
+        Socket socket = null;
+
+        for (int i = 0; i < partyCount; i++) {
             try {
                 socket = socketServer.accept();
-                ObjectOutputStream oStream = new ObjectOutputStream(socket.getOutputStream());
-                ObjectInputStream iStream = new ObjectInputStream(socket.getInputStream());
-                // Start BaServerHandler thread for this client
-                BaClientReceiver receiverHandler = new BaClientReceiver(socket, 
+                ObjectOutputStream oStream = new ObjectOutputStream(socket
+                        .getOutputStream());
+                ObjectInputStream iStream = new ObjectInputStream(socket
+                        .getInputStream());
+                
+                // Start Receiver and Sender thread for this client
+                BaClientReceiver receiverHandler = new BaClientReceiver(socket,
                         iStream, receiverQueue, clientId, partyCount);
-                
+
                 senderQueues.putIfAbsent(clientId, new LinkedBlockingQueue<>());
-                BaClientSender senderHandler = new BaClientSender(socket, 
+                BaClientSender senderHandler = new BaClientSender(socket,
                         oStream, senderQueues.get(clientId));
-                
-                
+
                 receiverFutureList.add(clientHandlerThreads.submit(receiverHandler));
                 senderFutureList.add(clientHandlerThreads.submit(senderHandler));
-                System.out.println("client ID:"+clientId+" connected to BA");
+                System.out.println("client ID:" + clientId + " connected to BA");
                 clientId++;
 
             } catch (IOException ex) {
@@ -125,15 +135,22 @@ public class BA {
 
     }
 
+    /**
+     * Send message to all other client queues
+     */
     private static void startQueueMappingThread() {
         es = Executors.newSingleThreadExecutor();
-        BaQueueHandler queueHandler = new BaQueueHandler(partyCount,receiverQueue, senderQueues);
+        BaQueueHandler queueHandler = new BaQueueHandler(partyCount, 
+                receiverQueue, senderQueues);
         es.submit(queueHandler);
     }
-    
+
+    /**
+     * Teardown threads when all clients are done with the computation
+     */
     private static void checkAndTeardownThreads() {
         System.out.println("checking...");
-        for(int i=0;i<partyCount;i++) {
+        for (int i = 0; i < partyCount; i++) {
             Future<Boolean> recThread = receiverFutureList.get(i);
             try {
                 Boolean done = recThread.get();
@@ -142,9 +159,8 @@ public class BA {
             } catch (InterruptedException | ExecutionException ex) {
                 Logger.getLogger(BA.class.getName()).log(Level.SEVERE, null, ex);
             }
-            
         }
-        
+
         es.shutdownNow();
         clientHandlerThreads.shutdownNow();
     }

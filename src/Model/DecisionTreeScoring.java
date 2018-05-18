@@ -82,7 +82,8 @@ class PolynomialComputing implements Callable<Integer[]> {
             List<Future<Integer[]>> taskList = new ArrayList<>();
         
             List<Integer> yj = Arrays.asList(y_j);
-            List<Integer> z_u = new ArrayList<>(Collections.<Integer>nCopies(Constants.batchSize, 
+            List<Integer> z_u = new ArrayList<>(Collections.<Integer>nCopies(
+                    Constants.batchSize, 
                     (comparisonOutputs[u-1] + oneShare*jBinary[s-1])%Constants.binaryPrime));
                         
             int i=0;
@@ -94,9 +95,12 @@ class PolynomialComputing implements Callable<Integer[]> {
                 
                 recQueues.putIfAbsent(startpid, new LinkedBlockingQueue<>());
                 
-                BatchMultiplicationByte mults = new BatchMultiplicationByte(yj.subList(i, toIndex), z_u, 
-                        tiShares.subList(i, toIndex), commonSender, recQueues.get(startpid), new LinkedList<>(protocolIdQueue),clientId, 
-                        Constants.binaryPrime, startpid, oneShare, protocolId, partyCount);
+                BatchMultiplicationByte mults = new BatchMultiplicationByte(
+                        yj.subList(i, toIndex), z_u, tiShares.subList(i, toIndex), 
+                        commonSender, recQueues.get(startpid), 
+                        new LinkedList<>(protocolIdQueue),clientId, 
+                        Constants.binaryPrime, startpid, oneShare, protocolId, 
+                        partyCount);
 
                 Future<Integer[]> task = es.submit(mults);
                 taskList.add(task);

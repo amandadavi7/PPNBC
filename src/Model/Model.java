@@ -7,7 +7,6 @@ package Model;
 
 import Communication.Message;
 import Communication.ReceiverQueueHandler;
-import TrustedInitializer.Triple;
 import TrustedInitializer.TripleByte;
 import TrustedInitializer.TripleInteger;
 import TrustedInitializer.TripleReal;
@@ -25,10 +24,10 @@ import java.util.concurrent.LinkedBlockingQueue;
  * @author keerthanaa
  */
 public class Model {
-    
+
     ConcurrentHashMap<Integer, BlockingQueue<Message>> recQueues;
     protected Queue<Integer> protocolIdQueue;
-    
+
     ExecutorService queueHandlers;
     ReceiverQueueHandler receiverThread;
 
@@ -37,26 +36,26 @@ public class Model {
 
     int clientId;
     int partyCount;
+    int oneShare;
     List<TripleByte> binaryTiShares;
     List<TripleInteger> decimalTiShares;
     List<TripleReal> realTiShares;
-    int oneShare;
-    
+
     /**
-     * 
+     *
      * @param senderQueue
      * @param receiverQueue
      * @param clientId
      * @param oneShares
      * @param binaryTiShares
      * @param decimalTiShares
-     * @param realTiShares 
+     * @param realTiShares
      */
-    public Model(BlockingQueue<Message> senderQueue, 
-            BlockingQueue<Message> receiverQueue, int clientId, int oneShares, 
+    public Model(BlockingQueue<Message> senderQueue,
+            BlockingQueue<Message> receiverQueue, int clientId, int oneShares,
             List<TripleByte> binaryTiShares, List<TripleInteger> decimalTiShares,
             List<TripleReal> realTiShares, int partyCount) {
-        
+
         this.binaryTiShares = binaryTiShares;
         this.decimalTiShares = decimalTiShares;
         this.realTiShares = realTiShares;
@@ -69,24 +68,24 @@ public class Model {
         recQueues = new ConcurrentHashMap<>(50, 0.9f, 1);
         this.protocolIdQueue = new LinkedList<>();
         this.protocolIdQueue.add(1);
-        
+
         queueHandlers = Executors.newSingleThreadExecutor();
         receiverThread = new ReceiverQueueHandler(1, commonReceiver, recQueues);
     }
-    
-    public void startModelHandlers(){
+
+    public void startModelHandlers() {
         queueHandlers.submit(receiverThread);
     }
-    
-    public void teardownModelHandlers(){
+
+    public void teardownModelHandlers() {
         receiverThread.setProtocolStatus();
         queueHandlers.shutdown();
     }
-    
+
     public void initQueueMap(
             ConcurrentHashMap<Integer, BlockingQueue<Message>> recQueues,
             int key) {
         recQueues.putIfAbsent(key, new LinkedBlockingQueue<>());
     }
-    
+
 }

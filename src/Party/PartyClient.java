@@ -20,9 +20,6 @@ import java.util.logging.Logger;
 public class PartyClient implements Runnable {
 
     BlockingQueue<Message> receiverQueue;
-    //String baServerIP;
-    //int baServerPort;
-    //ObjectOutputStream oStream = null;
     ObjectInputStream iStream = null;
     Socket receiveSocket = null;
 
@@ -33,10 +30,9 @@ public class PartyClient implements Runnable {
      * @param socket
      * @param iStream
      */
-    public PartyClient(BlockingQueue<Message> queue, Socket socket, ObjectInputStream iStream) {
+    public PartyClient(BlockingQueue<Message> queue, Socket socket, 
+            ObjectInputStream iStream) {
         this.receiverQueue = queue;
-        //this.baServerIP = ip;
-        //this.baServerPort = port;
         this.receiveSocket = socket;
         this.iStream = iStream;
     }
@@ -51,9 +47,7 @@ public class PartyClient implements Runnable {
                     Message msgs;
                     try {
                         msgs = (Message) iStream.readObject();
-                        //for(Message msg: msgs) {
                         receiverQueue.put(msgs);
-                        //}
                     } catch (InterruptedException | IOException ex) {
                         try {
                             iStream.close();

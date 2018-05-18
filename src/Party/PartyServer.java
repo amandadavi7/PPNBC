@@ -10,8 +10,6 @@ import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.concurrent.BlockingQueue;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  *
@@ -30,7 +28,8 @@ public class PartyServer implements Runnable {
      * @param queue
      * @param oStream
      */
-    public PartyServer(Socket socket, BlockingQueue<Message> queue, ObjectOutputStream oStream) {
+    public PartyServer(Socket socket, BlockingQueue<Message> queue, 
+            ObjectOutputStream oStream) {
         this.socket = socket;
         this.senderQueue = queue;
         this.oStream = oStream;
