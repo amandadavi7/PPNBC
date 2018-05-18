@@ -7,18 +7,22 @@ from sklearn.metrics import mean_squared_error
 
 # TODO replace RT from everywhere
 cwd = os.getcwd()
+f = 64
+divisor=2**f
+print(divisor)
 
-def appendData(dataPath, datafile):
-    framesY = []
+def sumPredictedShares(dataPath, datafile):
+    totalY = pd.DataFrame()
     for x in os.listdir(dataPath):
         # iterate through the files to combine data from from drivers
         if os.path.isfile(cwd+"/"+dataPath+x):
             if "y_" in x:
                 print("Considered file:"+ x)
                 dfRT = pd.DataFrame.from_csv(cwd+"/"+dataPath+x, header=None, index_col=None)
-                framesY.append(dfRT)
-    if framesY:
-        totalY = pd.concat(framesY)
+                dfRT = dfRT.astype(float)
+                dfRT = dfRT.divide(divisor)
+                totalY = totalY.add(dfRT)
+                print(totalY.describe)
     return totalY
 
 
@@ -32,7 +36,7 @@ print(clientY.shape)
 actualYArray = clientY[0].values
 
 for i in range(0,14):
-    predictedY = appendData(outputPath,"RT")
+    predictedY = sumPredictedShares(outputPath,"RT")
     print(predictedY.shape)
     predictedYArray = predictedY[0].values
     rms_lr.append(sqrt(mean_squared_error(actualYArray, predictedYArray)))
