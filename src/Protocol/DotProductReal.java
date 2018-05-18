@@ -49,9 +49,10 @@ public class DotProductReal extends DotProduct implements Callable<BigInteger> {
             List<TripleReal> tiShares, BlockingQueue<Message> senderqueue, 
             BlockingQueue<Message> receiverqueue, Queue<Integer> protocolIdQueue,
             int clientID, BigInteger prime, 
-            int protocolID, int oneShare) {
+            int protocolID, int oneShare, int partyCount) {
         
-        super(senderqueue, receiverqueue, protocolIdQueue,clientID, protocolID, oneShare);
+        super(senderqueue, receiverqueue, protocolIdQueue,clientID, protocolID, 
+                oneShare, partyCount);
         
         this.xShares = xShares;
         this.yShares = yShares;
@@ -86,7 +87,7 @@ public class DotProductReal extends DotProduct implements Callable<BigInteger> {
             multCompletionService.submit(new BatchMultiplicationReal(xShares.subList(i, toIndex), 
                     yShares.subList(i, toIndex), tiShares.subList(i, toIndex), senderQueue, 
                     recQueues.get(startpid), new LinkedList<>(protocolIdQueue),
-                    clientID, prime, startpid, oneShare, protocolId));
+                    clientID, prime, startpid, oneShare, protocolId, partyCount));
             
             startpid++;
             i = toIndex;

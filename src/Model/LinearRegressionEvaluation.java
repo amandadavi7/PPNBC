@@ -30,6 +30,7 @@ public class LinearRegressionEvaluation extends Model {
     List<BigInteger> beta;
     List<BigInteger> y;
     int testCases;
+    
     BigInteger prime;
     String outputPath;
 
@@ -48,10 +49,10 @@ public class LinearRegressionEvaluation extends Model {
             List<BigInteger> beta, List<TripleReal> realTriples,
             int oneShares, BlockingQueue<Message> senderQueue,
             BlockingQueue<Message> receiverQueue, int clientId, 
-            BigInteger prime, String outputPath) {
+            BigInteger prime, String outputPath, int partyCount) {
 
         super(senderQueue, receiverQueue, clientId, oneShares, null, 
-                null, realTriples);
+                null, realTriples, partyCount);
 
         this.x = x;
         this.beta = beta;
@@ -94,7 +95,7 @@ public class LinearRegressionEvaluation extends Model {
                             tiStartIndex, tiStartIndex+x.get(i).size()), 
                     commonSender, recQueues.get(i), 
                     new LinkedList<>(protocolIdQueue),
-                    clientId, prime, i, oneShare);
+                    clientId, prime, i, oneShare, partyCount);
 
             Future<BigInteger> DPTask = es.submit(DPModule);
             taskList.add(DPTask);
@@ -119,7 +120,7 @@ public class LinearRegressionEvaluation extends Model {
         long stopTime = System.currentTimeMillis();
         long elapsedTime = stopTime - startTime;
         //TODO: push time to a csv file
-        System.out.println("Avg time duration:" + elapsedTime);
+        System.out.println("Avg time duration:" + elapsedTime+" for partyId:"+ clientId);
     }
 
     /**

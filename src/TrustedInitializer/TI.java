@@ -20,7 +20,7 @@ import java.util.concurrent.Executors;
  */
 public class TI {
 
-    static int tiPort, decTriples, binTriples, bigIntTriples;
+    static int tiPort, decTriples, binTriples, bigIntTriples, clientCount;
     static TIShare[] uvw;
 
     /**
@@ -31,13 +31,15 @@ public class TI {
      * @param count2
      * @param count3
      */
-    public static void initializeVariables(String port, String count1, String count2, String count3) {
+    public static void initializeVariables(String port, String partyCount, 
+            String count1, String count2, String count3) {
         tiPort = Integer.parseInt(port);
+        clientCount = Integer.parseInt(partyCount);
         decTriples = Integer.parseInt(count1);
         binTriples = Integer.parseInt(count2);
         bigIntTriples = Integer.parseInt(count3);
-        uvw = new TIShare[Constants.clientCount];
-        for (int i = 0; i < Constants.clientCount; i++) {
+        uvw = new TIShare[clientCount];
+        for (int i = 0; i < clientCount; i++) {
             uvw[i] = new TIShare();
         }
     }
@@ -49,7 +51,7 @@ public class TI {
             int V = rand.nextInt(Constants.prime);
             int W = Math.floorMod(U * V, Constants.prime);
             int usum = 0, vsum = 0, wsum = 0;
-            for (int j = 0; j < Constants.clientCount - 1; j++) {
+            for (int j = 0; j < clientCount - 1; j++) {
                 TripleInteger t = new TripleInteger();
                 t.u = rand.nextInt(Constants.prime);
                 t.v = rand.nextInt(Constants.prime);
@@ -63,7 +65,7 @@ public class TI {
             t.u = Math.floorMod(U - usum, Constants.prime);
             t.v = Math.floorMod(V - vsum, Constants.prime);
             t.w = Math.floorMod(W - wsum, Constants.prime);
-            uvw[Constants.clientCount - 1].addDecimal(t);
+            uvw[clientCount - 1].addDecimal(t);
         }
     }
 
@@ -74,7 +76,7 @@ public class TI {
             int V = rand.nextInt(Constants.binaryPrime);
             int W = U * V;
             int usum = 0, vsum = 0, wsum = 0;
-            for (int j = 0; j < Constants.clientCount - 1; j++) {
+            for (int j = 0; j < clientCount - 1; j++) {
                 TripleByte t = new TripleByte();
                 t.u = (byte) rand.nextInt(Constants.binaryPrime);
                 t.v = (byte) rand.nextInt(Constants.binaryPrime);
@@ -88,7 +90,7 @@ public class TI {
             t.u = (byte) Math.floorMod(U - usum, Constants.binaryPrime);
             t.v = (byte) Math.floorMod(V - vsum, Constants.binaryPrime);
             t.w = (byte) Math.floorMod(W - wsum, Constants.binaryPrime);
-            uvw[Constants.clientCount - 1].addBinary(t);
+            uvw[clientCount - 1].addBinary(t);
         }
     }
 
@@ -104,7 +106,7 @@ public class TI {
             W = W.mod(Zq);
 
             BigInteger usum = BigInteger.ZERO, vsum = BigInteger.ZERO, wsum = BigInteger.ZERO;
-            for (int j = 0; j < Constants.clientCount - 1; j++) {
+            for (int j = 0; j < clientCount - 1; j++) {
                 TripleReal t = new TripleReal();
                 t.u = new BigInteger(Constants.integer_precision, rand);
                 t.v = new BigInteger(Constants.integer_precision, rand);
@@ -118,7 +120,7 @@ public class TI {
             t.u = (U.subtract(usum)).mod(Zq);
             t.v = (V.subtract(vsum)).mod(Zq);
             t.w = (W.subtract(wsum)).mod(Zq);
-            uvw[Constants.clientCount - 1].addBigInt(t);
+            uvw[clientCount - 1].addBigInt(t);
         }
 
     }
@@ -131,7 +133,7 @@ public class TI {
         ServerSocket tiserver = Connection.createServerSocket(tiPort);
 
         ExecutorService send = Executors.newFixedThreadPool(Constants.threadCount);
-        for (int i = 0; i < Constants.clientCount; i++) {
+        for (int i = 0; i < clientCount; i++) {
 
             Runnable sendtask = new TItoPeerCommunication(tiserver, uvw[i]);
             send.execute(sendtask);
@@ -146,7 +148,7 @@ public class TI {
             System.exit(0);
         }
 
-        initializeVariables(args[0], args[1], args[2], args[3]);
+        initializeVariables(args[0], args[1], args[2], args[3], args[4]);
 
         System.out.println("Generating " + decTriples + " decimal triples, "
                 + binTriples + " binary triples and " + bigIntTriples + " real triples");

@@ -59,9 +59,11 @@ public class Logging {
      * Guidelines to use the Party class
      */
     public static void partyUsage() {
-        System.out.println("java Party.Party party_port=<port> ti=<TI IP:port> "
-                + "peer_port=<peer IP:port> "
-                + "party_id=<Party Id> "
+        System.out.println("Usage: \n java Party.Party party_port=<port> "
+                + "ti=<TI IP:port> \n"
+                + "peer_port=<peer IP:port> \n"
+                + "partCount=<total number of parties involved> \n"
+                + "party_id=<Party Id> \n"
                 + "model=<Model Id(1: DT Scoring 2:LR Evaluation 3:KNN "
                 + "4:DT Learning default:TestModel)> ");
     }
@@ -70,7 +72,7 @@ public class Logging {
      * Guideline to use the TI class
      */
     public static void tiUsage() {
-        System.out.println("java TI <port> <no. of decimal triples> "
+        System.out.println("java TI <port> <no. of parties> <no. of decimal triples> "
                 + "<no. of binary triples> <no. of realnumber triples>");
     }
     

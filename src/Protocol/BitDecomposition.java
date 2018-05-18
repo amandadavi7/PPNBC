@@ -56,10 +56,10 @@ public class BitDecomposition extends CompositeProtocol implements
             int oneShare, int bitLength, BlockingQueue<Message> senderQueue,
             BlockingQueue<Message> receiverQueue, Queue<Integer> protocolIdQueue,
             int clientId, int prime,
-            int protocolID) {
+            int protocolID, int partyCount) {
 
         super(protocolID, senderQueue, receiverQueue, protocolIdQueue, clientId, 
-                oneShare);
+                oneShare, partyCount);
 
         this.input = input;
         this.bitLength = bitLength;
@@ -77,7 +77,7 @@ public class BitDecomposition extends CompositeProtocol implements
         }
 
         // TODO - client ID - change to zero indexed
-        for (int i = 0; i < Constants.clientCount; i++) {
+        for (int i = 0; i < partyCount; i++) {
             if (i + 1 == clientId) {
                 inputShares.add(temp);
             } else {
@@ -151,7 +151,7 @@ public class BitDecomposition extends CompositeProtocol implements
                 senderQueue,
                 recQueues.get(globalPid), new LinkedList<>(protocolIdQueue),
                 clientID,
-                prime, globalPid, oneShare, 1);
+                prime, globalPid, oneShare, 1, partyCount);
 
         tiIndex++;
         globalPid++;
@@ -197,7 +197,7 @@ public class BitDecomposition extends CompositeProtocol implements
                     inputShares.get(1).subList(i, toIndex),
                     tiShares.subList(tiIndex, tiIndex + tiCount),
                     senderQueue, recQueues.get(globalPid), new LinkedList<>(protocolIdQueue),
-                    clientID, prime, globalPid, oneShare, protocolId);
+                    clientID, prime, globalPid, oneShare, protocolId, partyCount);
 
             Future<Integer[]> multiplicationTask = es.submit(batchMultiplication);
             taskList.add(multiplicationTask);

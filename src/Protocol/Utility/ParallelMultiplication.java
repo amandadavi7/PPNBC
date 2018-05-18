@@ -48,9 +48,9 @@ public class ParallelMultiplication extends CompositeProtocol implements Callabl
             int clientID, int prime, int protocolID, 
             int oneShare, BlockingQueue<Message> senderQueue, 
             BlockingQueue<Message> receiverQueue,
-            Queue<Integer> protocolIdQueue) {
+            Queue<Integer> protocolIdQueue, int partyCount) {
         
-        super(protocolID,senderQueue,receiverQueue,protocolIdQueue,clientID,oneShare);
+        super(protocolID,senderQueue,receiverQueue,protocolIdQueue,clientID,oneShare, partyCount);
         this.wRow = row;
         this.tishares = tishares;
         this.prime = prime;
@@ -99,7 +99,7 @@ public class ParallelMultiplication extends CompositeProtocol implements Callabl
                 multCompletionService.submit(new BatchMultiplicationByte(products.subList(i1, tempIndex1), 
                     products.subList(i2, tempIndex2), tishares.subList(tiStartIndex, tiStartIndex+tempIndex1), 
                     senderQueue, recQueues.get(startpid), new LinkedList<>(protocolIdQueue),
-                        clientID, prime, startpid, oneShare, protocolId));
+                        clientID, prime, startpid, oneShare, protocolId, partyCount));
                 
                 tiStartIndex += tempIndex1;
                 startpid++;

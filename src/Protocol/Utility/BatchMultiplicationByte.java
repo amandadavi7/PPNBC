@@ -51,10 +51,10 @@ public class BatchMultiplicationByte extends BatchMultiplication
             BlockingQueue<Message> senderQueue,
             BlockingQueue<Message> receiverQueue, Queue<Integer> protocolIdQueue,
             int clientId, int prime,
-            int protocolID, int oneShare, int parentID) {
+            int protocolID, int oneShare, int parentID, int partyCount) {
 
         super(senderQueue, receiverQueue, protocolIdQueue,clientId, protocolID, 
-                oneShare, parentID);
+                oneShare, parentID, partyCount);
         this.x = x;
         this.y = y;
         this.prime = prime;
@@ -80,7 +80,7 @@ public class BatchMultiplicationByte extends BatchMultiplication
         List<Integer> d = new ArrayList<>(Collections.nCopies(batchSize, 0));
         List<Integer> e = new ArrayList<>(Collections.nCopies(batchSize, 0));
         List<List<Integer>> diffList = null;
-        for(int i=0;i<Constants.clientCount-1;i++) {
+        for(int i=0;i<partyCount-1;i++) {
             try {
                 receivedMessage = receiverQueue.take();
                 diffList = (List<List<Integer>>) receivedMessage.getValue();

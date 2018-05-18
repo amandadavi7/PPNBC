@@ -29,9 +29,10 @@ public abstract class DotProduct extends CompositeProtocol {
      */
     public DotProduct(BlockingQueue<Message> senderqueue, BlockingQueue<Message> receiverqueue,
             Queue<Integer> protocolIdQueue,
-            int clientID, int protocolID, int oneShare) {
+            int clientID, int protocolID, int oneShare, int partyCount) {
 
-        super(protocolID, senderqueue, receiverqueue, protocolIdQueue,clientID, oneShare);
+        super(protocolID, senderqueue, receiverqueue, protocolIdQueue,clientID, 
+                oneShare, partyCount);
 
     }
 

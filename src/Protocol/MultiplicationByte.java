@@ -49,10 +49,10 @@ public class MultiplicationByte extends Protocol implements Callable {
             BlockingQueue<Message> senderQueue,
             BlockingQueue<Message> receiverQueue, Queue<Integer> protocolIdQueue,
             int clientId, int prime,
-            int protocolID, int oneShare, int parentID) {
+            int protocolID, int oneShare, int parentID, int partyCount) {
 
         super(protocolID, senderQueue, receiverQueue, protocolIdQueue,
-                clientId, oneShare);
+                clientId, oneShare, partyCount);
         this.x = x;
         this.y = y;
         this.tiShares = tiShares;
@@ -73,7 +73,7 @@ public class MultiplicationByte extends Protocol implements Callable {
         Message receivedMessage = null;
         List<Integer> diffList = null;
         int d = 0, e = 0;
-        for(int i=0;i<Constants.clientCount-1;i++) {
+        for(int i=0;i<partyCount-1;i++) {
             try {
                 receivedMessage = receiverQueue.take();
                 diffList = (List<Integer>) receivedMessage.getValue();

@@ -64,7 +64,7 @@ public class BaClientSender implements Callable<Boolean> {
             oStream.close();
             clientSocket.close();
         } catch (IOException ex) {
-            Logger.getLogger(BaClientSender.class.getName()).log(Level.SEVERE, null, ex);
+            return true;
         }
         
         return true;

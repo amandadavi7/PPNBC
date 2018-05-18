@@ -36,6 +36,7 @@ public class Model {
     BlockingQueue<Message> commonReceiver;
 
     int clientId;
+    int partyCount;
     List<TripleByte> binaryTiShares;
     List<TripleInteger> decimalTiShares;
     List<TripleReal> realTiShares;
@@ -54,12 +55,13 @@ public class Model {
     public Model(BlockingQueue<Message> senderQueue, 
             BlockingQueue<Message> receiverQueue, int clientId, int oneShares, 
             List<TripleByte> binaryTiShares, List<TripleInteger> decimalTiShares,
-            List<TripleReal> realTiShares) {
+            List<TripleReal> realTiShares, int partyCount) {
         
         this.binaryTiShares = binaryTiShares;
         this.decimalTiShares = decimalTiShares;
         this.realTiShares = realTiShares;
         this.oneShare = oneShares;
+        this.partyCount = partyCount;
         this.commonSender = senderQueue;
         this.commonReceiver = receiverQueue;
         this.clientId = clientId;

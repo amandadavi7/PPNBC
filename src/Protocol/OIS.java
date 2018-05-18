@@ -57,9 +57,9 @@ public class OIS extends CompositeProtocol implements Callable<Integer[]>{
             int oneShare, BlockingQueue<Message> senderQueue,
             BlockingQueue<Message> receiverQueue, Queue<Integer> protocolIdQueue,
             int clientId, int prime,
-            int protocolID, int bitLength, int k, int numberCount){
+            int protocolID, int bitLength, int k, int numberCount, int partyCount){
         
-        super(protocolID, senderQueue, receiverQueue, protocolIdQueue,clientId, oneShare);
+        super(protocolID, senderQueue, receiverQueue, protocolIdQueue,clientId, oneShare, partyCount);
         this.numberCount = numberCount;
         this.bitLength = bitLength;
         this.tiShares = tiShares;
@@ -122,7 +122,7 @@ public class OIS extends CompositeProtocol implements Callable<Integer[]>{
             DotProductByte dp = new DotProductByte(featureVectorTransposed.get(i), yShares, 
                     tiShares.subList(tiStartIndex, tiStartIndex+numberCount), senderQueue, 
                     recQueues.get(i), new LinkedList<>(protocolIdQueue),
-                    clientID, prime, i, oneShare);
+                    clientID, prime, i, oneShare, partyCount);
             
             Future<Integer> dpTask = es.submit(dp);
             taskList.add(dpTask);

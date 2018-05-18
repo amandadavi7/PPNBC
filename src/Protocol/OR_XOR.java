@@ -51,9 +51,9 @@ public class OR_XOR extends CompositeProtocol implements Callable<Integer[]> {
     public OR_XOR(List<Integer> x, List<Integer> y, List<TripleInteger> tiShares,
             int oneShare, int constantMultiplier, BlockingQueue<Message> senderQueue,
             BlockingQueue<Message> receiverQueue, Queue<Integer> protocolIdQueue, int clientId, int prime,
-            int protocolID) {
+            int protocolID, int partyCount) {
         
-        super(protocolID, senderQueue, receiverQueue, protocolIdQueue,clientId, oneShare);
+        super(protocolID, senderQueue, receiverQueue, protocolIdQueue,clientId, oneShare, partyCount);
         
         this.xShares = x;
         this.yShares = y;
@@ -86,7 +86,7 @@ public class OR_XOR extends CompositeProtocol implements Callable<Integer[]> {
                     yShares.subList(i, toIndex),
                     tiShares.subList(i, toIndex),
                     senderQueue, recQueues.get(startpid), new LinkedList<>(protocolIdQueue),
-                    clientID, prime, startpid, oneShare, protocolId);
+                    clientID, prime, startpid, oneShare, protocolId, partyCount);
 
             Future<Integer[]> multiplicationTask = es.submit(batchMultiplication);
             taskList.add(multiplicationTask);

@@ -52,10 +52,10 @@ public class BatchMultiplicationReal extends BatchMultiplication
             BlockingQueue<Message> senderQueue,
             BlockingQueue<Message> receiverQueue, Queue<Integer> protocolIdQueue,
             int clientId, BigInteger prime,
-            int protocolID, int oneShare, int parentID) {
+            int protocolID, int oneShare, int parentID, int partyCount) {
 
         super(senderQueue, receiverQueue, protocolIdQueue, clientId, protocolID, 
-                oneShare, parentID);
+                oneShare, parentID, partyCount);
         this.x = x;
         this.y = y;
         this.prime = prime;
@@ -81,7 +81,7 @@ public class BatchMultiplicationReal extends BatchMultiplication
         List<BigInteger> d = new ArrayList<>(Collections.nCopies(batchSize, BigInteger.ZERO));
         List<BigInteger> e = new ArrayList<>(Collections.nCopies(batchSize, BigInteger.ZERO));
         List<List<BigInteger>> diffList = null;
-        for(int i=0;i<Constants.clientCount-1;i++) {
+        for(int i=0;i<partyCount-1;i++) {
             try {
                 receivedMessage = receiverQueue.take();
                 diffList = (List<List<BigInteger>>) receivedMessage.getValue();

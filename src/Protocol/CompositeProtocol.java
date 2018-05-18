@@ -36,10 +36,10 @@ public class CompositeProtocol extends Protocol {
      */
     public CompositeProtocol(int protocolId, BlockingQueue<Message> senderQueue,
             BlockingQueue<Message> receiverQueue, Queue<Integer> protocolIdQueue,
-            int clientId, int oneShare) {
+            int clientId, int oneShare, int partyCount) {
         
         super(protocolId, senderQueue, receiverQueue, protocolIdQueue, clientId, 
-                oneShare);
+                oneShare, partyCount);
         
         recQueues = new ConcurrentHashMap<>();
         queueHandlers = Executors.newSingleThreadExecutor();

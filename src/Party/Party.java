@@ -50,6 +50,7 @@ public class Party {
     private static String baIP;
     private static int baPort;
     private static String outputDir;
+    private static int partyCount;
 
     private static List<List<Integer>> xShares;
     private static List<List<Integer>> yShares;
@@ -113,6 +114,8 @@ public class Party {
                 case "model":
                     modelId = Integer.parseInt(value);
                     break;
+                case "partCount":
+                    partyCount = Integer.parseInt(value);
             }
 
         }
@@ -232,13 +235,13 @@ public class Party {
                     attributeThresholds[1] = 5;
                     attributeThresholds[2] = 20;
                     DecisionTreeScoring DTree = new DecisionTreeScoring(oneShares, senderQueue, receiverQueue, partyId, tiShares.binaryShares,
-                            tiShares.decimalShares, 2, 3, 5, leafToClassIndexMapping, nodeToAttributeIndexMapping, attributeThresholds, 3);
+                            tiShares.decimalShares, 2, 3, 5, leafToClassIndexMapping, nodeToAttributeIndexMapping, attributeThresholds, 3, partyCount);
                     DTree.ScoreDecisionTree();
 
                 } else if (partyId == 2) {
 
                     DecisionTreeScoring DScore = new DecisionTreeScoring(oneShares, senderQueue, receiverQueue, partyId, tiShares.binaryShares,
-                            tiShares.decimalShares, 2, 3, 5, vShares.get(0), 3);
+                            tiShares.decimalShares, 2, 3, 5, vShares.get(0), 3, partyCount);
 
                     DScore.ScoreDecisionTree();
                 }
@@ -249,7 +252,7 @@ public class Party {
                 LinearRegressionEvaluation regressionModel
                         = new LinearRegressionEvaluation(xSharesBigInt, ySharesBigInt,
                                 tiShares.bigIntShares, oneShares, senderQueue,
-                                receiverQueue, partyId, Zq, outputDir);
+                                receiverQueue, partyId, Zq, outputDir, partyCount);
 
                 regressionModel.predictValues();
                 break;
@@ -258,7 +261,7 @@ public class Party {
                 // test model
                 TestModel testModel = new TestModel(xShares, yShares, vShares,
                         tiShares.binaryShares, tiShares.decimalShares, tiShares.bigIntShares,
-                        oneShares, senderQueue, receiverQueue, partyId);
+                        oneShares, senderQueue, receiverQueue, partyId, partyCount);
 
                 testModel.compute();
                 break;

@@ -52,9 +52,9 @@ public class ArgMax extends CompositeProtocol implements Callable<Integer[]> {
             int oneShare, BlockingQueue<Message> senderQueue,
             BlockingQueue<Message> receiverQueue, Queue<Integer> protocolIdQueue,
             int clientId, int prime,
-            int protocolID) {
+            int protocolID, int partyCount) {
         
-        super(protocolID, senderQueue, receiverQueue, protocolIdQueue, clientId, oneShare);
+        super(protocolID, senderQueue, receiverQueue, protocolIdQueue, clientId, oneShare, partyCount);
         
         this.vShares = vShares;
         this.tiShares = tiShares;
@@ -125,7 +125,7 @@ public class ArgMax extends CompositeProtocol implements Callable<Integer[]> {
                     Comparison comparisonModule = new Comparison(vShares.get(i), vShares.get(j), 
                             tiShares.subList(tiIndex, tiIndex+tiCount), oneShare, 
                             senderQueue, recQueues.get(key), new LinkedList<>(protocolIdQueue),
-                            clientID, prime, key);
+                            clientID, prime, key, partyCount);
                     tiIndex += tiCount;
                     Future<Integer> comparisonTask = es.submit(comparisonModule);
                     taskList.add(comparisonTask);
@@ -169,7 +169,7 @@ public class ArgMax extends CompositeProtocol implements Callable<Integer[]> {
             ParallelMultiplication rowMultiplication = new ParallelMultiplication(
                     wIntermediate.get(i), tiShares.subList(tiIndex, tiIndex+tiCount), clientID, prime, i, 
                     oneShare, senderQueue, recQueues.get(i), 
-                    new LinkedList<>(protocolIdQueue));
+                    new LinkedList<>(protocolIdQueue), partyCount);
             tiIndex += tiCount;
             
             Future<Integer> wRowProduct = es.submit(rowMultiplication);
