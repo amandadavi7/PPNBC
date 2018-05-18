@@ -6,6 +6,8 @@
 package Model;
 
 import Communication.Message;
+import Protocol.BitDecomposition;
+import Protocol.Comparison;
 import Protocol.CompositeProtocol;
 import Protocol.Multiplication;
 import Protocol.OR_XOR;
@@ -545,6 +547,61 @@ public class KNN extends Model {
         System.out.println("KJD:"+KjaccardDistances);
     }
     
+    int computeMajorityClassLabel() {
+        int sum = 0;
+        int result = -1;
+        
+        for(int i=0;i<K;i++) {
+            sum += KjaccardDistances.get(i).get(2);
+        }
+        
+        int oneCount = Math.floorMod(sum, Constants.prime);
+        int zeroCount = Math.floorMod(oneShare*K - sum, Constants.prime);
+        
+        ExecutorService es = Executors.newFixedThreadPool(2);
+        
+        //Do a comparison between 1 count and 0 count
+        initQueueMap(recQueues, pid);
+        BitDecomposition bitDModule1 = new BitDecomposition(oneCount, binaryTiShares, oneShare, Constants.bitLength, 
+                commonSender, recQueues.get(pid), new LinkedList<>(protocolIdQueue), clientId, Constants.binaryPrime, pid);
+        pid++;
+        Future<List<Integer>> bitTask1 = es.submit(bitDModule1);
+        
+        initQueueMap(recQueues, pid);
+        BitDecomposition bitDModule0 = new BitDecomposition(zeroCount, binaryTiShares, oneShare, Constants.bitLength, 
+                commonSender, recQueues.get(pid), new LinkedList<>(protocolIdQueue), clientId, Constants.binaryPrime, pid);
+        pid++;
+        Future<List<Integer>> bitTask0 = es.submit(bitDModule0);
+        
+        
+        List<Integer> ones = null, zeros = null;
+        
+        try {
+            ones = bitTask1.get();
+            zeros = bitTask0.get();
+        } catch (InterruptedException ex) {
+            Logger.getLogger(KNN.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (ExecutionException ex) {
+            Logger.getLogger(KNN.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        
+        initQueueMap(recQueues, pid);
+        Comparison compClassLabels = new Comparison(ones, zeros, binaryTiShares, oneShare, commonSender, recQueues.get(pid), 
+                new LinkedList<>(protocolIdQueue), clientId, Constants.binaryPrime, pid);
+        
+        Future<Integer> resultTask = es.submit(compClassLabels);
+        es.shutdown();
+        try {
+            result = resultTask.get();
+        } catch (InterruptedException ex) {
+            Logger.getLogger(KNN.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (ExecutionException ex) {
+            Logger.getLogger(KNN.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        
+        return result;
+    }
+    
     
     public int KNN_Model(){
         //Jaccard Computation
@@ -593,14 +650,17 @@ public class KNN extends Model {
             swapTrainingShares(i);
         }
         
-        System.out.println("KjaccardDistances:" + KjaccardDistances);
+        System.out.println("KjaccardDistances after iterating all the training examnples:" + KjaccardDistances);
+        
+        int predictedLabel = computeMajorityClassLabel();
         
         long stopTime = System.currentTimeMillis();
         long elapsedTime = stopTime - startTime;
         
+        System.out.println("Label:"+predictedLabel);
         System.out.println("Time taken:" + elapsedTime + "ms");
         teardownModelHandlers();
-        return 0;
+        return predictedLabel;
     }
     
 }
