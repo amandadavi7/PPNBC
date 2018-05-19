@@ -473,6 +473,7 @@ public class KNN extends Model {
         List<Integer> dummy = new ArrayList<>(Collections.nCopies(K, 0));
         OR_XOR xorComp = null, xorCompMults = null;
         
+        // Convert comparisonResults and comparisonMultiplications from binary prime to decimal prime
         if(clientId==1) {
             xorComp = new OR_XOR(Arrays.asList(comparisonResults), dummy, decimalTiShares.subList(decimalTiIndex, decimalTiIndex+K), 
                 oneShare, 2, commonSender, recQueues.get(pid), new LinkedList<>(protocolIdQueue), 
@@ -513,7 +514,7 @@ public class KNN extends Model {
         for(int i=0;i<K;i++) {
             
             initQueueMap(recQueues, pid);
-            
+            // send null if i = 0 , else send (i - 1)th jaccard distance packet;
             List<Integer> prev = null;
             
             if(i!=0) {
@@ -533,6 +534,7 @@ public class KNN extends Model {
         
         es.shutdown();
         
+        // update positions from (kth to 1st) position, as kth position is independent of the rest
         for(int i=K-1;i>=0;i--) {
             Future<Integer[]> swapTask = swapTaskList.get(i);
             try {
@@ -584,11 +586,11 @@ public class KNN extends Model {
         Future<List<Integer>> bitTaskZero = es.submit(bitDModuleZero);
         
         
-        List<Integer> ones = null, zeros = null;
+        List<Integer> numOfOnePredictions = null, numOfZeroPredictions = null;
         
         try {
-            ones = bitTaskOne.get();
-            zeros = bitTaskZero.get();
+            numOfOnePredictions = bitTaskOne.get();
+            numOfZeroPredictions = bitTaskZero.get();
         } catch (InterruptedException ex) {
             Logger.getLogger(KNN.class.getName()).log(Level.SEVERE, null, ex);
         } catch (ExecutionException ex) {
@@ -596,10 +598,14 @@ public class KNN extends Model {
         }
         
         initQueueMap(recQueues, pid);
-        Comparison compClassLabels = new Comparison(ones, zeros, binaryTiShares, oneShare, commonSender, recQueues.get(pid), 
-                new LinkedList<>(protocolIdQueue), clientId, Constants.binaryPrime, pid);
+        Comparison compClassLabels = new Comparison(numOfOnePredictions,
+                                     numOfZeroPredictions, binaryTiShares, 
+                                     oneShare,commonSender, recQueues.get(pid), 
+                                     new LinkedList<>(protocolIdQueue), 
+                                     clientId, Constants.binaryPrime, pid);
         
         Future<Integer> resultTask = es.submit(compClassLabels);
+        pid++;
         es.shutdown();
         try {
             predictedClassLabel = resultTask.get();
