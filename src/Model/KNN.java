@@ -106,6 +106,7 @@ public class KNN extends Model {
         //left index position
         for(int i=0;i<3;i++) {
             initQueueMap(recQueues, pid);
+
             //System.out.println("multiplying.."+c[0]+" and "+ KjaccardDistances.get(rightIndex).get(i));
             MultiplicationInteger multModule = new MultiplicationInteger(c[0], KjaccardDistances.get(rightIndex).get(i), 
                 decimalTiShares.get(decimalTiIndex), commonSender, recQueues.get(pid), new LinkedList<>(protocolIdQueue), 
@@ -117,6 +118,7 @@ public class KNN extends Model {
             leftTaskList.add(task);
             
             initQueueMap(recQueues, pid);
+
             //System.out.println("multiplying.."+Math.floorMod(oneShare - c[0], Constants.prime)+" and "+
             //      KjaccardDistances.get(leftIndex).get(i));
             MultiplicationInteger multModule2 = new MultiplicationInteger(
@@ -241,7 +243,8 @@ public class KNN extends Model {
     
     void Merge(int[] indices, int next) {
         
-        int startIndex = 0, endIndex = indices.length-1;
+        int startIndex = 0;
+        int endIndex = indices.length - 1;
         System.out.println("In merge: startIndex=" + indices[startIndex] + " endIndex=" + indices[endIndex]);
         
         //Sort even indexed
@@ -264,7 +267,8 @@ public class KNN extends Model {
         //Compare adjacent numbers TODO - handle binaryTiShares sublist
         for(int i=startIndex+1;i<endIndex-1;i+=2){
             //compare and swap jd(i) and jd(i+1)
-            System.out.println("calling comparison between adjacent elements: indices - "+indices[i]+" and "+ indices[i+1]);
+            System.out.println("calling comparison between adjacent elements: indices - "
+                                +indices[i]+" and "+ indices[i+1]);
             initQueueMap(recQueues, pid);
             
             CrossMultiplyCompare ccModule = new CrossMultiplyCompare(KjaccardDistances.get(indices[i]).get(1), 
@@ -475,6 +479,7 @@ public class KNN extends Model {
         List<Integer> dummy = new ArrayList<>(Collections.nCopies(K, 0));
         OR_XOR xorComp = null, xorCompMults = null;
         
+        // Convert comparisonResults and comparisonMultiplications from binary prime to decimal prime
         if(clientId==1) {
             xorComp = new OR_XOR(Arrays.asList(comparisonResults), dummy, decimalTiShares.subList(decimalTiIndex, decimalTiIndex+K), 
                 oneShare, 2, commonSender, recQueues.get(pid), new LinkedList<>(protocolIdQueue), 
@@ -515,7 +520,7 @@ public class KNN extends Model {
         for(int i=0;i<K;i++) {
             
             initQueueMap(recQueues, pid);
-            
+            // send null if i = 0 , else send (i - 1)th jaccard distance packet;
             List<Integer> prev = null;
             
             if(i!=0) {
@@ -535,6 +540,7 @@ public class KNN extends Model {
         
         es.shutdown();
         
+        // update positions from (kth to 1st) position, as kth position is independent of the rest
         for(int i=K-1;i>=0;i--) {
             Future<Integer[]> swapTask = swapTaskList.get(i);
             try {
@@ -550,38 +556,49 @@ public class KNN extends Model {
         System.out.println("KJD:"+KjaccardDistances);
     }
     
+    
     int computeMajorityClassLabel() {
-        int sum = 0;
-        int result = -1;
+        int classLabelSum = 0;
+        int predictedClassLabel = -1;
         
+        //Get the sum of K - class labels
         for(int i=0;i<K;i++) {
-            sum += KjaccardDistances.get(i).get(2);
+            classLabelSum += KjaccardDistances.get(i).get(2);
         }
         
-        int oneCount = Math.floorMod(sum, Constants.prime);
-        int zeroCount = Math.floorMod(oneShare*K - sum, Constants.prime);
+        int oneCount = Math.floorMod(classLabelSum, Constants.prime);
+        // The number of zeroCounts is just K - oneCount
+        int zeroCount = Math.floorMod(oneShare*K - classLabelSum, Constants.prime);
         
         ExecutorService es = Executors.newFixedThreadPool(2);
         
-        //Do a comparison between 1 count and 0 count
+        //Do a comparison between oneCount and zeroCount
         initQueueMap(recQueues, pid);
-        BitDecomposition bitDModule1 = new BitDecomposition(oneCount, binaryTiShares, oneShare, Constants.bitLength, 
-                commonSender, recQueues.get(pid), new LinkedList<>(protocolIdQueue), clientId, Constants.binaryPrime, pid, partyCount);
+
+        BitDecomposition bitDModuleOne = new BitDecomposition(oneCount,
+                                binaryTiShares, oneShare, Constants.bitLength, 
+                                commonSender, recQueues.get(pid), 
+                                new LinkedList<>(protocolIdQueue),
+                                clientId, Constants.binaryPrime, pid, partyCount);
         pid++;
-        Future<List<Integer>> bitTask1 = es.submit(bitDModule1);
+        Future<List<Integer>> bitTaskOne = es.submit(bitDModuleOne);
         
         initQueueMap(recQueues, pid);
-        BitDecomposition bitDModule0 = new BitDecomposition(zeroCount, binaryTiShares, oneShare, Constants.bitLength, 
-                commonSender, recQueues.get(pid), new LinkedList<>(protocolIdQueue), clientId, Constants.binaryPrime, pid, partyCount);
+
+        BitDecomposition bitDModuleZero = new BitDecomposition(zeroCount, 
+                            binaryTiShares, oneShare, Constants.bitLength, 
+                            commonSender, recQueues.get(pid), 
+                            new LinkedList<>(protocolIdQueue),
+                            clientId, Constants.binaryPrime, pid, partyCount);
         pid++;
-        Future<List<Integer>> bitTask0 = es.submit(bitDModule0);
+        Future<List<Integer>> bitTaskZero = es.submit(bitDModuleZero);
         
         
-        List<Integer> ones = null, zeros = null;
+        List<Integer> numOfOnePredictions = null, numOfZeroPredictions = null;
         
         try {
-            ones = bitTask1.get();
-            zeros = bitTask0.get();
+            numOfOnePredictions = bitTaskOne.get();
+            numOfZeroPredictions = bitTaskZero.get();
         } catch (InterruptedException ex) {
             Logger.getLogger(KNN.class.getName()).log(Level.SEVERE, null, ex);
         } catch (ExecutionException ex) {
@@ -589,20 +606,25 @@ public class KNN extends Model {
         }
         
         initQueueMap(recQueues, pid);
-        Comparison compClassLabels = new Comparison(ones, zeros, binaryTiShares, oneShare, commonSender, recQueues.get(pid), 
-                new LinkedList<>(protocolIdQueue), clientId, Constants.binaryPrime, pid, partyCount);
+
+        Comparison compClassLabels = new Comparison(numOfOnePredictions,
+                                     numOfZeroPredictions, binaryTiShares, 
+                                     oneShare,commonSender, recQueues.get(pid), 
+                                     new LinkedList<>(protocolIdQueue), 
+                                     clientId, Constants.binaryPrime, pid, partyCount);
         
         Future<Integer> resultTask = es.submit(compClassLabels);
+        pid++;
         es.shutdown();
         try {
-            result = resultTask.get();
+            predictedClassLabel = resultTask.get();
         } catch (InterruptedException ex) {
             Logger.getLogger(KNN.class.getName()).log(Level.SEVERE, null, ex);
         } catch (ExecutionException ex) {
             Logger.getLogger(KNN.class.getName()).log(Level.SEVERE, null, ex);
         }
         
-        return result;
+        return predictedClassLabel;
     }
     
     
@@ -640,10 +662,10 @@ public class KNN extends Model {
             KjaccardDistances.add(new ArrayList<>(jaccardDistances.get(i)));
         }
         
-        //Sorting the K numbers
+        //Sorting the first K numbers
         Sort(indices, 1);
         
-        System.out.println("jaccarddistances:" + jaccardDistances);
+        System.out.println("Jaccard Distances:" + jaccardDistances);
         System.out.println("KjaccardDistances:" + KjaccardDistances);
         
         
@@ -653,7 +675,8 @@ public class KNN extends Model {
             swapTrainingShares(i);
         }
         
-        System.out.println("KjaccardDistances after iterating all the training examnples:" + KjaccardDistances);
+        System.out.println("KjaccardDistances after iterating all the training examples:"
+                            + KjaccardDistances);
         
         int predictedLabel = computeMajorityClassLabel();
         
