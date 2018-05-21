@@ -318,11 +318,12 @@ public class KNN extends Model {
             
             CrossMultiplyCompare ccModule = new CrossMultiplyCompare(jaccardDistances.get(index).get(1),
                     jaccardDistances.get(index).get(0), KjaccardDistances.get(i).get(1), KjaccardDistances.get(i).get(0),
-                    oneShare, decimalTiShares.subList(decimalTiIndex, decimalTiIndex+2), binaryTiShares, commonSender, recQueues.get(pid), clientId, Constants.prime,
+                    oneShare, decimalTiShares.subList(decimalTiIndex, decimalTiIndex+2), binaryTiShares.subList(binaryTiIndex, binaryTiIndex + ccTICount), commonSender, recQueues.get(pid), clientId, Constants.prime,
                     Constants.binaryPrime, pid, new LinkedList<>(protocolIdQueue), partyCount);
             
             pid++;
             decimalTiIndex += 2;
+            binaryTiIndex += ccTICount;
             
             Future<Integer> ccTask = es.submit(ccModule);
             taskList.add(ccTask);
@@ -515,23 +516,25 @@ public class KNN extends Model {
         
         //Do a comparison between oneCount and zeroCount
         initQueueMap(recQueues, pid);
-
+        int bitDTiCount = Constants.bitLength*3 - 2;
         BitDecomposition bitDModuleOne = new BitDecomposition(oneCount,
-                                binaryTiShares, oneShare, Constants.bitLength, 
+                                binaryTiShares.subList(binaryTiIndex, binaryTiIndex + bitDTiCount), oneShare, Constants.bitLength, 
                                 commonSender, recQueues.get(pid), 
                                 new LinkedList<>(protocolIdQueue),
                                 clientId, Constants.binaryPrime, pid, partyCount);
         pid++;
+        binaryTiIndex += bitDTiCount;
         Future<List<Integer>> bitTaskOne = es.submit(bitDModuleOne);
         
         initQueueMap(recQueues, pid);
 
         BitDecomposition bitDModuleZero = new BitDecomposition(zeroCount, 
-                            binaryTiShares, oneShare, Constants.bitLength, 
+                            binaryTiShares.subList(binaryTiIndex, binaryTiIndex + bitDTiCount), oneShare, Constants.bitLength, 
                             commonSender, recQueues.get(pid), 
                             new LinkedList<>(protocolIdQueue),
                             clientId, Constants.binaryPrime, pid, partyCount);
         pid++;
+        binaryTiIndex += bitDTiCount;
         Future<List<Integer>> bitTaskZero = es.submit(bitDModuleZero);
         
         
@@ -547,15 +550,16 @@ public class KNN extends Model {
         }
         
         initQueueMap(recQueues, pid);
-
+        int comparisonTiCount = Constants.bitLength*2 + (Constants.bitLength*(Constants.bitLength-1))/2;
         Comparison compClassLabels = new Comparison(numOfOnePredictions,
-                                     numOfZeroPredictions, binaryTiShares, 
+                                     numOfZeroPredictions, binaryTiShares.subList(binaryTiIndex, binaryTiIndex + comparisonTiCount), 
                                      oneShare,commonSender, recQueues.get(pid), 
                                      new LinkedList<>(protocolIdQueue), 
                                      clientId, Constants.binaryPrime, pid, partyCount);
         
         Future<Integer> resultTask = es.submit(compClassLabels);
         pid++;
+        binaryTiIndex += comparisonTiCount;
         es.shutdown();
         try {
             predictedClassLabel = resultTask.get();
