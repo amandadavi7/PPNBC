@@ -6,10 +6,11 @@
 package Protocol.Utility;
 
 import Communication.Message;
-import Protocol.Multiplication;
-import TrustedInitializer.Triple;
+import Protocol.MultiplicationInteger;
+import TrustedInitializer.TripleInteger;
 import Utility.Constants;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
@@ -22,11 +23,12 @@ import java.util.logging.Logger;
  * 
  * @author keerthanaa
  */
-public class BatchMultiplicationNumber extends BatchMultiplication 
+public class BatchMultiplicationInteger extends BatchMultiplication 
         implements Callable<Integer[]> {
     
     List<Integer> x;
     List<Integer> y;
+    List<TripleInteger> tiShares;
     int prime;
     
     /**
@@ -44,18 +46,19 @@ public class BatchMultiplicationNumber extends BatchMultiplication
      * @param oneShare
      * @param parentID
      */
-    public BatchMultiplicationNumber(List<Integer> x, List<Integer> y, 
-            List<Triple> tiShares, 
+    public BatchMultiplicationInteger(List<Integer> x, List<Integer> y, 
+            List<TripleInteger> tiShares, 
             BlockingQueue<Message> senderQueue,
             BlockingQueue<Message> receiverQueue, Queue<Integer> protocolIdQueue,
             int clientId, int prime,
-            int protocolID, int oneShare, int parentID) {
+            int protocolID, int oneShare, int parentID, int partyCount) {
 
-        super(tiShares, senderQueue, receiverQueue, protocolIdQueue,clientId, protocolID, 
-                oneShare, parentID);
+        super(senderQueue, receiverQueue, protocolIdQueue,clientId, protocolID, 
+                oneShare, parentID, partyCount);
         this.x = x;
         this.y = y;
         this.prime = prime;
+        this.tiShares = tiShares;
     }
 
     /**
@@ -74,18 +77,26 @@ public class BatchMultiplicationNumber extends BatchMultiplication
         initProtocol();
         //System.out.println("Waiting for receiver. parentID=" + parentID + " mult ID=" + protocolID);
         Message receivedMessage = null;
+        List<Integer> d = new ArrayList<>(Collections.nCopies(batchSize, 0));
+        List<Integer> e = new ArrayList<>(Collections.nCopies(batchSize, 0));
         List<List<Integer>> diffList = null;
-        try {
-            receivedMessage = receiverQueue.take();
-            diffList = (List<List<Integer>>) receivedMessage.getValue();
-        } catch (InterruptedException ex) {
-            ex.printStackTrace();
+        for(int i=0;i<partyCount-1;i++) {
+            try {
+                receivedMessage = receiverQueue.take();
+                diffList = (List<List<Integer>>) receivedMessage.getValue();
+                for(int j=0;j<batchSize;j++) {
+                    d.set(j, d.get(j)+diffList.get(j).get(0));
+                    e.set(j, e.get(j)+diffList.get(j).get(1));
+                }
+            } catch (InterruptedException ex) {
+                ex.printStackTrace();
+            }
         }
         
         for(int i=0;i<batchSize;i++){
-            int d = Math.floorMod((x.get(i) - tiShares.get(i).u) + diffList.get(i).get(0), prime);
-            int e = Math.floorMod((y.get(i) - tiShares.get(i).v) + diffList.get(i).get(1), prime);
-            int product = tiShares.get(i).w + (d * tiShares.get(i).v) + (tiShares.get(i).u * e) + (d * e * oneShare);
+            int D = Math.floorMod(x.get(i) - tiShares.get(i).u + d.get(i), prime);
+            int E = Math.floorMod(y.get(i) - tiShares.get(i).v + e.get(i), prime);
+            int product = tiShares.get(i).w + (D * tiShares.get(i).v) + (tiShares.get(i).u * E) + (D * E * oneShare);
             product = Math.floorMod(product, prime);
             products[i] = product;
         }
@@ -115,10 +126,10 @@ public class BatchMultiplicationNumber extends BatchMultiplication
         
         try {
             senderQueue.put(senderMessage);
-            //System.out.println("sending message for protocol id:"+ protocolIdQueue);
+            //System.out.println("sending message for protocol id:"+ protocolID);
         } catch (InterruptedException ex) {
             ex.printStackTrace();
-            Logger.getLogger(Multiplication.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(MultiplicationInteger.class.getName()).log(Level.SEVERE, null, ex);
         }
 
     }

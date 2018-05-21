@@ -10,8 +10,10 @@ import Model.KNN;
 import Protocol.BitDecomposition;
 import Protocol.Comparison;
 import Protocol.CompositeProtocol;
-import Protocol.Multiplication;
+import Protocol.MultiplicationInteger;
 import TrustedInitializer.Triple;
+import TrustedInitializer.TripleByte;
+import TrustedInitializer.TripleInteger;
 import Utility.Constants;
 import java.util.LinkedList;
 import java.util.List;
@@ -32,7 +34,8 @@ import java.util.logging.Logger;
 public class CrossMultiplyCompare extends CompositeProtocol implements Callable<Integer> {
     
     int numerator1, denominator1, numerator2, denominator2, pid, decimalPrime, binaryPrime;
-    List<Triple> decimalTiShares, binaryTiShares;
+    List<TripleInteger> decimalTiShares;
+    List<TripleByte> binaryTiShares;
     
     /**
      * Takes 2 decimal TI Shares and 
@@ -52,12 +55,12 @@ public class CrossMultiplyCompare extends CompositeProtocol implements Callable<
      * @param protocolIdQueue 
      */
     public CrossMultiplyCompare(int numerator1, int denominator1, int numerator2, 
-            int denominator2, int oneShare, List<Triple> decimaltiShares, 
-            List<Triple> binaryTiShares, BlockingQueue<Message> senderQueue,
+            int denominator2, int oneShare, List<TripleInteger> decimaltiShares, 
+            List<TripleByte> binaryTiShares, BlockingQueue<Message> senderQueue,
             BlockingQueue<Message> receiverQueue, int clientId, int decimalPrime,
-            int binaryPrime, int protocolID, Queue<Integer> protocolIdQueue){
+            int binaryPrime, int protocolID, Queue<Integer> protocolIdQueue, int partyCount){
         
-        super(protocolID, senderQueue, receiverQueue, protocolIdQueue, clientId, oneShare);
+        super(protocolID, senderQueue, receiverQueue, protocolIdQueue, clientId, oneShare,partyCount);
         
         this.numerator1 = numerator1;
         this.denominator1 = denominator1;
@@ -81,10 +84,10 @@ public class CrossMultiplyCompare extends CompositeProtocol implements Callable<
         System.out.println("calling mult1");
         initQueueMap(recQueues, pid);
         
-        Multiplication multiplicationModule = new Multiplication(numerator1,
+        MultiplicationInteger multiplicationModule = new MultiplicationInteger(numerator1,
                     denominator2, decimalTiShares.get(decimalTiIndex),
                     senderQueue, recQueues.get(pid), new LinkedList<>(protocolIdQueue), clientID,
-                    decimalPrime, pid, oneShare,0);
+                    decimalPrime, pid, oneShare,0,partyCount);
         
         Future<Integer> firstCrossMultiplication = es.submit(multiplicationModule);
         pid++;
@@ -92,10 +95,10 @@ public class CrossMultiplyCompare extends CompositeProtocol implements Callable<
         
         System.out.println("calling mult2");
         initQueueMap(recQueues, pid);
-        Multiplication multiplicationModule2 = new Multiplication(numerator2,
+        MultiplicationInteger multiplicationModule2 = new MultiplicationInteger(numerator2,
                     denominator1, decimalTiShares.get(decimalTiIndex),
                     senderQueue, recQueues.get(pid), new LinkedList<>(protocolIdQueue), clientID,
-                    decimalPrime, pid, oneShare,0);
+                    decimalPrime, pid, oneShare,0,partyCount);
         
         Future<Integer> secondCrossMultiplication = es.submit(multiplicationModule2);
         pid++;
@@ -117,7 +120,7 @@ public class CrossMultiplyCompare extends CompositeProtocol implements Callable<
         BitDecomposition firstTask = new BitDecomposition(first, binaryTiShares,
                                         oneShare, Constants.bitLength, senderQueue, 
                                         recQueues.get(pid), new LinkedList<>(protocolIdQueue), 
-                                        clientID, binaryPrime, pid);
+                                        clientID, binaryPrime, pid,partyCount);
         pid++;
         Future<List<Integer>> future1 = es.submit(firstTask);
         
@@ -126,7 +129,7 @@ public class CrossMultiplyCompare extends CompositeProtocol implements Callable<
         BitDecomposition secondTask = new BitDecomposition(second, binaryTiShares,
                                         oneShare, Constants.bitLength, senderQueue, 
                                         recQueues.get(pid), new LinkedList<>(protocolIdQueue), 
-                                        clientID, binaryPrime, pid);
+                                        clientID, binaryPrime, pid,partyCount);
         pid++;
         Future<List<Integer>> future2 = es.submit(secondTask);
         
@@ -146,7 +149,7 @@ public class CrossMultiplyCompare extends CompositeProtocol implements Callable<
         Comparison comparisonModule = new Comparison(firstNumber,
                                      secondNumber, binaryTiShares, oneShare,
                                     senderQueue, recQueues.get(pid), new LinkedList<>(protocolIdQueue), 
-                                    clientID, binaryPrime, pid);
+                                    clientID, binaryPrime, pid, partyCount);
         
         Future<Integer> comparisonTask = es.submit(comparisonModule);
         

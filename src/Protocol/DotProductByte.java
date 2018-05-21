@@ -6,10 +6,11 @@
 package Protocol;
 
 import Communication.Message;
-import Protocol.Utility.BatchMultiplicationReal;
-import TrustedInitializer.TripleReal;
+import Protocol.Utility.BatchMultiplicationByte;
+import Protocol.Utility.BatchMultiplicationInteger;
+import TrustedInitializer.Triple;
+import TrustedInitializer.TripleByte;
 import Utility.Constants;
-import java.math.BigInteger;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
@@ -23,13 +24,13 @@ import java.util.concurrent.Future;
 
 /**
  *
- * @author anisha
+ * @author keerthanaa
  */
-public class DotProductReal extends DotProduct implements Callable<BigInteger> {
+public class DotProductByte extends DotProduct implements Callable<Integer> {
 
-    List<BigInteger> xShares, yShares;
-    BigInteger prime;
-    List<TripleReal> tiShares;
+    List<Integer> xShares, yShares;
+    List<TripleByte> tiShares;
+    int prime;
 
     /**
      * Constructor
@@ -45,36 +46,35 @@ public class DotProductReal extends DotProduct implements Callable<BigInteger> {
      * @param protocolID
      * @param oneShare
      */
-    public DotProductReal(List<BigInteger> xShares, List<BigInteger> yShares, 
-            List<TripleReal> tiShares, BlockingQueue<Message> senderqueue, 
-            BlockingQueue<Message> receiverqueue, Queue<Integer> protocolIdQueue,
-            int clientID, BigInteger prime, 
-            int protocolID, int oneShare, int partyCount) {
+    public DotProductByte(List<Integer> xShares, List<Integer> yShares, List<TripleByte> tiShares,
+            BlockingQueue<Message> senderqueue, BlockingQueue<Message> receiverqueue,
+            Queue<Integer> protocolIdQueue,
+            int clientID, int prime, int protocolID, int oneShare, int partyCount) {
         
-        super(senderqueue, receiverqueue, protocolIdQueue,clientID, protocolID, 
-                oneShare, partyCount);
+        super(senderqueue, receiverqueue, protocolIdQueue,clientID, protocolID, oneShare, partyCount);
         
         this.xShares = xShares;
         this.yShares = yShares;
-        this.prime = prime;
         this.tiShares = tiShares;
+        this.prime = prime;
         
     }
 
     /**
-     * Do a batchmultiplication on chunks of vector, collate the results and return (10 mults per batch)
+     * Do a batch multiplication on chunks of vector, collate the results and 
+     * return
      * 
      * @return
      */
     @Override
-    public BigInteger call() {
+    public Integer call() {
 
-        BigInteger dotProduct = BigInteger.ZERO;
+        int dotProduct = 0;
         int vectorLength = xShares.size();
         startHandlers();
         
         ExecutorService mults = Executors.newFixedThreadPool(Constants.threadCount);
-        ExecutorCompletionService<BigInteger[]> multCompletionService = new ExecutorCompletionService<>(mults);
+        ExecutorCompletionService<Integer[]> multCompletionService = new ExecutorCompletionService<>(mults);
         
         int i=0;
         int startpid = 0;
@@ -82,9 +82,10 @@ public class DotProductReal extends DotProduct implements Callable<BigInteger> {
         do {
             int toIndex = Math.min(i+Constants.batchSize,vectorLength);
             
+            System.out.println("Protocol "+protocolId+" batch "+startpid);
             initQueueMap(recQueues, startpid);
             
-            multCompletionService.submit(new BatchMultiplicationReal(xShares.subList(i, toIndex), 
+            multCompletionService.submit(new BatchMultiplicationByte(xShares.subList(i, toIndex), 
                     yShares.subList(i, toIndex), tiShares.subList(i, toIndex), senderQueue, 
                     recQueues.get(startpid), new LinkedList<>(protocolIdQueue),
                     clientID, prime, startpid, oneShare, protocolId, partyCount));
@@ -98,10 +99,10 @@ public class DotProductReal extends DotProduct implements Callable<BigInteger> {
 
         for (i = 0; i < startpid; i++) {
             try {
-                Future<BigInteger[]> prod = multCompletionService.take();
-                BigInteger[] products = prod.get();
-                for(BigInteger j: products){
-                    dotProduct = dotProduct.add(j);
+                Future<Integer[]> prod = multCompletionService.take();
+                Integer[] products = prod.get();
+                for(int j: products){
+                    dotProduct+=j;
                 }
             } catch (InterruptedException | ExecutionException ex) {
                     ex.printStackTrace();
@@ -110,7 +111,8 @@ public class DotProductReal extends DotProduct implements Callable<BigInteger> {
 
         tearDownHandlers();
         
-        dotProduct = dotProduct.mod(prime);
+        dotProduct = Math.floorMod(dotProduct, prime);
+        System.out.println("dot product:" + dotProduct + ", protocol id:" + protocolId);
         return dotProduct;
 
     }

@@ -6,7 +6,7 @@
 package Protocol;
 
 import Communication.Message;
-import TrustedInitializer.Triple;
+import TrustedInitializer.TripleInteger;
 import Utility.Constants;
 import java.util.ArrayList;
 import java.util.List;
@@ -22,11 +22,11 @@ import java.util.logging.Logger;
  *
  * @author anisha
  */
-public class Multiplication extends Protocol implements Callable {
+public class MultiplicationInteger extends Protocol implements Callable {
 
     int x;
     int y;
-    Triple tiShares;
+    TripleInteger tiShares;
     int parentID;
     int prime;
 
@@ -38,19 +38,21 @@ public class Multiplication extends Protocol implements Callable {
      * @param tiShares
      * @param senderQueue
      * @param receiverQueue
+     * @param protocolIdQueue
      * @param clientId
      * @param prime
      * @param protocolID
      * @param oneShare
+     * @param parentID
      */
-    public Multiplication(int x, int y, Triple tiShares,
+    public MultiplicationInteger(int x, int y, TripleInteger tiShares,
             BlockingQueue<Message> senderQueue,
             BlockingQueue<Message> receiverQueue, Queue<Integer> protocolIdQueue,
             int clientId, int prime,
-            int protocolID, int oneShare, int parentID) {
+            int protocolID, int oneShare, int parentID, int partyCount) {
 
         super(protocolID, senderQueue, receiverQueue, protocolIdQueue,
-                clientId, oneShare);
+                clientId, oneShare, partyCount);
         this.x = x;
         this.y = y;
         this.tiShares = tiShares;
@@ -69,16 +71,21 @@ public class Multiplication extends Protocol implements Callable {
         initProtocol();
         //System.out.println("Waiting for receiver. parentID=" + parentID + " mult ID=" + protocolID);
         Message receivedMessage = null;
+        int d = 0,e = 0;
         List<Integer> diffList = null;
-        try {
-            receivedMessage = receiverQueue.take();
-            diffList = (List<Integer>) receivedMessage.getValue();
-        } catch (InterruptedException ex) {
-            ex.printStackTrace();
+        for(int i=0;i<partyCount-1;i++) {
+            try {
+                receivedMessage = receiverQueue.take();
+                diffList = (List<Integer>) receivedMessage.getValue();
+                d += diffList.get(0);
+                e += diffList.get(1);
+            } catch (InterruptedException ex) {
+                ex.printStackTrace();
+            }
         }
 
-        int d = Math.floorMod((x - tiShares.u) + diffList.get(0), prime);
-        int e = Math.floorMod((y - tiShares.v) + diffList.get(1), prime);
+        d = Math.floorMod(x - tiShares.u + d, prime);
+        e = Math.floorMod(y - tiShares.v + e, prime);
         int product = tiShares.w + (d * tiShares.v) + (tiShares.u * e) + (d * e * oneShare);
         product = Math.floorMod(product, prime);
         //System.out.println("ti("+tiShares.u+","+tiShares.v+","+tiShares.w+"), "+"x*y("+x+","+y+"):"+product);
@@ -102,7 +109,7 @@ public class Multiplication extends Protocol implements Callable {
             //System.out.println("sending message for protocol id:"+ protocolID);
         } catch (InterruptedException ex) {
             ex.printStackTrace();
-            Logger.getLogger(Multiplication.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(MultiplicationInteger.class.getName()).log(Level.SEVERE, null, ex);
         }
 
     }

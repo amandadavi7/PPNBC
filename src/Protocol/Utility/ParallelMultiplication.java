@@ -8,6 +8,7 @@ package Protocol.Utility;
 import Communication.Message;
 import Protocol.CompositeProtocol;
 import TrustedInitializer.Triple;
+import TrustedInitializer.TripleByte;
 import Utility.Constants;
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -27,7 +28,7 @@ import java.util.concurrent.Future;
 public class ParallelMultiplication extends CompositeProtocol implements Callable<Integer> {
     
     List<Integer> wRow;
-    List<Triple> tishares;
+    List<TripleByte> tishares;
     int prime;
     
     /**
@@ -43,13 +44,13 @@ public class ParallelMultiplication extends CompositeProtocol implements Callabl
      * @param receiverQueue
      * @param protocolIdQueue 
      */
-    public ParallelMultiplication(List<Integer> row, List<Triple> tishares, 
+    public ParallelMultiplication(List<Integer> row, List<TripleByte> tishares, 
             int clientID, int prime, int protocolID, 
             int oneShare, BlockingQueue<Message> senderQueue, 
             BlockingQueue<Message> receiverQueue,
-            Queue<Integer> protocolIdQueue) {
+            Queue<Integer> protocolIdQueue, int partyCount) {
         
-        super(protocolID,senderQueue,receiverQueue,protocolIdQueue,clientID,oneShare);
+        super(protocolID,senderQueue,receiverQueue,protocolIdQueue,clientID,oneShare, partyCount);
         this.wRow = row;
         this.tishares = tishares;
         this.prime = prime;
@@ -95,10 +96,10 @@ public class ParallelMultiplication extends CompositeProtocol implements Callabl
                 
                 initQueueMap(recQueues, startpid);
                 
-                multCompletionService.submit(new BatchMultiplicationNumber(products.subList(i1, tempIndex1), 
+                multCompletionService.submit(new BatchMultiplicationByte(products.subList(i1, tempIndex1), 
                     products.subList(i2, tempIndex2), tishares.subList(tiStartIndex, tiStartIndex+tempIndex1), 
                     senderQueue, recQueues.get(startpid), new LinkedList<>(protocolIdQueue),
-                        clientID, prime, startpid, oneShare, protocolId));
+                        clientID, prime, startpid, oneShare, protocolId, partyCount));
                 
                 tiStartIndex += tempIndex1;
                 startpid++;

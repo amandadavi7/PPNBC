@@ -59,24 +59,36 @@ public class Logging {
      * Guidelines to use the Party class
      */
     public static void partyUsage() {
-        System.out.println("java Party.Party party_port=<port> ti=<TI IP:port> "
-                + "peer_port=<peer IP:port> "
-                + "party_id=<Party Id> "
-                + "values=<secret share>");
+        System.out.println("Usage: \n java Party.Party party_port=<port> "
+                + "ti=<TI IP:port> \n"
+                + "ba=<BA IP:port> \n"
+                + "partyCount=<total number of parties involved> \n"
+                + "party_id=<Party Id> \n"
+                + "model=<Model Id(1: DT Scoring 2:LR Evaluation 3:KNN "
+                + "4:DT Learning default:TestModel)> ");
     }
 
     /**
      * Guideline to use the TI class
      */
     public static void tiUsage() {
-        System.out.println("java TI <port> <no. of decimal triples> <no. of binary triples>");
+        System.out.println("java TI <port> <no. of parties> <no. of decimal triples> "
+                + "<no. of binary triples> <no. of realnumber triples>");
+    }
+    
+    /**
+     * Guideline to use the BA class
+     */
+    public static void baUsage() {
+        System.out.println("java BA port=<port> partyCount=<no. of parties> ");
     }
     
     /**
      * Guideline to use the Client class
      */
     public static void clientUsage() {
-        System.out.println("java ShareDistribution <inputfilePath>");
+        System.out.println("java ShareDistribution <number of client> "
+                + "<inputfilePath> <output path>");
     }
 
 }

@@ -42,10 +42,15 @@ public class TItoPeerCommunication implements Runnable {
             System.out.println("Connected to:" + socket + ": sending,");
             ObjectOutputStream oStream = new ObjectOutputStream(socket.getOutputStream());
             oStream.writeObject(tishare);
-            for(Triple t: tishare.decimalShares){
+            System.out.println("Sent "+ tishare.bigIntShares.size() +" shares to "+ socket.getInetAddress());
+            //TODO the socket life depends on the below print now
+            for(TripleInteger t: tishare.decimalShares){
                 System.out.println("u : " + t.u + ",v : " + t.v + ",w : " + t.w);
             }
-            for(Triple t: tishare.binaryShares){
+            for(TripleByte t: tishare.binaryShares){
+                System.out.println("u : " + t.u + ",v : " + t.v + ",w : " + t.w);
+            }
+            for(TripleReal t: tishare.bigIntShares){
                 System.out.println("u : " + t.u + ",v : " + t.v + ",w : " + t.w);
             }
         } catch (IOException ex){
