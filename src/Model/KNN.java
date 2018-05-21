@@ -64,7 +64,7 @@ public class KNN extends Model {
         this.binaryTiIndex = 0;
         this.trainingSharesCount = trainingShares.size();
         KjaccardDistances = new ArrayList<>();
-        ccTICount = 8*Constants.bitLength - 4 + (Constants.bitLength*(Constants.bitLength-1)/2);
+        ccTICount = (8*Constants.bitLength) - 4 + ((Constants.bitLength*(Constants.bitLength-1))/2);
         
     }
     

@@ -149,7 +149,7 @@ public class CrossMultiplyCompare extends CompositeProtocol implements Callable<
         // TODO - binaryti index management in Comparison
         initQueueMap(recQueues, pid);
         System.out.println("calling comparison");
-        binaryTiCount = (2*Constants.bitLength) + (Constants.bitLength*(Constants.bitLength-1)/2);
+        binaryTiCount = (2*Constants.bitLength) + ((Constants.bitLength*(Constants.bitLength-1))/2);
         Comparison comparisonModule = new Comparison(firstNumber,
                                      secondNumber, binaryTiShares.subList(binaryTiIndex, binaryTiIndex + binaryTiCount), oneShare,
                                     senderQueue, recQueues.get(pid), new LinkedList<>(protocolIdQueue), 
