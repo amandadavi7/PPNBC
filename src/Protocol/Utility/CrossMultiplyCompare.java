@@ -117,20 +117,23 @@ public class CrossMultiplyCompare extends CompositeProtocol implements Callable<
         // TODO - binaryTiShares sublist in bit decompositions
         System.out.println("calling bitD1");
         initQueueMap(recQueues, pid);
-        BitDecomposition firstTask = new BitDecomposition(first, binaryTiShares,
+        int binaryTiCount = 3*Constants.bitLength - 2;
+        BitDecomposition firstTask = new BitDecomposition(first, binaryTiShares.subList(binaryTiIndex, binaryTiIndex + binaryTiCount),
                                         oneShare, Constants.bitLength, senderQueue, 
                                         recQueues.get(pid), new LinkedList<>(protocolIdQueue), 
                                         clientID, binaryPrime, pid,partyCount);
         pid++;
+        binaryTiIndex += binaryTiCount;
         Future<List<Integer>> future1 = es.submit(firstTask);
         
         System.out.println("calling bitD2");
         initQueueMap(recQueues, pid);
-        BitDecomposition secondTask = new BitDecomposition(second, binaryTiShares,
+        BitDecomposition secondTask = new BitDecomposition(second, binaryTiShares.subList(binaryTiIndex, binaryTiIndex + binaryTiCount),
                                         oneShare, Constants.bitLength, senderQueue, 
                                         recQueues.get(pid), new LinkedList<>(protocolIdQueue), 
                                         clientID, binaryPrime, pid,partyCount);
         pid++;
+        binaryTiIndex += binaryTiCount;
         Future<List<Integer>> future2 = es.submit(secondTask);
         
         List<Integer> firstNumber = null, secondNumber = null;
@@ -146,13 +149,15 @@ public class CrossMultiplyCompare extends CompositeProtocol implements Callable<
         // TODO - binaryti index management in Comparison
         initQueueMap(recQueues, pid);
         System.out.println("calling comparison");
+        binaryTiCount = (2*Constants.bitLength) + (Constants.bitLength*(Constants.bitLength-1)/2);
         Comparison comparisonModule = new Comparison(firstNumber,
-                                     secondNumber, binaryTiShares, oneShare,
+                                     secondNumber, binaryTiShares.subList(binaryTiIndex, binaryTiIndex + binaryTiCount), oneShare,
                                     senderQueue, recQueues.get(pid), new LinkedList<>(protocolIdQueue), 
                                     clientID, binaryPrime, pid, partyCount);
         
         Future<Integer> comparisonTask = es.submit(comparisonModule);
-        
+        pid++; 
+        binaryTiIndex += binaryTiCount;
         es.shutdown();
         int result = 0;
         try {

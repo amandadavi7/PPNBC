@@ -15,7 +15,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import TrustedInitializer.TripleByte;
 import Utility.Constants;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.Queue;
@@ -41,6 +40,8 @@ public class BitDecomposition extends CompositeProtocol implements
 
     /**
      * Constructor
+     * 
+     * Takes 3(bitLength) - 2 binary ti shares
      *
      * @param input
      * @param tiShares
@@ -52,6 +53,7 @@ public class BitDecomposition extends CompositeProtocol implements
      * @param clientId
      * @param prime
      * @param protocolID
+     * @param partyCount
      */
     public BitDecomposition(Integer input, List<TripleByte> tiShares,
             int oneShare, int bitLength, BlockingQueue<Message> senderQueue,
