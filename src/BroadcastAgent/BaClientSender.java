@@ -3,35 +3,37 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package Party;
+package BroadcastAgent;
 
 import Communication.Message;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Callable;
 
 /**
+ * This thread takes out messages pending to be sent to the client and sends it
+ * over the socket
  *
- * @author keerthanaa
+ * @author anisha
  */
-public class PartyServer implements Runnable {
+public class BaClientSender implements Callable<Boolean> {
 
-    Socket socket;
+    Socket clientSocket;
     BlockingQueue<Message> senderQueue;
-    ObjectOutputStream oStream;
+    ObjectOutputStream oStream = null;
 
     /**
      * Constructor
      *
-     * @param socket
+     * @param socketserver
      * @param queue
-     * @param oStream
      */
-    public PartyServer(Socket socket, BlockingQueue<Message> queue, 
-            ObjectOutputStream oStream) {
-        this.socket = socket;
-        this.senderQueue = queue;
+    BaClientSender(Socket socket, ObjectOutputStream oStream,
+            BlockingQueue<Message> senderQueue) {
+        this.clientSocket = socket;
+        this.senderQueue = senderQueue;
         this.oStream = oStream;
     }
 
@@ -40,26 +42,27 @@ public class PartyServer implements Runnable {
      * them to other parties
      */
     @Override
-    public void run() {
+    public Boolean call() {
 
+        Message msg;
         while (!(Thread.currentThread().isInterrupted())) {
-            Message msg;
             try {
                 msg = senderQueue.take();
                 oStream.writeObject(msg);
-                //oStream.flush();
             } catch (InterruptedException | IOException ex) {
+                System.out.println("breaking from sender thread");
                 break;
-            } 
+            }
         }
-        
+
         try {
             oStream.close();
+            clientSocket.close();
         } catch (IOException ex) {
-            //Logger.getLogger(PartyServer.class.getName()).log(Level.SEVERE, null, ex);
+            return true;
         }
-        
-        System.out.println("Server closed");
+
+        return true;
 
     }
 }

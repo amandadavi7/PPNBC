@@ -99,7 +99,7 @@ public class FileIO {
     
     public static List<List<BigInteger>> loadMatrixFromFile(String sourceFile) {
         
-        File file = new File(sourceFile);
+        File file = new File("./"+sourceFile);
         Scanner inputStream;
         List<List<BigInteger>> x = new ArrayList<>();
 
@@ -141,7 +141,7 @@ public class FileIO {
     public static List<BigInteger> loadListFromFile(String sourceFile, 
             BigInteger Zq) {
         
-        File file = new File(sourceFile);
+        File file = new File("./"+sourceFile);
         Scanner inputStream;
         List<BigInteger> x = new ArrayList<>();
 

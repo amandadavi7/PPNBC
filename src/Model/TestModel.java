@@ -9,12 +9,14 @@ import Communication.Message;
 import Protocol.ArgMax;
 import Protocol.BitDecomposition;
 import Protocol.Comparison;
-import Protocol.Utility.JaccardDistance;
-import Protocol.DotProductNumber;
-import Protocol.Multiplication;
+import Protocol.DotProductInteger;
+import Protocol.MultiplicationInteger;
 import Protocol.OIS;
 import Protocol.OR_XOR;
-import TrustedInitializer.Triple;
+import Protocol.Utility.JaccardDistance;
+import TrustedInitializer.TripleByte;
+import TrustedInitializer.TripleInteger;
+import TrustedInitializer.TripleReal;
 import Utility.Constants;
 import java.util.*;
 import java.util.concurrent.*;
@@ -31,11 +33,11 @@ public class TestModel extends Model {
     List<List<List<Integer>>> v;
 
     public TestModel(List<List<Integer>> x, List<List<Integer>> y,
-            List<List<List<Integer>>> v, List<Triple> binaryTriples, List<Triple> decimalTriples,
-            int oneShares, BlockingQueue<Message> senderQueue,
-            BlockingQueue<Message> receiverQueue, int clientId) {
+            List<List<List<Integer>>> v, List<TripleByte> binaryTriples, List<TripleInteger> decimalTriples,
+            List<TripleReal> realTiShares, int oneShares, BlockingQueue<Message> senderQueue,
+            BlockingQueue<Message> receiverQueue, int clientId, int partyCount) {
 
-        super(senderQueue, receiverQueue, clientId, oneShares, binaryTriples, decimalTriples);
+        super(senderQueue, receiverQueue, clientId, oneShares, binaryTriples, decimalTriples, realTiShares, partyCount);
 
         this.x = x;
         this.y = y;
@@ -54,7 +56,7 @@ public class TestModel extends Model {
 
         BitDecomposition bitTest = new BitDecomposition(2, binaryTiShares,
                 oneShare, Constants.bitLength, commonSender,
-                recQueues.get(1), new LinkedList<>(protocolIdQueue), clientId, Constants.binaryPrime, 1);
+                recQueues.get(1), new LinkedList<>(protocolIdQueue), clientId, Constants.binaryPrime, 1, partyCount);
 
         Future<List<Integer>> bitdecompositionTask = es.submit(bitTest);
 
@@ -82,7 +84,7 @@ public class TestModel extends Model {
             initQueueMap(recQueues, i);
 
             ArgMax argmaxModule = new ArgMax(v.get(i), binaryTiShares, oneShare, commonSender,
-                    recQueues.get(i), new LinkedList<>(protocolIdQueue), clientId, Constants.binaryPrime, i);
+                    recQueues.get(i), new LinkedList<>(protocolIdQueue), clientId, Constants.binaryPrime, i, partyCount);
 
             System.out.println("submitted " + i + " argmax");
 
@@ -125,7 +127,7 @@ public class TestModel extends Model {
 
             initQueueMap(recQueues, i);
             OR_XOR or_xor = new OR_XOR(x.get(i), y.get(i), decimalTiShares, oneShare, 1, commonSender,
-                    recQueues.get(i), new LinkedList<>(protocolIdQueue), clientId, Constants.prime, i);
+                    recQueues.get(i), new LinkedList<>(protocolIdQueue), clientId, Constants.prime, i,partyCount);
 
             Future<Integer[]> task = es.submit(or_xor);
             taskList.add(task);
@@ -165,12 +167,14 @@ public class TestModel extends Model {
 
         if (v.isEmpty()) {
             System.out.println("v is null");
-            ois = new OIS(null, binaryTiShares, oneShare, commonSender, recQueues.get(0), new LinkedList<>(protocolIdQueue), clientId,
-                    Constants.binaryPrime, 0, 4, 1, 3);
+            ois = new OIS(null, binaryTiShares, oneShare, commonSender, recQueues.get(0), 
+                    new LinkedList<>(protocolIdQueue), clientId,
+                    Constants.binaryPrime, 0, 4, 1, 3,partyCount);
         } else {
             System.out.println("v is not null");
-            ois = new OIS(v.get(0), binaryTiShares, oneShare, commonSender, recQueues.get(0), new LinkedList<>(protocolIdQueue), clientId,
-                    Constants.binaryPrime, 0, 4, -1, 3);
+            ois = new OIS(v.get(0), binaryTiShares, oneShare, commonSender, recQueues.get(0), 
+                    new LinkedList<>(protocolIdQueue), clientId,
+                    Constants.binaryPrime, 0, 4, -1, 3, partyCount);
         }
 
         Future<Integer[]> task = es.submit(ois);
@@ -204,10 +208,10 @@ public class TestModel extends Model {
 
                     initQueueMap(recQueues, i);
 
-                    Multiplication multiplicationModule = new Multiplication(
+                    MultiplicationInteger multiplicationModule = new MultiplicationInteger(
                             x.get(i).get(0), y.get(i).get(0), 
                             decimalTiShares.get(i), commonSender, recQueues.get(i), 
-                            new LinkedList<>(protocolIdQueue), clientId, Constants.prime, i, oneShare, 0);
+                            new LinkedList<>(protocolIdQueue), clientId, Constants.prime, i, oneShare, 0, partyCount);
 
                     System.out.println("Submitted " + i + " multiplication");
 
@@ -220,9 +224,9 @@ public class TestModel extends Model {
 
                     initQueueMap(recQueues, i);
 
-                    DotProductNumber DPModule = new DotProductNumber(x.get(i),
+                    DotProductInteger DPModule = new DotProductInteger(x.get(i),
                             y.get(i), decimalTiShares, commonSender, recQueues.get(i),
-                            new LinkedList<>(protocolIdQueue),clientId, Constants.prime, i, oneShare);
+                            new LinkedList<>(protocolIdQueue),clientId, Constants.prime, i, oneShare, partyCount);
 
                     System.out.println("Submitted " + i + " dotproduct");
 
@@ -237,7 +241,7 @@ public class TestModel extends Model {
 
                     Comparison comparisonModule = new Comparison(x.get(i), y.get(i),
                             binaryTiShares, oneShare, commonSender,
-                            recQueues.get(i), new LinkedList<>(protocolIdQueue), clientId, Constants.binaryPrime, i);
+                            recQueues.get(i), new LinkedList<>(protocolIdQueue), clientId, Constants.binaryPrime, i, partyCount);
 
                     System.out.println("submitted " + i + " comparison");
 
@@ -278,7 +282,7 @@ public class TestModel extends Model {
           JaccardDistance jdistance = new JaccardDistance(x, y.get(0), oneShare, 
                                     decimalTiShares, commonSender, 
                                     recQueues.get(0), clientId, Constants.prime, 0, 
-                                    new LinkedList<>(protocolIdQueue));
+                                    new LinkedList<>(protocolIdQueue),partyCount);
         
         Future<List<List<Integer>>> jaccardTask = es.submit(jdistance);
         es.shutdown();
@@ -300,15 +304,17 @@ public class TestModel extends Model {
     public void compute() {
 
         startModelHandlers();
-        
+
         //callArgMax();
         //callOIS();
         callJaccard();
         //callOR_XOR();
         //callBitDecomposition();
         // pass 1 - multiplication, 2 - dot product and 3 - comparison
+
         //callProtocol(3);
         
+
         teardownModelHandlers();
 
     }

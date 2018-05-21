@@ -7,6 +7,7 @@ package Protocol;
 
 import Communication.Message;
 import TrustedInitializer.Triple;
+import TrustedInitializer.TripleByte;
 import Utility.Constants;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -24,24 +25,27 @@ import java.util.concurrent.Future;
  * Takes a feature vector, k (index (0 index) of the feature that needs to be selected and returns shares of xk
  * asymmetric computation one party sends k=-1 and feature vector, another party sends k and featurevector = null
  * 
- * Uses bitlength*count no. of binartTiShares
+ * Uses bitlength*count no. of binaryTiShares
  * 
  * @author keerthanaa
  */
 public class OIS extends CompositeProtocol implements Callable<Integer[]>{
     List<List<Integer>> featureVectorTransposed;
     List<Integer> yShares;
-    List<Triple> tiShares;
+    List<TripleByte> tiShares;
     int numberCount,bitLength, prime;
     
     /**
      * Constructor
+     * 
+     * Uses bitLength*count no. of binaryTIShares
      * 
      * @param features
      * @param tiShares
      * @param oneShare
      * @param senderQueue
      * @param receiverQueue
+     * @param protocolIdQueue
      * @param clientId
      * @param prime
      * @param protocolID
@@ -49,13 +53,13 @@ public class OIS extends CompositeProtocol implements Callable<Integer[]>{
      * @param k
      * @param numberCount 
      */
-    public OIS(List<List<Integer>> features, List<Triple> tiShares,
+    public OIS(List<List<Integer>> features, List<TripleByte> tiShares,
             int oneShare, BlockingQueue<Message> senderQueue,
             BlockingQueue<Message> receiverQueue, Queue<Integer> protocolIdQueue,
             int clientId, int prime,
-            int protocolID, int bitLength, int k, int numberCount){
+            int protocolID, int bitLength, int k, int numberCount, int partyCount){
         
-        super(protocolID, senderQueue, receiverQueue, protocolIdQueue,clientId, oneShare);
+        super(protocolID, senderQueue, receiverQueue, protocolIdQueue,clientId, oneShare, partyCount);
         this.numberCount = numberCount;
         this.bitLength = bitLength;
         this.tiShares = tiShares;
@@ -115,9 +119,10 @@ public class OIS extends CompositeProtocol implements Callable<Integer[]>{
             
             //System.out.println("parentID-"+ protocolId +", dp with pid "+ i + " - " +featureVectorTransposed.get(i)+" and "+yShares);
             
-            DotProductNumber dp = new DotProductNumber(featureVectorTransposed.get(i), yShares, 
-                    tiShares.subList(tiStartIndex, tiStartIndex+numberCount), senderQueue, recQueues.get(i), new LinkedList<>(protocolIdQueue),
-                    clientID, prime, i, oneShare);
+            DotProductByte dp = new DotProductByte(featureVectorTransposed.get(i), yShares, 
+                    tiShares.subList(tiStartIndex, tiStartIndex+numberCount), senderQueue, 
+                    recQueues.get(i), new LinkedList<>(protocolIdQueue),
+                    clientID, prime, i, oneShare, partyCount);
             
             Future<Integer> dpTask = es.submit(dp);
             taskList.add(dpTask);

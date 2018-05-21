@@ -14,18 +14,21 @@ import java.util.List;
  * @author keerthanaa
  */
 public class TIShare implements Serializable {
-    public List<Triple> decimalShares,binaryShares;
+    public List<TripleInteger> decimalShares;
+    public List<TripleByte> binaryShares;
+    public List<TripleReal> bigIntShares;
     
     public TIShare(){
         decimalShares = new LinkedList<>();
         binaryShares = new LinkedList<>();
+        bigIntShares = new LinkedList<>();
     }
     
     /**
      * add Triple object to decimalshares
      * @param t 
      */
-    public void addDecimal(Triple t){
+    public void addDecimal(TripleInteger t){
         decimalShares.add(t);
     }
     
@@ -33,7 +36,11 @@ public class TIShare implements Serializable {
      * add Triple object to binary shares
      * @param t 
      */
-    public void addBinary(Triple t){
+    public void addBinary(TripleByte t){
         binaryShares.add(t);
+    }
+    
+    public void addBigInt(TripleReal t){
+        bigIntShares.add(t);
     }
 }

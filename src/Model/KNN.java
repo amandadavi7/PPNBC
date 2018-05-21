@@ -9,12 +9,15 @@ import Communication.Message;
 import Protocol.BitDecomposition;
 import Protocol.Comparison;
 import Protocol.CompositeProtocol;
-import Protocol.Multiplication;
+import Protocol.MultiplicationByte;
+import Protocol.MultiplicationInteger;
 import Protocol.OR_XOR;
-import Protocol.Utility.BatchMultiplicationNumber;
+import Protocol.Utility.BatchMultiplicationInteger;
 import Protocol.Utility.CrossMultiplyCompare;
 import Protocol.Utility.JaccardDistance;
 import TrustedInitializer.Triple;
+import TrustedInitializer.TripleByte;
+import TrustedInitializer.TripleInteger;
 import Utility.Constants;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -45,11 +48,11 @@ public class KNN extends Model {
     
     
     public KNN(int oneShare, BlockingQueue<Message> senderQueue,
-            BlockingQueue<Message> receiverQueue, int clientId, List<Triple> binaryTriples, 
-            List<Triple> decimalTriples, List<List<Integer>> trainingShares, List<Integer> testShare, 
-            List<Integer> classLabels, int K) {
+            BlockingQueue<Message> receiverQueue, int clientId, List<TripleByte> binaryTriples, 
+            List<TripleInteger> decimalTriples, List<List<Integer>> trainingShares, List<Integer> testShare, 
+            List<Integer> classLabels, int K, int partyCount) {
         
-        super(senderQueue, receiverQueue, clientId, oneShare, binaryTriples, decimalTriples);
+        super(senderQueue, receiverQueue, clientId, oneShare, binaryTriples, decimalTriples, null, partyCount);
         this.trainingShares = trainingShares;
         this.testShare = testShare;
         this.classLabels = classLabels;
@@ -83,11 +86,11 @@ public class KNN extends Model {
         if(clientId==1) {
             xor = new OR_XOR(cShares, dummy, decimalTiShares.subList(decimalTiIndex, decimalTiIndex+1), 
                 oneShare, 2, commonSender, recQueues.get(pid), new LinkedList<>(protocolIdQueue), 
-                clientId, Constants.prime, pid);
+                clientId, Constants.prime, pid, partyCount);
         } else if(clientId==2) {
             xor = new OR_XOR(dummy, cShares, decimalTiShares.subList(decimalTiIndex, decimalTiIndex+1), 
                 oneShare, 2, commonSender, recQueues.get(pid), new LinkedList<>(protocolIdQueue), 
-                clientId, Constants.prime, pid);
+                clientId, Constants.prime, pid, partyCount);
         }
         
         Future<Integer[]> xorTask = es.submit(xor);
@@ -103,10 +106,11 @@ public class KNN extends Model {
         //left index position
         for(int i=0;i<3;i++) {
             initQueueMap(recQueues, pid);
-         
-            Multiplication multModule = new Multiplication(c[0], KjaccardDistances.get(rightIndex).get(i), 
+
+            //System.out.println("multiplying.."+c[0]+" and "+ KjaccardDistances.get(rightIndex).get(i));
+            MultiplicationInteger multModule = new MultiplicationInteger(c[0], KjaccardDistances.get(rightIndex).get(i), 
                 decimalTiShares.get(decimalTiIndex), commonSender, recQueues.get(pid), new LinkedList<>(protocolIdQueue), 
-                clientId, Constants.prime, pid, oneShare, 0);
+                clientId, Constants.prime, pid, oneShare, 0, partyCount);
             
             pid++;
             decimalTiIndex++;
@@ -115,11 +119,13 @@ public class KNN extends Model {
             
             initQueueMap(recQueues, pid);
 
-            Multiplication multModule2 = new Multiplication(
+            //System.out.println("multiplying.."+Math.floorMod(oneShare - c[0], Constants.prime)+" and "+
+            //      KjaccardDistances.get(leftIndex).get(i));
+            MultiplicationInteger multModule2 = new MultiplicationInteger(
                     Math.floorMod(oneShare - c[0], Constants.prime), 
                     KjaccardDistances.get(leftIndex).get(i), decimalTiShares.get(decimalTiIndex), 
                     commonSender, recQueues.get(pid), new LinkedList<>(protocolIdQueue), clientId, 
-                    Constants.prime, pid, oneShare, 0);
+                    Constants.prime, pid, oneShare, 0, partyCount);
             
             pid++;
             decimalTiIndex++;
@@ -130,10 +136,10 @@ public class KNN extends Model {
         //right index position
         for(int i=0;i<3;i++) {
             initQueueMap(recQueues, pid);
-            Multiplication multModule = new Multiplication(c[0], KjaccardDistances.get(leftIndex).get(i), 
+            MultiplicationInteger multModule = new MultiplicationInteger(c[0], KjaccardDistances.get(leftIndex).get(i), 
                 decimalTiShares.get(decimalTiIndex), commonSender, recQueues.get(pid), 
                 new LinkedList<>(protocolIdQueue), 
-                clientId, Constants.prime, pid, oneShare, 0);
+                clientId, Constants.prime, pid, oneShare, 0, partyCount);
             
             pid++;
             decimalTiIndex++;
@@ -141,11 +147,11 @@ public class KNN extends Model {
             rightTaskList.add(task);
             
             initQueueMap(recQueues, pid);
-            Multiplication multModule2 = new Multiplication(
+            MultiplicationInteger multModule2 = new MultiplicationInteger(
                     Math.floorMod(oneShare - c[0], Constants.prime), 
                     KjaccardDistances.get(rightIndex).get(i), decimalTiShares.get(decimalTiIndex), 
                     commonSender, recQueues.get(pid), new LinkedList<>(protocolIdQueue), 
-                    clientId, Constants.prime, pid, oneShare, 0);
+                    clientId, Constants.prime, pid, oneShare, 0, partyCount);
             
             pid++;
             decimalTiIndex++;
@@ -204,7 +210,7 @@ public class KNN extends Model {
                     KjaccardDistances.get(indices[endIndex]).get(0), oneShare, 
                     decimalTiShares.subList(decimalTiIndex, decimalTiIndex+2), 
                     binaryTiShares, commonSender, recQueues.get(pid), 
-                    clientId, Constants.prime, Constants.binaryPrime, pid, new LinkedList<>(protocolIdQueue));
+                    clientId, Constants.prime, Constants.binaryPrime, pid, new LinkedList<>(protocolIdQueue),partyCount);
             
             Future<Integer> resultTask = es.submit(ccModule);
             pid++;
@@ -270,7 +276,7 @@ public class KNN extends Model {
                     KjaccardDistances.get(indices[i+1]).get(0), oneShare, 
                     decimalTiShares.subList(decimalTiIndex, decimalTiIndex+2), 
                     binaryTiShares, commonSender, recQueues.get(pid), 
-                    clientId, Constants.prime, Constants.binaryPrime, pid, new LinkedList<>(protocolIdQueue));
+                    clientId, Constants.prime, Constants.binaryPrime, pid, new LinkedList<>(protocolIdQueue),partyCount);
             
             Future<Integer> resultTask = es.submit(ccModule);
             pid++;
@@ -309,7 +315,7 @@ public class KNN extends Model {
             CrossMultiplyCompare ccModule = new CrossMultiplyCompare(jaccardDistances.get(index).get(1),
                     jaccardDistances.get(index).get(0), KjaccardDistances.get(i).get(1), KjaccardDistances.get(i).get(0),
                     oneShare, decimalTiShares.subList(decimalTiIndex, decimalTiIndex+2), binaryTiShares, commonSender, recQueues.get(pid), clientId, Constants.prime,
-                    Constants.binaryPrime, pid, new LinkedList<>(protocolIdQueue));
+                    Constants.binaryPrime, pid, new LinkedList<>(protocolIdQueue), partyCount);
             
             pid++;
             decimalTiIndex += 2;
@@ -342,9 +348,9 @@ public class KNN extends Model {
         for(int i=1;i<K-1;i++) {
             initQueueMap(recQueues, pid);
             
-            Multiplication mult = new Multiplication(comparisonMultiplications[i], comparisonResults[i],
+            MultiplicationByte mult = new MultiplicationByte(comparisonMultiplications[i], comparisonResults[i],
                     binaryTiShares.get(binaryTiIndex), commonSender, recQueues.get(pid),
-                    new LinkedList<>(protocolIdQueue), clientId, Constants.binaryPrime, pid, oneShare, 0);
+                    new LinkedList<>(protocolIdQueue), clientId, Constants.binaryPrime, pid, oneShare, 0, partyCount);
             binaryTiIndex++;
             pid++;
             Future<Integer> multTask = es.submit(mult);
@@ -443,11 +449,11 @@ public class KNN extends Model {
         for(int i=1;i<K;i++) {
             initQueueMap(recQueues, pid);
             
-            Multiplication mult = new Multiplication(comparisonMultiplications[i], 
+            MultiplicationByte mult = new MultiplicationByte(comparisonMultiplications[i], 
                     Math.floorMod(oneShare-comparisonResults[i], Constants.binaryPrime), 
                     binaryTiShares.get(binaryTiIndex), commonSender, recQueues.get(pid), 
                     new LinkedList<>(protocolIdQueue), clientId, 
-                    Constants.binaryPrime, pid, oneShare, 0);
+                    Constants.binaryPrime, pid, oneShare, 0, partyCount);
             
             binaryTiIndex++;
             pid++;
@@ -477,21 +483,21 @@ public class KNN extends Model {
         if(clientId==1) {
             xorComp = new OR_XOR(Arrays.asList(comparisonResults), dummy, decimalTiShares.subList(decimalTiIndex, decimalTiIndex+K), 
                 oneShare, 2, commonSender, recQueues.get(pid), new LinkedList<>(protocolIdQueue), 
-                clientId, Constants.prime, pid);
+                clientId, Constants.prime, pid, partyCount);
             pid++;
             decimalTiIndex += K;
             xorCompMults = new OR_XOR(Arrays.asList(comparisonMultiplications), dummy, decimalTiShares.subList(decimalTiIndex, decimalTiIndex+K), 
                 oneShare, 2, commonSender, recQueues.get(pid), new LinkedList<>(protocolIdQueue), 
-                clientId, Constants.prime, pid);
+                clientId, Constants.prime, pid, partyCount);
         } else if(clientId==2) {
             xorComp = new OR_XOR(dummy, Arrays.asList(comparisonResults), decimalTiShares.subList(decimalTiIndex, decimalTiIndex+K), 
                 oneShare, 2, commonSender, recQueues.get(pid), new LinkedList<>(protocolIdQueue), 
-                clientId, Constants.prime, pid);
+                clientId, Constants.prime, pid, partyCount);
             pid++;
             decimalTiIndex += K;
             xorCompMults = new OR_XOR(dummy, Arrays.asList(comparisonMultiplications), decimalTiShares.subList(decimalTiIndex, decimalTiIndex+K), 
                 oneShare, 2, commonSender, recQueues.get(pid), new LinkedList<>(protocolIdQueue), 
-                clientId, Constants.prime, pid);
+                clientId, Constants.prime, pid, partyCount);
         }
         
         Future<Integer[]> xorTask1 = es.submit(xorComp);
@@ -525,7 +531,7 @@ public class KNN extends Model {
                     i, comparisonResults, comparisonMultiplications, pid, 
                     new LinkedList<>(protocolIdQueue), Constants.prime, oneShare, commonSender, 
                     recQueues.get(pid), clientId, decimalTiShares.subList(decimalTiIndex, decimalTiIndex+9), 
-                    jaccardDistances.get(index), KjaccardDistances.get(i), prev);
+                    jaccardDistances.get(index), KjaccardDistances.get(i), prev, partyCount);
             
             swapTaskList.add(es.submit(swapModule));
             pid++;
@@ -568,20 +574,22 @@ public class KNN extends Model {
         
         //Do a comparison between oneCount and zeroCount
         initQueueMap(recQueues, pid);
+
         BitDecomposition bitDModuleOne = new BitDecomposition(oneCount,
                                 binaryTiShares, oneShare, Constants.bitLength, 
                                 commonSender, recQueues.get(pid), 
                                 new LinkedList<>(protocolIdQueue),
-                                clientId, Constants.binaryPrime, pid);
+                                clientId, Constants.binaryPrime, pid, partyCount);
         pid++;
         Future<List<Integer>> bitTaskOne = es.submit(bitDModuleOne);
         
         initQueueMap(recQueues, pid);
+
         BitDecomposition bitDModuleZero = new BitDecomposition(zeroCount, 
                             binaryTiShares, oneShare, Constants.bitLength, 
                             commonSender, recQueues.get(pid), 
                             new LinkedList<>(protocolIdQueue),
-                            clientId, Constants.binaryPrime, pid);
+                            clientId, Constants.binaryPrime, pid, partyCount);
         pid++;
         Future<List<Integer>> bitTaskZero = es.submit(bitDModuleZero);
         
@@ -598,11 +606,12 @@ public class KNN extends Model {
         }
         
         initQueueMap(recQueues, pid);
+
         Comparison compClassLabels = new Comparison(numOfOnePredictions,
                                      numOfZeroPredictions, binaryTiShares, 
                                      oneShare,commonSender, recQueues.get(pid), 
                                      new LinkedList<>(protocolIdQueue), 
-                                     clientId, Constants.binaryPrime, pid);
+                                     clientId, Constants.binaryPrime, pid, partyCount);
         
         Future<Integer> resultTask = es.submit(compClassLabels);
         pid++;
@@ -629,7 +638,7 @@ public class KNN extends Model {
         int decTICount = attrLength*2*trainingSharesCount;
         JaccardDistance jdModule = new JaccardDistance(trainingShares, testShare, 
                 oneShare, decimalTiShares.subList(0, decTICount), commonSender, 
-                recQueues.get(pid), clientId, Constants.prime, pid, new LinkedList<>(protocolIdQueue));
+                recQueues.get(pid), clientId, Constants.prime, pid, new LinkedList<>(protocolIdQueue), partyCount);
         
         Future<List<List<Integer>>> jdTask = es.submit(jdModule);
         pid++;
@@ -691,7 +700,7 @@ class SwapCircuitTrainingShares extends CompositeProtocol implements Callable<In
     int position;
     Integer[] comparisonResults;
     Integer[] comparisonMultiplications;
-    List<Triple> decimalTiShares;
+    List<TripleInteger> decimalTiShares;
     int prime;
     List<Integer> jaccardDistanceTraining, jaccardDistanceSorted, jaccardDistanceSortedPrevious;
     
@@ -716,10 +725,10 @@ class SwapCircuitTrainingShares extends CompositeProtocol implements Callable<In
             Integer[] comparisonResults, Integer[] comparisonMultiplications,
             int protocolID, Queue<Integer> protocolIdQueue, int prime, int oneShare, 
             BlockingQueue<Message> senderQueue, BlockingQueue<Message> receiverQueue, 
-            int clientId, List<Triple> tiShares, List<Integer> jaccardDistanceTraining, 
-            List<Integer> jaccardDistanceSorted, List<Integer> jaccardDistanceSortedprev) {
+            int clientId, List<TripleInteger> tiShares, List<Integer> jaccardDistanceTraining, 
+            List<Integer> jaccardDistanceSorted, List<Integer> jaccardDistanceSortedprev, int partyCount) {
         
-        super(protocolID, senderQueue, receiverQueue, protocolIdQueue, clientId, oneShare);
+        super(protocolID, senderQueue, receiverQueue, protocolIdQueue, clientId, oneShare, partyCount);
         this.trainingIndex = trainingIndex;
         this.position = position;
         this.comparisonResults = comparisonResults;
@@ -739,10 +748,10 @@ class SwapCircuitTrainingShares extends CompositeProtocol implements Callable<In
         //first mult
         initQueueMap(recQueues, pid);
         List<Integer> piC = new ArrayList<>(Collections.nCopies(3, comparisonMultiplications[position]));
-        BatchMultiplicationNumber mult1 = new BatchMultiplicationNumber(jaccardDistanceTraining, 
+        BatchMultiplicationInteger mult1 = new BatchMultiplicationInteger(jaccardDistanceTraining, 
                 piC, decimalTiShares.subList(decimalTiIndex, decimalTiIndex+3), senderQueue, 
                 recQueues.get(pid), new LinkedList<>(protocolIdQueue), clientID, Constants.prime, 
-                pid, oneShare, 0);
+                pid, oneShare, 0, partyCount);
         Future<Integer[]> multTask1 = es.submit(mult1);
         pid++;
         decimalTiIndex+=3;
@@ -750,9 +759,9 @@ class SwapCircuitTrainingShares extends CompositeProtocol implements Callable<In
         //third mult
         initQueueMap(recQueues, pid);
         List<Integer> C = new ArrayList<>(Collections.nCopies(3, comparisonResults[position]));
-        BatchMultiplicationNumber mult3 = new BatchMultiplicationNumber(jaccardDistanceSorted, 
+        BatchMultiplicationInteger mult3 = new BatchMultiplicationInteger(jaccardDistanceSorted, 
                 C, decimalTiShares.subList(decimalTiIndex, decimalTiIndex+3), senderQueue, 
-                recQueues.get(pid), new LinkedList<>(protocolIdQueue), clientID, Constants.prime, pid, oneShare, 0);
+                recQueues.get(pid), new LinkedList<>(protocolIdQueue), clientID, Constants.prime, pid, oneShare, 0, partyCount);
         Future<Integer[]> multTask3 = es.submit(mult3);
         pid++;
         decimalTiIndex+=3;
@@ -764,9 +773,9 @@ class SwapCircuitTrainingShares extends CompositeProtocol implements Callable<In
             //second mult
             initQueueMap(recQueues, pid);
             List<Integer> notC = new ArrayList<>(Collections.nCopies(3, Math.floorMod(oneShare-comparisonResults[position-1], Constants.prime)));
-            BatchMultiplicationNumber mult2 = new BatchMultiplicationNumber(jaccardDistanceSortedPrevious, 
+            BatchMultiplicationInteger mult2 = new BatchMultiplicationInteger(jaccardDistanceSortedPrevious, 
                     notC, decimalTiShares.subList(decimalTiIndex, decimalTiIndex+3), senderQueue, 
-                    recQueues.get(pid), new LinkedList<>(protocolIdQueue), clientID, Constants.prime, pid, oneShare, 0);
+                    recQueues.get(pid), new LinkedList<>(protocolIdQueue), clientID, Constants.prime, pid, oneShare, 0, partyCount);
             Future<Integer[]> multTask2 = es.submit(mult2);
             pid++;
             decimalTiIndex+=3;

@@ -19,7 +19,6 @@ import java.util.concurrent.BlockingQueue;
  */
 public abstract class BatchMultiplication extends Protocol {
 
-    List<Triple> tiShares;
     int parentID;
 
     /**
@@ -36,14 +35,12 @@ public abstract class BatchMultiplication extends Protocol {
      * @param oneShare
      * @param parentID
      */
-    public BatchMultiplication(List<Triple> tiShares,
-            BlockingQueue<Message> senderQueue,
+    public BatchMultiplication(BlockingQueue<Message> senderQueue,
             BlockingQueue<Message> receiverQueue, Queue<Integer> protocolIdQueue,
             int clientId, 
-            int protocolID, int oneShare, int parentID) {
+            int protocolID, int oneShare, int parentID, int partyCount) {
 
-        super(protocolID, senderQueue, receiverQueue, protocolIdQueue, clientId, oneShare);
-        this.tiShares = tiShares;
+        super(protocolID, senderQueue, receiverQueue, protocolIdQueue, clientId, oneShare, partyCount);
         this.parentID = parentID;
     }
 
