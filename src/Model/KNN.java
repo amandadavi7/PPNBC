@@ -638,7 +638,7 @@ public class KNN extends Model {
         int decTICount = attrLength*2*trainingSharesCount;
         JaccardDistance jdModule = new JaccardDistance(trainingShares, testShare, 
                 oneShare, decimalTiShares.subList(0, decTICount), commonSender, 
-                recQueues.get(pid), clientId, Constants.prime, pid, new LinkedList<>(protocolIdQueue),partyCount);
+                recQueues.get(pid), clientId, Constants.prime, pid, new LinkedList<>(protocolIdQueue), partyCount);
         
         Future<List<List<Integer>>> jdTask = es.submit(jdModule);
         pid++;
