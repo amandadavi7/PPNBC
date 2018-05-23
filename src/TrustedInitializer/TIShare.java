@@ -17,11 +17,13 @@ public class TIShare implements Serializable {
     public List<TripleInteger> decimalShares;
     public List<TripleByte> binaryShares;
     public List<TripleReal> bigIntShares;
+    public List<TruncationPair> truncationPair;
     
     public TIShare(){
         decimalShares = new LinkedList<>();
         binaryShares = new LinkedList<>();
         bigIntShares = new LinkedList<>();
+        truncationPair = new LinkedList<>();
     }
     
     /**
@@ -40,7 +42,19 @@ public class TIShare implements Serializable {
         binaryShares.add(t);
     }
     
+    /**
+     * add Triple object to real shares
+     * @param t 
+     */
     public void addBigInt(TripleReal t){
         bigIntShares.add(t);
+    }
+    
+    /**
+     * add Truncation pair object to real shares
+     * @param t 
+     */
+    public void addBigInt(TruncationPair t){
+        truncationPair.add(t);
     }
 }

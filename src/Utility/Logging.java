@@ -11,6 +11,7 @@ import java.util.Map;
 
 /**
  * Contains all logging functions for cleaner code, and easy debugging.
+ *
  * @author anisha
  */
 public class Logging {
@@ -29,7 +30,7 @@ public class Logging {
         }
         System.out.println("");
     }
-    
+
     /**
      * Log shares from a list
      *
@@ -39,7 +40,7 @@ public class Logging {
     public static void logShares(String variableName, HashMap<Integer, Integer> shares) {
         int n = 0;
         System.out.print(variableName + ": ");
-        for (Map.Entry<Integer,Integer> share : shares.entrySet()) {
+        for (Map.Entry<Integer, Integer> share : shares.entrySet()) {
             System.out.print(share.getValue() + " ");
         }
         System.out.println("");
@@ -72,17 +73,20 @@ public class Logging {
      * Guideline to use the TI class
      */
     public static void tiUsage() {
-        System.out.println("java TI <port> <no. of parties> <no. of decimal triples> "
-                + "<no. of binary triples> <no. of realnumber triples>");
+        System.out.println("java TI port=<port> partyCount=<no. of parties> \n"
+                + "decimal=<no. of decimal triples> \n"
+                + "binary=<no. of binary triples> \n"
+                + "real=<no. of realnumber triples> \n"
+                + "truncation= <no. of truncation pairs>");
     }
-    
+
     /**
      * Guideline to use the BA class
      */
     public static void baUsage() {
         System.out.println("java BA port=<port> partyCount=<no. of parties> ");
     }
-    
+
     /**
      * Guideline to use the Client class
      */
