@@ -110,10 +110,15 @@ public class Random {
 
         int f = Constants.decimal_precision;
         int k = Constants.integer_precision + Constants.decimal_precision;
+        //TODO take lambda as a parameter
+        int lambda = 10;
 
         for (int i = 0; i < truncationPairs; i++) {
+            // generate a random Rp of f bit length
             BigInteger Rp = new BigInteger(f, rand);
-            BigInteger R2p = new BigInteger(k, rand);
+            
+            // generate a random Rp of lambda+k bit length
+            BigInteger R2p = new BigInteger(lambda+k, rand);
 
             BigInteger f2 = BigInteger.valueOf(2).pow(f);
 
@@ -126,12 +131,12 @@ public class Random {
                 t.rp = new BigInteger(Zq.bitLength(), rand).mod(Zq);
                 rsum = rsum.add(t.r);
                 rpsum = rpsum.add(t.rp);
-                tiShare[j].addBigInt(t);
+                tiShare[j].addTruncationPair(t);
             }
             TruncationPair t = new TruncationPair();
             t.r = (R.subtract(rsum)).mod(Zq);
             t.rp = (Rp.subtract(rpsum)).mod(Zq);
-            tiShare[clientCount - 1].addBigInt(t);
+            tiShare[clientCount - 1].addTruncationPair(t);
         }
 
     }

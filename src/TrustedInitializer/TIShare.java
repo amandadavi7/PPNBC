@@ -54,7 +54,7 @@ public class TIShare implements Serializable {
      * add Truncation pair object to real shares
      * @param t 
      */
-    public void addBigInt(TruncationPair t){
+    public void addTruncationPair(TruncationPair t){
         truncationPair.add(t);
     }
 }

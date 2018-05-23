@@ -244,7 +244,7 @@ public class Party {
                 // LR Evaluation
                 LinearRegressionEvaluation regressionModel
                         = new LinearRegressionEvaluation(xSharesBigInt, ySharesBigInt,
-                                tiShares.bigIntShares, oneShares, senderQueue,
+                                tiShares.bigIntShares, tiShares.truncationPair, oneShares, senderQueue,
                                 receiverQueue, partyId, Zq, outputDir, partyCount);
 
                 regressionModel.predictValues();

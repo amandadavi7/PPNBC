@@ -8,6 +8,7 @@ package Model;
 import Communication.Message;
 import Protocol.DotProductReal;
 import TrustedInitializer.TripleReal;
+import TrustedInitializer.TruncationPair;
 import Utility.Constants;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -29,6 +30,8 @@ public class LinearRegressionEvaluation extends Model {
     List<List<BigInteger>> x;
     List<BigInteger> beta;
     List<BigInteger> y;
+    List<TruncationPair> truncationTiPairs;
+    
     int testCases;
 
     BigInteger prime;
@@ -48,6 +51,7 @@ public class LinearRegressionEvaluation extends Model {
      */
     public LinearRegressionEvaluation(List<List<BigInteger>> x,
             List<BigInteger> beta, List<TripleReal> realTriples,
+            List<TruncationPair> truncationPair,
             int oneShares, BlockingQueue<Message> senderQueue,
             BlockingQueue<Message> receiverQueue, int clientId,
             BigInteger prime, String outputPath, int partyCount) {
@@ -59,6 +63,7 @@ public class LinearRegressionEvaluation extends Model {
         this.beta = beta;
         this.prime = prime;
         this.outputPath = outputPath;
+        this.truncationTiPairs = truncationPair;
         testCases = x.size();
         y = new ArrayList<>();
 

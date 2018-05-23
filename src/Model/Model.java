@@ -10,6 +10,7 @@ import Communication.ReceiverQueueHandler;
 import TrustedInitializer.TripleByte;
 import TrustedInitializer.TripleInteger;
 import TrustedInitializer.TripleReal;
+import TrustedInitializer.TruncationPair;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
@@ -37,6 +38,7 @@ public class Model {
     int clientId;
     int partyCount;
     int oneShare;
+    // TODO: this should be model specific. not global
     List<TripleByte> binaryTiShares;
     List<TripleInteger> decimalTiShares;
     List<TripleReal> realTiShares;
