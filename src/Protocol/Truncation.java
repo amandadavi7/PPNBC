@@ -19,20 +19,18 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Truncation of n elements batch wise
- *
+ * Batch Truncation of n elements 
+ * TODO better name
  * @author anisha
  */
 public class Truncation extends CompositeProtocol implements Callable<List<BigInteger>> {
 
     List<BigInteger> wShares;
     List<BigInteger> zShares;
-    List<TruncationPair> truncationShares;
-    List<BigInteger> C, Cp;
     List<BigInteger> T;
+    List<TruncationPair> truncationShares;
 
-    BigInteger prime, fpow2;
-
+    BigInteger prime;
     int batchSize;
 
     public Truncation(List<BigInteger> wShares,
@@ -47,19 +45,16 @@ public class Truncation extends CompositeProtocol implements Callable<List<BigIn
         this.wShares = wShares;
         this.prime = prime;
         this.truncationShares = tiShares;
-        batchSize = wShares.size();
+        
         zShares = new ArrayList<>();
-        C = new ArrayList<>();
-        Cp = new ArrayList<>();
         T = new ArrayList<>();
-
-        fpow2 = BigInteger.valueOf(2).pow(Constants.decimal_precision);
+        batchSize = wShares.size();
+        
     }
 
     @Override
     public List<BigInteger> call() throws Exception {
         computeAndShareZShare();
-        computeC();
         computeSecretShare();
 
         return T;
@@ -92,10 +87,11 @@ public class Truncation extends CompositeProtocol implements Callable<List<BigIn
         }
     }
 
-    private void computeC() {
+    private void computeSecretShare() {
         Message receivedMessage = null;
         List<BigInteger> z = new ArrayList<>(Collections.nCopies(batchSize, BigInteger.ZERO));
         List<List<BigInteger>> diffList = null;
+        // Receive all zShares
         for (int i = 0; i < partyCount - 1; i++) {
             try {
                 receivedMessage = receiverQueue.take();
@@ -110,28 +106,22 @@ public class Truncation extends CompositeProtocol implements Callable<List<BigIn
 
         BigInteger roundOffBit = BigInteger.valueOf(2).pow(Constants.integer_precision
                 + Constants.decimal_precision - 1);
+        BigInteger fInv = prime.add(BigInteger.ONE).divide(BigInteger.valueOf(2)).
+                pow(Constants.decimal_precision).mod(prime);
+        BigInteger fpow2 = BigInteger.valueOf(2).pow(Constants.decimal_precision);
+
         for (int i = 0; i < batchSize; i++) {
             // Add local z to the sum
             BigInteger Z = zShares.get(i)
                     .add(z.get(i)).mod(prime);
-            C.add(Z.add(roundOffBit));
-            Cp.add(C.get(i).mod(fpow2));
-
-        }
-
-    }
-
-    private void computeSecretShare() {
-        BigInteger fInv = prime.add(BigInteger.ONE).divide(BigInteger.valueOf(2)).
-                pow(Constants.decimal_precision).mod(prime);
-
-        BigInteger S;
-
-        for (int i = 0; i < batchSize; i++) {
-            S = wShares.get(i).add(truncationShares.get(i).rp).
-                    subtract(Cp.get(i).multiply(BigInteger.valueOf(oneShare)));
+            BigInteger c = Z.add(roundOffBit);
+            BigInteger cp = c.mod(fpow2);
+            BigInteger S = wShares.get(i).add(truncationShares.get(i).rp).
+                    subtract(cp.multiply(BigInteger.valueOf(oneShare)));
             T.add(S.multiply(fInv).mod(prime));
 
         }
+
     }
+
 }
