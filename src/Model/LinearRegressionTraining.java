@@ -29,9 +29,9 @@ import java.util.logging.Logger;
  */
 public class LinearRegressionTraining extends Model {
 
-    static List<List<BigInteger>> x;
-    static List<List<BigInteger>> xT;
-    List<BigInteger> y;
+    static BigInteger[][] x;
+    static BigInteger[][] xT;
+    BigInteger[] y;
 
     BigInteger prime;
     String outputPath;
@@ -48,8 +48,8 @@ public class LinearRegressionTraining extends Model {
      * @param realTiShares
      * @param partyCount
      */
-    public LinearRegressionTraining(List<List<BigInteger>> x,
-            List<BigInteger> y, List<TripleReal> realTriples,
+    public LinearRegressionTraining(BigInteger[][] x,
+            BigInteger[] y, List<TripleReal> realTriples,
             BlockingQueue<Message> senderQueue,
             BlockingQueue<Message> receiverQueue, int clientId, int oneShares,
             List<TripleByte> binaryTiShares, List<TripleInteger> decimalTiShares,
@@ -81,24 +81,23 @@ public class LinearRegressionTraining extends Model {
     }
 
     private void init() {
-        xT = new ArrayList<>();
 
     }
 
     static void transpose() {
-        final int N = x.get(0).size();
-        for (int i = 0; i < N; i++) {
-            List<BigInteger> col = new ArrayList<>();
-            for (List<BigInteger> row : x) {
-                col.add(row.get(i));
+        int rows = x.length;
+        int cols = x[0].length;
+        xT = new BigInteger[cols][rows];
+
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < cols; j++) {
+                xT[j][i] = x[i][j];
             }
-            xT.add(col);
         }
     }
 
     /**
-     * Distributed matrix multiplication of a(n*t) and b(t*m) to give result
-     * c(n*m)
+     * Local matrix multiplication of a(n*t) and b(t*m) to give result c(n*m)
      *
      * @param a
      * @param b
@@ -136,10 +135,10 @@ public class LinearRegressionTraining extends Model {
 
             }
         }
-        
+
         es.shutdown();
         int testCases = taskList.size();
-        
+
         for (int i = 0; i < n; i++) {
             List<BigInteger> row = new ArrayList<>();
             for (int j = 0; j < m; j++) {
@@ -157,6 +156,44 @@ public class LinearRegressionTraining extends Model {
             c.add(row);
         }
 
+    }
+
+    /**
+     * Local matrix Multiplication
+     *
+     * @param a
+     * @param b
+     * @param c
+     */
+    void localMatrixMultiplication(BigInteger[][] a,
+            BigInteger[][] b, BigInteger[][] c) {
+
+        ExecutorService es = Executors.newFixedThreadPool(Constants.threadCount);
+        List<Future<BigInteger>> taskList = new ArrayList<>();
+
+        int crows = a.length;
+        int ccol = b[0].length;
+        int m = a[0].length;
+
+        for (int i = 0; i < crows; i++) {
+            for (int j = 0; j < ccol; j++) {
+                // dot product of ith row of a and jth row of b
+                BigInteger sum = BigInteger.ZERO;
+                for (int k = 0; k < m; k++) {
+                    sum.add(a[i][k].multiply(b[k][j])).mod(prime);
+                }
+
+                c[i][j] = sum;
+            }
+        }
+    }
+
+    //TODO convert this to matrix scaling
+    BigInteger localScale(BigInteger value, int currentScale, int newScale) {
+        
+        BigInteger scaleFactor = BigInteger.valueOf(2).pow(Constants.decimal_precision);
+        value = value.divide(scaleFactor).mod(prime);
+        return value;
     }
 
 }
