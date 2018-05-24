@@ -71,9 +71,6 @@ public class KNN extends Model {
     void swapCircuitSorting(int leftIndex, int rightIndex, int comparisonOutput) {
         
         ExecutorService es = Executors.newFixedThreadPool(Constants.threadCount);
-        List<Future<Integer>> leftTaskList = new ArrayList<>();
-        List<Future<Integer>> rightTaskList = new ArrayList<>();
-        
         
         //Do xor between comparison results....
         initQueueMap(recQueues, pid);
@@ -83,7 +80,6 @@ public class KNN extends Model {
         List<Integer> dummy = new ArrayList<>();
         dummy.add(0);
         OR_XOR xor = null;
-        
         
         if(clientId==1) {
             xor = new OR_XOR(cShares, dummy, decimalTiShares.subList(decimalTiIndex, decimalTiIndex+1), 
@@ -105,87 +101,71 @@ public class KNN extends Model {
             Logger.getLogger(KNN.class.getName()).log(Level.SEVERE, null, ex);
         }
         
+        List<Integer> C = new ArrayList<>(Collections.nCopies(3, c[0]));
+        List<Integer> notC = new ArrayList<>(Collections.nCopies(3, Math.floorMod(oneShare - c[0], Constants.prime)));
+        
         //left index position
-        for(int i=0;i<3;i++) {
-            initQueueMap(recQueues, pid);
-
-            //System.out.println("multiplying.."+c[0]+" and "+ KjaccardDistances.get(rightIndex).get(i));
-            MultiplicationInteger multModule = new MultiplicationInteger(c[0], KjaccardDistances.get(rightIndex).get(i), 
-                decimalTiShares.get(decimalTiIndex), commonSender, recQueues.get(pid), new LinkedList<>(protocolIdQueue), 
-                clientId, Constants.prime, pid, oneShare, 0, partyCount);
-            
-            pid++;
-            decimalTiIndex++;
-            Future<Integer> task = es.submit(multModule);
-            leftTaskList.add(task);
-            
-            initQueueMap(recQueues, pid);
-
-            //System.out.println("multiplying.."+Math.floorMod(oneShare - c[0], Constants.prime)+" and "+
-            //      KjaccardDistances.get(leftIndex).get(i));
-            MultiplicationInteger multModule2 = new MultiplicationInteger(
-                    Math.floorMod(oneShare - c[0], Constants.prime), 
-                    KjaccardDistances.get(leftIndex).get(i), decimalTiShares.get(decimalTiIndex), 
-                    commonSender, recQueues.get(pid), new LinkedList<>(protocolIdQueue), clientId, 
-                    Constants.prime, pid, oneShare, 0, partyCount);
-            
-            pid++;
-            decimalTiIndex++;
-            Future<Integer> task2 = es.submit(multModule2);
-            leftTaskList.add(task2);
-        }
+        initQueueMap(recQueues, pid);
+        
+        BatchMultiplicationInteger batchMult = new BatchMultiplicationInteger(C, KjaccardDistances.get(rightIndex), 
+                decimalTiShares.subList(decimalTiIndex, decimalTiIndex+3), commonSender, recQueues.get(pid), 
+                new LinkedList<>(protocolIdQueue), clientId, Constants.prime, pid, oneShare, 0, partyCount);
+        pid++;
+        decimalTiIndex += 3;
+        
+        Future<Integer[]> leftTask1 = es.submit(batchMult);
+        
+        initQueueMap(recQueues, pid);
+        BatchMultiplicationInteger batchMult2 = new BatchMultiplicationInteger(notC, KjaccardDistances.get(leftIndex), 
+                decimalTiShares.subList(decimalTiIndex, decimalTiIndex+3), commonSender, recQueues.get(pid), 
+                new LinkedList<>(protocolIdQueue), clientId, Constants.prime, pid, oneShare, 0, partyCount);
+        pid++;
+        decimalTiIndex += 3;
+        
+        Future<Integer[]> leftTask2 = es.submit(batchMult2);
         
         //right index position
-        for(int i=0;i<3;i++) {
-            initQueueMap(recQueues, pid);
-            MultiplicationInteger multModule = new MultiplicationInteger(c[0], KjaccardDistances.get(leftIndex).get(i), 
-                decimalTiShares.get(decimalTiIndex), commonSender, recQueues.get(pid), 
-                new LinkedList<>(protocolIdQueue), 
-                clientId, Constants.prime, pid, oneShare, 0, partyCount);
-            
-            pid++;
-            decimalTiIndex++;
-            Future<Integer> task = es.submit(multModule);
-            rightTaskList.add(task);
-            
-            initQueueMap(recQueues, pid);
-            MultiplicationInteger multModule2 = new MultiplicationInteger(
-                    Math.floorMod(oneShare - c[0], Constants.prime), 
-                    KjaccardDistances.get(rightIndex).get(i), decimalTiShares.get(decimalTiIndex), 
-                    commonSender, recQueues.get(pid), new LinkedList<>(protocolIdQueue), 
-                    clientId, Constants.prime, pid, oneShare, 0, partyCount);
-            
-            pid++;
-            decimalTiIndex++;
-            Future<Integer> task2 = es.submit(multModule2);
-            rightTaskList.add(task2);
-        }
+        initQueueMap(recQueues, pid);
+        
+        BatchMultiplicationInteger batchMult3 = new BatchMultiplicationInteger(C, KjaccardDistances.get(leftIndex), 
+                decimalTiShares.subList(decimalTiIndex, decimalTiIndex+3), commonSender, recQueues.get(pid), 
+                new LinkedList<>(protocolIdQueue), clientId, Constants.prime, pid, oneShare, 0, partyCount);
+        pid++;
+        decimalTiIndex += 3;
+        
+        Future<Integer[]> rightTask1 = es.submit(batchMult3);
+        
+        initQueueMap(recQueues, pid);
+        
+        BatchMultiplicationInteger batchMult4 = new BatchMultiplicationInteger(notC, KjaccardDistances.get(rightIndex), 
+                decimalTiShares.subList(decimalTiIndex, decimalTiIndex+3), commonSender, recQueues.get(pid), 
+                new LinkedList<>(protocolIdQueue), clientId, Constants.prime, pid, oneShare, 0, partyCount);
+        pid++;
+        decimalTiIndex += 3;
+        
+        Future<Integer[]> rightTask2 = es.submit(batchMult4);
+        
         es.shutdown();
         System.out.println("before swapping indices:"+leftIndex+"and"+rightIndex);
         System.out.println(KjaccardDistances.get(leftIndex)+" "+ KjaccardDistances.get(rightIndex));
         
-        for(int i=0;i<6;i+=2) {
-            try {
-                Future<Integer> leftTask1 = leftTaskList.get(i);
-                Future<Integer> leftTask2 = leftTaskList.get(i+1);
-                int test1, test2;
-                test1 = leftTask1.get(); test2 = leftTask2.get();
-                //System.out.println("c.d:"+test1+",(1-c).d:"+test2);
-                int newLeftVal = Math.floorMod(test1+test2, Constants.prime);
-                KjaccardDistances.get(leftIndex).set(i/2, newLeftVal);
-                
-                Future<Integer> rightTask1 = rightTaskList.get(i);
-                Future<Integer> rightTask2 = rightTaskList.get(i+1);
-                test1 = rightTask1.get(); test2 = rightTask2.get();
-                //System.out.println("c.d:"+test1+",(1-c).d:"+test2);
-                int newRightVal = Math.floorMod(test1+test2, Constants.prime);
-                KjaccardDistances.get(rightIndex).set(i/2, newRightVal);
-                
-            } catch (InterruptedException | ExecutionException ex) {
-                Logger.getLogger(KNN.class.getName()).log(Level.SEVERE, null, ex);
-            }
+        //get the results
+        Integer[] left1 = null, left2 = null, right1 = null, right2 = null;
+        
+        try {
+            left1 = leftTask1.get();
+            left2 = leftTask2.get();
+            right1 = rightTask1.get();
+            right2 = rightTask2.get();            
+        } catch (InterruptedException | ExecutionException ex) {
+            Logger.getLogger(KNN.class.getName()).log(Level.SEVERE, null, ex);
         }
         
+        for(int i=0;i<3;i++) {
+            KjaccardDistances.get(leftIndex).set(i, Math.floorMod(left1[i]+left2[i], Constants.prime));
+            KjaccardDistances.get(rightIndex).set(i, Math.floorMod(right1[i]+right2[i], Constants.prime));
+        }
+
         System.out.println("after swapping indices:"+leftIndex+"and"+rightIndex);
         System.out.println(KjaccardDistances.get(leftIndex)+" "+ KjaccardDistances.get(rightIndex));
         
@@ -206,7 +186,7 @@ public class KNN extends Model {
             
             initQueueMap(recQueues, pid);
             System.out.println("calling crossmultiply and compare");
-            //TODO binary shares sublist handling here
+            
             CrossMultiplyCompare ccModule = new CrossMultiplyCompare(KjaccardDistances.get(indices[startIndex]).get(1), 
                     KjaccardDistances.get(indices[startIndex]).get(0), KjaccardDistances.get(indices[endIndex]).get(1), 
                     KjaccardDistances.get(indices[endIndex]).get(0), oneShare, 
@@ -267,7 +247,7 @@ public class KNN extends Model {
         ExecutorService es = Executors.newFixedThreadPool(Constants.threadCount);
         List<Future<Integer>> taskList = new ArrayList<>();
         
-        //Compare adjacent numbers TODO - handle binaryTiShares sublist
+        //Compare adjacent numbers
         for(int i=startIndex+1;i<endIndex-1;i+=2){
             //compare and swap jd(i) and jd(i+1)
             System.out.println("calling comparison between adjacent elements: indices - "
