@@ -97,68 +97,6 @@ public class LinearRegressionTraining extends Model {
     }
 
     /**
-     * Local matrix multiplication of a(n*t) and b(t*m) to give result c(n*m)
-     *
-     * @param a
-     * @param b
-     */
-    void matrixMultiplication(List<List<BigInteger>> a,
-            List<List<BigInteger>> b, List<List<BigInteger>> c) {
-
-        int n = a.size();
-        int m = b.get(0).size();
-        int tiStartIndex = 0;
-
-        ExecutorService es = Executors.newFixedThreadPool(Constants.threadCount);
-        List<Future<BigInteger>> taskList = new ArrayList<>();
-
-        int protocolIndex = 0;
-        for (int i = 0; i < n; i++) {
-            List<BigInteger> row = new ArrayList<>();
-            for (int j = 0; j < m; j++) {
-                // get col from b
-                List<BigInteger> col = new ArrayList<>();
-                for (List<BigInteger> rowB : b) {
-                    col.add(rowB.get(j));
-                }
-                initQueueMap(recQueues, protocolIndex);
-                DotProductReal DPModule = new DotProductReal(a.get(i),
-                        col, realTiShares.subList(
-                                tiStartIndex, tiStartIndex + m),
-                        commonSender, recQueues.get(i),
-                        new LinkedList<>(protocolIdQueue),
-                        clientId, prime, i, oneShare, partyCount);
-
-                Future<BigInteger> DPTask = es.submit(DPModule);
-                taskList.add(DPTask);
-                tiStartIndex += m;
-
-            }
-        }
-
-        es.shutdown();
-        int testCases = taskList.size();
-
-        for (int i = 0; i < n; i++) {
-            List<BigInteger> row = new ArrayList<>();
-            for (int j = 0; j < m; j++) {
-                Future<BigInteger> dWorkerResponse = taskList.get(i);
-                BigInteger result = null;
-                try {
-                    result = dWorkerResponse.get();
-                } catch (InterruptedException ex) {
-                    Logger.getLogger(LinearRegressionTraining.class.getName()).log(Level.SEVERE, null, ex);
-                } catch (ExecutionException ex) {
-                    Logger.getLogger(LinearRegressionTraining.class.getName()).log(Level.SEVERE, null, ex);
-                }
-                row.add(result);
-            }
-            c.add(row);
-        }
-
-    }
-
-    /**
      * Local matrix Multiplication
      *
      * @param a
@@ -195,5 +133,5 @@ public class LinearRegressionTraining extends Model {
         value = value.divide(scaleFactor).mod(prime);
         return value;
     }
-
+    
 }
