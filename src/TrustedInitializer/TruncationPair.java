@@ -5,13 +5,14 @@
  */
 package TrustedInitializer;
 
+import java.io.Serializable;
 import java.math.BigInteger;
 
 /**
  *
  * @author anisha
  */
-public class TruncationPair {
+public class TruncationPair implements Serializable{
     public BigInteger r,rp;
     
     /**

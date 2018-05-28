@@ -236,12 +236,23 @@ public class Party {
 
             case 2:
                 // LR Evaluation
-                LinearRegressionTraining regressionModel
+                LinearRegressionEvaluation regressionEvaluationModel
+                        = new LinearRegressionEvaluation(tiShares.bigIntShares,
+                                oneShares,
+                                senderQueue, receiverQueue, partyId,
+                                partyCount, args);
+
+                regressionEvaluationModel.predictValues();
+                break;
+
+            case 3:
+                // LR Evaluation
+                LinearRegressionTraining regressionTrainingModel
                         = new LinearRegressionTraining(tiShares.bigIntShares,
                                 senderQueue, receiverQueue, partyId,
                                 oneShares, partyCount, args);
 
-                regressionModel.trainModel();
+                regressionTrainingModel.trainModel();
                 break;
 
             default:

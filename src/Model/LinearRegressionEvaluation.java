@@ -72,7 +72,7 @@ public class LinearRegressionEvaluation extends Model {
         startModelHandlers();
         computeDotProduct();
         teardownModelHandlers();
-        writeToCSV();
+        FileIO.writeToCSV(y, outputPath, clientId);
 
     }
 
@@ -129,21 +129,7 @@ public class LinearRegressionEvaluation extends Model {
      *
      * TODO: Move this to FileIO Utility
      */
-    private void writeToCSV() {
-        try {
-            try (FileWriter writer = new FileWriter(outputPath + "y_" + clientId
-                    + ".csv")) {
-                for (int i = 0; i < testCases; i++) {
-                    writer.write(y.get(i).toString());
-                    writer.write("\n");
-                }
-            }
-            System.out.println("Written all lines");
-        } catch (IOException ex) {
-            Logger.getLogger(LinearRegressionEvaluation.class.getName()).log(Level.SEVERE, null, ex);
-        }
-
-    }
+    
 
     private void initalizeModelVariables(String[] args) {
         for (String arg : args) {
@@ -157,7 +143,7 @@ public class LinearRegressionEvaluation extends Model {
 
             switch (command) {
                 case "xCsv":
-                    x = FileIO.loadMatrixFromFileAsList(value);
+                    x = FileIO.loadMatrixFromFile(value);
                     break;
                 case "yCsv":
                     //TODO generalize it

@@ -7,6 +7,7 @@ package Model;
 
 import Communication.Message;
 import Protocol.MatrixInversion;
+import Protocol.Utility.MatrixMultiplication;
 import TrustedInitializer.TripleReal;
 import Utility.Constants;
 import Utility.FileIO;
@@ -53,7 +54,26 @@ public class LinearRegressionTraining extends Model {
 
         super(senderQueue, receiverQueue, clientId, oneShares, null,
                 null, realTriples, partyCount);
-        initalizeModelVariables(args);
+        prime = BigInteger.valueOf(11);
+        //initalizeModelVariables(args);
+        x = new BigInteger[5][4];
+        for (int i = 0; i < 5; i++) {
+            for (int j = 0; j < 4; j++) {
+                x[i][j] = BigInteger.valueOf(i + j);
+            }
+        }
+        printMatrix(x);
+    }
+
+    public void printMatrix(BigInteger[][] x) {
+        int rows = x.length;
+        int cols = x[0].length;
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < cols; j++) {
+                System.err.print(x[i][j] + " ");
+            }
+            System.out.println();
+        }
     }
 
     /**
@@ -66,6 +86,7 @@ public class LinearRegressionTraining extends Model {
 
         //TODO can do both local matrix multiplication in parallel
         BigInteger[][] gamma1 = localMatrixMultiplication(xT, x);
+        printMatrix(gamma1);
         BigInteger[][] gamma2 = localMatrixMultiplication(xT, y);
 
         MatrixInversion matrixInversion = new MatrixInversion(gamma1,
@@ -73,22 +94,35 @@ public class LinearRegressionTraining extends Model {
                 new LinkedList<>(protocolIdQueue), clientId, oneShare, 
                 partyCount, prime);
         
+        BigInteger[][] gamma1Inv = null;
         try {
-            BigInteger[][] gamma1Inv = matrixInversion.call();
+            gamma1Inv = matrixInversion.call();
         } catch (Exception ex) {
             Logger.getLogger(LinearRegressionTraining.class.getName())
                     .log(Level.SEVERE, null, ex);
         }
         
+        MatrixMultiplication matrixMultiplication = new MatrixMultiplication(gamma1Inv, 
+                gamma2, realTiShares, clientId, prime, 2, oneShare, commonSender, 
+                commonReceiver, new LinkedList<>(protocolIdQueue), partyCount);
         
+        BigInteger[][] beta = null;
         
+        try {
+            beta = matrixInversion.call();
+        } catch (Exception ex) {
+            Logger.getLogger(LinearRegressionTraining.class.getName())
+                    .log(Level.SEVERE, null, ex);
+        }
+        
+
         // 3. beta = matrixMultiplication(gamma1.gamma2)
         teardownModelHandlers();
-        //writeToCSV();
+        FileIO.writeToCSV(beta, outputPath, clientId);
 
     }
 
-    static void transpose() {
+    void transpose() {
         int rows = x.length;
         int cols = x[0].length;
         xT = new BigInteger[cols][rows];
@@ -98,6 +132,9 @@ public class LinearRegressionTraining extends Model {
                 xT[j][i] = x[i][j];
             }
         }
+
+        printMatrix(xT);
+
     }
 
     /**
@@ -120,10 +157,12 @@ public class LinearRegressionTraining extends Model {
                 // dot product of ith row of a and jth row of b
                 BigInteger sum = BigInteger.ZERO;
                 for (int k = 0; k < m; k++) {
-                    sum.add(a[i][k].multiply(b[k][j])).mod(prime);
+                    sum = sum.add(a[i][k].multiply(b[k][j])).mod(prime);
                 }
-
-                c[i][j] = localScale(sum);
+                //System.out.println("sum:"+sum);
+                //TODO revert
+                //c[i][j] = localScale(sum);
+                c[i][j] = sum;
             }
         }
         return c;
@@ -149,11 +188,11 @@ public class LinearRegressionTraining extends Model {
 
             switch (command) {
                 case "xCsv":
-                    List<List<BigInteger>> xList= FileIO.loadMatrixFromFileAsList(value, prime);
-                    int row=xList.size();
+                    List<List<BigInteger>> xList = FileIO.loadMatrixFromFile(value, prime);
+                    int row = xList.size();
                     int col = xList.get(0).size();
-                    for(int i=0;i<row;i++) {
-                        for(int j=0;j<col;j++) {
+                    for (int i = 0; i < row; i++) {
+                        for (int j = 0; j < col; j++) {
                             x[i][j] = xList.get(i).get(j);
                         }
                     }
@@ -174,6 +213,9 @@ public class LinearRegressionTraining extends Model {
             }
 
         }
+
+        prime = BigInteger.valueOf(2).pow(Constants.integer_precision
+                + 2 * Constants.decimal_precision + 1).nextProbablePrime();  //Zq must be a prime field
 
     }
 

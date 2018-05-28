@@ -5,23 +5,29 @@
  */
 package Utility;
 
+import Model.LinearRegressionEvaluation;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.Stream;
 
 /**
- * The class deals with all input/ output utils. Have functions related to 
+ * The class deals with all input/ output utils. Have functions related to
  * reading from files, saving to files, and converting data to relevant forms.
+ *
  * @author anisha
  */
 public class FileIO {
-    
+
     /**
      * @param x value in reals
      * @param f bit resolution of decimal component
@@ -53,16 +59,17 @@ public class FileIO {
         return Q;
         // return Zk.divide(new BigDecimal(inverse), BigDecimal.ROUND_HALF_UP);
     }
-    
+
     /**
      * Reads a matrix from a csv and converts it to Zq.
+     *
      * @param sourceFile
      * @param Zq
-     * @return 
+     * @return
      */
-    public static List<List<BigInteger>> loadMatrixFromFileAsList(String sourceFile, 
+    public static List<List<BigInteger>> loadMatrixFromFile(String sourceFile,
             BigInteger Zq) {
-        
+
         File file = new File(sourceFile);
         Scanner inputStream;
         List<List<BigInteger>> x = new ArrayList<>();
@@ -94,10 +101,10 @@ public class FileIO {
         return x;
 
     }
-    
-    public static List<List<BigInteger>> loadMatrixFromFileAsList(String sourceFile) {
-        
-        File file = new File("./"+sourceFile);
+
+    public static List<List<BigInteger>> loadMatrixFromFile(String sourceFile) {
+
+        File file = new File("./" + sourceFile);
         Scanner inputStream;
         List<List<BigInteger>> x = new ArrayList<>();
 
@@ -128,18 +135,17 @@ public class FileIO {
 
     }
 
-
-    
     /**
      * Reads a matrix from a csv and converts it to Zq.
+     *
      * @param sourceFile
      * @param Zq
-     * @return 
+     * @return
      */
-    public static List<BigInteger> loadListFromFile(String sourceFile, 
+    public static List<BigInteger> loadListFromFile(String sourceFile,
             BigInteger Zq) {
-        
-        File file = new File("./"+sourceFile);
+
+        File file = new File("./" + sourceFile);
         Scanner inputStream;
         List<BigInteger> x = new ArrayList<>();
 
@@ -152,9 +158,9 @@ public class FileIO {
                         .map(Double::valueOf).toArray(Double[]::new);
 
                 int col = doubleValues.length;
-                
+
                 x.add(realToZq(doubleValues[0],
-                            Constants.decimal_precision, Zq));
+                        Constants.decimal_precision, Zq));
 
             }
 
@@ -166,6 +172,42 @@ public class FileIO {
         return x;
 
     }
-    
-    
+
+    public static void writeToCSV(List<BigInteger> y, String outputPath, int clientId) {
+        int len = y.size();
+        try {
+            try (FileWriter writer = new FileWriter(outputPath + "y_" + clientId
+                    + ".csv")) {
+                for (int i = 0; i < len; i++) {
+                    writer.write(y.get(i).toString());
+                    writer.write("\n");
+                }
+            }
+            System.out.println("Written all lines");
+        } catch (IOException ex) {
+            Logger.getLogger(LinearRegressionEvaluation.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
+    }
+
+    public static void writeToCSV(BigInteger[][] y, String outputPath, int clientId) {
+        int rows = y.length;
+        int cols = y[0].length;
+        try {
+            try (FileWriter writer = new FileWriter(outputPath + "y_" + clientId
+                    + ".csv")) {
+                for (int i = 0; i < rows; i++) {
+                    for (int j = 0; j < cols; j++) {
+                        writer.write(y[i][j]+",");
+                    }
+                    writer.write("\n");
+                }
+            }
+            System.out.println("Written all lines");
+        } catch (IOException ex) {
+            Logger.getLogger(LinearRegressionEvaluation.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
+    }
+
 }

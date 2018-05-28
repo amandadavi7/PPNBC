@@ -40,7 +40,7 @@ public class LinearRegressionClient {
         }
         initalizeVariables(args);
 
-        x = FileIO.loadMatrixFromFileAsList(sourceFile, Zq);
+        x = FileIO.loadMatrixFromFile(sourceFile, Zq);
         
         row = x.size();
         col = x.get(0).size();
