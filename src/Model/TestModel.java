@@ -10,9 +10,11 @@ import Protocol.ArgMax;
 import Protocol.BitDecomposition;
 import Protocol.Comparison;
 import Protocol.DotProductInteger;
+import Protocol.MatrixInversion;
 import Protocol.MultiplicationInteger;
 import Protocol.OIS;
 import Protocol.OR_XOR;
+import Protocol.Utility.MatrixMultiplication;
 import TrustedInitializer.TripleByte;
 import TrustedInitializer.TripleInteger;
 import TrustedInitializer.TripleReal;
@@ -23,6 +25,7 @@ import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.math.BigInteger;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.logging.*;
@@ -284,7 +287,8 @@ public class TestModel extends Model {
         //callOR_XOR();
         //callBitDecomposition();
         // pass 1 - multiplication, 2 - dot product and 3 - comparison
-        callProtocol(2);
+        //callProtocol(2);
+        callMatrixInversion();
         teardownModelHandlers();
 
     }
@@ -330,6 +334,40 @@ public class TestModel extends Model {
             }
 
         }
+    }
+
+    private void callMatrixInversion() {
+        ExecutorService es = Executors.newFixedThreadPool(1);
+        initQueueMap(recQueues, 1);
+
+        BigInteger a[][] = new BigInteger[5][5];
+
+        for (int i = 0; i < 5; i++) {
+            for (int j = 0; j < 5; j++) {
+                a[i][j] = BigInteger.valueOf(i + j);
+            }
+        }
+
+        MatrixInversion matrixInversion = new MatrixInversion(a, realTiShares,
+                1, commonSender, commonReceiver, new LinkedList<>(protocolIdQueue),
+                clientId, oneShare, partyCount, BigInteger.valueOf(11));
+
+        Future<BigInteger[][]> bitdecompositionTask = es.submit(matrixInversion);
+
+        try {
+            BigInteger[][] result = bitdecompositionTask.get();
+            System.out.println("result:");
+            for (int i = 0; i < 5; i++) {
+                for (int j = 0; j < 5; j++) {
+                    System.out.print(result[i][j] + " ");
+                }
+                System.out.println();
+            }
+        } catch (InterruptedException | ExecutionException ex) {
+            Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
+        teardownModelHandlers();
     }
 
 }
