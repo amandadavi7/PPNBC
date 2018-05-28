@@ -5,10 +5,8 @@
  */
 package Utility;
 
-import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileWriter;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.RoundingMode;
@@ -68,47 +66,6 @@ public class FileIO {
         File file = new File(sourceFile);
         Scanner inputStream;
         List<List<BigInteger>> x = new ArrayList<>();
-
-        try {
-            inputStream = new Scanner(file);
-            int row = 0;
-            while (inputStream.hasNext()) {
-                String line = inputStream.next();
-                Double[] doubleValues = Stream.of(line.split(","))
-                        .map(Double::valueOf).toArray(Double[]::new);
-
-                int col = doubleValues.length;
-                List<BigInteger> bigIntegerlist = new ArrayList<>();
-                for (int i = 0; i < col; i++) {
-                    bigIntegerlist.add(realToZq(doubleValues[i],
-                            Constants.decimal_precision, Zq));
-                }
-
-                x.add(bigIntegerlist);
-
-            }
-
-            inputStream.close();
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
-
-        return x;
-
-    }
-    
-    /**
-     * Reads a matrix from a csv and converts it to Zq.
-     * @param sourceFile
-     * @param Zq
-     * @return 
-     */
-    public static BigInteger[][] loadMatrixFromFile(String sourceFile, 
-            BigInteger Zq) {
-        
-        File file = new File(sourceFile);
-        Scanner inputStream;
-        BigInteger[][] x = new BigInteger[][];
 
         try {
             inputStream = new Scanner(file);

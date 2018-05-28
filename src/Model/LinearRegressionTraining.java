@@ -149,7 +149,14 @@ public class LinearRegressionTraining extends Model {
 
             switch (command) {
                 case "xCsv":
-                    x = FileIO.loadMatrixFromFile(value, prime);
+                    List<List<BigInteger>> xList= FileIO.loadMatrixFromFileAsList(value, prime);
+                    int row=xList.size();
+                    int col = xList.get(0).size();
+                    for(int i=0;i<row;i++) {
+                        for(int j=0;j<col;j++) {
+                            x[i][j] = xList.get(i).get(j);
+                        }
+                    }
                     break;
                 case "yCsv":
                     //TODO generalize it
