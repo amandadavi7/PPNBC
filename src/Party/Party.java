@@ -49,17 +49,14 @@ public class Party {
     private static int tiPort;
     private static String baIP;
     private static int baPort;
-    private static String outputDir;
     private static int partyCount;
 
     private static List<List<Integer>> xShares;
     private static List<List<Integer>> yShares;
-    private static List<List<BigInteger>> xSharesBigInt;
-    private static List<BigInteger> ySharesBigInt;
-
+    
     private static List<List<List<Integer>>> vShares;
     private static int oneShares;
-    private static BigInteger Zq;
+    
 
     private static int modelId;
     private static Socket clientSocket;
@@ -79,9 +76,6 @@ public class Party {
         socketFutureList = new ArrayList<>();
         tiShares = new TIShare();
         partyId = -1;
-
-        Zq = BigInteger.valueOf(2).pow(Constants.integer_precision
-                + 2 * Constants.decimal_precision + 1).nextProbablePrime();  //Zq must be a prime field
 
         for (String arg : args) {
             String[] currInput = arg.split("=");
@@ -141,7 +135,7 @@ public class Party {
 
         startPartyConnections();
 
-        callModel();
+        callModel(args);
 
         tearDownSocket();
     }
@@ -209,7 +203,7 @@ public class Party {
 //        }
     }
 
-    private static void callModel() {
+    private static void callModel(String[] args) {
         switch (modelId) {
             case 1:
                 // DT Scoring
@@ -243,9 +237,9 @@ public class Party {
             case 2:
                 // LR Evaluation
                 LinearRegressionEvaluation regressionModel
-                        = new LinearRegressionEvaluation(xSharesBigInt, ySharesBigInt,
-                                tiShares.bigIntShares, oneShares, senderQueue,
-                                receiverQueue, partyId, Zq, outputDir, partyCount);
+                        = new LinearRegressionEvaluation(tiShares.bigIntShares, 
+                                oneShares, senderQueue,
+                                receiverQueue, partyId, partyCount, args);
 
                 regressionModel.predictValues();
                 break;
@@ -299,34 +293,6 @@ public class Party {
 
                 }
 
-                break;
-
-            case 2:
-                // LR Evaluation
-                for (String arg : args) {
-                    String[] currInput = arg.split("=");
-                    if (currInput.length < 2) {
-                        Logging.partyUsage();
-                        System.exit(0);
-                    }
-                    String command = currInput[0];
-                    String value = currInput[1];
-
-                    switch (command) {
-                        case "xCsv":
-                            xSharesBigInt = FileIO.loadMatrixFromFile(value);
-                            break;
-                        case "yCsv":
-                            //TODO generalize it
-                            ySharesBigInt = FileIO.loadListFromFile(value, Zq);
-                            break;
-                        case "output":
-                            outputDir = value;
-                            break;
-
-                    }
-
-                }
                 break;
 
             default:
