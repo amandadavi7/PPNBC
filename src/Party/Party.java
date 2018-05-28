@@ -51,9 +51,6 @@ public class Party {
     private static int baPort;
     private static int partyCount;
 
-    private static List<List<Integer>> xShares;
-    private static List<List<Integer>> yShares;
-    
     private static List<List<List<Integer>>> vShares;
     private static int oneShares;
     
@@ -67,8 +64,6 @@ public class Party {
      * @param args
      */
     public static void initalizeVariables(String[] args) {
-        xShares = new ArrayList<>();
-        yShares = new ArrayList<>();
         vShares = new ArrayList<>();
         senderQueue = new LinkedBlockingQueue<>();
         receiverQueue = new LinkedBlockingQueue<>();
@@ -196,11 +191,6 @@ public class Party {
 
     private static void tearDownSocket() {
         partySocketEs.shutdownNow();
-//        try {
-//            clientSocket.close();
-//        } catch (IOException ex) {
-//            Logger.getLogger(Party.class.getName()).log(Level.SEVERE, null, ex);
-//        }
     }
 
     private static void callModel(String[] args) {
@@ -246,9 +236,10 @@ public class Party {
 
             default:
                 // test model
-                TestModel testModel = new TestModel(xShares, yShares, vShares,
-                        tiShares.binaryShares, tiShares.decimalShares, tiShares.bigIntShares,
-                        oneShares, senderQueue, receiverQueue, partyId, partyCount);
+                TestModel testModel = new TestModel(tiShares.binaryShares, 
+                        tiShares.decimalShares, tiShares.bigIntShares,
+                        oneShares, senderQueue, receiverQueue, partyId, 
+                        partyCount, args);
 
                 testModel.compute();
                 break;
@@ -295,81 +286,6 @@ public class Party {
 
                 break;
 
-            default:
-                // test model
-                for (String arg : args) {
-                    String[] currInput = arg.split("=");
-                    if (currInput.length < 2) {
-                        Logging.partyUsage();
-                        System.exit(0);
-                    }
-                    String command = currInput[0];
-                    String value = currInput[1];
-
-                    switch (command) {
-                        case "xShares":
-                            String csvFile = value;
-
-                            BufferedReader buf;
-                            try {
-                                buf = new BufferedReader(new FileReader(csvFile));
-                                String line = null;
-                                while ((line = buf.readLine()) != null) {
-                                    int lineInt[] = Arrays.stream(line.split(",")).mapToInt(Integer::parseInt).toArray();
-                                    List<Integer> xline = Arrays.stream(lineInt).boxed().collect(Collectors.toList());
-                                    xShares.add(xline);
-                                }
-                            } catch (FileNotFoundException ex) {
-                                Logger.getLogger(Party.class.getName()).log(Level.SEVERE, null, ex);
-                            } catch (IOException ex) {
-                                Logger.getLogger(Party.class.getName()).log(Level.SEVERE, null, ex);
-                            }
-                            break;
-                        case "oneShares":
-                            oneShares = Integer.parseInt(value);
-                            break;
-                        case "yShares":
-                            csvFile = value;
-
-                            try {
-                                buf = new BufferedReader(new FileReader(csvFile));
-                                String line = null;
-                                while ((line = buf.readLine()) != null) {
-                                    int lineInt[] = Arrays.stream(line.split(",")).mapToInt(Integer::parseInt).toArray();
-                                    List<Integer> yline = Arrays.stream(lineInt).boxed().collect(Collectors.toList());
-                                    yShares.add(yline);
-                                }
-                            } catch (FileNotFoundException ex) {
-                                Logger.getLogger(Party.class.getName()).log(Level.SEVERE, null, ex);
-                            } catch (IOException ex) {
-                                Logger.getLogger(Party.class.getName()).log(Level.SEVERE, null, ex);
-                            }
-                            break;
-                        case "vShares":
-                            csvFile = value;
-                            try {
-                                buf = new BufferedReader(new FileReader(csvFile));
-                                String line = null;
-                                while ((line = buf.readLine()) != null) {
-                                    String[] vListShares = line.split(";");
-                                    List<List<Integer>> vline = new ArrayList<>();
-                                    for (String str : vListShares) {
-                                        int lineInt[] = Arrays.stream(str.split(",")).mapToInt(Integer::parseInt).toArray();
-                                        vline.add(Arrays.stream(lineInt).boxed().collect(Collectors.toList()));
-                                    }
-                                    vShares.add(vline);
-                                }
-                            } catch (FileNotFoundException ex) {
-                                Logger.getLogger(Party.class.getName()).log(Level.SEVERE, null, ex);
-                            } catch (IOException ex) {
-                                Logger.getLogger(Party.class.getName()).log(Level.SEVERE, null, ex);
-                            }
-                            break;
-
-                    }
-
-                }
-                break;
         }
     }
 
