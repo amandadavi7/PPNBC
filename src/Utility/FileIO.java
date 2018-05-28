@@ -5,19 +5,31 @@
  */
 package Utility;
 
+<<<<<<< HEAD
 import Model.LinearRegressionEvaluation;
+=======
+import Party.Party;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+>>>>>>> refactor_Party
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.RoundingMode;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+<<<<<<< HEAD
+=======
+import java.util.stream.Collectors;
+>>>>>>> refactor_Party
 import java.util.stream.Stream;
 
 /**
@@ -207,7 +219,38 @@ public class FileIO {
         } catch (IOException ex) {
             Logger.getLogger(LinearRegressionEvaluation.class.getName()).log(Level.SEVERE, null, ex);
         }
+    }
 
+    public static List<List<Integer>> loadIntListFromFile(String csvFile) {
+        BufferedReader buf = null;
+        List<List<Integer>> value = new ArrayList<>();
+        try {
+            buf = new BufferedReader(new FileReader(csvFile));
+
+            try {
+                buf = new BufferedReader(new FileReader(csvFile));
+                String line = null;
+                while ((line = buf.readLine()) != null) {
+                    int lineInt[] = Arrays.stream(line.split(",")).mapToInt(Integer::parseInt).toArray();
+                    List<Integer> yline = Arrays.stream(lineInt).boxed().collect(Collectors.toList());
+                    value.add(yline);
+                }
+            } catch (FileNotFoundException ex) {
+                Logger.getLogger(Party.class.getName()).log(Level.SEVERE, null, ex);
+            } catch (IOException ex) {
+                Logger.getLogger(Party.class.getName()).log(Level.SEVERE, null, ex);
+            }
+
+        } catch (FileNotFoundException ex) {
+            Logger.getLogger(FileIO.class.getName()).log(Level.SEVERE, null, ex);
+        } finally {
+            try {
+                buf.close();
+            } catch (IOException ex) {
+                Logger.getLogger(FileIO.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+        return value;
     }
 
 }
