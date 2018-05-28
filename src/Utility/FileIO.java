@@ -62,7 +62,7 @@ public class FileIO {
      * @param Zq
      * @return 
      */
-    public static List<List<BigInteger>> loadMatrixFromFile(String sourceFile, 
+    public static List<List<BigInteger>> loadMatrixFromFileAsList(String sourceFile, 
             BigInteger Zq) {
         
         File file = new File(sourceFile);
@@ -97,7 +97,48 @@ public class FileIO {
 
     }
     
-    public static List<List<BigInteger>> loadMatrixFromFile(String sourceFile) {
+    /**
+     * Reads a matrix from a csv and converts it to Zq.
+     * @param sourceFile
+     * @param Zq
+     * @return 
+     */
+    public static BigInteger[][] loadMatrixFromFile(String sourceFile, 
+            BigInteger Zq) {
+        
+        File file = new File(sourceFile);
+        Scanner inputStream;
+        BigInteger[][] x = new BigInteger[][];
+
+        try {
+            inputStream = new Scanner(file);
+            int row = 0;
+            while (inputStream.hasNext()) {
+                String line = inputStream.next();
+                Double[] doubleValues = Stream.of(line.split(","))
+                        .map(Double::valueOf).toArray(Double[]::new);
+
+                int col = doubleValues.length;
+                List<BigInteger> bigIntegerlist = new ArrayList<>();
+                for (int i = 0; i < col; i++) {
+                    bigIntegerlist.add(realToZq(doubleValues[i],
+                            Constants.decimal_precision, Zq));
+                }
+
+                x.add(bigIntegerlist);
+
+            }
+
+            inputStream.close();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+
+        return x;
+
+    }
+    
+    public static List<List<BigInteger>> loadMatrixFromFileAsList(String sourceFile) {
         
         File file = new File("./"+sourceFile);
         Scanner inputStream;

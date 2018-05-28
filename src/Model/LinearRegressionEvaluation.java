@@ -157,7 +157,7 @@ public class LinearRegressionEvaluation extends Model {
 
             switch (command) {
                 case "xCsv":
-                    x = FileIO.loadMatrixFromFile(value);
+                    x = FileIO.loadMatrixFromFileAsList(value);
                     break;
                 case "yCsv":
                     //TODO generalize it

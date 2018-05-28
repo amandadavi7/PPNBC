@@ -6,17 +6,16 @@
 package Model;
 
 import Communication.Message;
-import Protocol.DotProductReal;
-import TrustedInitializer.TripleByte;
-import TrustedInitializer.TripleInteger;
+import Protocol.MatrixInversion;
 import TrustedInitializer.TripleReal;
 import Utility.Constants;
+import Utility.FileIO;
+import Utility.Logging;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -31,7 +30,7 @@ public class LinearRegressionTraining extends Model {
 
     static BigInteger[][] x;
     static BigInteger[][] xT;
-    BigInteger[] y;
+    BigInteger[][] y;
 
     BigInteger prime;
     String outputPath;
@@ -39,28 +38,22 @@ public class LinearRegressionTraining extends Model {
     /**
      * Constructor
      *
+     * @param realTriples
      * @param senderQueue
      * @param receiverQueue
      * @param clientId
      * @param oneShares
-     * @param binaryTiShares
-     * @param decimalTiShares
-     * @param realTiShares
      * @param partyCount
+     * @param args
      */
-    public LinearRegressionTraining(BigInteger[][] x,
-            BigInteger[] y, List<TripleReal> realTriples,
+    public LinearRegressionTraining(List<TripleReal> realTriples,
             BlockingQueue<Message> senderQueue,
             BlockingQueue<Message> receiverQueue, int clientId, int oneShares,
-            List<TripleByte> binaryTiShares, List<TripleInteger> decimalTiShares,
-            List<TripleReal> realTiShares, int partyCount, BigInteger prime) {
+            int partyCount, String[] args) {
 
-        super(senderQueue, receiverQueue, clientId, oneShares, binaryTiShares,
-                decimalTiShares, realTiShares, partyCount);
-        this.x = x;
-        this.y = y;
-        this.prime = prime;
-        this.outputPath = outputPath;
+        super(senderQueue, receiverQueue, clientId, oneShares, null,
+                null, realTriples, partyCount);
+        initalizeModelVariables(args);
     }
 
     /**
@@ -69,18 +62,29 @@ public class LinearRegressionTraining extends Model {
     public void trainModel() {
 
         startModelHandlers();
-        init();
-        //computeTranspose();
-        // parallely:
-        // 1. gamma1 = matrixMultiplication(Xt.X), matrix inverse
-        // 2. gamma2 = matrixMultiplication(Xy.Y)
+        transpose();
+
+        //TODO can do both local matrix multiplication in parallel
+        BigInteger[][] gamma1 = localMatrixMultiplication(xT, x);
+        BigInteger[][] gamma2 = localMatrixMultiplication(xT, y);
+
+        MatrixInversion matrixInversion = new MatrixInversion(gamma1,
+                realTiShares, 1, commonSender, commonReceiver,
+                new LinkedList<>(protocolIdQueue), clientId, oneShare, 
+                partyCount, prime);
+        
+        try {
+            BigInteger[][] gamma1Inv = matrixInversion.call();
+        } catch (Exception ex) {
+            Logger.getLogger(LinearRegressionTraining.class.getName())
+                    .log(Level.SEVERE, null, ex);
+        }
+        
+        
+        
         // 3. beta = matrixMultiplication(gamma1.gamma2)
         teardownModelHandlers();
         //writeToCSV();
-
-    }
-
-    private void init() {
 
     }
 
@@ -103,14 +107,12 @@ public class LinearRegressionTraining extends Model {
      * @param b
      * @param c
      */
-    void localMatrixMultiplication(BigInteger[][] a,
-            BigInteger[][] b, BigInteger[][] c) {
-
-        ExecutorService es = Executors.newFixedThreadPool(Constants.threadCount);
-        List<Future<BigInteger>> taskList = new ArrayList<>();
+    BigInteger[][] localMatrixMultiplication(BigInteger[][] a,
+            BigInteger[][] b) {
 
         int crows = a.length;
         int ccol = b[0].length;
+        BigInteger[][] c = new BigInteger[crows][ccol];
         int m = a[0].length;
 
         for (int i = 0; i < crows; i++) {
@@ -121,17 +123,51 @@ public class LinearRegressionTraining extends Model {
                     sum.add(a[i][k].multiply(b[k][j])).mod(prime);
                 }
 
-                c[i][j] = sum;
+                c[i][j] = localScale(sum);
             }
         }
+        return c;
     }
 
     //TODO convert this to matrix scaling
-    BigInteger localScale(BigInteger value, int currentScale, int newScale) {
-        
+    BigInteger localScale(BigInteger value) {
+
         BigInteger scaleFactor = BigInteger.valueOf(2).pow(Constants.decimal_precision);
         value = value.divide(scaleFactor).mod(prime);
         return value;
     }
-    
+
+    private void initalizeModelVariables(String[] args) {
+        for (String arg : args) {
+            String[] currInput = arg.split("=");
+            if (currInput.length < 2) {
+                Logging.partyUsage();
+                System.exit(0);
+            }
+            String command = currInput[0];
+            String value = currInput[1];
+
+            switch (command) {
+                case "xCsv":
+                    x = FileIO.loadMatrixFromFile(value, prime);
+                    break;
+                case "yCsv":
+                    //TODO generalize it
+                    List<BigInteger> yList = FileIO.loadListFromFile(value, prime);
+                    int len = yList.size();
+                    y = new BigInteger[len][1];
+                    for (int i = 0; i < len; i++) {
+                        y[i][1] = yList.get(i);
+                    }
+                    break;
+                case "output":
+                    outputPath = value;
+                    break;
+
+            }
+
+        }
+
+    }
+
 }

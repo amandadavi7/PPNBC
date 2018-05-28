@@ -26,7 +26,7 @@ import java.util.logging.Logger;
  *
  * @author anisha
  */
-public class MatricInversion extends CompositeProtocol implements Callable<BigInteger[][]> {
+public class MatrixInversion extends CompositeProtocol implements Callable<BigInteger[][]> {
 
     private static BigInteger[][] Ashares, I;
     private static int n;
@@ -34,17 +34,17 @@ public class MatricInversion extends CompositeProtocol implements Callable<BigIn
     List<TripleReal> tishares;
     private BigInteger prime;
 
-    public MatricInversion(BigInteger[][] Ashares, List<TripleReal> tishares,
+    public MatrixInversion(BigInteger[][] Ashares, List<TripleReal> tishares,
             int protocolId,
             BlockingQueue<Message> senderQueue,
             BlockingQueue<Message> receiverQueue, Queue<Integer> protocolIdQueue,
-            int clientId, int oneShare, int partyCount, int prime) {
+            int clientId, int oneShare, int partyCount, BigInteger prime) {
 
         super(protocolId, senderQueue, receiverQueue, protocolIdQueue, clientId,
                 oneShare, partyCount);
         this.Ashares = Ashares;
         this.tishares = tishares;
-        this.prime = this.prime;
+        this.prime = prime;
         n = Ashares.length;
         I = createIdentity();
         globalPid = 0;

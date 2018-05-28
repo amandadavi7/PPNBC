@@ -8,6 +8,7 @@ package Party;
 import Communication.Message;
 import Model.DecisionTreeScoring;
 import Model.LinearRegressionEvaluation;
+import Model.LinearRegressionTraining;
 import Utility.Connection;
 import Model.TestModel;
 import TrustedInitializer.TIShare;
@@ -53,10 +54,9 @@ public class Party {
 
     private static List<List<Integer>> xShares;
     private static List<List<Integer>> yShares;
-    
+
     private static List<List<List<Integer>>> vShares;
     private static int oneShares;
-    
 
     private static int modelId;
     private static Socket clientSocket;
@@ -236,12 +236,12 @@ public class Party {
 
             case 2:
                 // LR Evaluation
-                LinearRegressionEvaluation regressionModel
-                        = new LinearRegressionEvaluation(tiShares.bigIntShares, 
-                                oneShares, senderQueue,
-                                receiverQueue, partyId, partyCount, args);
+                LinearRegressionTraining regressionModel
+                        = new LinearRegressionTraining(tiShares.bigIntShares,
+                                senderQueue, receiverQueue, partyId,
+                                oneShares, partyCount, args);
 
-                regressionModel.predictValues();
+                regressionModel.trainModel();
                 break;
 
             default:
