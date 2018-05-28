@@ -5,13 +5,9 @@
  */
 package Utility;
 
-<<<<<<< HEAD
-import Model.LinearRegressionEvaluation;
-=======
 import Party.Party;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
->>>>>>> refactor_Party
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
@@ -26,10 +22,7 @@ import java.util.List;
 import java.util.Scanner;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-<<<<<<< HEAD
-=======
 import java.util.stream.Collectors;
->>>>>>> refactor_Party
 import java.util.stream.Stream;
 
 /**
@@ -197,7 +190,7 @@ public class FileIO {
             }
             System.out.println("Written all lines");
         } catch (IOException ex) {
-            Logger.getLogger(LinearRegressionEvaluation.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(FileIO.class.getName()).log(Level.SEVERE, null, ex);
         }
 
     }
@@ -217,7 +210,7 @@ public class FileIO {
             }
             System.out.println("Written all lines");
         } catch (IOException ex) {
-            Logger.getLogger(LinearRegressionEvaluation.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(FileIO.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
