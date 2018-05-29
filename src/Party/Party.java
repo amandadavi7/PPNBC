@@ -120,12 +120,6 @@ public class Party {
 
         }
 
-        socketServer = Connection.createServerSocket(port);
-        if (socketServer == null) {
-            System.out.println("Socket creation error");
-            System.exit(0);
-        }
-
     }
 
     public static void main(String[] args) {
@@ -180,11 +174,26 @@ public class Party {
 
     private static void startPartyConnections() {
         System.out.println("creating a party socket");
-        clientSocket = Connection.initializeClientConnection(
-                baIP, baPort);
         ObjectOutputStream oStream = null;
         ObjectInputStream iStream = null;
 
+        if(partyCount==2 && oneShares==1) {
+            socketServer = Connection.createServerSocket(port);
+            if (socketServer == null) {
+                System.out.println("Socket creation error");
+                System.exit(0);
+            }
+            try {
+                clientSocket = socketServer.accept();
+            } catch (IOException ex) {
+                Logger.getLogger(Party.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            
+        } else {
+            clientSocket = Connection.initializeClientConnection(
+                        baIP, baPort);   
+        }
+        
         try {
             oStream = new ObjectOutputStream(clientSocket.getOutputStream());
             iStream = new ObjectInputStream(clientSocket.getInputStream());
