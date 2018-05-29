@@ -36,7 +36,7 @@ public class Constants {
     public static final int decimal_precision = 64;
     public static final int integer_precision = 64;
     
-    public static final int comparisonTICount = (8*Constants.bitLength) - 4 + ((Constants.bitLength*(Constants.bitLength-1))/2);
+    public static final int comparisonTICount = (2*Constants.bitLength) + ((Constants.bitLength*(Constants.bitLength-1))/2);
     public static final int bitDTiCount = Constants.bitLength*3 - 2;
 
 }

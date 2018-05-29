@@ -10,12 +10,10 @@ import Protocol.BitDecomposition;
 import Protocol.Comparison;
 import Protocol.CompositeProtocol;
 import Protocol.MultiplicationByte;
-import Protocol.MultiplicationInteger;
 import Protocol.OR_XOR;
 import Protocol.Utility.BatchMultiplicationInteger;
 import Protocol.Utility.CrossMultiplyCompare;
 import Protocol.Utility.JaccardDistance;
-import TrustedInitializer.Triple;
 import TrustedInitializer.TripleByte;
 import TrustedInitializer.TripleInteger;
 import Utility.Constants;
@@ -45,8 +43,7 @@ public class KNN extends Model {
     List<Integer> classLabels;
     List<List<Integer>> jaccardDistances, KjaccardDistances;
     int pid, attrLength, K, decimalTiIndex, binaryTiIndex, trainingSharesCount;
-    int comparisonTICount;
-    
+    int ccTICount;
     
     public KNN(int oneShare, BlockingQueue<Message> senderQueue,
             BlockingQueue<Message> receiverQueue, int clientId, List<TripleByte> binaryTriples, 
@@ -65,7 +62,7 @@ public class KNN extends Model {
         this.trainingSharesCount = trainingShares.size();
         KjaccardDistances = new ArrayList<>();
       //  comparisonTICount = (8*Constants.bitLength) - 4 + ((Constants.bitLength*(Constants.bitLength-1))/2);
-        comparisonTICount = Constants.comparisonTICount;
+        ccTICount = Constants.comparisonTICount + 2*Constants.bitDTiCount;
         
     }
     
@@ -192,13 +189,13 @@ public class KNN extends Model {
                     KjaccardDistances.get(indices[startIndex]).get(0), KjaccardDistances.get(indices[endIndex]).get(1), 
                     KjaccardDistances.get(indices[endIndex]).get(0), oneShare, 
                     decimalTiShares.subList(decimalTiIndex, decimalTiIndex+2), 
-                    binaryTiShares.subList(binaryTiIndex, binaryTiIndex+comparisonTICount), commonSender, recQueues.get(pid), 
+                    binaryTiShares.subList(binaryTiIndex, binaryTiIndex+ccTICount), commonSender, recQueues.get(pid), 
                     clientId, Constants.prime, Constants.binaryPrime, pid, new LinkedList<>(protocolIdQueue),partyCount);
             
             Future<Integer> resultTask = es.submit(ccModule);
             pid++;
             decimalTiIndex+=2;
-            binaryTiIndex+=comparisonTICount;
+            binaryTiIndex+=ccTICount;
             
             int comparisonresult = 0;
             
@@ -259,13 +256,13 @@ public class KNN extends Model {
                     KjaccardDistances.get(indices[i]).get(0), KjaccardDistances.get(indices[i+1]).get(1), 
                     KjaccardDistances.get(indices[i+1]).get(0), oneShare, 
                     decimalTiShares.subList(decimalTiIndex, decimalTiIndex+2), 
-                    binaryTiShares.subList(binaryTiIndex, binaryTiIndex+comparisonTICount), commonSender, recQueues.get(pid), 
+                    binaryTiShares.subList(binaryTiIndex, binaryTiIndex+ccTICount), commonSender, recQueues.get(pid), 
                     clientId, Constants.prime, Constants.binaryPrime, pid, new LinkedList<>(protocolIdQueue),partyCount);
             
             Future<Integer> resultTask = es.submit(ccModule);
             pid++;
             decimalTiIndex+=2;
-            binaryTiIndex+=comparisonTICount;
+            binaryTiIndex+=ccTICount;
             taskList.add(resultTask);
         }
         
@@ -299,12 +296,12 @@ public class KNN extends Model {
             
             CrossMultiplyCompare ccModule = new CrossMultiplyCompare(jaccardDistances.get(index).get(1),
                     jaccardDistances.get(index).get(0), KjaccardDistances.get(i).get(1), KjaccardDistances.get(i).get(0),
-                    oneShare, decimalTiShares.subList(decimalTiIndex, decimalTiIndex+2), binaryTiShares.subList(binaryTiIndex, binaryTiIndex + comparisonTICount), commonSender, recQueues.get(pid), clientId, Constants.prime,
+                    oneShare, decimalTiShares.subList(decimalTiIndex, decimalTiIndex+2), binaryTiShares.subList(binaryTiIndex, binaryTiIndex + ccTICount), commonSender, recQueues.get(pid), clientId, Constants.prime,
                     Constants.binaryPrime, pid, new LinkedList<>(protocolIdQueue), partyCount);
             
             pid++;
             decimalTiIndex += 2;
-            binaryTiIndex += comparisonTICount;
+            binaryTiIndex += ccTICount;
             
             Future<Integer> ccTask = es.submit(ccModule);
             taskList.add(ccTask);
