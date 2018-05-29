@@ -120,6 +120,10 @@ public class MatrixInversion extends CompositeProtocol implements Callable<BigIn
 
     private BigInteger[][] newtonRaphsonAlgorithm(BigInteger[][] X, int rounds) {
         ExecutorService es = Executors.newFixedThreadPool(2);
+        if(X.length == 1 && X[0].length == 1) {
+            // scalar matrix. Assign a small value and return.
+            
+        }
         for (int i = 0; i < rounds; i++) {
             // temp = DM(A.X)
             int tiIndex = 0;

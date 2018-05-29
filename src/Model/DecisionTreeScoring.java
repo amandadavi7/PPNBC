@@ -6,7 +6,6 @@
 package Model;
 
 import Communication.Message;
-import Party.Party;
 import Protocol.BitDecomposition;
 import Protocol.Comparison;
 import Protocol.OIS;
@@ -14,11 +13,6 @@ import Protocol.Utility.BatchMultiplicationByte;
 import TrustedInitializer.TripleByte;
 import TrustedInitializer.TripleInteger;
 import Utility.Constants;
-import Utility.Logging;
-import java.io.BufferedReader;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -35,7 +29,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
 
 /**
  *
