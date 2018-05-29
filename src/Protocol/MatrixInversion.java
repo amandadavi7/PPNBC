@@ -55,15 +55,74 @@ public class MatrixInversion extends CompositeProtocol implements Callable<BigIn
         BigInteger c = calculateTrace(Ashares);
 
         // compute cinv using Newton Raphson
-        BigInteger cInv = computeCInv();
+        BigInteger[][] cInv = computeCInv(c);
 
         BigInteger[][] X = computeX0(cInv);
-        int tiIndex = 0;
+        
         // Number of rounds = k = f+e
         int rounds = Constants.decimal_precision + Constants.integer_precision;
+        X=newtonRaphsonAlgorithm(X, rounds);
+        return X;
+
+    }
+
+    private BigInteger calculateTrace(BigInteger[][] matrix) {
+        BigInteger trace = BigInteger.ZERO;
+        for (int i = 0; i < n; i++) {
+            trace = trace.add(matrix[i][i]);
+        }
+
+        return trace;
+    }
+
+    private BigInteger[][] createIdentity() {
+        BigInteger[][] I = new BigInteger[n][n];
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                if (i == j) {
+                    I[i][j] = BigInteger.ONE;
+                } else {
+                    I[i][j] = BigInteger.ZERO;
+                }
+
+            }
+        }
+        return I;
+    }
+
+    private BigInteger[][] computeCInv(BigInteger c) {
+        // compute cnv using newton raphson method
+        BigInteger[][] cInvMatrix = new BigInteger[1][1];
+        cInvMatrix[0][0] = c;
+        return newtonRaphsonAlgorithm(cInvMatrix, 1);
+    }
+
+    private BigInteger[][] computeX0(BigInteger[][] cInv) {
+        BigInteger[][] X = new BigInteger[n][n];
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                X[i][j] = cInv[0][0].multiply(I[i][j]);
+            }
+        }
+        return X;
+    }
+
+    private BigInteger[][] subtractFromTwo(BigInteger[][] AX) {
+        //TODO? Element waise substraction?
+        BigInteger[][] subtractedAX = new BigInteger[n][n];
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                subtractedAX[i][j] = BigInteger.valueOf(2 * oneShare).subtract(AX[i][j]).mod(prime);
+            }
+        }
+        return subtractedAX;
+    }
+
+    private BigInteger[][] newtonRaphsonAlgorithm(BigInteger[][] X, int rounds) {
         ExecutorService es = Executors.newFixedThreadPool(2);
         for (int i = 0; i < rounds; i++) {
             // temp = DM(A.X)
+            int tiIndex = 0;
             initQueueMap(recQueues, globalPid);
 
             MatrixMultiplication matrixMultiplication = new MatrixMultiplication(
@@ -105,57 +164,6 @@ public class MatrixInversion extends CompositeProtocol implements Callable<BigIn
         es.shutdown();
 
         return X;
-
-    }
-
-    private BigInteger calculateTrace(BigInteger[][] matrix) {
-        BigInteger trace = BigInteger.ZERO;
-        for (int i = 0; i < n; i++) {
-            trace = trace.add(matrix[i][i]);
-        }
-
-        return trace;
-    }
-
-    private BigInteger[][] createIdentity() {
-        BigInteger[][] I = new BigInteger[n][n];
-        for (int i = 0; i < n; i++) {
-            for (int j = 0; j < n; j++) {
-                if (i == j) {
-                    I[i][j] = BigInteger.ONE;
-                } else {
-                    I[i][j] = BigInteger.ZERO;
-                }
-
-            }
-        }
-        return I;
-    }
-
-    private BigInteger computeCInv() {
-        // create a queue and all matrix inversion again
-        return null;
-    }
-
-    private BigInteger[][] computeX0(BigInteger cInv) {
-        BigInteger[][] X = new BigInteger[n][n];
-        for (int i = 0; i < n; i++) {
-            for (int j = 0; j < n; j++) {
-                X[i][j] = cInv.multiply(I[i][j]);
-            }
-        }
-        return X;
-    }
-
-    private BigInteger[][] subtractFromTwo(BigInteger[][] AX) {
-        //TODO? Element waise substraction?
-        BigInteger[][] subtractedAX = new BigInteger[n][n];
-        for (int i = 0; i < n; i++) {
-            for (int j = 0; j < n; j++) {
-                subtractedAX[i][j] = BigInteger.valueOf(2 * oneShare).subtract(AX[i][j]).mod(prime);
-            }
-        }
-        return subtractedAX;
     }
 
 }
