@@ -37,10 +37,10 @@ public class Truncation extends CompositeProtocol implements Callable<List<BigIn
             List<TruncationPair> tiShares, BlockingQueue<Message> senderqueue,
             BlockingQueue<Message> receiverqueue, Queue<Integer> protocolIdQueue,
             int clientID, BigInteger prime,
-            int protocolID, int oneShare, int partyCount) {
+            int protocolID, int asymmetricBit, int partyCount) {
 
         super(protocolID, senderqueue, receiverqueue, protocolIdQueue, clientID,
-                oneShare, partyCount);
+                asymmetricBit, partyCount);
 
         this.wShares = wShares;
         this.prime = prime;
@@ -117,7 +117,7 @@ public class Truncation extends CompositeProtocol implements Callable<List<BigIn
             BigInteger c = Z.add(roundOffBit);
             BigInteger cp = c.mod(fpow2);
             BigInteger S = wShares.get(i).add(truncationShares.get(i).rp).
-                    subtract(cp.multiply(BigInteger.valueOf(oneShare)));
+                    subtract(cp.multiply(BigInteger.valueOf(asymmetricBit)));
             T.add(S.multiply(fInv).mod(prime));
 
         }

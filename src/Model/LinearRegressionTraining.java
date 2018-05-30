@@ -39,16 +39,16 @@ public class LinearRegressionTraining extends Model {
      * @param senderQueue
      * @param receiverQueue
      * @param clientId
-     * @param oneShares
+     * @param asymmetricBit
      * @param partyCount
      * @param args
      */
     public LinearRegressionTraining(List<TripleReal> realTriples,
             BlockingQueue<Message> senderQueue,
-            BlockingQueue<Message> receiverQueue, int clientId, int oneShares,
+            BlockingQueue<Message> receiverQueue, int clientId, int asymmetricBit,
             int partyCount, String[] args) {
 
-        super(senderQueue, receiverQueue, clientId, oneShares, null,
+        super(senderQueue, receiverQueue, clientId, asymmetricBit, null,
                 null, realTriples, partyCount);
         prime = BigInteger.valueOf(11);
         //initalizeModelVariables(args);
@@ -87,7 +87,7 @@ public class LinearRegressionTraining extends Model {
 
         MatrixInversion matrixInversion = new MatrixInversion(gamma1,
                 realTiShares, 1, commonSender, commonReceiver,
-                new LinkedList<>(protocolIdQueue), clientId, oneShare, 
+                new LinkedList<>(protocolIdQueue), clientId, asymmetricBit, 
                 partyCount, prime);
         
         BigInteger[][] gamma1Inv = null;
@@ -99,7 +99,7 @@ public class LinearRegressionTraining extends Model {
         }
         
         MatrixMultiplication matrixMultiplication = new MatrixMultiplication(gamma1Inv, 
-                gamma2, realTiShares, clientId, prime, 2, oneShare, commonSender, 
+                gamma2, realTiShares, clientId, prime, 2, asymmetricBit, commonSender, 
                 commonReceiver, new LinkedList<>(protocolIdQueue), partyCount);
         
         BigInteger[][] beta = null;

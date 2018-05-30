@@ -32,15 +32,15 @@ public abstract class BatchMultiplication extends Protocol {
      * @param protocolIdQueue
      * @param clientId
      * @param protocolID
-     * @param oneShare
+     * @param asymmetricBit
      * @param parentID
      */
     public BatchMultiplication(BlockingQueue<Message> senderQueue,
             BlockingQueue<Message> receiverQueue, Queue<Integer> protocolIdQueue,
             int clientId, 
-            int protocolID, int oneShare, int parentID, int partyCount) {
+            int protocolID, int asymmetricBit, int parentID, int partyCount) {
 
-        super(protocolID, senderQueue, receiverQueue, protocolIdQueue, clientId, oneShare, partyCount);
+        super(protocolID, senderQueue, receiverQueue, protocolIdQueue, clientId, asymmetricBit, partyCount);
         this.parentID = parentID;
     }
 

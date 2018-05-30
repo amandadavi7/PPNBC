@@ -38,10 +38,10 @@ public class MatrixInversion extends CompositeProtocol implements Callable<BigIn
             int protocolId,
             BlockingQueue<Message> senderQueue,
             BlockingQueue<Message> receiverQueue, Queue<Integer> protocolIdQueue,
-            int clientId, int oneShare, int partyCount, BigInteger prime) {
+            int clientId, int asymmetricBit, int partyCount, BigInteger prime) {
 
         super(protocolId, senderQueue, receiverQueue, protocolIdQueue, clientId,
-                oneShare, partyCount);
+                asymmetricBit, partyCount);
         this.Ashares = Ashares;
         this.tishares = tishares;
         this.prime = prime;
@@ -112,7 +112,7 @@ public class MatrixInversion extends CompositeProtocol implements Callable<BigIn
         BigInteger[][] subtractedAX = new BigInteger[n][n];
         for (int i = 0; i < n; i++) {
             for (int j = 0; j < n; j++) {
-                subtractedAX[i][j] = BigInteger.valueOf(2 * oneShare).subtract(AX[i][j]).mod(prime);
+                subtractedAX[i][j] = BigInteger.valueOf(2 * asymmetricBit).subtract(AX[i][j]).mod(prime);
             }
         }
         return subtractedAX;
@@ -131,7 +131,7 @@ public class MatrixInversion extends CompositeProtocol implements Callable<BigIn
 
             MatrixMultiplication matrixMultiplication = new MatrixMultiplication(
                     Ashares, X, tishares.subList(tiIndex, tiIndex + n),
-                    clientID, prime, globalPid, oneShare, senderQueue,
+                    clientID, prime, globalPid, asymmetricBit, senderQueue,
                     recQueues.get(globalPid), new LinkedList<>(protocolIdQueue),
                     partyCount);
 
@@ -146,13 +146,13 @@ public class MatrixInversion extends CompositeProtocol implements Callable<BigIn
                 Logger.getLogger(Comparison.class.getName()).log(Level.SEVERE, null, ex);
             }
 
-            // TODO: temp2 = 2-temp local? oneshare? 2 over zq?
+            // TODO: temp2 = 2-temp local? asymmetricBit? 2 over zq?
             BigInteger[][] subtractedAX = subtractFromTwo(AX);
 
             // X = DM(X.temp2)
             matrixMultiplication = new MatrixMultiplication(
                     X, subtractedAX, tishares.subList(tiIndex, tiIndex + n),
-                    clientID, prime, globalPid, oneShare, senderQueue,
+                    clientID, prime, globalPid, asymmetricBit, senderQueue,
                     recQueues.get(globalPid), new LinkedList<>(protocolIdQueue),
                     partyCount);
 

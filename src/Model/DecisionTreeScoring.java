@@ -41,7 +41,7 @@ class PolynomialComputing implements Callable<Integer[]> {
     int partyCount;
     Integer[] y_j, jBinary;
     List<TripleByte> tiShares;
-    int startpid, clientId, protocolId, oneShare;
+    int startpid, clientId, protocolId, asymmetricBit;
 
     ConcurrentHashMap<Integer, BlockingQueue<Message>> recQueues;
     protected Queue<Integer> protocolIdQueue;
@@ -54,7 +54,7 @@ class PolynomialComputing implements Callable<Integer[]> {
             Queue<Integer> protocolIdQueue,
             ConcurrentHashMap<Integer, BlockingQueue<Message>> recQueues,
             BlockingQueue<Message> senderQueue, BlockingQueue<Message> receiverQueue,
-            int startpid, int clientId, int protocolId, int oneShare, int partyCount) {
+            int startpid, int clientId, int protocolId, int asymmetricBit, int partyCount) {
         this.s = depth;
         u = 1;
         this.alpha = alpha;
@@ -71,7 +71,7 @@ class PolynomialComputing implements Callable<Integer[]> {
         this.startpid = startpid;
         this.clientId = clientId;
         this.protocolId = protocolId;
-        this.oneShare = oneShare;
+        this.asymmetricBit = asymmetricBit;
         this.partyCount = partyCount;
     }
 
@@ -83,9 +83,8 @@ class PolynomialComputing implements Callable<Integer[]> {
             List<Future<Integer[]>> taskList = new ArrayList<>();
 
             List<Integer> yj = Arrays.asList(y_j);
-            List<Integer> z_u = new ArrayList<>(Collections.<Integer>nCopies(
-                    Constants.batchSize,
-                    (comparisonOutputs[u - 1] + oneShare * jBinary[s - 1]) % Constants.binaryPrime));
+            List<Integer> z_u = new ArrayList<>(Collections.<Integer>nCopies(Constants.batchSize,
+                    (comparisonOutputs[u - 1] + asymmetricBit * jBinary[s - 1]) % Constants.binaryPrime));
 
             int i = 0;
             do {
@@ -99,7 +98,7 @@ class PolynomialComputing implements Callable<Integer[]> {
                         yj.subList(i, toIndex), z_u, tiShares.subList(i, toIndex),
                         commonSender, recQueues.get(startpid),
                         new LinkedList<>(protocolIdQueue), clientId,
-                        Constants.binaryPrime, startpid, oneShare, protocolId,
+                        Constants.binaryPrime, startpid, asymmetricBit, protocolId,
                         partyCount);
 
                 Future<Integer[]> task = es.submit(mults);
@@ -160,7 +159,7 @@ public class DecisionTreeScoring extends Model {
     /**
      * Constructor if the party has the tree
      *
-     * @param oneShare
+     * @param asymmetricBit
      * @param senderQueue
      * @param receiverQueue
      * @param clientId
@@ -174,13 +173,13 @@ public class DecisionTreeScoring extends Model {
      * @param attributeThresholds
      * @param classValueCount
      */
-    public DecisionTreeScoring(int oneShare, BlockingQueue<Message> senderQueue,
+    public DecisionTreeScoring(int asymmetricBit, BlockingQueue<Message> senderQueue,
             BlockingQueue<Message> receiverQueue, int clientId, List<TripleByte> binaryTriples,
             List<TripleInteger> decimalTriple,
             int depth, int attributeCount, int bitLength, int[] leafToClassIndexMapping,
             int[] nodeToAttributeIndexMapping, int[] attributeThresholds, int classValueCount, int partyCount) {
 
-        super(senderQueue, receiverQueue, clientId, oneShare, binaryTriples, decimalTriple, null, partyCount);
+        super(senderQueue, receiverQueue, clientId, asymmetricBit, binaryTriples, decimalTriple, null, partyCount);
 
         this.depth = depth;
         partyHasTree = true;
@@ -196,7 +195,7 @@ public class DecisionTreeScoring extends Model {
     /**
      * Constructor if the party has the feature vector
      *
-     * @param oneShares
+     * @param asymmetricBit
      * @param senderQueue
      * @param receiverQueue
      * @param clientId
@@ -208,11 +207,11 @@ public class DecisionTreeScoring extends Model {
      * @param testVector
      * @param classValueCount
      */
-    public DecisionTreeScoring(int oneShares, BlockingQueue<Message> senderQueue,
+    public DecisionTreeScoring(int asymmetricBit, BlockingQueue<Message> senderQueue,
             BlockingQueue<Message> receiverQueue, int clientId, List<TripleByte> binaryTriples, List<TripleInteger> decimalTriple,
             int depth, int attributeCount, int bitLength, List<List<Integer>> testVector, int classValueCount, int partyCount) {
 
-        super(senderQueue, receiverQueue, clientId, oneShares, binaryTriples, decimalTriple, null, partyCount);
+        super(senderQueue, receiverQueue, clientId, asymmetricBit, binaryTriples, decimalTriple, null, partyCount);
 
         partyHasTree = false;
         this.depth = depth;
@@ -287,7 +286,7 @@ public class DecisionTreeScoring extends Model {
                 initQueueMap(recQueues, i);
                 OIS ois = new OIS(null, binaryTiShares.subList(tiBinaryStartIndex,
                         tiBinaryStartIndex + (attributeBitLength * attributeCount)),
-                        oneShare, commonSender, recQueues.get(i), new LinkedList<>(protocolIdQueue), clientId, Constants.binaryPrime, i,
+                        asymmetricBit, commonSender, recQueues.get(i), new LinkedList<>(protocolIdQueue), clientId, Constants.binaryPrime, i,
                         attributeBitLength, nodeToAttributeIndexMapping[i], attributeCount, partyCount);
                 tiBinaryStartIndex += attributeBitLength * attributeCount;
                 Future<Integer[]> task = es.submit(ois);
@@ -300,7 +299,7 @@ public class DecisionTreeScoring extends Model {
                 initQueueMap(recQueues, i);
                 OIS ois = new OIS(testVector, binaryTiShares.subList(tiBinaryStartIndex,
                         tiBinaryStartIndex + (attributeBitLength * attributeCount)),
-                        oneShare, commonSender, recQueues.get(i), new LinkedList<>(protocolIdQueue), clientId, Constants.binaryPrime, i,
+                        asymmetricBit, commonSender, recQueues.get(i), new LinkedList<>(protocolIdQueue), clientId, Constants.binaryPrime, i,
                         attributeBitLength, -1, attributeCount, partyCount);
                 tiBinaryStartIndex += attributeBitLength * attributeCount;
                 Future<Integer[]> task = es.submit(ois);
@@ -335,7 +334,7 @@ public class DecisionTreeScoring extends Model {
         if (partyHasTree) {
             for (int i = 0; i < leafNodes - 1; i++) {
                 initQueueMap(recQueues, i + startpid);
-                BitDecomposition bitD = new BitDecomposition(attributeThresholds[i], binaryTiShares, oneShare, Constants.bitLength,
+                BitDecomposition bitD = new BitDecomposition(attributeThresholds[i], binaryTiShares, asymmetricBit, Constants.bitLength,
                         commonSender, recQueues.get(i + startpid), new LinkedList<>(protocolIdQueue), clientId, Constants.binaryPrime, i + startpid, partyCount);
                 Future<List<Integer>> task = es.submit(bitD);
                 taskList.add(task);
@@ -343,7 +342,7 @@ public class DecisionTreeScoring extends Model {
         } else {
             for (int i = 0; i < leafNodes - 1; i++) {
                 initQueueMap(recQueues, i + startpid);
-                BitDecomposition bitD = new BitDecomposition(0, binaryTiShares, oneShare, Constants.bitLength,
+                BitDecomposition bitD = new BitDecomposition(0, binaryTiShares, asymmetricBit, Constants.bitLength,
                         commonSender, recQueues.get(i + startpid), new LinkedList<>(protocolIdQueue), clientId, Constants.binaryPrime, i + startpid, partyCount);
                 Future<List<Integer>> task = es.submit(bitD);
                 taskList.add(task);
@@ -377,7 +376,7 @@ public class DecisionTreeScoring extends Model {
         for (int i = 0; i < leafNodes - 1; i++) {
             initQueueMap(recQueues, i + startpid);
             Comparison comp = new Comparison(Arrays.asList(featureVectors[i]), attributeThresholdsBitShares.get(i), binaryTiShares,
-                    oneShare, commonSender, recQueues.get(i + startpid), new LinkedList<>(protocolIdQueue), clientId, Constants.binaryPrime, i + startpid, partyCount);
+                    asymmetricBit, commonSender, recQueues.get(i + startpid), new LinkedList<>(protocolIdQueue), clientId, Constants.binaryPrime, i + startpid, partyCount);
 
             Future<Integer> task = es.submit(comp);
             taskList.add(task);
@@ -444,7 +443,7 @@ public class DecisionTreeScoring extends Model {
             Integer[] jBinary = convertToBits(j, depth);
 
             PolynomialComputing pc = new PolynomialComputing(yShares[j], jBinary, alpha, depth, comparisonOutputs, binaryTiShares,
-                    new LinkedList<>(protocolIdQueue), recQueues, commonSender, commonReceiver, startpid, clientId, 0, oneShare, partyCount);
+                    new LinkedList<>(protocolIdQueue), recQueues, commonSender, commonReceiver, startpid, clientId, 0, asymmetricBit, partyCount);
 
             startpid += depth * (alpha / Constants.batchSize + 1);
             Future<Integer[]> task = es.submit(pc);

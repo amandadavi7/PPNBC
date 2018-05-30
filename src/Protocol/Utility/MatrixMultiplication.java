@@ -46,7 +46,7 @@ public class MatrixMultiplication extends CompositeProtocol implements
      * @param clientID
      * @param prime
      * @param protocolID
-     * @param oneShare
+     * @param asymmetricBit
      * @param senderQueue
      * @param receiverQueue
      * @param protocolIdQueue
@@ -55,12 +55,12 @@ public class MatrixMultiplication extends CompositeProtocol implements
     public MatrixMultiplication(BigInteger[][] a, BigInteger[][] b,
             List<TripleReal> tishares,
             int clientID, BigInteger prime, int protocolID,
-            int oneShare, BlockingQueue<Message> senderQueue,
+            int asymmetricBit, BlockingQueue<Message> senderQueue,
             BlockingQueue<Message> receiverQueue,
             Queue<Integer> protocolIdQueue, int partyCount) {
 
         super(protocolID, senderQueue, receiverQueue, protocolIdQueue, clientID, 
-                oneShare, partyCount);
+                asymmetricBit, partyCount);
         this.a = a;
         this.b = b;
         this.tishares = tishares;
@@ -106,7 +106,7 @@ public class MatrixMultiplication extends CompositeProtocol implements
                                 tiStartIndex, tiStartIndex + l),
                         senderQueue, recQueues.get(i),
                         new LinkedList<>(protocolIdQueue),
-                        clientID, prime, i, oneShare, partyCount);
+                        clientID, prime, i, asymmetricBit, partyCount);
             
                 Future<BigInteger> DPTask = es.submit(DPModule);
                 taskList.add(DPTask);

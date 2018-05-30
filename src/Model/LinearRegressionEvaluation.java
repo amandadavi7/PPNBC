@@ -39,7 +39,7 @@ public class LinearRegressionEvaluation extends Model {
      * Constructor
      *
      * @param realTriples
-     * @param oneShares
+     * @param asymmetricBit
      * @param senderQueue
      * @param receiverQueue
      * @param clientId
@@ -48,11 +48,11 @@ public class LinearRegressionEvaluation extends Model {
      * 
      */
     public LinearRegressionEvaluation(List<TripleReal> realTriples,
-            int oneShares, BlockingQueue<Message> senderQueue,
+            int asymmetricBit, BlockingQueue<Message> senderQueue,
             BlockingQueue<Message> receiverQueue, int clientId,
             int partyCount, String[] args) {
 
-        super(senderQueue, receiverQueue, clientId, oneShares, null,
+        super(senderQueue, receiverQueue, clientId, asymmetricBit, null,
                 null, realTriples, partyCount);
 
         y = new ArrayList<>();
@@ -95,7 +95,7 @@ public class LinearRegressionEvaluation extends Model {
                             tiStartIndex, tiStartIndex + x.get(i).size()),
                     commonSender, recQueues.get(i),
                     new LinkedList<>(protocolIdQueue),
-                    clientId, prime, i, oneShare, partyCount);
+                    clientId, prime, i, asymmetricBit, partyCount);
 
             Future<BigInteger> DPTask = es.submit(DPModule);
             taskList.add(DPTask);

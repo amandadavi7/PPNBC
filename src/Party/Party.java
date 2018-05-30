@@ -50,8 +50,8 @@ public class Party {
     private static int partyCount;
 
     private static List<List<List<Integer>>> vShares;
-    private static int oneShares;
-
+    private static int asymmetricBit;
+    
     private static int modelId;
     private static Socket clientSocket;
 
@@ -93,8 +93,8 @@ public class Party {
                 case "party_id":
                     partyId = Integer.parseInt(value);
                     break;
-                case "oneShares":
-                    oneShares = Integer.parseInt(value);
+                case "asymmetricBit":
+                    asymmetricBit = Integer.parseInt(value);
                     break;
                 case "model":
                     modelId = Integer.parseInt(value);
@@ -208,13 +208,13 @@ public class Party {
                     attributeThresholds[0] = 10;
                     attributeThresholds[1] = 5;
                     attributeThresholds[2] = 20;
-                    DecisionTreeScoring DTree = new DecisionTreeScoring(oneShares, senderQueue, receiverQueue, partyId, tiShares.binaryShares,
+                    DecisionTreeScoring DTree = new DecisionTreeScoring(asymmetricBit, senderQueue, receiverQueue, partyId, tiShares.binaryShares,
                             tiShares.decimalShares, 2, 3, 5, leafToClassIndexMapping, nodeToAttributeIndexMapping, attributeThresholds, 3, partyCount);
                     DTree.ScoreDecisionTree();
 
                 } else if (partyId == 2) {
 
-                    DecisionTreeScoring DScore = new DecisionTreeScoring(oneShares, senderQueue, receiverQueue, partyId, tiShares.binaryShares,
+                    DecisionTreeScoring DScore = new DecisionTreeScoring(asymmetricBit, senderQueue, receiverQueue, partyId, tiShares.binaryShares,
                             tiShares.decimalShares, 2, 3, 5, vShares.get(0), 3, partyCount);
 
                     DScore.ScoreDecisionTree();
@@ -224,10 +224,9 @@ public class Party {
             case 2:
                 // LR Evaluation
                 LinearRegressionEvaluation regressionEvaluationModel
-                        = new LinearRegressionEvaluation(tiShares.bigIntShares,
-                                oneShares,
-                                senderQueue, receiverQueue, partyId,
-                                partyCount, args);
+                        = new LinearRegressionEvaluation(tiShares.bigIntShares, 
+                                asymmetricBit, senderQueue,
+                                receiverQueue, partyId, partyCount, args);
 
                 regressionEvaluationModel.predictValues();
                 break;
@@ -237,7 +236,7 @@ public class Party {
                 LinearRegressionTraining regressionTrainingModel
                         = new LinearRegressionTraining(tiShares.bigIntShares,
                                 senderQueue, receiverQueue, partyId,
-                                oneShares, partyCount, args);
+                                asymmetricBit, partyCount, args);
 
                 regressionTrainingModel.trainModel();
                 break;
@@ -246,7 +245,7 @@ public class Party {
                 // test model
                 TestModel testModel = new TestModel(tiShares.binaryShares, 
                         tiShares.decimalShares, tiShares.bigIntShares,
-                        oneShares, senderQueue, receiverQueue, partyId, 
+                        asymmetricBit, senderQueue, receiverQueue, partyId, 
                         partyCount, args);
 
                 testModel.compute();
