@@ -160,6 +160,8 @@ public class MatrixMultiplication extends CompositeProtocol implements
 
         es.shutdown();
         tearDownHandlers();
+        
+        System.out.println("returning matrix multiplication:"+ c.length+", "+ c[0].length);
         return c;
 
     }

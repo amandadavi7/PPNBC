@@ -10,6 +10,7 @@ import Protocol.Utility.MatrixMultiplication;
 import TrustedInitializer.TripleReal;
 import TrustedInitializer.TruncationPair;
 import Utility.Constants;
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.LinkedList;
 import java.util.List;
@@ -65,8 +66,9 @@ public class MatrixInversion extends CompositeProtocol implements
         BigInteger[][] X = computeX0(cInv);
         
         // Number of rounds = k = f+e
-        int rounds = Constants.decimal_precision + Constants.integer_precision;
-        X=newtonRaphsonAlgorithm(X, rounds);
+        //int rounds = Constants.decimal_precision + Constants.integer_precision;
+        int rounds = 20;
+        X=newtonRaphsonAlgorithm(Ashares, X, rounds);
         return X;
 
     }
@@ -97,9 +99,12 @@ public class MatrixInversion extends CompositeProtocol implements
 
     private BigInteger[][] computeCInv(BigInteger c) {
         // compute cnv using newton raphson method
+        // start with a very small value
         BigInteger[][] cInvMatrix = new BigInteger[1][1];
-        cInvMatrix[0][0] = c;
-        return newtonRaphsonAlgorithm(cInvMatrix, 1);
+        BigInteger[][] cMatrix = new BigInteger[1][1];
+        cMatrix[0][0] = c;
+        cInvMatrix[0][0] = BigDecimal.valueOf(0.01).toBigInteger();
+        return newtonRaphsonAlgorithm(cMatrix, cInvMatrix, 1);
     }
 
     private BigInteger[][] computeX0(BigInteger[][] cInv) {
@@ -114,30 +119,27 @@ public class MatrixInversion extends CompositeProtocol implements
 
     private BigInteger[][] subtractFromTwo(BigInteger[][] AX) {
         //TODO? Element waise substraction?
-        BigInteger[][] subtractedAX = new BigInteger[n][n];
-        for (int i = 0; i < n; i++) {
-            for (int j = 0; j < n; j++) {
+        int marixSize = AX.length;
+        BigInteger[][] subtractedAX = new BigInteger[marixSize][marixSize];
+        for (int i = 0; i < marixSize; i++) {
+            for (int j = 0; j < marixSize; j++) {
                 subtractedAX[i][j] = BigInteger.valueOf(2 * asymmetricBit).subtract(AX[i][j]).mod(prime);
             }
         }
         return subtractedAX;
     }
 
-    private BigInteger[][] newtonRaphsonAlgorithm(BigInteger[][] X, int rounds) {
+    private BigInteger[][] newtonRaphsonAlgorithm(BigInteger[][] A,
+            BigInteger[][] X, int rounds) {
         ExecutorService es = Executors.newFixedThreadPool(2);
-        if(X.length == 1 && X[0].length == 1) {
-            // TODO scalar matrix. Assign a small value and return.
-            
-            //TODO update return
-            return null;
-        }
+        
         for (int i = 0; i < rounds; i++) {
             // AX = DM(A.X)
             int tiIndex = 0;
             initQueueMap(recQueues, globalPid);
 
             MatrixMultiplication matrixMultiplication = new MatrixMultiplication(
-                    Ashares, X, tishares.subList(tiIndex, tiIndex + n),
+                    A, X, tishares.subList(tiIndex, tiIndex + n),
                     tiTruncationPair.subList(tiIndex, tiIndex + n),
                     clientID, prime, globalPid, asymmetricBit, senderQueue,
                     recQueues.get(globalPid), new LinkedList<>(protocolIdQueue),
@@ -151,7 +153,7 @@ public class MatrixInversion extends CompositeProtocol implements
                 AX = multiplicationTask.get();
 
             } catch (InterruptedException | ExecutionException ex) {
-                Logger.getLogger(Comparison.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(MatrixInversion.class.getName()).log(Level.SEVERE, null, ex);
             }
 
             // TODO: temp2 = 2-temp local? asymmetricBit? 2 over zq?
@@ -171,10 +173,12 @@ public class MatrixInversion extends CompositeProtocol implements
             try {
                 X = multiplicationTask.get();
             } catch (InterruptedException | ExecutionException ex) {
-                Logger.getLogger(Comparison.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(MatrixInversion.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
         es.shutdown();
+        
+        System.out.println("returning matrix inversion");
 
         return X;
     }

@@ -58,6 +58,8 @@ public class LinearRegressionTraining extends Model {
                 null, realTriples, partyCount);
         this.tiTruncationPair = tiTruncationPair;
         globalProtocolId = 0;
+        prime = BigInteger.valueOf(2).pow(Constants.integer_precision
+                + 2 * Constants.decimal_precision + 1).nextProbablePrime();  //Zq must be a prime field
         initalizeModelVariables(args);
     }
 
@@ -82,7 +84,7 @@ public class LinearRegressionTraining extends Model {
 
         //TODO can do both local matrix multiplication in parallel
         BigInteger[][] gamma1 = localMatrixMultiplication(xT, x);
-        printMatrix(gamma1);
+        //printMatrix(gamma1);
         BigInteger[][] gamma2 = localMatrixMultiplication(xT, y);
 
         MatrixInversion matrixInversion = new MatrixInversion(gamma1,
@@ -128,7 +130,7 @@ public class LinearRegressionTraining extends Model {
             }
         }
 
-        printMatrix(xT);
+        //printMatrix(xT);
 
     }
 
@@ -142,6 +144,9 @@ public class LinearRegressionTraining extends Model {
     BigInteger[][] localMatrixMultiplication(BigInteger[][] a,
             BigInteger[][] b) {
 
+        System.out.println("a: rows:"+ a.length+", col:"+a[0].length);
+        System.out.println("b: rows:"+ b.length+", col:"+b[0].length);
+        System.out.println("c: rows:"+ a.length+", col:"+b[0].length);
         int crows = a.length;
         int ccol = b[0].length;
         BigInteger[][] c = new BigInteger[crows][ccol];
@@ -171,6 +176,7 @@ public class LinearRegressionTraining extends Model {
     }
 
     private void initalizeModelVariables(String[] args) {
+        
         for (String arg : args) {
             String[] currInput = arg.split("=");
             String command = currInput[0];
@@ -194,7 +200,7 @@ public class LinearRegressionTraining extends Model {
                     int len = yList.size();
                     y = new BigInteger[len][1];
                     for (int i = 0; i < len; i++) {
-                        y[i][1] = yList.get(i);
+                        y[i][0] = yList.get(i);
                     }
                     break;
                 case "output":
@@ -209,8 +215,7 @@ public class LinearRegressionTraining extends Model {
             Logging.lrTrainingUsage();
             System.exit(1);
         }
-        prime = BigInteger.valueOf(2).pow(Constants.integer_precision
-                + 2 * Constants.decimal_precision + 1).nextProbablePrime();  //Zq must be a prime field
+        
 
     }
 

@@ -74,7 +74,7 @@ public class Truncation extends CompositeProtocol implements Callable<BigInteger
             diffList.add(newRow);
         }
 
-        Message senderMessage = new Message(Constants.localShares, diffList,
+        Message senderMessage = new Message(diffList,
                 clientID, protocolIdQueue);
 
         try {
