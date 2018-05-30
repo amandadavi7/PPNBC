@@ -68,12 +68,10 @@ public class Truncation extends CompositeProtocol implements Callable<BigInteger
         }
 
         // broadcast it to n parties
-        List<List<BigInteger>> diffList = new ArrayList<>();
+        List<BigInteger> diffList = new ArrayList<>();
 
         for (int i = 0; i < batchSize; i++) {
-            List<BigInteger> newRow = new ArrayList<>();
-            newRow.add(zShares.get(i));
-            diffList.add(newRow);
+            diffList.add(zShares.get(i));
         }
 
         Message senderMessage = new Message(diffList,
@@ -90,15 +88,14 @@ public class Truncation extends CompositeProtocol implements Callable<BigInteger
 
     private void computeSecretShare() {
         Message receivedMessage = null;
-        List<BigInteger> z = new ArrayList<>(Collections.nCopies(batchSize, BigInteger.ZERO));
-        List<List<BigInteger>> diffList = null;
+        List<BigInteger> diffList = null;
         // Receive all zShares
         for (int i = 0; i < partyCount - 1; i++) {
             try {
                 receivedMessage = receiverQueue.take();
-                diffList = (List<List<BigInteger>>) receivedMessage.getValue();
+                diffList = (List<BigInteger>) receivedMessage.getValue();
                 for (int j = 0; j < batchSize; j++) {
-                    z.set(j, z.get(j).add(diffList.get(j).get(0)));
+                    zShares.set(j, zShares.get(j).add(diffList.get(j)).mod(prime));
                 }
             } catch (InterruptedException ex) {
                 ex.printStackTrace();
@@ -113,9 +110,7 @@ public class Truncation extends CompositeProtocol implements Callable<BigInteger
 
         for (int i = 0; i < batchSize; i++) {
             // Add local z to the sum
-            BigInteger Z = zShares.get(i)
-                    .add(z.get(i)).mod(prime);
-            BigInteger c = Z.add(roundOffBit);
+            BigInteger c = zShares.get(i).add(roundOffBit);
             BigInteger cp = c.mod(fpow2);
             BigInteger S = wShares[i].add(truncationShares.get(i).rp).
                     subtract(cp.multiply(BigInteger.valueOf(asymmetricBit)));
