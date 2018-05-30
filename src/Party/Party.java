@@ -235,6 +235,7 @@ public class Party {
                 // LR Evaluation
                 LinearRegressionTraining regressionTrainingModel
                         = new LinearRegressionTraining(tiShares.bigIntShares,
+                                tiShares.truncationPair,
                                 senderQueue, receiverQueue, partyId,
                                 asymmetricBit, partyCount, args);
 
@@ -243,8 +244,9 @@ public class Party {
 
             default:
                 // test model
-                TestModel testModel = new TestModel(tiShares.binaryShares, 
+                TestModel testModel = new TestModel(tiShares.binaryShares,
                         tiShares.decimalShares, tiShares.bigIntShares,
+                        tiShares.truncationPair,
                         asymmetricBit, senderQueue, receiverQueue, partyId, 
                         partyCount, args);
 

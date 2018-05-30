@@ -94,5 +94,14 @@ public class Logging {
         System.out.println("java ShareDistribution <number of client> "
                 + "<inputfilePath> <output path>");
     }
+    
+    /**
+     * Guidelines to use the LinearRegression Training
+     */
+    public static void lrTrainingUsage() {
+        System.out.println("Required fields: xCsv=<input file path for xShares> \n"
+                + "yCsv=<input file path for yShares> \n"
+                + "output=<output file path for betaShares>");
+    }
 
 }

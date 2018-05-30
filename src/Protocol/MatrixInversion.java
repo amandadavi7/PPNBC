@@ -8,6 +8,7 @@ package Protocol;
 import Communication.Message;
 import Protocol.Utility.MatrixMultiplication;
 import TrustedInitializer.TripleReal;
+import TrustedInitializer.TruncationPair;
 import Utility.Constants;
 import java.math.BigInteger;
 import java.util.LinkedList;
@@ -26,15 +27,18 @@ import java.util.logging.Logger;
  *
  * @author anisha
  */
-public class MatrixInversion extends CompositeProtocol implements Callable<BigInteger[][]> {
+public class MatrixInversion extends CompositeProtocol implements 
+        Callable<BigInteger[][]> {
 
     private static BigInteger[][] Ashares, I;
     private static int n;
     private static int globalPid;
     List<TripleReal> tishares;
+    List<TruncationPair> tiTruncationPair;
     private BigInteger prime;
 
     public MatrixInversion(BigInteger[][] Ashares, List<TripleReal> tishares,
+            List<TruncationPair> tiTruncationPair,
             int protocolId,
             BlockingQueue<Message> senderQueue,
             BlockingQueue<Message> receiverQueue, Queue<Integer> protocolIdQueue,
@@ -44,6 +48,7 @@ public class MatrixInversion extends CompositeProtocol implements Callable<BigIn
                 asymmetricBit, partyCount);
         this.Ashares = Ashares;
         this.tishares = tishares;
+        this.tiTruncationPair = tiTruncationPair;
         this.prime = prime;
         n = Ashares.length;
         I = createIdentity();
@@ -69,7 +74,7 @@ public class MatrixInversion extends CompositeProtocol implements Callable<BigIn
     private BigInteger calculateTrace(BigInteger[][] matrix) {
         BigInteger trace = BigInteger.ZERO;
         for (int i = 0; i < n; i++) {
-            trace = trace.add(matrix[i][i]);
+            trace = trace.add(matrix[i][i]).mod(prime);
         }
 
         return trace;
@@ -121,16 +126,19 @@ public class MatrixInversion extends CompositeProtocol implements Callable<BigIn
     private BigInteger[][] newtonRaphsonAlgorithm(BigInteger[][] X, int rounds) {
         ExecutorService es = Executors.newFixedThreadPool(2);
         if(X.length == 1 && X[0].length == 1) {
-            // scalar matrix. Assign a small value and return.
+            // TODO scalar matrix. Assign a small value and return.
             
+            //TODO update return
+            return null;
         }
         for (int i = 0; i < rounds; i++) {
-            // temp = DM(A.X)
+            // AX = DM(A.X)
             int tiIndex = 0;
             initQueueMap(recQueues, globalPid);
 
             MatrixMultiplication matrixMultiplication = new MatrixMultiplication(
                     Ashares, X, tishares.subList(tiIndex, tiIndex + n),
+                    tiTruncationPair.subList(tiIndex, tiIndex + n),
                     clientID, prime, globalPid, asymmetricBit, senderQueue,
                     recQueues.get(globalPid), new LinkedList<>(protocolIdQueue),
                     partyCount);
@@ -152,6 +160,7 @@ public class MatrixInversion extends CompositeProtocol implements Callable<BigIn
             // X = DM(X.temp2)
             matrixMultiplication = new MatrixMultiplication(
                     X, subtractedAX, tishares.subList(tiIndex, tiIndex + n),
+                    tiTruncationPair.subList(tiIndex, tiIndex + n),
                     clientID, prime, globalPid, asymmetricBit, senderQueue,
                     recQueues.get(globalPid), new LinkedList<>(protocolIdQueue),
                     partyCount);

@@ -18,6 +18,7 @@ import Protocol.Utility.MatrixMultiplication;
 import TrustedInitializer.TripleByte;
 import TrustedInitializer.TripleInteger;
 import TrustedInitializer.TripleReal;
+import TrustedInitializer.TruncationPair;
 import Utility.Constants;
 import Utility.FileIO;
 import Utility.Logging;
@@ -40,9 +41,12 @@ public class TestModel extends Model {
     List<List<Integer>> x;
     List<List<Integer>> y;
     List<List<List<Integer>>> v;
+    
+    List<TruncationPair> tiTruncationPair;
 
     public TestModel(List<TripleByte> binaryTriples, List<TripleInteger> decimalTriples,
-            List<TripleReal> realTiShares, int asymmetricBit, BlockingQueue<Message> senderQueue,
+            List<TripleReal> realTiShares, List<TruncationPair> tiTruncationPair,
+            int asymmetricBit, BlockingQueue<Message> senderQueue,
             BlockingQueue<Message> receiverQueue, int clientId, int partyCount, String[] args) {
 
         super(senderQueue, receiverQueue, clientId, asymmetricBit, binaryTriples, decimalTriples, realTiShares, partyCount);
@@ -349,6 +353,7 @@ public class TestModel extends Model {
         }
 
         MatrixInversion matrixInversion = new MatrixInversion(a, realTiShares,
+                tiTruncationPair,
                 1, commonSender, commonReceiver, new LinkedList<>(protocolIdQueue),
                 clientId, asymmetricBit, partyCount, BigInteger.valueOf(11));
 

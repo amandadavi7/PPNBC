@@ -23,17 +23,17 @@ import java.util.logging.Logger;
  * TODO better name
  * @author anisha
  */
-public class Truncation extends CompositeProtocol implements Callable<List<BigInteger>> {
+public class Truncation extends CompositeProtocol implements Callable<BigInteger[]> {
 
-    List<BigInteger> wShares;
+    BigInteger[] wShares;
     List<BigInteger> zShares;
-    List<BigInteger> T;
+    BigInteger[] T;
     List<TruncationPair> truncationShares;
 
     BigInteger prime;
     int batchSize;
 
-    public Truncation(List<BigInteger> wShares,
+    public Truncation(BigInteger[] wShares,
             List<TruncationPair> tiShares, BlockingQueue<Message> senderqueue,
             BlockingQueue<Message> receiverqueue, Queue<Integer> protocolIdQueue,
             int clientID, BigInteger prime,
@@ -47,13 +47,12 @@ public class Truncation extends CompositeProtocol implements Callable<List<BigIn
         this.truncationShares = tiShares;
         
         zShares = new ArrayList<>();
-        T = new ArrayList<>();
-        batchSize = wShares.size();
-        
+        batchSize = wShares.length;
+        T = new BigInteger[batchSize];
     }
 
     @Override
-    public List<BigInteger> call() throws Exception {
+    public BigInteger[] call() throws Exception {
         computeAndShareZShare();
         computeSecretShare();
 
@@ -63,7 +62,7 @@ public class Truncation extends CompositeProtocol implements Callable<List<BigIn
     private void computeAndShareZShare() {
 
         for (int i = 0; i < batchSize; i++) {
-            zShares.add(i, wShares.get(i).add(truncationShares.get(0).r).mod(prime));
+            zShares.add(i, wShares[i].add(truncationShares.get(0).r).mod(prime));
         }
 
         // broadcast it to n parties
@@ -116,9 +115,9 @@ public class Truncation extends CompositeProtocol implements Callable<List<BigIn
                     .add(z.get(i)).mod(prime);
             BigInteger c = Z.add(roundOffBit);
             BigInteger cp = c.mod(fpow2);
-            BigInteger S = wShares.get(i).add(truncationShares.get(i).rp).
+            BigInteger S = wShares[i].add(truncationShares.get(i).rp).
                     subtract(cp.multiply(BigInteger.valueOf(asymmetricBit)));
-            T.add(S.multiply(fInv).mod(prime));
+            T[i] = S.multiply(fInv).mod(prime);
 
         }
 

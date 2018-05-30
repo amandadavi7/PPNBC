@@ -124,13 +124,6 @@ public class LinearRegressionEvaluation extends Model {
                 + clientId + ", for size:" + y.size());
     }
 
-    /**
-     * Push results of the prediction (shares) to a csv to send it to the client
-     *
-     * TODO: Move this to FileIO Utility
-     */
-    
-
     private void initalizeModelVariables(String[] args) {
         for (String arg : args) {
             String[] currInput = arg.split("=");
