@@ -144,9 +144,6 @@ public class LinearRegressionTraining extends Model {
     BigInteger[][] localMatrixMultiplication(BigInteger[][] a,
             BigInteger[][] b) {
 
-        System.out.println("a: rows:"+ a.length+", col:"+a[0].length);
-        System.out.println("b: rows:"+ b.length+", col:"+b[0].length);
-        System.out.println("c: rows:"+ a.length+", col:"+b[0].length);
         int crows = a.length;
         int ccol = b[0].length;
         BigInteger[][] c = new BigInteger[crows][ccol];

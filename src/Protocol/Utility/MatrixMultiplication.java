@@ -29,6 +29,9 @@ import java.util.logging.Logger;
 
 /**
  * Class to take care of matrix multiplication
+ * 
+ * uses n*l*m TripleReal shares
+ * uses n*l TruncationPair shares
  *
  * @author anisha
  */
@@ -46,7 +49,7 @@ public class MatrixMultiplication extends CompositeProtocol implements
      *
      * @param a
      * @param b
-     * @param tishares
+     * @param tiRealshares
      * @param clientID
      * @param prime
      * @param protocolID
@@ -57,7 +60,7 @@ public class MatrixMultiplication extends CompositeProtocol implements
      * @param partyCount
      */
     public MatrixMultiplication(BigInteger[][] a, BigInteger[][] b,
-            List<TripleReal> tishares, List<TruncationPair> tiTruncationPair,
+            List<TripleReal> tiRealshares, List<TruncationPair> tiTruncationPair,
             int clientID, BigInteger prime, int protocolID,
             int asymmetricBit, BlockingQueue<Message> senderQueue,
             BlockingQueue<Message> receiverQueue,
@@ -67,7 +70,7 @@ public class MatrixMultiplication extends CompositeProtocol implements
                 asymmetricBit, partyCount);
         this.a = a;
         this.b = b;
-        this.tiRealShares = tishares;
+        this.tiRealShares = tiRealshares;
         this.tiTruncationPair = tiTruncationPair;
         this.prime = prime;
         globalProtocolId = 0;
@@ -90,8 +93,8 @@ public class MatrixMultiplication extends CompositeProtocol implements
         BigInteger[][] c2f = new BigInteger[n][l];
         BigInteger[][] c = new BigInteger[n][l];
 
-        int tiStartIndex = 0;
-
+        int tiRealStartIndex = 0;
+        
         ExecutorService es = Executors.newFixedThreadPool(Constants.threadCount);
         List<Future<BigInteger>> taskList = new ArrayList<>();
 
@@ -111,19 +114,21 @@ public class MatrixMultiplication extends CompositeProtocol implements
                 initQueueMap(recQueues, protocolIndex);
                 DotProductReal DPModule = new DotProductReal(row,
                         col, tiRealShares.subList(
-                                tiStartIndex, tiStartIndex + l),
+                                tiRealStartIndex, tiRealStartIndex + m),
                         senderQueue, recQueues.get(i),
                         new LinkedList<>(protocolIdQueue),
                         clientID, prime, globalProtocolId++, asymmetricBit, partyCount);
 
                 Future<BigInteger> DPTask = es.submit(DPModule);
                 taskList.add(DPTask);
-                tiStartIndex += l;
+                tiRealStartIndex += m;
 
             }
         }
 
         int testCases = taskList.size();
+        int tiTruncationStartIndex = 0;
+
         List<Future<BigInteger[]>> taskListTruncation = new ArrayList<>();
 
         for (int i = 0; i < n; i++) {
@@ -138,11 +143,16 @@ public class MatrixMultiplication extends CompositeProtocol implements
                 }
             }
 
-            Truncation truncationPair = new Truncation(c2f[i], tiTruncationPair,
+            //TODO do not reuse tiTruncationPair
+            Truncation truncationPair = new Truncation(c2f[i], 
+                    tiTruncationPair.subList(tiTruncationStartIndex, 
+                            tiTruncationStartIndex+c2f[i].length),
                     senderQueue, receiverQueue, new LinkedList<>(protocolIdQueue),
                     clientID, prime, globalProtocolId++, asymmetricBit, partyCount);
             Future<BigInteger[]> truncationTask = es.submit(truncationPair);
             taskListTruncation.add(truncationTask);
+            
+            tiTruncationStartIndex += c2f[i].length;
 
         }
 

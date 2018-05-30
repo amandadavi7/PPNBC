@@ -20,6 +20,8 @@ import java.util.logging.Logger;
 
 /**
  * Batch Truncation of n elements 
+ * 
+ * uses wShares.length TruncationPair shares
  * TODO better name
  * @author anisha
  */
@@ -62,7 +64,7 @@ public class Truncation extends CompositeProtocol implements Callable<BigInteger
     private void computeAndShareZShare() {
 
         for (int i = 0; i < batchSize; i++) {
-            zShares.add(i, wShares[i].add(truncationShares.get(0).r).mod(prime));
+            zShares.add(i, wShares[i].add(truncationShares.get(i).r).mod(prime));
         }
 
         // broadcast it to n parties
