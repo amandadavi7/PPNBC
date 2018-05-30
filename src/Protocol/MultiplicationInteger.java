@@ -42,17 +42,17 @@ public class MultiplicationInteger extends Protocol implements Callable {
      * @param clientId
      * @param prime
      * @param protocolID
-     * @param oneShare
+     * @param asymmetricBit
      * @param parentID
      */
     public MultiplicationInteger(int x, int y, TripleInteger tiShares,
             BlockingQueue<Message> senderQueue,
             BlockingQueue<Message> receiverQueue, Queue<Integer> protocolIdQueue,
             int clientId, int prime,
-            int protocolID, int oneShare, int parentID, int partyCount) {
+            int protocolID, int asymmetricBit, int parentID, int partyCount) {
 
         super(protocolID, senderQueue, receiverQueue, protocolIdQueue,
-                clientId, oneShare, partyCount);
+                clientId, asymmetricBit, partyCount);
         this.x = x;
         this.y = y;
         this.tiShares = tiShares;
@@ -86,7 +86,7 @@ public class MultiplicationInteger extends Protocol implements Callable {
 
         d = Math.floorMod(x - tiShares.u + d, prime);
         e = Math.floorMod(y - tiShares.v + e, prime);
-        int product = tiShares.w + (d * tiShares.v) + (tiShares.u * e) + (d * e * oneShare);
+        int product = tiShares.w + (d * tiShares.v) + (tiShares.u * e) + (d * e * asymmetricBit);
         product = Math.floorMod(product, prime);
         //System.out.println("ti("+tiShares.u+","+tiShares.v+","+tiShares.w+"), "+"x*y("+x+","+y+"):"+product);
         //System.out.println("parent ID=" + parentID + " mult ID=" + protocolID + " successful, product returned");

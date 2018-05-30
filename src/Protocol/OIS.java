@@ -42,7 +42,7 @@ public class OIS extends CompositeProtocol implements Callable<Integer[]>{
      * 
      * @param features
      * @param tiShares
-     * @param oneShare
+     * @param asymmetricBit
      * @param senderQueue
      * @param receiverQueue
      * @param protocolIdQueue
@@ -54,12 +54,12 @@ public class OIS extends CompositeProtocol implements Callable<Integer[]>{
      * @param numberCount 
      */
     public OIS(List<List<Integer>> features, List<TripleByte> tiShares,
-            int oneShare, BlockingQueue<Message> senderQueue,
+            int asymmetricBit, BlockingQueue<Message> senderQueue,
             BlockingQueue<Message> receiverQueue, Queue<Integer> protocolIdQueue,
             int clientId, int prime,
             int protocolID, int bitLength, int k, int numberCount, int partyCount){
         
-        super(protocolID, senderQueue, receiverQueue, protocolIdQueue,clientId, oneShare, partyCount);
+        super(protocolID, senderQueue, receiverQueue, protocolIdQueue,clientId, asymmetricBit, partyCount);
         this.numberCount = numberCount;
         this.bitLength = bitLength;
         this.tiShares = tiShares;
@@ -122,7 +122,7 @@ public class OIS extends CompositeProtocol implements Callable<Integer[]>{
             DotProductByte dp = new DotProductByte(featureVectorTransposed.get(i), yShares, 
                     tiShares.subList(tiStartIndex, tiStartIndex+numberCount), senderQueue, 
                     recQueues.get(i), new LinkedList<>(protocolIdQueue),
-                    clientID, prime, i, oneShare, partyCount);
+                    clientID, prime, i, asymmetricBit, partyCount);
             
             Future<Integer> dpTask = es.submit(dp);
             taskList.add(dpTask);

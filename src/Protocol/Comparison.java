@@ -55,7 +55,7 @@ public class Comparison extends CompositeProtocol implements Callable<Integer> {
      * @param x List of bits of shares of x
      * @param y List of bits of shares of y
      * @param tiShares
-     * @param oneShare [[1]] with the Party
+     * @param asymmetricBit [[1]] with the Party
      * @param senderQueue
      * @param receiverQueue
      * @param protocolIdQueue
@@ -64,13 +64,13 @@ public class Comparison extends CompositeProtocol implements Callable<Integer> {
      * @param protocolID
      */
     public Comparison(List<Integer> x, List<Integer> y, List<TripleByte> tiShares,
-            int oneShare, BlockingQueue<Message> senderQueue,
+            int asymmetricBit, BlockingQueue<Message> senderQueue,
             BlockingQueue<Message> receiverQueue, Queue<Integer> protocolIdQueue,
             int clientId, int prime,
             int protocolID, int partyCount) {
 
         super(protocolID, senderQueue, receiverQueue, protocolIdQueue,clientId, 
-                oneShare, partyCount);
+                asymmetricBit, partyCount);
         this.x = x;
         this.y = y;
         this.tiShares = tiShares;
@@ -146,7 +146,7 @@ public class Comparison extends CompositeProtocol implements Callable<Integer> {
      */
     private void computeEShares() {
         for (int i = 0; i < bitLength; i++) {
-            int eShare = x.get(i) + y.get(i) + oneShare;
+            int eShare = x.get(i) + y.get(i) + asymmetricBit;
             eShares[i] = Math.floorMod(eShare, prime);
 
         }
@@ -179,7 +179,7 @@ public class Comparison extends CompositeProtocol implements Callable<Integer> {
                     y.subList(i, toIndex),
                     tiShares.subList(i, toIndex),
                     senderQueue, recQueues.get(startpid), new LinkedList<>(protocolIdQueue),
-                    clientID, prime, startpid, oneShare, protocolId, partyCount);
+                    clientID, prime, startpid, asymmetricBit, protocolId, partyCount);
 
             Future<Integer[]> multiplicationTask = es.submit(batchMultiplication);
             taskList.add(multiplicationTask);
@@ -243,7 +243,7 @@ public class Comparison extends CompositeProtocol implements Callable<Integer> {
                         tempMultE.subList(i + 1, toIndex),
                         tiShares.subList(tiStartIndex, tiStartIndex+tiCount), senderQueue,
                         recQueues.get(startpid), new LinkedList<>(protocolIdQueue),clientID, prime, startpid,
-                        oneShare, protocolId, partyCount);
+                        asymmetricBit, protocolId, partyCount);
 
                 Future<Integer[]> multiplicationTask = es.submit(batchMultiplication);
                 taskList.add(multiplicationTask);
@@ -309,7 +309,7 @@ public class Comparison extends CompositeProtocol implements Callable<Integer> {
                     dShareList.subList(i, toIndex),
                     tiShares.subList(tiStartIndex, tiStartIndex + tiCount), senderQueue,
                     recQueues.get(startpid), new LinkedList<>(protocolIdQueue),
-                    clientID, prime, startpid, oneShare, protocolId, partyCount);
+                    clientID, prime, startpid, asymmetricBit, protocolId, partyCount);
 
             Future<Integer[]> multiplicationTask = es.submit(batchMultiplication);
             taskList.add(multiplicationTask);
@@ -350,7 +350,7 @@ public class Comparison extends CompositeProtocol implements Callable<Integer> {
      * @return
      */
     private int computeW() {
-        int w = oneShare;
+        int w = asymmetricBit;
         for (int i = 0; i < bitLength; i++) {
             w += cShares[i];
             w = Math.floorMod(w, prime);
