@@ -15,7 +15,6 @@ import java.util.Queue;
  */
 public class Message implements Serializable {
 
-    String variableName;
     Object value;
     int clientId;
     Queue<Integer> protocolIds;
@@ -23,27 +22,15 @@ public class Message implements Serializable {
     /**
      * Constructor
      *
-     * @param name
      * @param value
      * @param clientId
      * @param protocolIdQueue
      */
-    //TODO - variableName - obsolete, clientId??
-    public Message(String name, Object value, int clientId,
+    public Message(Object value, int clientId,
             Queue<Integer> protocolIdQueue) {
-        variableName = name;
         this.value = value;
         this.clientId = clientId;
         protocolIds = protocolIdQueue;
-    }
-
-    /**
-     * Get variable name
-     *
-     * @return variable name
-     */
-    public String getName() {
-        return variableName;
     }
 
     /**
@@ -95,7 +82,7 @@ public class Message implements Serializable {
      * Log values for the message
      */
     public void log() {
-        System.out.println("Message: Name-" + variableName + ", Value-" + value
+        System.out.println("Message: Value-" + value
                 + ", clientId-" + clientId);
     }
 
