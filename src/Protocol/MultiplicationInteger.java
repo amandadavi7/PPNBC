@@ -102,7 +102,7 @@ public class MultiplicationInteger extends Protocol implements Callable {
         diffList.add(Math.floorMod(x - tiShares.u, prime));
         diffList.add(Math.floorMod(y - tiShares.v, prime));
 
-        Message senderMessage = new Message(Constants.localShares, diffList,
+        Message senderMessage = new Message(diffList,
                 clientID, protocolIdQueue);
         try {
             senderQueue.put(senderMessage);

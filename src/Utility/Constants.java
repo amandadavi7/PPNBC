@@ -23,7 +23,6 @@ public class Constants {
     public static final String w = "w";
     public static final String d = "d";
     public static final String e = "e";
-    public static final String localShares = "localShares";
     public static final String localD = "localD";
     public static final String localE = "localE";
     public static final String product = "product";
