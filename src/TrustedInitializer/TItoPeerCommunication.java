@@ -53,6 +53,9 @@ public class TItoPeerCommunication implements Runnable {
             for(TripleReal t: tishare.bigIntShares){
                 System.out.println("u : " + t.u + ",v : " + t.v + ",w : " + t.w);
             }
+            for(TruncationPair t: tishare.truncationPair){
+                System.out.println("r : " + t.r + ",rp : " + t.rp);
+            }
         } catch (IOException ex){
             Logger.getLogger(TItoPeerCommunication.class.getName()).log(Level.SEVERE, null, ex);
         }

@@ -91,7 +91,7 @@ public class Logging {
      * Guideline to use the Client class
      */
     public static void clientUsage() {
-        System.out.println("java ShareDistribution <number of client> "
+        System.out.println("java LinearRegressionClient <number of parties> "
                 + "<inputfilePath> <output path>");
     }
     

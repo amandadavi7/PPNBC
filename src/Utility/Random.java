@@ -104,6 +104,7 @@ public class Random {
 
     public static void generateTruncationPairs(int truncationPairs,
             int clientCount, TIShare[] tiShare) {
+        System.out.println("Generating "+ truncationPairs+" truncation shares");
         java.util.Random rand = new java.util.Random();
         BigInteger Zq = BigInteger.valueOf(2).pow(Constants.integer_precision
                 + 2 * Constants.decimal_precision + 1).nextProbablePrime();

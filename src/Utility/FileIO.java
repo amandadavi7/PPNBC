@@ -38,7 +38,7 @@ public class FileIO {
      * @param f bit resolution of decimal component
      * @return SMPCVariable of x in Z_q
      */
-    static BigInteger realToZq(double x, int f, BigInteger q) {
+    public static BigInteger realToZq(double x, int f, BigInteger q) {
         // Our integer space must be at least 2^k
         // TODO: Does this need to be larger given more parties?
         BigDecimal X = BigDecimal.valueOf(x);
