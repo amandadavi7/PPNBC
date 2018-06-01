@@ -178,11 +178,12 @@ public class FileIO {
 
     }
 
-    public static void writeToCSV(List<BigInteger> y, String outputPath, int clientId) {
+    public static void writeToCSV(List<BigInteger> y, String outputPath,
+            String filePrefix, int clientId) {
         int len = y.size();
         try {
-            try (FileWriter writer = new FileWriter(outputPath + "y_" + clientId
-                    + ".csv")) {
+            try (FileWriter writer = new FileWriter(outputPath + filePrefix + 
+                    "_" + clientId + ".csv")) {
                 for (int i = 0; i < len; i++) {
                     writer.write(y.get(i).toString());
                     writer.write("\n");
@@ -195,15 +196,16 @@ public class FileIO {
 
     }
 
-    public static void writeToCSV(BigInteger[][] y, String outputPath, int clientId) {
+    public static void writeToCSV(BigInteger[][] y, String outputPath, 
+            String filePrefix, int clientId) {
         int rows = y.length;
         int cols = y[0].length;
         try {
-            try (FileWriter writer = new FileWriter(outputPath + "y_" + clientId
-                    + ".csv")) {
+            try (FileWriter writer = new FileWriter(outputPath + filePrefix + 
+                    "_" + clientId + ".csv")) {
                 for (int i = 0; i < rows; i++) {
                     for (int j = 0; j < cols; j++) {
-                        writer.write(y[i][j]+",");
+                        writer.write(y[i][j] + ",");
                     }
                     writer.write("\n");
                 }

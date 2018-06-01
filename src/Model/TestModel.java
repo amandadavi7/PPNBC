@@ -301,9 +301,9 @@ public class TestModel extends Model {
         //callBitDecomposition();
         // pass 1 - multiplication, 2 - dot product and 3 - comparison
         //callProtocol(2);
-        //callMatrixInversion();
+        callMatrixInversion();
         //callTruncation();
-        callMatrixMultiplication();
+        //callMatrixMultiplication();
         teardownModelHandlers();
 
     }
@@ -369,35 +369,28 @@ public class TestModel extends Model {
         ExecutorService es = Executors.newFixedThreadPool(1);
         initQueueMap(recQueues, 1);
 
-        BigInteger a[][] = new BigInteger[5][5];
-
-        for (int i = 0; i < 5; i++) {
-            for (int j = 0; j < 5; j++) {
-                a[i][j] = BigInteger.valueOf(i + j);
-            }
-        }
-
-        MatrixInversion matrixInversion = new MatrixInversion(a, realTiShares,
+        long startTime = System.currentTimeMillis();
+        MatrixInversion matrixInversion = new MatrixInversion(xBigInt, realTiShares,
                 tiTruncationPair,
-                1, commonSender, commonReceiver, new LinkedList<>(protocolIdQueue),
+                1, commonSender, recQueues.get(1), new LinkedList<>(protocolIdQueue),
                 clientId, asymmetricBit, partyCount, BigInteger.valueOf(11));
 
-        Future<BigInteger[][]> bitdecompositionTask = es.submit(matrixInversion);
+        Future<BigInteger[][]> matrixInversionTask = es.submit(matrixInversion);
 
+        BigInteger[][] result = null;
         try {
-            BigInteger[][] result = bitdecompositionTask.get();
-            System.out.println("result:");
-            for (int i = 0; i < 5; i++) {
-                for (int j = 0; j < 5; j++) {
-                    System.out.print(result[i][j] + " ");
-                }
-                System.out.println();
-            }
+            result = matrixInversionTask.get();
+            
         } catch (InterruptedException | ExecutionException ex) {
             Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
         }
 
         teardownModelHandlers();
+        long stopTime = System.currentTimeMillis();
+        long elapsedTime = stopTime - startTime;
+        System.out.println("Avg time duration:" + elapsedTime);
+
+        FileIO.writeToCSV(result, outputPath, "matrixInversion", clientId);
     }
 
     private void callMatrixMultiplication() {
@@ -414,8 +407,8 @@ public class TestModel extends Model {
 
         //TODO fix ti share count
         MatrixMultiplication matrixMultiplication = new MatrixMultiplication(
-                xBigInt, xT, realTiShares.subList(0, (n * m)),
-                tiTruncationPair.subList(0, n),
+                xBigInt, xT, realTiShares,
+                tiTruncationPair,
                 clientId, prime, 1, asymmetricBit, commonSender,
                 recQueues.get(1), new LinkedList<>(protocolIdQueue),
                 partyCount);
@@ -435,7 +428,7 @@ public class TestModel extends Model {
         long elapsedTime = stopTime - startTime;
         System.out.println("Avg time duration:" + elapsedTime);
 
-        FileIO.writeToCSV(result, outputPath, clientId);
+        FileIO.writeToCSV(result, outputPath, "matrixMultiplication", clientId);
 
     }
 
@@ -509,7 +502,7 @@ public class TestModel extends Model {
         long elapsedTime = stopTime - startTime;
         System.out.println("Avg time duration:" + elapsedTime);
 
-        FileIO.writeToCSV(truncationOutput, outputPath, clientId);
+        FileIO.writeToCSV(truncationOutput, outputPath, "truncation", clientId);
 
     }
 

@@ -131,14 +131,14 @@ public class MatrixInversion extends CompositeProtocol implements
 
     private BigInteger[][] newtonRaphsonAlgorithm(BigInteger[][] A,
             BigInteger[][] X, int rounds) {
-        ExecutorService es = Executors.newFixedThreadPool(2);
+        ExecutorService es = Executors.newSingleThreadExecutor();
         
         int n = A.length;
         
         for (int i = 0; i < rounds; i++) {
             // AX = DM(A.X)
-            System.out.println("Newton Raphson: round "+ i +" on A:"+ A.length+
-                    ","+A[0].length+" and X:"+ X.length+", "+X[0].length);
+            /*System.out.println("Newton Raphson: round "+ i +" on A:"+ A.length+
+                    ","+A[0].length+" and X:"+ X.length+", "+X[0].length);*/
             int tiRealIndex = 0;
             int tiTruncationIndex = 0;
             initQueueMap(recQueues, globalPid);
@@ -151,9 +151,9 @@ public class MatrixInversion extends CompositeProtocol implements
                     partyCount);
             
             
-
-            tiRealIndex += Math.pow(n, 3);
-            tiTruncationIndex += (n*n);
+            // TODO uncomment to not reuse the shares
+            //tiRealIndex += Math.pow(n, 3);
+            //tiTruncationIndex += (n*n);
             
             globalPid++;
             Future<BigInteger[][]> multiplicationTask = es.submit(matrixMultiplication);
@@ -170,14 +170,16 @@ public class MatrixInversion extends CompositeProtocol implements
 
             // X = DM(X.temp2)
             matrixMultiplication = new MatrixMultiplication(
-                    X, subtractedAX, tishares.subList(tiRealIndex, tiRealIndex + (int) (tiRealIndex + Math.pow(n, 3))),
+                    X, subtractedAX, tishares.subList(tiRealIndex, 
+                            tiRealIndex + (int) (tiRealIndex + Math.pow(n, 3))),
                     tiTruncationPair.subList(tiTruncationIndex, tiTruncationIndex + n*n),
                     clientID, prime, globalPid, asymmetricBit, senderQueue,
                     recQueues.get(globalPid), new LinkedList<>(protocolIdQueue),
                     partyCount);
 
-            tiRealIndex += Math.pow(n, 3);
-            tiTruncationIndex += (n*n);
+            // TODO uncomment to not reuse the shares
+            //tiRealIndex += Math.pow(n, 3);
+            //tiTruncationIndex += (n*n);
             globalPid++;
             multiplicationTask = es.submit(matrixMultiplication);
             try {
@@ -188,7 +190,7 @@ public class MatrixInversion extends CompositeProtocol implements
         }
         es.shutdown();
         
-        System.out.println("returning matrix inversion");
+        //System.out.println("returning matrix inversion");
 
         return X;
     }

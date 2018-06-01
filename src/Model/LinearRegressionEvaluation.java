@@ -72,7 +72,7 @@ public class LinearRegressionEvaluation extends Model {
         startModelHandlers();
         computeDotProduct();
         teardownModelHandlers();
-        FileIO.writeToCSV(y, outputPath, clientId);
+        FileIO.writeToCSV(y, outputPath, "y",clientId);
 
     }
 

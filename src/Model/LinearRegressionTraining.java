@@ -31,11 +31,10 @@ public class LinearRegressionTraining extends Model {
     BigInteger[][] y;
 
     List<TruncationPair> tiTruncationPair;
-    
+
     BigInteger prime;
     String outputPath;
     int globalProtocolId;
-    
 
     /**
      * Constructor
@@ -87,11 +86,15 @@ public class LinearRegressionTraining extends Model {
         //printMatrix(gamma1);
         BigInteger[][] gamma2 = localMatrixMultiplication(xT, y);
 
+        initQueueMap(recQueues, globalProtocolId);
         MatrixInversion matrixInversion = new MatrixInversion(gamma1,
-                realTiShares, tiTruncationPair, globalProtocolId++, commonSender, commonReceiver,
-                new LinkedList<>(protocolIdQueue), clientId, asymmetricBit, 
+                realTiShares, tiTruncationPair, globalProtocolId, commonSender, 
+                recQueues.get(globalProtocolId),
+                new LinkedList<>(protocolIdQueue), clientId, asymmetricBit,
                 partyCount, prime);
         
+        globalProtocolId++;
+
         BigInteger[][] gamma1Inv = null;
         try {
             gamma1Inv = matrixInversion.call();
@@ -99,23 +102,24 @@ public class LinearRegressionTraining extends Model {
             Logger.getLogger(LinearRegressionTraining.class.getName())
                     .log(Level.SEVERE, null, ex);
         }
-        
-        MatrixMultiplication matrixMultiplication = new MatrixMultiplication(gamma1Inv, 
-                gamma2, realTiShares, tiTruncationPair, clientId, prime, globalProtocolId++, 
-                asymmetricBit, commonSender, 
-                commonReceiver, new LinkedList<>(protocolIdQueue), partyCount);
-        
+
+        initQueueMap(recQueues, globalProtocolId);
+        MatrixMultiplication matrixMultiplication = new MatrixMultiplication(gamma1Inv,
+                gamma2, realTiShares, tiTruncationPair, clientId, prime, globalProtocolId,
+                asymmetricBit, commonSender,
+                recQueues.get(globalProtocolId), new LinkedList<>(protocolIdQueue), partyCount);
+
         BigInteger[][] beta = null;
-        
+
         try {
             beta = matrixInversion.call();
         } catch (Exception ex) {
             Logger.getLogger(LinearRegressionTraining.class.getName())
                     .log(Level.SEVERE, null, ex);
         }
-        
+
         teardownModelHandlers();
-        FileIO.writeToCSV(beta, outputPath, clientId);
+        FileIO.writeToCSV(beta, outputPath, "lr_training", clientId);
 
     }
 
@@ -131,7 +135,6 @@ public class LinearRegressionTraining extends Model {
         }
 
         //printMatrix(xT);
-
     }
 
     /**
@@ -158,7 +161,7 @@ public class LinearRegressionTraining extends Model {
                 }
                 //System.out.println("sum:"+sum);
                 c[i][j] = localScale(sum);
-                
+
             }
         }
         return c;
@@ -173,7 +176,7 @@ public class LinearRegressionTraining extends Model {
     }
 
     private void initalizeModelVariables(String[] args) {
-        
+
         for (String arg : args) {
             String[] currInput = arg.split("=");
             String command = currInput[0];
@@ -207,12 +210,11 @@ public class LinearRegressionTraining extends Model {
             }
 
         }
-        
-        if(x == null || y == null || outputPath == null) {
+
+        if (x == null || y == null || outputPath == null) {
             Logging.lrTrainingUsage();
             System.exit(1);
         }
-        
 
     }
 
