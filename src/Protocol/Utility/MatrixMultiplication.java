@@ -50,6 +50,7 @@ public class MatrixMultiplication extends CompositeProtocol implements
      * @param a
      * @param b
      * @param tiRealshares
+     * @param tiTruncationPair
      * @param clientID
      * @param prime
      * @param protocolID
@@ -98,7 +99,6 @@ public class MatrixMultiplication extends CompositeProtocol implements
         ExecutorService es = Executors.newFixedThreadPool(Constants.threadCount);
         List<Future<BigInteger>> taskList = new ArrayList<>();
 
-        int protocolIndex = 0;
         for (int i = 0; i < n; i++) {
             List<BigInteger> row = new ArrayList<>();
             for (int k = 0; k < m; k++) {
@@ -111,55 +111,57 @@ public class MatrixMultiplication extends CompositeProtocol implements
                     col.add(b[k][j]);
                 }
 
-                initQueueMap(recQueues, protocolIndex);
+                initQueueMap(recQueues, globalProtocolId);
                 DotProductReal DPModule = new DotProductReal(row,
                         col, tiRealShares.subList(
                                 tiRealStartIndex, tiRealStartIndex + m),
-                        senderQueue, recQueues.get(i),
+                        senderQueue, recQueues.get(globalProtocolId),
                         new LinkedList<>(protocolIdQueue),
                         clientID, prime, globalProtocolId++, asymmetricBit, partyCount);
 
                 Future<BigInteger> DPTask = es.submit(DPModule);
                 taskList.add(DPTask);
-                tiRealStartIndex += m;
+                //TODO: uncomment this to avoid reusing the shares 
+                //tiRealStartIndex += m;
 
             }
         }
 
-        int testCases = taskList.size();
+        int testCases = 0;
         int tiTruncationStartIndex = 0;
 
         List<Future<BigInteger[]>> taskListTruncation = new ArrayList<>();
 
         for (int i = 0; i < n; i++) {
             for (int j = 0; j < l; j++) {
-                Future<BigInteger> dWorkerResponse = taskList.get(i);
+                Future<BigInteger> dWorkerResponse = taskList.get(testCases++);
                 try {
-                    //TODO do truncation here
                     c2f[i][j] = dWorkerResponse.get();
+                    //System.out.println("row "+i+" done dp: "+c2f[i][j]);
                 } catch (InterruptedException | ExecutionException ex) {
                     Logger.getLogger(LinearRegressionTraining.class.getName())
                             .log(Level.SEVERE, null, ex);
                 }
             }
-
-            //TODO do not reuse tiTruncationPair
+            initQueueMap(recQueues, globalProtocolId);
             Truncation truncationPair = new Truncation(c2f[i], 
                     tiTruncationPair.subList(tiTruncationStartIndex, 
                             tiTruncationStartIndex+c2f[i].length),
-                    senderQueue, receiverQueue, new LinkedList<>(protocolIdQueue),
+                    senderQueue, recQueues.get(globalProtocolId), 
+                    new LinkedList<>(protocolIdQueue),
                     clientID, prime, globalProtocolId++, asymmetricBit, partyCount);
             Future<BigInteger[]> truncationTask = es.submit(truncationPair);
             taskListTruncation.add(truncationTask);
-            
-            tiTruncationStartIndex += c2f[i].length;
+            //TODO: uncomment this to avoid reusing the shares 
+            //tiTruncationStartIndex += c2f[i].length;
 
         }
+        // release the memory once done
+        taskList.clear();
 
         for (int i = 0; i < n; i++) {
             Future<BigInteger[]> dWorkerResponse = taskListTruncation.get(i);
             try {
-                //TODO do truncation here
                 c[i] = dWorkerResponse.get();
             } catch (InterruptedException | ExecutionException ex) {
                 Logger.getLogger(LinearRegressionTraining.class.getName())

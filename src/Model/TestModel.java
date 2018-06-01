@@ -302,7 +302,8 @@ public class TestModel extends Model {
         // pass 1 - multiplication, 2 - dot product and 3 - comparison
         //callProtocol(2);
         //callMatrixInversion();
-        callTruncation();
+        //callTruncation();
+        callMatrixMultiplication();
         teardownModelHandlers();
 
     }
@@ -397,6 +398,61 @@ public class TestModel extends Model {
         }
 
         teardownModelHandlers();
+    }
+
+    private void callMatrixMultiplication() {
+        ExecutorService es = Executors.newFixedThreadPool(1);
+        initQueueMap(recQueues, 1);
+
+        int n = xBigInt.length;
+        int l = xBigInt[0].length;
+
+        BigInteger xT[][] = transposeMatrix(xBigInt);
+        int m = xT[0].length;
+        
+        long startTime = System.currentTimeMillis();
+
+        //TODO fix ti share count
+        MatrixMultiplication matrixMultiplication = new MatrixMultiplication(
+                xBigInt, xT, realTiShares.subList(0, (n * m)),
+                tiTruncationPair.subList(0, n),
+                clientId, prime, 1, asymmetricBit, commonSender,
+                recQueues.get(1), new LinkedList<>(protocolIdQueue),
+                partyCount);
+
+        Future<BigInteger[][]> matrixMultiplicationTask = es.submit(matrixMultiplication);
+
+        BigInteger[][] result = null;
+        try {
+            result = matrixMultiplicationTask.get();
+
+        } catch (InterruptedException | ExecutionException ex) {
+            Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
+        teardownModelHandlers();
+        long stopTime = System.currentTimeMillis();
+        long elapsedTime = stopTime - startTime;
+        System.out.println("Avg time duration:" + elapsedTime);
+
+        FileIO.writeToCSV(result, outputPath, clientId);
+
+    }
+
+    BigInteger[][] transposeMatrix(BigInteger[][] x) {
+        int rows = x.length;
+        int cols = x[0].length;
+        BigInteger[][] xT = new BigInteger[cols][rows];
+
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < cols; j++) {
+                xT[j][i] = x[i][j];
+            }
+        }
+
+        return xT;
+        //printMatrix(xT);
+
     }
 
     private void callTruncation() {
