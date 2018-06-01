@@ -62,7 +62,6 @@ public class FileIO {
 
         BigDecimal Q = Zk.divide(new BigDecimal(inverse), f, RoundingMode.CEILING);
         return Q;
-        // return Zk.divide(new BigDecimal(inverse), BigDecimal.ROUND_HALF_UP);
     }
 
     /**
@@ -197,7 +196,7 @@ public class FileIO {
     }
 
     public static void writeToCSV(BigInteger[][] y, String outputPath, 
-            String filePrefix, int clientId) {
+            String filePrefix, int clientId, BigInteger Zq) {
         int rows = y.length;
         int cols = y[0].length;
         try {
@@ -205,7 +204,7 @@ public class FileIO {
                     "_" + clientId + ".csv")) {
                 for (int i = 0; i < rows; i++) {
                     for (int j = 0; j < cols; j++) {
-                        writer.write(y[i][j] + ",");
+                        writer.write(ZqToReal(y[i][j], Constants.decimal_precision, Zq) + ",");
                     }
                     writer.write("\n");
                 }

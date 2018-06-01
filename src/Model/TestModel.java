@@ -390,7 +390,7 @@ public class TestModel extends Model {
         long elapsedTime = stopTime - startTime;
         System.out.println("Avg time duration:" + elapsedTime);
 
-        FileIO.writeToCSV(result, outputPath, "matrixInversion", clientId);
+        FileIO.writeToCSV(result, outputPath, "matrixInversion", clientId, prime);
     }
 
     private void callMatrixMultiplication() {
@@ -428,7 +428,7 @@ public class TestModel extends Model {
         long elapsedTime = stopTime - startTime;
         System.out.println("Avg time duration:" + elapsedTime);
 
-        FileIO.writeToCSV(result, outputPath, "matrixMultiplication", clientId);
+        FileIO.writeToCSV(result, outputPath, "matrixMultiplication", clientId, prime);
 
     }
 
@@ -502,7 +502,7 @@ public class TestModel extends Model {
         long elapsedTime = stopTime - startTime;
         System.out.println("Avg time duration:" + elapsedTime);
 
-        FileIO.writeToCSV(truncationOutput, outputPath, "truncation", clientId);
+        FileIO.writeToCSV(truncationOutput, outputPath, "truncation", clientId, prime);
 
     }
 

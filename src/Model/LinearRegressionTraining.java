@@ -133,7 +133,7 @@ public class LinearRegressionTraining extends Model {
                 + clientId);
 
         teardownModelHandlers();
-        FileIO.writeToCSV(beta, outputPath, "lr_training", clientId);
+        FileIO.writeToCSV(beta, outputPath, "beta", clientId, prime);
 
     }
 
