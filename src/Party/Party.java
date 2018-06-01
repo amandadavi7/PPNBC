@@ -49,17 +49,11 @@ public class Party {
     private static int tiPort;
     private static String baIP;
     private static int baPort;
-    private static String outputDir;
     private static int partyCount;
 
-    private static List<List<Integer>> xShares;
-    private static List<List<Integer>> yShares;
-    private static List<List<BigInteger>> xSharesBigInt;
-    private static List<BigInteger> ySharesBigInt;
-
     private static List<List<List<Integer>>> vShares;
-    private static int oneShares;
-    private static BigInteger Zq;
+    private static int asymmetricBit;
+    
 
     private static int modelId;
     private static Socket clientSocket;
@@ -70,8 +64,6 @@ public class Party {
      * @param args
      */
     public static void initalizeVariables(String[] args) {
-        xShares = new ArrayList<>();
-        yShares = new ArrayList<>();
         vShares = new ArrayList<>();
         senderQueue = new LinkedBlockingQueue<>();
         receiverQueue = new LinkedBlockingQueue<>();
@@ -79,9 +71,6 @@ public class Party {
         socketFutureList = new ArrayList<>();
         tiShares = new TIShare();
         partyId = -1;
-
-        Zq = BigInteger.valueOf(2).pow(Constants.integer_precision
-                + 2 * Constants.decimal_precision + 1).nextProbablePrime();  //Zq must be a prime field
 
         for (String arg : args) {
             String[] currInput = arg.split("=");
@@ -107,8 +96,8 @@ public class Party {
                 case "party_id":
                     partyId = Integer.parseInt(value);
                     break;
-                case "oneShares":
-                    oneShares = Integer.parseInt(value);
+                case "asymmetricBit":
+                    asymmetricBit = Integer.parseInt(value);
                     break;
                 case "model":
                     modelId = Integer.parseInt(value);
@@ -141,7 +130,7 @@ public class Party {
 
         startPartyConnections();
 
-        callModel();
+        callModel(args);
 
         tearDownSocket();
     }
@@ -202,14 +191,9 @@ public class Party {
 
     private static void tearDownSocket() {
         partySocketEs.shutdownNow();
-//        try {
-//            clientSocket.close();
-//        } catch (IOException ex) {
-//            Logger.getLogger(Party.class.getName()).log(Level.SEVERE, null, ex);
-//        }
     }
 
-    private static void callModel() {
+    private static void callModel(String[] args) {
         switch (modelId) {
             case 1:
                 // DT Scoring
@@ -227,13 +211,13 @@ public class Party {
                     attributeThresholds[0] = 10;
                     attributeThresholds[1] = 5;
                     attributeThresholds[2] = 20;
-                    DecisionTreeScoring DTree = new DecisionTreeScoring(oneShares, senderQueue, receiverQueue, partyId, tiShares.binaryShares,
+                    DecisionTreeScoring DTree = new DecisionTreeScoring(asymmetricBit, senderQueue, receiverQueue, partyId, tiShares.binaryShares,
                             tiShares.decimalShares, 2, 3, 5, leafToClassIndexMapping, nodeToAttributeIndexMapping, attributeThresholds, 3, partyCount);
                     DTree.ScoreDecisionTree();
 
                 } else if (partyId == 2) {
 
-                    DecisionTreeScoring DScore = new DecisionTreeScoring(oneShares, senderQueue, receiverQueue, partyId, tiShares.binaryShares,
+                    DecisionTreeScoring DScore = new DecisionTreeScoring(asymmetricBit, senderQueue, receiverQueue, partyId, tiShares.binaryShares,
                             tiShares.decimalShares, 2, 3, 5, vShares.get(0), 3, partyCount);
 
                     DScore.ScoreDecisionTree();
@@ -243,18 +227,19 @@ public class Party {
             case 2:
                 // LR Evaluation
                 LinearRegressionEvaluation regressionModel
-                        = new LinearRegressionEvaluation(xSharesBigInt, ySharesBigInt,
-                                tiShares.bigIntShares, oneShares, senderQueue,
-                                receiverQueue, partyId, Zq, outputDir, partyCount);
+                        = new LinearRegressionEvaluation(tiShares.bigIntShares, 
+                                asymmetricBit, senderQueue,
+                                receiverQueue, partyId, partyCount, args);
 
                 regressionModel.predictValues();
                 break;
 
             default:
                 // test model
-                TestModel testModel = new TestModel(xShares, yShares, vShares,
-                        tiShares.binaryShares, tiShares.decimalShares, tiShares.bigIntShares,
-                        oneShares, senderQueue, receiverQueue, partyId, partyCount);
+                TestModel testModel = new TestModel(tiShares.binaryShares, 
+                        tiShares.decimalShares, tiShares.bigIntShares,
+                        asymmetricBit, senderQueue, receiverQueue, partyId, 
+                        partyCount, args);
 
                 testModel.compute();
                 break;
@@ -301,109 +286,6 @@ public class Party {
 
                 break;
 
-            case 2:
-                // LR Evaluation
-                for (String arg : args) {
-                    String[] currInput = arg.split("=");
-                    if (currInput.length < 2) {
-                        Logging.partyUsage();
-                        System.exit(0);
-                    }
-                    String command = currInput[0];
-                    String value = currInput[1];
-
-                    switch (command) {
-                        case "xCsv":
-                            xSharesBigInt = FileIO.loadMatrixFromFile(value);
-                            break;
-                        case "yCsv":
-                            //TODO generalize it
-                            ySharesBigInt = FileIO.loadListFromFile(value, Zq);
-                            break;
-                        case "output":
-                            outputDir = value;
-                            break;
-
-                    }
-
-                }
-                break;
-
-            default:
-                // test model
-                for (String arg : args) {
-                    String[] currInput = arg.split("=");
-                    if (currInput.length < 2) {
-                        Logging.partyUsage();
-                        System.exit(0);
-                    }
-                    String command = currInput[0];
-                    String value = currInput[1];
-
-                    switch (command) {
-                        case "xShares":
-                            String csvFile = value;
-
-                            BufferedReader buf;
-                            try {
-                                buf = new BufferedReader(new FileReader(csvFile));
-                                String line = null;
-                                while ((line = buf.readLine()) != null) {
-                                    int lineInt[] = Arrays.stream(line.split(",")).mapToInt(Integer::parseInt).toArray();
-                                    List<Integer> xline = Arrays.stream(lineInt).boxed().collect(Collectors.toList());
-                                    xShares.add(xline);
-                                }
-                            } catch (FileNotFoundException ex) {
-                                Logger.getLogger(Party.class.getName()).log(Level.SEVERE, null, ex);
-                            } catch (IOException ex) {
-                                Logger.getLogger(Party.class.getName()).log(Level.SEVERE, null, ex);
-                            }
-                            break;
-                        case "oneShares":
-                            oneShares = Integer.parseInt(value);
-                            break;
-                        case "yShares":
-                            csvFile = value;
-
-                            try {
-                                buf = new BufferedReader(new FileReader(csvFile));
-                                String line = null;
-                                while ((line = buf.readLine()) != null) {
-                                    int lineInt[] = Arrays.stream(line.split(",")).mapToInt(Integer::parseInt).toArray();
-                                    List<Integer> yline = Arrays.stream(lineInt).boxed().collect(Collectors.toList());
-                                    yShares.add(yline);
-                                }
-                            } catch (FileNotFoundException ex) {
-                                Logger.getLogger(Party.class.getName()).log(Level.SEVERE, null, ex);
-                            } catch (IOException ex) {
-                                Logger.getLogger(Party.class.getName()).log(Level.SEVERE, null, ex);
-                            }
-                            break;
-                        case "vShares":
-                            csvFile = value;
-                            try {
-                                buf = new BufferedReader(new FileReader(csvFile));
-                                String line = null;
-                                while ((line = buf.readLine()) != null) {
-                                    String[] vListShares = line.split(";");
-                                    List<List<Integer>> vline = new ArrayList<>();
-                                    for (String str : vListShares) {
-                                        int lineInt[] = Arrays.stream(str.split(",")).mapToInt(Integer::parseInt).toArray();
-                                        vline.add(Arrays.stream(lineInt).boxed().collect(Collectors.toList()));
-                                    }
-                                    vShares.add(vline);
-                                }
-                            } catch (FileNotFoundException ex) {
-                                Logger.getLogger(Party.class.getName()).log(Level.SEVERE, null, ex);
-                            } catch (IOException ex) {
-                                Logger.getLogger(Party.class.getName()).log(Level.SEVERE, null, ex);
-                            }
-                            break;
-
-                    }
-
-                }
-                break;
         }
     }
 

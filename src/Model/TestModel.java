@@ -17,9 +17,16 @@ import TrustedInitializer.TripleByte;
 import TrustedInitializer.TripleInteger;
 import TrustedInitializer.TripleReal;
 import Utility.Constants;
+import Utility.FileIO;
+import Utility.Logging;
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.logging.*;
+import java.util.stream.Collectors;
 
 /**
  *
@@ -31,16 +38,13 @@ public class TestModel extends Model {
     List<List<Integer>> y;
     List<List<List<Integer>>> v;
 
-    public TestModel(List<List<Integer>> x, List<List<Integer>> y,
-            List<List<List<Integer>>> v, List<TripleByte> binaryTriples, List<TripleInteger> decimalTriples,
-            List<TripleReal> realTiShares, int oneShares, BlockingQueue<Message> senderQueue,
-            BlockingQueue<Message> receiverQueue, int clientId, int partyCount) {
+    public TestModel(List<TripleByte> binaryTriples, List<TripleInteger> decimalTriples,
+            List<TripleReal> realTiShares, int asymmetricBit, BlockingQueue<Message> senderQueue,
+            BlockingQueue<Message> receiverQueue, int clientId, int partyCount, String[] args) {
 
-        super(senderQueue, receiverQueue, clientId, oneShares, binaryTriples, decimalTriples, realTiShares, partyCount);
+        super(senderQueue, receiverQueue, clientId, asymmetricBit, binaryTriples, decimalTriples, realTiShares, partyCount);
 
-        this.x = x;
-        this.y = y;
-        this.v = v;
+        initalizeModelVariables(args);
 
     }
 
@@ -50,11 +54,11 @@ public class TestModel extends Model {
         initQueueMap(recQueues, 1);
         //TODO: change this to just take integers instead of wasting memory on List<Integer> 
 //        BitDecomposition bitTest = new BitDecomposition(x.get(0).get(0), y.get(0).get(0),
-//                binaryTiShares, oneShare, Constants.bitLength, sendQueues.get(1),
+//                binaryTiShares, asymmetricBit, Constants.bitLength, sendQueues.get(1),
 //                recQueues.get(1), clientId, Constants.binaryPrime, 1);
 
         BitDecomposition bitTest = new BitDecomposition(2, binaryTiShares,
-                oneShare, Constants.bitLength, commonSender,
+                asymmetricBit, Constants.bitLength, commonSender,
                 recQueues.get(1), new LinkedList<>(protocolIdQueue), clientId, Constants.binaryPrime, 1, partyCount);
 
         Future<List<Integer>> bitdecompositionTask = es.submit(bitTest);
@@ -76,13 +80,13 @@ public class TestModel extends Model {
         long startTime = System.currentTimeMillis();
 
         int totalCases = v.size();
-        
+
         // totalcases number of protocols are submitted to the executorservice
         for (int i = 0; i < totalCases; i++) {
 
             initQueueMap(recQueues, i);
 
-            ArgMax argmaxModule = new ArgMax(v.get(i), binaryTiShares, oneShare, commonSender,
+            ArgMax argmaxModule = new ArgMax(v.get(i), binaryTiShares, asymmetricBit, commonSender,
                     recQueues.get(i), new LinkedList<>(protocolIdQueue), clientId, Constants.binaryPrime, i, partyCount);
 
             System.out.println("submitted " + i + " argmax");
@@ -125,8 +129,8 @@ public class TestModel extends Model {
         for (int i = 0; i < totalCases; i++) {
 
             initQueueMap(recQueues, i);
-            OR_XOR or_xor = new OR_XOR(x.get(i), y.get(i), decimalTiShares, oneShare, 1, commonSender,
-                    recQueues.get(i), new LinkedList<>(protocolIdQueue), clientId, Constants.prime, i,partyCount);
+            OR_XOR or_xor = new OR_XOR(x.get(i), y.get(i), decimalTiShares, asymmetricBit, 1, commonSender,
+                    recQueues.get(i), new LinkedList<>(protocolIdQueue), clientId, Constants.prime, i, partyCount);
 
             Future<Integer[]> task = es.submit(or_xor);
             taskList.add(task);
@@ -166,12 +170,12 @@ public class TestModel extends Model {
 
         if (v.isEmpty()) {
             System.out.println("v is null");
-            ois = new OIS(null, binaryTiShares, oneShare, commonSender, recQueues.get(0), 
+            ois = new OIS(null, binaryTiShares, asymmetricBit, commonSender, recQueues.get(0),
                     new LinkedList<>(protocolIdQueue), clientId,
-                    Constants.binaryPrime, 0, 4, 1, 3,partyCount);
+                    Constants.binaryPrime, 0, 4, 1, 3, partyCount);
         } else {
             System.out.println("v is not null");
-            ois = new OIS(v.get(0), binaryTiShares, oneShare, commonSender, recQueues.get(0), 
+            ois = new OIS(v.get(0), binaryTiShares, asymmetricBit, commonSender, recQueues.get(0),
                     new LinkedList<>(protocolIdQueue), clientId,
                     Constants.binaryPrime, 0, 4, -1, 3, partyCount);
         }
@@ -208,9 +212,9 @@ public class TestModel extends Model {
                     initQueueMap(recQueues, i);
 
                     MultiplicationInteger multiplicationModule = new MultiplicationInteger(
-                            x.get(i).get(0), y.get(i).get(0), 
-                            decimalTiShares.get(i), commonSender, recQueues.get(i), 
-                            new LinkedList<>(protocolIdQueue), clientId, Constants.prime, i, oneShare, 0, partyCount);
+                            x.get(i).get(0), y.get(i).get(0),
+                            decimalTiShares.get(i), commonSender, recQueues.get(i),
+                            new LinkedList<>(protocolIdQueue), clientId, Constants.prime, i, asymmetricBit, 0, partyCount);
 
                     System.out.println("Submitted " + i + " multiplication");
 
@@ -225,7 +229,7 @@ public class TestModel extends Model {
 
                     DotProductInteger DPModule = new DotProductInteger(x.get(i),
                             y.get(i), decimalTiShares, commonSender, recQueues.get(i),
-                            new LinkedList<>(protocolIdQueue),clientId, Constants.prime, i, oneShare, partyCount);
+                            new LinkedList<>(protocolIdQueue), clientId, Constants.prime, i, asymmetricBit, partyCount);
 
                     System.out.println("Submitted " + i + " dotproduct");
 
@@ -239,7 +243,7 @@ public class TestModel extends Model {
                     initQueueMap(recQueues, i);
 
                     Comparison comparisonModule = new Comparison(x.get(i), y.get(i),
-                            binaryTiShares, oneShare, commonSender,
+                            binaryTiShares, asymmetricBit, commonSender,
                             recQueues.get(i), new LinkedList<>(protocolIdQueue), clientId, Constants.binaryPrime, i, partyCount);
 
                     System.out.println("submitted " + i + " comparison");
@@ -279,11 +283,53 @@ public class TestModel extends Model {
         //callOIS();
         //callOR_XOR();
         //callBitDecomposition();
-
         // pass 1 - multiplication, 2 - dot product and 3 - comparison
         callProtocol(2);
         teardownModelHandlers();
 
+    }
+
+    private void initalizeModelVariables(String[] args) {
+
+        for (String arg : args) {
+            String[] currInput = arg.split("=");
+            if (currInput.length < 2) {
+                Logging.partyUsage();
+                System.exit(0);
+            }
+            String command = currInput[0];
+            String value = currInput[1];
+
+            switch (command) {
+                case "xShares":
+                    x = FileIO.loadIntListFromFile(value);
+                    break;
+                case "yShares":
+                    y = FileIO.loadIntListFromFile(value);
+                    break;
+                case "vShares":
+                    try {
+                        BufferedReader buf = new BufferedReader(new FileReader(value));
+                        String line = null;
+                        while ((line = buf.readLine()) != null) {
+                            String[] vListShares = line.split(";");
+                            List<List<Integer>> vline = new ArrayList<>();
+                            for (String str : vListShares) {
+                                int lineInt[] = Arrays.stream(str.split(",")).mapToInt(Integer::parseInt).toArray();
+                                vline.add(Arrays.stream(lineInt).boxed().collect(Collectors.toList()));
+                            }
+                            v.add(vline);
+                        }
+                    } catch (FileNotFoundException ex) {
+                        Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
+                    } catch (IOException ex) {
+                        Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                    break;
+
+            }
+
+        }
     }
 
 }

@@ -44,14 +44,14 @@ public class DotProductByte extends DotProduct implements Callable<Integer> {
      * @param clientID
      * @param prime
      * @param protocolID
-     * @param oneShare
+     * @param asymmetricBit
      */
     public DotProductByte(List<Integer> xShares, List<Integer> yShares, List<TripleByte> tiShares,
             BlockingQueue<Message> senderqueue, BlockingQueue<Message> receiverqueue,
             Queue<Integer> protocolIdQueue,
-            int clientID, int prime, int protocolID, int oneShare, int partyCount) {
+            int clientID, int prime, int protocolID, int asymmetricBit, int partyCount) {
         
-        super(senderqueue, receiverqueue, protocolIdQueue,clientID, protocolID, oneShare, partyCount);
+        super(senderqueue, receiverqueue, protocolIdQueue,clientID, protocolID, asymmetricBit, partyCount);
         
         this.xShares = xShares;
         this.yShares = yShares;
@@ -88,7 +88,7 @@ public class DotProductByte extends DotProduct implements Callable<Integer> {
             multCompletionService.submit(new BatchMultiplicationByte(xShares.subList(i, toIndex), 
                     yShares.subList(i, toIndex), tiShares.subList(i, toIndex), senderQueue, 
                     recQueues.get(startpid), new LinkedList<>(protocolIdQueue),
-                    clientID, prime, startpid, oneShare, protocolId, partyCount));
+                    clientID, prime, startpid, asymmetricBit, protocolId, partyCount));
             
             startpid++;
             i = toIndex;

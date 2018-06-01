@@ -44,7 +44,7 @@ public class BatchMultiplicationReal extends BatchMultiplication
      * @param clientId
      * @param prime
      * @param protocolID
-     * @param oneShare
+     * @param asymmetricBit
      * @param parentID
      */
     public BatchMultiplicationReal(List<BigInteger> x, List<BigInteger> y, 
@@ -52,10 +52,10 @@ public class BatchMultiplicationReal extends BatchMultiplication
             BlockingQueue<Message> senderQueue,
             BlockingQueue<Message> receiverQueue, Queue<Integer> protocolIdQueue,
             int clientId, BigInteger prime,
-            int protocolID, int oneShare, int parentID, int partyCount) {
+            int protocolID, int asymmetricBit, int parentID, int partyCount) {
 
         super(senderQueue, receiverQueue, protocolIdQueue, clientId, protocolID, 
-                oneShare, parentID, partyCount);
+                asymmetricBit, parentID, partyCount);
         this.x = x;
         this.y = y;
         this.prime = prime;
@@ -106,7 +106,7 @@ public class BatchMultiplicationReal extends BatchMultiplication
             BigInteger product = tiShares.get(i).w
                     .add(D.multiply(tiShares.get(i).v))
                     .add(E.multiply(tiShares.get(i).u))
-                    .add(D.multiply(E).multiply(BigInteger.valueOf(oneShare)))
+                    .add(D.multiply(E).multiply(BigInteger.valueOf(asymmetricBit)))
                     .mod(prime);
             
             products[i] = product;
@@ -131,7 +131,7 @@ public class BatchMultiplicationReal extends BatchMultiplication
             diffList.add(newRow);
         }
         
-        Message senderMessage = new Message(Constants.localShares, diffList,
+        Message senderMessage = new Message(diffList,
                 clientID, protocolIdQueue);
         
         try {

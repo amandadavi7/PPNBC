@@ -9,6 +9,8 @@ import Communication.Message;
 import Protocol.DotProductReal;
 import TrustedInitializer.TripleReal;
 import Utility.Constants;
+import Utility.FileIO;
+import Utility.Logging;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.math.BigInteger;
@@ -29,38 +31,36 @@ public class LinearRegressionEvaluation extends Model {
     List<List<BigInteger>> x;
     List<BigInteger> beta;
     List<BigInteger> y;
-    int testCases;
-
     BigInteger prime;
     String outputPath;
+    int testCases;
 
     /**
      * Constructor
      *
-     * @param x data matrix
-     * @param beta co-efficient array
      * @param realTriples
-     * @param oneShares
+     * @param asymmetricBit
      * @param senderQueue
      * @param receiverQueue
      * @param clientId
-     * @param prime
+     * @param partyCount
+     * @param args
+     * 
      */
-    public LinearRegressionEvaluation(List<List<BigInteger>> x,
-            List<BigInteger> beta, List<TripleReal> realTriples,
-            int oneShares, BlockingQueue<Message> senderQueue,
+    public LinearRegressionEvaluation(List<TripleReal> realTriples,
+            int asymmetricBit, BlockingQueue<Message> senderQueue,
             BlockingQueue<Message> receiverQueue, int clientId,
-            BigInteger prime, String outputPath, int partyCount) {
+            int partyCount, String[] args) {
 
-        super(senderQueue, receiverQueue, clientId, oneShares, null,
+        super(senderQueue, receiverQueue, clientId, asymmetricBit, null,
                 null, realTriples, partyCount);
 
-        this.x = x;
-        this.beta = beta;
-        this.prime = prime;
-        this.outputPath = outputPath;
-        testCases = x.size();
         y = new ArrayList<>();
+
+        prime = BigInteger.valueOf(2).pow(Constants.integer_precision
+                + 2 * Constants.decimal_precision + 1).nextProbablePrime();  //Zq must be a prime field
+
+        initalizeModelVariables(args);
 
     }
 
@@ -95,7 +95,7 @@ public class LinearRegressionEvaluation extends Model {
                             tiStartIndex, tiStartIndex + x.get(i).size()),
                     commonSender, recQueues.get(i),
                     new LinkedList<>(protocolIdQueue),
-                    clientId, prime, i, oneShare, partyCount);
+                    clientId, prime, i, asymmetricBit, partyCount);
 
             Future<BigInteger> DPTask = es.submit(DPModule);
             taskList.add(DPTask);
@@ -120,7 +120,7 @@ public class LinearRegressionEvaluation extends Model {
         long stopTime = System.currentTimeMillis();
         long elapsedTime = stopTime - startTime;
         //TODO: push time to a csv file
-        System.out.println("Avg time duration:" + elapsedTime + " for partyId:" 
+        System.out.println("Avg time duration:" + elapsedTime + " for partyId:"
                 + clientId + ", for size:" + y.size());
     }
 
@@ -143,6 +143,34 @@ public class LinearRegressionEvaluation extends Model {
             Logger.getLogger(LinearRegressionEvaluation.class.getName()).log(Level.SEVERE, null, ex);
         }
 
+    }
+
+    private void initalizeModelVariables(String[] args) {
+        for (String arg : args) {
+            String[] currInput = arg.split("=");
+            if (currInput.length < 2) {
+                Logging.partyUsage();
+                System.exit(0);
+            }
+            String command = currInput[0];
+            String value = currInput[1];
+
+            switch (command) {
+                case "xCsv":
+                    x = FileIO.loadMatrixFromFile(value);
+                    break;
+                case "yCsv":
+                    //TODO generalize it
+                    beta = FileIO.loadListFromFile(value, prime);
+                    break;
+                case "output":
+                    outputPath = value;
+                    break;
+
+            }
+
+        }
+        testCases = x.size();
     }
 
 }
