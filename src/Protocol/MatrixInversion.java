@@ -67,7 +67,7 @@ public class MatrixInversion extends CompositeProtocol implements
         
         // Number of rounds = k = f+e
         //int rounds = Constants.decimal_precision + Constants.integer_precision;
-        int rounds = 5;
+        int rounds = 10;
         X=newtonRaphsonAlgorithm(Ashares, X, rounds);
         return X;
 

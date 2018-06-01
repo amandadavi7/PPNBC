@@ -95,11 +95,8 @@ public class TI {
 
         initializeVariables(args);
 
-        System.out.println("Generating " + decTriples + " decimal triples, "
-                + binTriples + " binary triples and " + bigIntTriples + " real triples");
-
         generateRandomShares();
-        System.out.println("Generated " + tiShare[0].bigIntShares.size() + " bigInt shares");
+        System.out.println("Generated shares");
 
         sendShares();
     }

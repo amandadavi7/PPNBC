@@ -40,6 +40,7 @@ public class LinearRegressionTraining extends Model {
      * Constructor
      *
      * @param realTriples
+     * @param tiTruncationPair
      * @param senderQueue
      * @param receiverQueue
      * @param clientId
@@ -79,20 +80,26 @@ public class LinearRegressionTraining extends Model {
     public void trainModel() {
 
         startModelHandlers();
+        long startTime = System.currentTimeMillis();
+        
+        System.out.println("Transpose");
         transposeMatrix();
 
         //TODO can do both local matrix multiplication in parallel
+        System.out.println("Local matrix multiplication");
         BigInteger[][] gamma1 = localMatrixMultiplication(xT, x);
         //printMatrix(gamma1);
+        System.out.println("Local matrix multiplication");
         BigInteger[][] gamma2 = localMatrixMultiplication(xT, y);
 
+        System.out.println("Matrix inversion");
         initQueueMap(recQueues, globalProtocolId);
         MatrixInversion matrixInversion = new MatrixInversion(gamma1,
-                realTiShares, tiTruncationPair, globalProtocolId, commonSender, 
+                realTiShares, tiTruncationPair, globalProtocolId, commonSender,
                 recQueues.get(globalProtocolId),
                 new LinkedList<>(protocolIdQueue), clientId, asymmetricBit,
                 partyCount, prime);
-        
+
         globalProtocolId++;
 
         BigInteger[][] gamma1Inv = null;
@@ -103,6 +110,7 @@ public class LinearRegressionTraining extends Model {
                     .log(Level.SEVERE, null, ex);
         }
 
+        System.out.println("Matrix multiplication");
         initQueueMap(recQueues, globalProtocolId);
         MatrixMultiplication matrixMultiplication = new MatrixMultiplication(gamma1Inv,
                 gamma2, realTiShares, tiTruncationPair, clientId, prime, globalProtocolId,
@@ -117,6 +125,12 @@ public class LinearRegressionTraining extends Model {
             Logger.getLogger(LinearRegressionTraining.class.getName())
                     .log(Level.SEVERE, null, ex);
         }
+        
+        long stopTime = System.currentTimeMillis();
+        long elapsedTime = stopTime - startTime;
+        //TODO: push time to a csv file
+        System.out.println("Avg time duration:" + elapsedTime + " for partyId:"
+                + clientId);
 
         teardownModelHandlers();
         FileIO.writeToCSV(beta, outputPath, "lr_training", clientId);

@@ -70,7 +70,13 @@ public class LinearRegressionEvaluation extends Model {
     public void predictValues() {
 
         startModelHandlers();
+        long startTime = System.currentTimeMillis();
         computeDotProduct();
+        long stopTime = System.currentTimeMillis();
+        long elapsedTime = stopTime - startTime;
+        //TODO: push time to a csv file
+        System.out.println("Avg time duration:" + elapsedTime + " for partyId:"
+                + clientId + ", for size:" + y.size());
         teardownModelHandlers();
         FileIO.writeToCSV(y, outputPath, "y",clientId);
 
@@ -85,7 +91,6 @@ public class LinearRegressionEvaluation extends Model {
         List<Future<BigInteger>> taskList = new ArrayList<>();
 
         int tiStartIndex = 0;
-        long startTime = System.currentTimeMillis();
         for (int i = 0; i < testCases; i++) {
 
             initQueueMap(recQueues, i);
@@ -116,12 +121,6 @@ public class LinearRegressionEvaluation extends Model {
                 Logger.getLogger(LinearRegressionEvaluation.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
-
-        long stopTime = System.currentTimeMillis();
-        long elapsedTime = stopTime - startTime;
-        //TODO: push time to a csv file
-        System.out.println("Avg time duration:" + elapsedTime + " for partyId:"
-                + clientId + ", for size:" + y.size());
     }
 
     private void initalizeModelVariables(String[] args) {
