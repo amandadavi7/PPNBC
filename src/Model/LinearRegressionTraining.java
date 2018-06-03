@@ -75,7 +75,7 @@ public class LinearRegressionTraining extends Model {
     }
 
     /**
-     * Compute shares of the prediction for each entry of the dataset:x
+     * Compute shares of the coefficients for the training dataset
      */
     public void trainModel() {
 
@@ -89,8 +89,10 @@ public class LinearRegressionTraining extends Model {
         System.out.println("Local matrix multiplication");
         BigInteger[][] gamma1 = localMatrixMultiplication(xT, x);
         //printMatrix(gamma1);
+        System.out.println("gamma1:"+gamma1.length+","+gamma1[0].length);
         System.out.println("Local matrix multiplication");
         BigInteger[][] gamma2 = localMatrixMultiplication(xT, y);
+        System.out.println("gamma2:"+gamma2.length+","+gamma2[0].length);
 
         System.out.println("Matrix inversion");
         initQueueMap(recQueues, globalProtocolId);
@@ -111,6 +113,7 @@ public class LinearRegressionTraining extends Model {
         }
 
         System.out.println("Matrix multiplication");
+        System.out.println("gammainv:"+gamma1Inv.length+","+gamma1Inv[0].length);
         initQueueMap(recQueues, globalProtocolId);
         MatrixMultiplication matrixMultiplication = new MatrixMultiplication(gamma1Inv,
                 gamma2, realTiShares, tiTruncationPair, clientId, prime, globalProtocolId,
@@ -120,12 +123,12 @@ public class LinearRegressionTraining extends Model {
         BigInteger[][] beta = null;
 
         try {
-            beta = matrixInversion.call();
+            beta = matrixMultiplication.call();
         } catch (Exception ex) {
             Logger.getLogger(LinearRegressionTraining.class.getName())
                     .log(Level.SEVERE, null, ex);
         }
-        
+        System.out.println("beta:"+beta.length+","+beta[0].length);
         long stopTime = System.currentTimeMillis();
         long elapsedTime = stopTime - startTime;
         //TODO: push time to a csv file
@@ -137,6 +140,9 @@ public class LinearRegressionTraining extends Model {
 
     }
 
+    /**
+     * Transpose a matrix
+     */
     void transposeMatrix() {
         int rows = x.length;
         int cols = x[0].length;
@@ -147,16 +153,14 @@ public class LinearRegressionTraining extends Model {
                 xT[j][i] = x[i][j];
             }
         }
-
-        //printMatrix(xT);
     }
 
     /**
      * Local matrix Multiplication
      *
-     * @param a
-     * @param b
-     * @param c
+     * @param a input matrix a
+     * @param b input matrix b
+     * @param c output matrix c
      */
     BigInteger[][] localMatrixMultiplication(BigInteger[][] a,
             BigInteger[][] b) {

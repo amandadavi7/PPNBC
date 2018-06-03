@@ -25,7 +25,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- *
+ * Matrix inversion using Newton Raphson
  * @author anisha
  */
 public class MatrixInversion extends CompositeProtocol implements 
@@ -34,6 +34,7 @@ public class MatrixInversion extends CompositeProtocol implements
     private static BigInteger[][] Ashares, I;
     private static int n;
     private static int globalPid;
+    private static int nrRounds;
     List<TripleReal> tishares;
     List<TruncationPair> tiTruncationPair;
     private BigInteger prime;
@@ -51,6 +52,7 @@ public class MatrixInversion extends CompositeProtocol implements
         this.tishares = tishares;
         this.tiTruncationPair = tiTruncationPair;
         this.prime = prime;
+        this.nrRounds = Constants.decimal_precision/2;
         n = Ashares.length;
         I = createIdentity();
         globalPid = 0;
@@ -66,9 +68,7 @@ public class MatrixInversion extends CompositeProtocol implements
         BigInteger[][] X = computeX0(cInv);
         
         // Number of rounds = k = f+e
-        //int rounds = Constants.decimal_precision + Constants.integer_precision;
-        int rounds = Constants.decimal_precision;
-        X=newtonRaphsonAlgorithm(Ashares, X, rounds);
+        X=newtonRaphsonAlgorithm(Ashares, X, nrRounds);
         return X;
 
     }
@@ -104,7 +104,7 @@ public class MatrixInversion extends CompositeProtocol implements
         BigInteger[][] cMatrix = new BigInteger[1][1];
         cMatrix[0][0] = c;
         cInvMatrix[0][0] = BigDecimal.valueOf(0.01).toBigInteger();
-        return newtonRaphsonAlgorithm(cMatrix, cInvMatrix, 5);
+        return newtonRaphsonAlgorithm(cMatrix, cInvMatrix, nrRounds);
     }
 
     private BigInteger[][] computeX0(BigInteger[][] cInv) {
@@ -118,7 +118,6 @@ public class MatrixInversion extends CompositeProtocol implements
     }
 
     private BigInteger[][] subtractFromTwo(BigInteger[][] AX) {
-        //TODO? Element waise substraction?
         int marixSize = AX.length;
         BigInteger[][] subtractedAX = new BigInteger[marixSize][marixSize];
         for (int i = 0; i < marixSize; i++) {
@@ -137,8 +136,8 @@ public class MatrixInversion extends CompositeProtocol implements
         
         for (int i = 0; i < rounds; i++) {
             // AX = DM(A.X)
-            /*System.out.println("Newton Raphson: round "+ i +" on A:"+ A.length+
-                    ","+A[0].length+" and X:"+ X.length+", "+X[0].length);*/
+            System.out.println("Newton Raphson: round "+ i +" on A:"+ A.length+
+                    ","+A[0].length+" and X:"+ X.length+", "+X[0].length+", globalPid:"+ globalPid);
             int tiRealIndex = 0;
             int tiTruncationIndex = 0;
             initQueueMap(recQueues, globalPid);
@@ -165,7 +164,6 @@ public class MatrixInversion extends CompositeProtocol implements
                 Logger.getLogger(MatrixInversion.class.getName()).log(Level.SEVERE, null, ex);
             }
 
-            // TODO: temp2 = 2-temp local? asymmetricBit? 2 over zq?
             BigInteger[][] subtractedAX = subtractFromTwo(AX);
 
             // X = DM(X.temp2)

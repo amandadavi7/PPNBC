@@ -19,10 +19,10 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Batch Truncation of n elements 
+ * Batch Truncation of n elements: converts shares of value from 2^2f to 2^f
  * 
  * uses wShares.length TruncationPair shares
- * TODO better name
+ * 
  * @author anisha
  */
 public class Truncation extends CompositeProtocol implements Callable<BigInteger[]> {

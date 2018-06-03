@@ -101,6 +101,7 @@ public class MatrixMultiplication extends CompositeProtocol implements
 
         for (int i = 0; i < n; i++) {
             List<BigInteger> row = new ArrayList<>();
+            //TODO use apache commons to improve this
             for (int k = 0; k < m; k++) {
                 row.add(a[i][k]);
             }
@@ -144,13 +145,13 @@ public class MatrixMultiplication extends CompositeProtocol implements
                 }
             }
             initQueueMap(recQueues, globalProtocolId);
-            Truncation truncationPair = new Truncation(c2f[i], 
+            Truncation truncationModule = new Truncation(c2f[i], 
                     tiTruncationPair.subList(tiTruncationStartIndex, 
                             tiTruncationStartIndex+c2f[i].length),
                     senderQueue, recQueues.get(globalProtocolId), 
                     new LinkedList<>(protocolIdQueue),
                     clientID, prime, globalProtocolId++, asymmetricBit, partyCount);
-            Future<BigInteger[]> truncationTask = es.submit(truncationPair);
+            Future<BigInteger[]> truncationTask = es.submit(truncationModule);
             taskListTruncation.add(truncationTask);
             //TODO: uncomment this to avoid reusing the shares 
             //tiTruncationStartIndex += c2f[i].length;

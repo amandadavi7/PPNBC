@@ -41,9 +41,10 @@ public class BaQueueHandler implements Runnable {
      */
     @Override
     public void run() {
+        BaMessagePacket msg;
         while (!(Thread.currentThread().isInterrupted())) {
             try {
-                BaMessagePacket msg = receiverQueue.take();
+                msg = receiverQueue.take();
                 int msgIndex = msg.clientId;
                 for (int i = 0; i < partyCount; i++) {
                     if (i != msgIndex) {
