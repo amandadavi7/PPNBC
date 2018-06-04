@@ -44,11 +44,11 @@ public class BaClientSender implements Callable<Boolean> {
     @Override
     public Boolean call() {
 
-        Message msg;
         while (!(Thread.currentThread().isInterrupted())) {
             try {
-                msg = senderQueue.take();
+                Message msg = senderQueue.take();
                 oStream.writeObject(msg);
+                oStream.reset();
             } catch (InterruptedException | IOException ex) {
                 System.out.println("breaking from sender thread");
                 break;

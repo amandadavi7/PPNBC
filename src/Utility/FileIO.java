@@ -178,13 +178,13 @@ public class FileIO {
     }
 
     public static void writeToCSV(List<BigInteger> y, String outputPath,
-            String filePrefix, int clientId) {
+            String filePrefix, int clientId, BigInteger Zq) {
         int len = y.size();
         try {
             try (FileWriter writer = new FileWriter(outputPath + filePrefix + 
                     "_" + clientId + ".csv")) {
                 for (int i = 0; i < len; i++) {
-                    writer.write(y.get(i).toString());
+                    writer.write(ZqToReal(y.get(i), Constants.decimal_precision, Zq).toPlainString());
                     writer.write("\n");
                 }
             }
@@ -204,7 +204,7 @@ public class FileIO {
                     "_" + clientId + ".csv")) {
                 for (int i = 0; i < rows; i++) {
                     for (int j = 0; j < cols; j++) {
-                        writer.write(ZqToReal(y[i][j], Constants.decimal_precision, Zq) + ",");
+                        writer.write(ZqToReal(y[i][j], Constants.decimal_precision, Zq).toPlainString() + ",");
                     }
                     writer.write("\n");
                 }

@@ -44,9 +44,8 @@ public class PartyClient implements Runnable {
     public void run() {
 
             while (!(Thread.currentThread().isInterrupted())) {
-                    Message msgs;
                     try {
-                        msgs = (Message) iStream.readObject();
+                        Message msgs = (Message) iStream.readObject();
                         receiverQueue.put(msgs);
                     } catch (InterruptedException | IOException ex) {
                         try {

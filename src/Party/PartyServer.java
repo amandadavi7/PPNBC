@@ -43,10 +43,10 @@ public class PartyServer implements Runnable {
     public void run() {
 
         while (!(Thread.currentThread().isInterrupted())) {
-            Message msg;
             try {
-                msg = senderQueue.take();
+                Message msg = senderQueue.take();
                 oStream.writeObject(msg);
+                oStream.reset();
                 //oStream.flush();
             } catch (InterruptedException | IOException ex) {
                 break;

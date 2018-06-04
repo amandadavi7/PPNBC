@@ -78,7 +78,7 @@ public class LinearRegressionEvaluation extends Model {
         System.out.println("Avg time duration:" + elapsedTime + " for partyId:"
                 + clientId + ", for size:" + y.size());
         teardownModelHandlers();
-        FileIO.writeToCSV(y, outputPath, "y",clientId);
+        FileIO.writeToCSV(y, outputPath, "y",clientId, prime);
 
     }
 
@@ -137,7 +137,7 @@ public class LinearRegressionEvaluation extends Model {
                 case "xCsv":
                     x = FileIO.loadMatrixFromFile(value);
                     break;
-                case "yCsv":
+                case "beta":
                     //TODO generalize it
                     beta = FileIO.loadListFromFile(value, prime);
                     break;
