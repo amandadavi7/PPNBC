@@ -65,6 +65,7 @@ public class Logging {
                 + "ba=<BA IP:port> \n"
                 + "partyCount=<total number of parties involved> \n"
                 + "party_id=<Party Id> \n"
+                + "asymmetricBit=<asymmetric bit 0/1> \n"
                 + "model=<Model Id(1: DT Scoring 2:LR Evaluation 3:KNN "
                 + "4:DT Learning default:TestModel)> ");
     }

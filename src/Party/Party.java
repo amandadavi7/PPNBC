@@ -51,7 +51,7 @@ public class Party {
 
     private static List<List<List<Integer>>> vShares;
     private static int asymmetricBit;
-    
+
     private static int modelId;
     private static Socket clientSocket;
 
@@ -68,6 +68,9 @@ public class Party {
         socketFutureList = new ArrayList<>();
         tiShares = new TIShare();
         partyId = -1;
+        asymmetricBit = -1;
+        port = -1;
+        partyCount = -1;
 
         for (String arg : args) {
             String[] currInput = arg.split("=");
@@ -105,6 +108,12 @@ public class Party {
 
         }
 
+        if (tiIP == null || baIP == null || port <= 0 || asymmetricBit == -1
+                || partyCount <= 0 || partyId < 0) {
+            Logging.partyUsage();
+            System.exit(0);
+        }
+
         socketServer = Connection.createServerSocket(port);
         if (socketServer == null) {
             System.out.println("Socket creation error");
@@ -114,7 +123,7 @@ public class Party {
     }
 
     public static void main(String[] args) {
-        if (args.length < 6) {
+        if (args.length < 7) {
             Logging.partyUsage();
             System.exit(0);
         }
@@ -224,7 +233,7 @@ public class Party {
             case 2:
                 // LR Evaluation
                 LinearRegressionEvaluation regressionEvaluationModel
-                        = new LinearRegressionEvaluation(tiShares.bigIntShares, 
+                        = new LinearRegressionEvaluation(tiShares.bigIntShares,
                                 asymmetricBit, senderQueue,
                                 receiverQueue, partyId, partyCount, args);
 
@@ -247,7 +256,7 @@ public class Party {
                 TestModel testModel = new TestModel(tiShares.binaryShares,
                         tiShares.decimalShares, tiShares.bigIntShares,
                         tiShares.truncationPair,
-                        asymmetricBit, senderQueue, receiverQueue, partyId, 
+                        asymmetricBit, senderQueue, receiverQueue, partyId,
                         partyCount, args);
 
                 testModel.compute();

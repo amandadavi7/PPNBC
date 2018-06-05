@@ -8,7 +8,6 @@ package Protocol.Utility;
 import Communication.Message;
 import Protocol.MultiplicationInteger;
 import TrustedInitializer.TripleReal;
-import Utility.Constants;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -86,8 +85,8 @@ public class BatchMultiplicationReal extends BatchMultiplication
                 receivedMessage = receiverQueue.take();
                 diffList = (List<List<BigInteger>>) receivedMessage.getValue();
                 for(int j=0;j<batchSize;j++) {
-                    d.set(j, d.get(j).add(diffList.get(j).get(0)));
-                    e.set(j, e.get(j).add(diffList.get(j).get(1)));
+                    d.set(j, d.get(j).add(diffList.get(j).get(0)).mod(prime));
+                    e.set(j, e.get(j).add(diffList.get(j).get(1)).mod(prime));
                 }
             } catch (InterruptedException ex) {
                 ex.printStackTrace();

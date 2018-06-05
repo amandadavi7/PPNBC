@@ -128,6 +128,18 @@ public class LinearRegressionTraining extends Model {
             Logger.getLogger(LinearRegressionTraining.class.getName())
                     .log(Level.SEVERE, null, ex);
         }
+        
+        int row = beta.length;
+        int col = beta[0].length;
+        
+        System.out.println("Printing beta");
+        for(int i=0;i<row;i++) {
+            for(int j=0;j<col;j++) {
+                System.out.print(beta[i][j]+" ");
+            }
+            System.out.println("");
+        }
+        
         System.out.println("beta:"+beta.length+","+beta[0].length);
         long stopTime = System.currentTimeMillis();
         long elapsedTime = stopTime - startTime;
@@ -136,7 +148,7 @@ public class LinearRegressionTraining extends Model {
                 + clientId);
 
         teardownModelHandlers();
-        FileIO.writeToCSV(beta, outputPath, "beta", clientId, prime);
+        FileIO.writeToCSV(beta, outputPath, "beta_less_rounds", clientId, prime);
 
     }
 

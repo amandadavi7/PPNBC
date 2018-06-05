@@ -48,11 +48,11 @@ public class FileIO {
         return X.toBigInteger().mod(q);
     }
 
-    static BigDecimal ZqToReal(BigInteger x, int f, BigInteger q) {
+    public static BigDecimal ZqToReal(BigInteger x, int f, BigInteger q) {
         BigInteger partition = q.subtract(BigInteger.ONE).divide(BigInteger.valueOf(2));
         BigInteger inverse = BigInteger.valueOf(2).pow(f);
         BigDecimal Zk;
-
+        
         // If x is more than half of the field size, it is negative.
         if (x.compareTo(partition) > 0) {
             Zk = new BigDecimal(x.subtract(q));
