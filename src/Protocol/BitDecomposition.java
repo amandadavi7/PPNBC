@@ -108,11 +108,11 @@ public class BitDecomposition extends CompositeProtocol implements
         int first_c_share = bitMultiplication(inputShares.get(0).get(0),
                 inputShares.get(1).get(0));
         cShares[0] = Math.floorMod(first_c_share, prime);
-        System.out.println("the first c share: " + cShares[0]);
+        //System.out.println("the first c share: " + cShares[0]);
 
         computeDShares();
         for (int i = 1; i < bitLength; i++) {
-            System.out.println("The current index " + i);
+            //System.out.println("The current index " + i);
             computeVariables(i);
         }
 
@@ -128,10 +128,10 @@ public class BitDecomposition extends CompositeProtocol implements
             int y = inputShares.get(0).get(i) + inputShares.get(1).get(i);
             yShares[i] = Math.floorMod(y, prime);
         }
-        System.out.println("Y shares: " + Arrays.toString(yShares));
+        //System.out.println("Y shares: " + Arrays.toString(yShares));
         // set x[1] <- y[1]
         xShares.add(0, yShares[0]);
-        System.out.println("LSB for x: " + xShares);
+        //System.out.println("LSB for x: " + xShares);
     }
 
     // Calculate step (2)  [c1] = [a1][b1] 
@@ -179,7 +179,7 @@ public class BitDecomposition extends CompositeProtocol implements
 
         ExecutorService es = Executors.newFixedThreadPool(Constants.threadCount);
         List<Future<Integer[]>> taskList = new ArrayList<>();
-        System.out.println("In D shares");
+        //System.out.println("In D shares");
 
         int i = 1;
         //int startpid = 1;
@@ -262,7 +262,7 @@ public class BitDecomposition extends CompositeProtocol implements
                             cShares[index - 1]) + asymmetricBit;
                     e_result = Math.floorMod(e_result, prime);
                     eShares[index] = e_result;
-                    System.out.println("e result for id: " + e_result);
+                    //System.out.println("e result for id: " + e_result);
                 } catch (InterruptedException ex) {
                     Logger.getLogger(Comparison.class.getName()).log(Level.SEVERE, null, ex);
                 } catch (ExecutionException ex) {
@@ -296,7 +296,7 @@ public class BitDecomposition extends CompositeProtocol implements
                         dShares[index]) + asymmetricBit;
                 c_result = Math.floorMod(c_result, prime);
                 cShares[index] = c_result;
-                System.out.println("c result for id: " + c_result);
+                //System.out.println("c result for id: " + c_result);
             }
         } catch (InterruptedException | ExecutionException ex) {
             Logger.getLogger(BitDecomposition.class.getName()).log(Level.SEVERE, null, ex);

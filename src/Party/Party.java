@@ -197,31 +197,9 @@ public class Party {
         switch (modelId) {
             case 1:
                 // DT Scoring
-                if (partyId == 1) {
-                    int[] leafToClassIndexMapping = new int[5];
-                    leafToClassIndexMapping[1] = 1;
-                    leafToClassIndexMapping[2] = 2;
-                    leafToClassIndexMapping[3] = 3;
-                    leafToClassIndexMapping[4] = 1;
-                    int[] nodeToAttributeIndexMapping = new int[3];
-                    nodeToAttributeIndexMapping[0] = 0;
-                    nodeToAttributeIndexMapping[1] = 1;
-                    nodeToAttributeIndexMapping[2] = 2;
-                    int[] attributeThresholds = new int[3];
-                    attributeThresholds[0] = 10;
-                    attributeThresholds[1] = 5;
-                    attributeThresholds[2] = 20;
-                    DecisionTreeScoring DTree = new DecisionTreeScoring(asymmetricBit, senderQueue, receiverQueue, partyId, tiShares.binaryShares,
-                            tiShares.decimalShares, 2, 3, 5, leafToClassIndexMapping, nodeToAttributeIndexMapping, attributeThresholds, 3, partyCount);
-                    DTree.ScoreDecisionTree();
-
-                } else if (partyId == 2) {
-
-                    DecisionTreeScoring DScore = new DecisionTreeScoring(asymmetricBit, senderQueue, receiverQueue, partyId, tiShares.binaryShares,
-                            tiShares.decimalShares, 2, 3, 5, vShares.get(0), 3, partyCount);
-
-                    DScore.ScoreDecisionTree();
-                }
+                DecisionTreeScoring DTree = new DecisionTreeScoring(asymmetricBit, senderQueue, receiverQueue, partyId, tiShares.binaryShares,
+                            tiShares.decimalShares, 2, 3, 5, partyCount, args);
+                DTree.ScoreDecisionTree();
                 break;
 
             case 2:
