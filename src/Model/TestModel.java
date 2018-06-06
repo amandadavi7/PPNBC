@@ -303,9 +303,8 @@ public class TestModel extends Model {
         //callBitDecomposition();
         // pass 1 - multiplication, 2 - dot product and 3 - comparison
         //callProtocol(2);
-        testRealOperations();
         //callMatrixInversion();
-        //callTruncation();
+        callTruncation();
         //callMatrixMultiplication();
         teardownModelHandlers();
 
@@ -512,63 +511,6 @@ public class TestModel extends Model {
         System.out.println("Avg time duration:" + elapsedTime);
 
         FileIO.writeToCSV(truncationOutput, outputPath, "truncation", clientId, prime);
-
-    }
-
-    private void testRealOperations() {
-        BigInteger aBig = FileIO.realToZq(a, Constants.decimal_precision, prime);
-        BigInteger bBig = FileIO.realToZq(b, Constants.decimal_precision, prime);
-
-        List<BigInteger> aList = new ArrayList<>();
-        List<BigInteger> bList = new ArrayList<>();
-
-        aList.add(aBig);
-        bList.add(bBig);
-
-        ExecutorService es = Executors.newSingleThreadExecutor();
-        initQueueMap(recQueues, 1);
-
-        BatchMultiplicationReal multiplicationModule = new BatchMultiplicationReal(aList,
-                bList, realTiShares, commonSender,
-                recQueues.get(1), new LinkedList<>(protocolIdQueue),
-                clientId, prime, 1, asymmetricBit, 1, partyCount);
-
-        Future<BigInteger[]> multiplicationTask = es.submit(multiplicationModule);
-
-        BigInteger[] result = null;
-        try {
-            result = multiplicationTask.get();
-            System.out.println("result multiplication:" + result[0]);
-
-        } catch (InterruptedException | ExecutionException ex) {
-            Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
-        }
-
-        initQueueMap(recQueues, 2);
-        Truncation truncationModule = new Truncation(result,
-                tiTruncationPair,
-                commonSender, recQueues.get(2),
-                new LinkedList<>(protocolIdQueue),
-                clientId, prime, 2, asymmetricBit, partyCount);
-        Future<BigInteger[]> truncationTask = es.submit(truncationModule);
-        
-        es.shutdown();
-        
-        BigInteger[] truncResult = null;
-        try {
-            truncResult = truncationTask.get();
-            System.out.println("result truncation:" + truncResult[0]);
-
-        } catch (InterruptedException | ExecutionException ex) {
-            Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        
-        String valueReal = FileIO.ZqToReal(truncResult[0].divide(
-                BigInteger.valueOf(2).pow(Constants.decimal_precision)), 
-                Constants.decimal_precision, prime).toPlainString();
-        System.out.println("valueReal:"+ valueReal);
-        
-        teardownModelHandlers();
 
     }
 

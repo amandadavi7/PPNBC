@@ -124,7 +124,7 @@ public class Random {
             BigInteger f2 = BigInteger.valueOf(2).pow(f);
 
             BigInteger R = R2p.multiply(f2).add(Rp);
-
+            
             BigInteger rsum = BigInteger.ZERO, rpsum = BigInteger.ZERO;
             for (int j = 0; j < clientCount - 1; j++) {
                 TruncationPair t = new TruncationPair();

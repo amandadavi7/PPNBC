@@ -10,7 +10,6 @@ import TrustedInitializer.TruncationPair;
 import Utility.Constants;
 import java.math.BigInteger;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
@@ -20,9 +19,9 @@ import java.util.logging.Logger;
 
 /**
  * Batch Truncation of n elements: converts shares of value from 2^2f to 2^f
- * 
+ *
  * uses wShares.length TruncationPair shares
- * 
+ *
  * @author anisha
  */
 public class Truncation extends CompositeProtocol implements Callable<BigInteger[]> {
@@ -47,7 +46,7 @@ public class Truncation extends CompositeProtocol implements Callable<BigInteger
         this.wShares = wShares;
         this.prime = prime;
         this.truncationShares = tiShares;
-        
+
         zShares = new ArrayList<>();
         batchSize = wShares.length;
         T = new BigInteger[batchSize];
@@ -62,15 +61,11 @@ public class Truncation extends CompositeProtocol implements Callable<BigInteger
     }
 
     private void computeAndShareZShare() {
-
-        for (int i = 0; i < batchSize; i++) {
-            zShares.add(i, wShares[i].add(truncationShares.get(i).r).mod(prime));
-        }
-
+        
         // broadcast it to n parties
         List<BigInteger> diffList = new ArrayList<>();
-
         for (int i = 0; i < batchSize; i++) {
+            zShares.add(i, wShares[i].add(truncationShares.get(i).r).mod(prime));
             diffList.add(zShares.get(i));
         }
 
@@ -103,7 +98,7 @@ public class Truncation extends CompositeProtocol implements Callable<BigInteger
         }
 
         BigInteger roundOffBit = BigInteger.valueOf(2).pow(Constants.integer_precision
-                + Constants.decimal_precision - 1);
+                + 2 * Constants.decimal_precision - 1);
         BigInteger fInv = prime.add(BigInteger.ONE).divide(BigInteger.valueOf(2)).
                 pow(Constants.decimal_precision).mod(prime);
         BigInteger fpow2 = BigInteger.valueOf(2).pow(Constants.decimal_precision);
@@ -112,10 +107,10 @@ public class Truncation extends CompositeProtocol implements Callable<BigInteger
             // Add local z to the sum
             BigInteger c = zShares.get(i).add(roundOffBit);
             BigInteger cp = c.mod(fpow2);
-            BigInteger S = wShares[i].add(truncationShares.get(i).rp).
+            BigInteger S = wShares[i].add(truncationShares.get(i).rp).mod(prime).
                     subtract(cp.multiply(BigInteger.valueOf(asymmetricBit)));
             T[i] = S.multiply(fInv).mod(prime);
-
+            
         }
 
     }
