@@ -37,6 +37,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
+ * compute the final tree output by computing the polynomial circuit
  *
  * @author keerthanaa
  */
@@ -47,6 +48,24 @@ class PolynomialComputing extends CompositeProtocol implements Callable<Integer[
     Integer[] y_j, jBinary;
     List<TripleByte> tiShares;
 
+    /**
+     * Constructor (takes initial y[j][r] for a given j and computes the final
+     * y[j][r] output
+     *
+     * @param y_j
+     * @param jBinary
+     * @param alpha
+     * @param depth
+     * @param zOutputs
+     * @param tiShares
+     * @param protocolIdQueue
+     * @param senderQueue
+     * @param receiverQueue
+     * @param protocolID
+     * @param clientId
+     * @param asymmetricBit
+     * @param partyCount
+     */
     public PolynomialComputing(Integer[] y_j, Integer[] jBinary, int alpha, int depth,
             int[] zOutputs, List<TripleByte> tiShares,
             Queue<Integer> protocolIdQueue,
@@ -58,14 +77,16 @@ class PolynomialComputing extends CompositeProtocol implements Callable<Integer[
         this.s = depth;
         u = 1;
         this.alpha = alpha;
-        //this.y_j = new Integer[y_j.length];
-        //System.arraycopy(y_j, 0, this.y_j, 0, y_j.length);
         this.y_j = y_j;
         this.comparisonOutputs = zOutputs;
         this.jBinary = jBinary;
         this.tiShares = tiShares;
     }
 
+    /**
+     *
+     * @return @throws Exception
+     */
     @Override
     public Integer[] call() throws Exception {
 
@@ -80,13 +101,9 @@ class PolynomialComputing extends CompositeProtocol implements Callable<Integer[
             List<Integer> z_u = new ArrayList<>(Collections.<Integer>nCopies(Constants.batchSize,
                     (comparisonOutputs[u - 1] + asymmetricBit * jBinary[s - 1]) % Constants.binaryPrime));
 
-            System.out.println("pid=" + protocolId + ",s=" + s + ",u=" + u + ",yj=" + yj + ",Zu+js=" + z_u);
             int i = 0;
             do {
                 int toIndex = Math.min(i + Constants.batchSize, alpha);
-                //System.out.println("toIndex="+toIndex+", comp"+Arrays.toString(comparisonOutputs)+"jbin"+Arrays.toString(jBinary));
-
-                //System.out.println("j="+Arrays.toString(jBinary)+"batchmults between "+yj+" and "+z_u);
                 initQueueMap(recQueues, pid);
 
                 BatchMultiplicationByte mults = new BatchMultiplicationByte(
@@ -109,7 +126,6 @@ class PolynomialComputing extends CompositeProtocol implements Callable<Integer[
                 Future<Integer[]> taskResponse = taskList.get(i);
                 try {
                     Integer[] arr = taskResponse.get();
-                    //System.out.println("jBin="+Arrays.toString(jBinary)+"arr="+Arrays.toString(arr));
                     for (int l = 0; l < arr.length; l++) {
                         y_j[globalIndex] = arr[l];
                         globalIndex++;
@@ -121,7 +137,6 @@ class PolynomialComputing extends CompositeProtocol implements Callable<Integer[
                 }
             }
 
-            //System.out.println("u=" + u + ",s=" + s + ",jbin=" + Arrays.toString(jBinary) + ",y_j=" + Arrays.toString(y_j));
             u = 2 * u + jBinary[s - 1];
             s--;
         }
@@ -142,23 +157,30 @@ class PolynomialComputing extends CompositeProtocol implements Callable<Integer[
 public class DecisionTreeScoring extends Model {
 
     int depth, attributeBitLength, attributeCount;//depth d, bitlength for each attribute value, total no. of attributes
-    boolean partyHasTree;                       //true if the party has the tree, false if it has the test case
-    Integer[][] featureVectors;                 //Shares of features 2^d - 1 vectors for each internal node
-    List<List<Integer>> testVectorsDecimal;     //Test cases - feature vectors as decimal numbers
-    List<List<Integer>> testVector;             //Test case - a list of features represented as binary values for one test case
-    int[] leafToClassIndexMapping;              //leaf node index to class index mapping (stored by the party that has the tree)
-    int[] nodeToAttributeIndexMapping;          //internal node index to the attribute intex mapping (stored by the party that has the tree)
-    int[] attributeThresholds;                  //each internal node's attribute threshold
-    List<List<Integer>> attributeThresholdsBitShares;
-    int leafNodes, tiBinaryStartIndex, tiDecimalStartIndex, classLabelCount, alpha, pid;
+    boolean partyHasTree;                         //true if the party has the tree, false if it has the test case
+    Integer[][] featureVectors;                   //Shares of features 2^d - 1 vectors for each internal node
+    // TODO - modify this as a list instead of list of lists
+    List<List<Integer>> testVectorsDecimal;       //Test case - feature vectors as decimal numbers
+    List<List<Integer>> testVector;               //Test case - a list of features represented as binary values
+    int[] leafToClassIndexMapping;                //leaf node index to class index mapping (stored by the party that has the tree)
+    int[] nodeToAttributeIndexMapping;            //internal node index to the attribute intex mapping (stored by the party that has the tree)
+    int[] attributeThresholds;                    //each internal node's attribute threshold
+    List<List<Integer>> attributeThresholdsBitShares; //attribute thresholds as bits
+    int leafNodes, tiBinaryStartIndex, tiDecimalStartIndex, classLabelCount, alpha, pid; //leafNode - no. of leafnodes, classlabelcount - total number of class labels
     int[] comparisonOutputs, finalOutputs;
     List<TripleByte> binaryTiShares;
     List<TripleInteger> decimalTiShares;
-    
 
     /**
-     * Constructor
-     *
+     * Constructor 2 party DT scoring: one party has the tree, one party has the
+     * feature vector 
+     * In args, 
+     * party1: pass the feature vector as csv file
+     * (testCsv) pass the tree properties (depth, attribute count, attribute
+     * bitlength, class label count in properties file (treeproperties) 
+     * party2:
+     * pass the tree as a properties file (storedtree)
+     * 
      * @param asymmetricBit
      * @param senderQueue
      * @param receiverQueue
@@ -173,7 +195,8 @@ public class DecisionTreeScoring extends Model {
      */
     public DecisionTreeScoring(int asymmetricBit, BlockingQueue<Message> senderQueue,
             BlockingQueue<Message> receiverQueue, int clientId, List<TripleByte> binaryTriples,
-            List<TripleInteger> decimalTriple, int depth, int attributeCount, int bitLength, int partyCount, String[] args) {
+            List<TripleInteger> decimalTriple, int depth, int attributeCount, int bitLength,
+            int partyCount, String[] args) {
 
         super(senderQueue, receiverQueue, clientId, asymmetricBit, partyCount);
 
@@ -186,6 +209,7 @@ public class DecisionTreeScoring extends Model {
     }
 
     /**
+     * initialize variables
      *
      * @param args
      */
@@ -208,10 +232,12 @@ public class DecisionTreeScoring extends Model {
 
             switch (command) {
                 case "testCsv":
+                    //party has feature vector
                     testVectorsDecimal = FileIO.loadIntListFromFile(value);
                     System.out.println("testcsv:" + testVectorsDecimal);
                     break;
                 case "storedtree":
+                    //party has the tree
                     partyHasTree = true;
                     Properties prop = new Properties();
                     InputStream input = null;
@@ -242,6 +268,7 @@ public class DecisionTreeScoring extends Model {
                     attributeThresholds = Arrays.stream(str.split(",")).mapToInt(Integer::parseInt).toArray();
                     break;
                 case "treeproperties":
+                    //party has feature vector
                     partyHasTree = false;
                     prop = new Properties();
                     input = null;
@@ -263,6 +290,7 @@ public class DecisionTreeScoring extends Model {
     }
 
     /**
+     * Convert the feature values from decimal to bits
      *
      * @param testCase
      */
@@ -302,7 +330,7 @@ public class DecisionTreeScoring extends Model {
 
         if (!partyHasTree) {
             convertTestVectorToBits(testVectorsDecimal.get(0));
-            System.out.println("converting to bits: from " + testVectorsDecimal.get(0) + " to " + testVector);
+            System.out.println("converting to bits feature vector: from " + testVectorsDecimal.get(0) + " to " + testVector);
         }
 
         getFeatureVectors();
@@ -378,8 +406,7 @@ public class DecisionTreeScoring extends Model {
     }
 
     /**
-     * Converts all the attribute thresholds to bits using bitdecomposition
-     * protocol
+     * Converts all the attribute thresholds to bits protocol
      *
      * @param startpid
      */
@@ -408,15 +435,17 @@ public class DecisionTreeScoring extends Model {
         ExecutorService es = Executors.newFixedThreadPool(Constants.threadCount);
         List<Future<Integer>> taskList = new ArrayList<>();
 
-        // TODO - Need to handle tishares sublist
+        int comparisonTiCount = (2 * attributeBitLength) + ((attributeBitLength * (attributeBitLength - 1)) / 2);
         for (int i = 0; i < leafNodes - 1; i++) {
             initQueueMap(recQueues, pid);
-            Comparison comp = new Comparison(Arrays.asList(featureVectors[i]), attributeThresholdsBitShares.get(i), binaryTiShares,
+            Comparison comp = new Comparison(Arrays.asList(featureVectors[i]), attributeThresholdsBitShares.get(i),
+                    binaryTiShares.subList(tiBinaryStartIndex, tiBinaryStartIndex + comparisonTiCount),
                     asymmetricBit, commonSender, recQueues.get(pid), new LinkedList<>(protocolIdQueue),
                     clientId, Constants.binaryPrime, pid, partyCount);
 
             Future<Integer> task = es.submit(comp);
             pid++;
+            tiBinaryStartIndex += comparisonTiCount;
             taskList.add(task);
         }
 
@@ -452,12 +481,11 @@ public class DecisionTreeScoring extends Model {
     }
 
     /**
-     *
+     * calls the polynomialcomputing class and gets the final output
      * @param startpid
      */
     void computePolynomialEquation() {
 
-        System.out.println("leaftoclass:" + Arrays.toString(leafToClassIndexMapping));
         Integer[][] yShares = new Integer[leafNodes][alpha];
 
         //y[j][r] initialization
@@ -480,17 +508,20 @@ public class DecisionTreeScoring extends Model {
         ExecutorService es = Executors.newFixedThreadPool(Constants.threadCount);
         List<Future<Integer[]>> taskList = new ArrayList<>();
 
+        int polynomialComputationTiCount = depth * alpha;
+
         for (int j = 0; j < leafNodes; j++) {
             Integer[] jBinary = convertToBits(j, depth);
 
             initQueueMap(recQueues, pid);
 
             PolynomialComputing pc = new PolynomialComputing(yShares[j], jBinary, alpha,
-                    depth, comparisonOutputs, binaryTiShares, new LinkedList<>(protocolIdQueue),
-                    commonSender, recQueues.get(pid), pid, clientId, asymmetricBit, partyCount);
+                    depth, comparisonOutputs, binaryTiShares.subList(tiBinaryStartIndex, tiBinaryStartIndex + polynomialComputationTiCount),
+                    new LinkedList<>(protocolIdQueue), commonSender, recQueues.get(pid),
+                    pid, clientId, asymmetricBit, partyCount);
 
-            //pid += depth * (alpha / Constants.batchSize + 1);
             pid++;
+            tiBinaryStartIndex += polynomialComputationTiCount;
             Future<Integer[]> task = es.submit(pc);
             taskList.add(task);
         }
