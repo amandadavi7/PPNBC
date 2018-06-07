@@ -203,7 +203,7 @@ public class FileIO {
                     "_" + clientId + ".csv")) {
                 for (int i = 0; i < rows; i++) {
                     for (int j = 0; j < cols; j++) {
-                        writer.write(ZqToReal(y[i][j], Constants.decimal_precision, Zq).toPlainString() + ",");
+                        writer.write(y[i][j] + ",");
                     }
                     writer.write("\n");
                 }

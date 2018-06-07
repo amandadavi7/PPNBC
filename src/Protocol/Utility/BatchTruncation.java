@@ -3,9 +3,10 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package Protocol;
+package Protocol.Utility;
 
 import Communication.Message;
+import Protocol.CompositeProtocol;
 import TrustedInitializer.TruncationPair;
 import Utility.Constants;
 import java.math.BigInteger;
@@ -25,17 +26,18 @@ import java.util.logging.Logger;
  *
  * @author anisha
  */
-public class Truncation extends CompositeProtocol implements Callable<BigInteger> {
+public class BatchTruncation extends CompositeProtocol implements Callable<BigInteger[]> {
 
-    BigInteger wShares;
-    BigInteger zShares;
-    BigInteger T;
-    TruncationPair truncationShares;
+    BigInteger[] wShares;
+    List<BigInteger> zShares;
+    BigInteger[] T;
+    List<TruncationPair> truncationShares;
 
     BigInteger prime;
+    int batchSize;
 
-    public Truncation(BigInteger wShares,
-            TruncationPair tiShares, BlockingQueue<Message> senderqueue,
+    public BatchTruncation(BigInteger[] wShares,
+            List<TruncationPair> tiShares, BlockingQueue<Message> senderqueue,
             BlockingQueue<Message> receiverqueue, Queue<Integer> protocolIdQueue,
             int clientID, BigInteger prime,
             int protocolID, int asymmetricBit, int partyCount) {
@@ -44,26 +46,32 @@ public class Truncation extends CompositeProtocol implements Callable<BigInteger
                 asymmetricBit, partyCount);
 
         this.wShares = wShares;
-        System.out.println("W:"+wShares);
         this.prime = prime;
         this.truncationShares = tiShares;
 
+        batchSize = wShares.length;
+        zShares = new ArrayList<>(batchSize);
+        T = new BigInteger[batchSize];
     }
 
     @Override
-    public BigInteger call() throws Exception {
+    public BigInteger[] call() throws Exception {
         computeAndShareZShare();
         computeSecretShare();
-
+        
         return T;
     }
 
     private void computeAndShareZShare() {
 
-        zShares = wShares.add(truncationShares.r).mod(prime);
-
         // broadcast it to n parties
-        Message senderMessage = new Message(zShares,
+        List<BigInteger> diffList = new ArrayList<>(batchSize);
+        for (int i = 0; i < batchSize; i++) {
+            zShares.add(i, wShares[i].add(truncationShares.get(i).r).mod(prime));
+            diffList.add(zShares.get(i));
+        }
+
+        Message senderMessage = new Message(diffList,
                 clientID, protocolIdQueue);
 
         try {
@@ -71,19 +79,21 @@ public class Truncation extends CompositeProtocol implements Callable<BigInteger
             //System.out.println("sending message for protocol id:"+ protocolId);
         } catch (InterruptedException ex) {
             ex.printStackTrace();
-            Logger.getLogger(Truncation.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(BatchTruncation.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
     private void computeSecretShare() {
         Message receivedMessage = null;
-        BigInteger diffList = null;
+        List<BigInteger> diffList = null;
         // Receive all zShares
         for (int i = 0; i < partyCount - 1; i++) {
             try {
                 receivedMessage = receiverQueue.take();
-                diffList = (BigInteger) receivedMessage.getValue();
-                zShares = zShares.add(diffList).mod(prime);
+                diffList = (List<BigInteger>) receivedMessage.getValue();
+                for (int j = 0; j < batchSize; j++) {
+                    zShares.set(j, zShares.get(j).add(diffList.get(j)).mod(prime));
+                }
             } catch (InterruptedException ex) {
                 ex.printStackTrace();
             }
@@ -95,16 +105,15 @@ public class Truncation extends CompositeProtocol implements Callable<BigInteger
                 pow(Constants.decimal_precision).mod(prime);
         BigInteger fpow2 = BigInteger.valueOf(2).pow(Constants.decimal_precision);
 
-        BigInteger c = zShares.add(roundOffBit);
-        BigInteger cp = c.mod(fpow2);
-        BigInteger S = wShares.add(truncationShares.rp).mod(prime).
-                subtract(cp.multiply(BigInteger.valueOf(asymmetricBit)));
-        T = S.multiply(fInv).mod(prime);
-        System.out.println("R:"+truncationShares.r);
-        System.out.println("Z:"+ zShares);
-        System.out.println("Cp:"+ cp);
-        System.out.println("S:"+ S);
-        System.out.println("T:"+ T);
+        for (int i = 0; i < batchSize; i++) {
+            // Add local z to the sum
+            BigInteger c = zShares.get(i).add(roundOffBit);
+            BigInteger cp = c.mod(fpow2);
+            BigInteger S = wShares[i].add(truncationShares.get(i).rp).mod(prime).
+                    subtract(cp.multiply(BigInteger.valueOf(asymmetricBit)));
+            T[i] = S.multiply(fInv).mod(prime);
+
+        }
 
     }
 

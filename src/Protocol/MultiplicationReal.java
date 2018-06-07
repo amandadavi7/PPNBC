@@ -6,7 +6,8 @@
 package Protocol;
 
 import Communication.Message;
-import TrustedInitializer.TripleInteger;
+import TrustedInitializer.TripleReal;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
@@ -21,13 +22,12 @@ import java.util.logging.Logger;
  *
  * @author anisha
  */
-public class MultiplicationInteger extends Protocol implements Callable {
+public class MultiplicationReal extends Protocol implements Callable<BigInteger> {
 
-    int x;
-    int y;
-    TripleInteger tiShares;
-    int parentID;
-    int prime;
+    BigInteger x;
+    BigInteger y;
+    TripleReal tiRealShares;
+    BigInteger prime;
 
     /**
      * Constructor
@@ -42,20 +42,19 @@ public class MultiplicationInteger extends Protocol implements Callable {
      * @param prime
      * @param protocolID
      * @param asymmetricBit
-     * @param parentID
+     *
      */
-    public MultiplicationInteger(int x, int y, TripleInteger tiShares,
+    public MultiplicationReal(BigInteger x, BigInteger y, TripleReal tiShares,
             BlockingQueue<Message> senderQueue,
             BlockingQueue<Message> receiverQueue, Queue<Integer> protocolIdQueue,
-            int clientId, int prime,
-            int protocolID, int asymmetricBit, int parentID, int partyCount) {
+            int clientId, BigInteger prime,
+            int protocolID, int asymmetricBit, int partyCount) {
 
         super(protocolID, senderQueue, receiverQueue, protocolIdQueue,
                 clientId, asymmetricBit, partyCount);
         this.x = x;
         this.y = y;
-        this.tiShares = tiShares;
-        this.parentID = parentID;
+        this.tiRealShares = tiShares;
         this.prime = prime;
     }
 
@@ -66,29 +65,31 @@ public class MultiplicationInteger extends Protocol implements Callable {
      * @return shares of product
      */
     @Override
-    public Object call() {
+    public BigInteger call() {
         initProtocol();
-        //System.out.println("Waiting for receiver. parentID=" + parentID + " mult ID=" + protocolID);
         Message receivedMessage = null;
-        int d = 0,e = 0;
-        List<Integer> diffList = null;
-        for(int i=0;i<partyCount-1;i++) {
+        BigInteger d = BigInteger.ZERO;
+        BigInteger e = BigInteger.ZERO;
+        List<BigInteger> diffList = null;
+        for (int i = 0; i < partyCount - 1; i++) {
             try {
                 receivedMessage = receiverQueue.take();
-                diffList = (List<Integer>) receivedMessage.getValue();
-                d += diffList.get(0);
-                e += diffList.get(1);
+                diffList = (List<BigInteger>) receivedMessage.getValue();
+                d = d.add(diffList.get(0));
+                e = e.add(diffList.get(1));
             } catch (InterruptedException ex) {
                 ex.printStackTrace();
             }
         }
 
-        d = Math.floorMod(x - tiShares.u + d, prime);
-        e = Math.floorMod(y - tiShares.v + e, prime);
-        int product = tiShares.w + (d * tiShares.v) + (tiShares.u * e) + (d * e * asymmetricBit);
-        product = Math.floorMod(product, prime);
-        //System.out.println("ti("+tiShares.u+","+tiShares.v+","+tiShares.w+"), "+"x*y("+x+","+y+"):"+product);
-        //System.out.println("parent ID=" + parentID + " mult ID=" + protocolID + " successful, product returned");
+        d = x.subtract(tiRealShares.u).add(d).mod(prime);
+        e = y.subtract(tiRealShares.v).add(e).mod(prime);
+        BigInteger product = tiRealShares.w
+                .add(d.multiply(tiRealShares.v))
+                .add(e.multiply(tiRealShares.u))
+                .add(d.multiply(e).multiply(BigInteger.valueOf(asymmetricBit)))
+                .mod(prime);
+
         return product;
 
     }
@@ -97,18 +98,17 @@ public class MultiplicationInteger extends Protocol implements Callable {
      * Bundle the d and e values and add to the sender queue
      */
     private void initProtocol() {
-        List<Integer> diffList = new ArrayList<>();
-        diffList.add(Math.floorMod(x - tiShares.u, prime));
-        diffList.add(Math.floorMod(y - tiShares.v, prime));
+        List<BigInteger> diffList = new ArrayList<>();
+        diffList.add(x.subtract(tiRealShares.u).mod(prime));
+        diffList.add(y.subtract(tiRealShares.v).mod(prime));
 
         Message senderMessage = new Message(diffList,
                 clientID, protocolIdQueue);
         try {
             senderQueue.put(senderMessage);
-            //System.out.println("sending message for protocol id:"+ protocolID);
         } catch (InterruptedException ex) {
             ex.printStackTrace();
-            Logger.getLogger(MultiplicationInteger.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(MultiplicationReal.class.getName()).log(Level.SEVERE, null, ex);
         }
 
     }

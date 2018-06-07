@@ -15,6 +15,7 @@ import TrustedInitializer.TruncationPair;
 import Utility.Constants;
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
@@ -29,20 +30,21 @@ import java.util.logging.Logger;
 
 /**
  * Class to take care of matrix multiplication
- * 
- * uses n*l*m TripleReal shares
- * uses n*l TruncationPair shares
+ *
+ * uses n*l*m TripleReal shares uses n*l TruncationPair shares
  *
  * @author anisha
  */
 public class MatrixMultiplication extends CompositeProtocol implements
         Callable<BigInteger[][]> {
 
-    BigInteger[][] a, b;
+    BigInteger[][] a;
+    List<List<BigInteger>> bT;
     List<TripleReal> tiRealShares;
     List<TruncationPair> tiTruncationPair;
     BigInteger prime;
     int globalProtocolId;
+    int n, m, l;
 
     /**
      * Uses n-1 tiShares
@@ -70,11 +72,22 @@ public class MatrixMultiplication extends CompositeProtocol implements
         super(protocolID, senderQueue, receiverQueue, protocolIdQueue, clientID,
                 asymmetricBit, partyCount);
         this.a = a;
-        this.b = b;
         this.tiRealShares = tiRealshares;
         this.tiTruncationPair = tiTruncationPair;
         this.prime = prime;
         globalProtocolId = 0;
+        bT = new ArrayList<>();
+        n = a.length;
+        m = a[0].length;
+        l = b[0].length;
+        for (int i = 0; i < l; i++) {
+            List<BigInteger> col = new ArrayList<>(m);
+            for (int j = 0; j < m; j++) {
+                col.add(b[j][i]);
+            }
+            bT.add(col);
+        }
+        
     }
 
     /**
@@ -88,34 +101,23 @@ public class MatrixMultiplication extends CompositeProtocol implements
     public BigInteger[][] call() throws Exception {
 
         startHandlers();
-        int n = a.length;
-        int m = a[0].length;
-        int l = b[0].length;
         BigInteger[][] c2f = new BigInteger[n][l];
         BigInteger[][] c = new BigInteger[n][l];
 
         int tiRealStartIndex = 0;
-        
+
         ExecutorService es = Executors.newFixedThreadPool(Constants.threadCount);
-        List<Future<BigInteger>> taskList = new ArrayList<>();
+        List<Future<BigInteger>> taskList = new ArrayList<>(n * l);
 
         for (int i = 0; i < n; i++) {
-            List<BigInteger> row = new ArrayList<>();
+            List<BigInteger> row = Arrays.asList(a[i]);
             //TODO use apache commons to improve this
-            for (int k = 0; k < m; k++) {
-                row.add(a[i][k]);
-            }
             for (int j = 0; j < l; j++) {
                 // get jth col from b
-                List<BigInteger> col = new ArrayList<>();
-                for (int k = 0; k < m; k++) {
-                    col.add(b[k][j]);
-                }
-
                 initQueueMap(recQueues, globalProtocolId);
                 DotProductReal DPModule = new DotProductReal(row,
-                        col, tiRealShares.subList(
-                                tiRealStartIndex, tiRealStartIndex + m),
+                        bT.get(j), tiRealShares.subList(
+                        tiRealStartIndex, tiRealStartIndex + m),
                         senderQueue, recQueues.get(globalProtocolId),
                         new LinkedList<>(protocolIdQueue),
                         clientID, prime, globalProtocolId++, asymmetricBit, partyCount);
@@ -131,34 +133,35 @@ public class MatrixMultiplication extends CompositeProtocol implements
         int testCases = 0;
         int tiTruncationStartIndex = 0;
 
-        List<Future<BigInteger[]>> taskListTruncation = new ArrayList<>();
+        List<Future<BigInteger[]>> taskListTruncation = new ArrayList<>(n);
 
         for (int i = 0; i < n; i++) {
             for (int j = 0; j < l; j++) {
                 Future<BigInteger> dWorkerResponse = taskList.get(testCases++);
                 try {
                     c2f[i][j] = dWorkerResponse.get();
-                    //System.out.println("row "+i+" done dp: "+c2f[i][j]);
                 } catch (InterruptedException | ExecutionException ex) {
                     Logger.getLogger(LinearRegressionTraining.class.getName())
                             .log(Level.SEVERE, null, ex);
                 }
             }
+        }
+        // release the memory once done
+        taskList.clear();
+        
+        for (int i = 0; i < n; i++) {
             initQueueMap(recQueues, globalProtocolId);
-            Truncation truncationModule = new Truncation(c2f[i], 
-                    tiTruncationPair.subList(tiTruncationStartIndex, 
-                            tiTruncationStartIndex+c2f[i].length),
-                    senderQueue, recQueues.get(globalProtocolId), 
+            BatchTruncation truncationModule = new BatchTruncation(c2f[i],
+                    tiTruncationPair.subList(tiTruncationStartIndex,
+                            tiTruncationStartIndex + c2f[i].length),
+                    senderQueue, recQueues.get(globalProtocolId),
                     new LinkedList<>(protocolIdQueue),
                     clientID, prime, globalProtocolId++, asymmetricBit, partyCount);
             Future<BigInteger[]> truncationTask = es.submit(truncationModule);
             taskListTruncation.add(truncationTask);
             //TODO: uncomment this to avoid reusing the shares 
             //tiTruncationStartIndex += c2f[i].length;
-
         }
-        // release the memory once done
-        taskList.clear();
 
         for (int i = 0; i < n; i++) {
             Future<BigInteger[]> dWorkerResponse = taskListTruncation.get(i);
@@ -173,7 +176,7 @@ public class MatrixMultiplication extends CompositeProtocol implements
 
         es.shutdown();
         tearDownHandlers();
-        
+
         return c;
 
     }

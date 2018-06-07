@@ -6,7 +6,6 @@
 package Protocol.Utility;
 
 import Communication.Message;
-import Protocol.MultiplicationInteger;
 import TrustedInitializer.TripleReal;
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -138,7 +137,7 @@ public class BatchMultiplicationReal extends BatchMultiplication
             //System.out.println("sending message for protocol id:"+ protocolId);
         } catch (InterruptedException ex) {
             ex.printStackTrace();
-            Logger.getLogger(MultiplicationInteger.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(BatchMultiplicationReal.class.getName()).log(Level.SEVERE, null, ex);
         }
 
     }

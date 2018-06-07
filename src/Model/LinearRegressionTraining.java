@@ -82,19 +82,16 @@ public class LinearRegressionTraining extends Model {
         startModelHandlers();
         long startTime = System.currentTimeMillis();
         
-        System.out.println("Transpose");
         transposeMatrix();
 
         //TODO can do both local matrix multiplication in parallel
-        System.out.println("Local matrix multiplication");
         BigInteger[][] gamma1 = localMatrixMultiplication(xT, x);
+        FileIO.writeToCSV(gamma1, outputPath, "gamma1", clientId, prime);
+        
         //printMatrix(gamma1);
-        System.out.println("gamma1:"+gamma1.length+","+gamma1[0].length);
-        System.out.println("Local matrix multiplication");
         BigInteger[][] gamma2 = localMatrixMultiplication(xT, y);
-        System.out.println("gamma2:"+gamma2.length+","+gamma2[0].length);
-
-        System.out.println("Matrix inversion");
+        FileIO.writeToCSV(gamma2, outputPath, "gamma2", clientId, prime);
+        
         initQueueMap(recQueues, globalProtocolId);
         MatrixInversion matrixInversion = new MatrixInversion(gamma1,
                 realTiShares, tiTruncationPair, globalProtocolId, commonSender,
@@ -149,6 +146,7 @@ public class LinearRegressionTraining extends Model {
 
         teardownModelHandlers();
         FileIO.writeToCSV(beta, outputPath, "beta_less_rounds", clientId, prime);
+        FileIO.writeToCSV(gamma1Inv, outputPath, "gammaInv", clientId, prime);
 
     }
 

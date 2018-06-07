@@ -6,9 +6,7 @@
 package Protocol.Utility;
 
 import Communication.Message;
-import Protocol.MultiplicationInteger;
 import TrustedInitializer.TripleByte;
-import Utility.Constants;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -129,7 +127,7 @@ public class BatchMultiplicationByte extends BatchMultiplication
             //System.out.println("sending message for protocol id:"+ protocolID);
         } catch (InterruptedException ex) {
             ex.printStackTrace();
-            Logger.getLogger(MultiplicationInteger.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(BatchMultiplicationInteger.class.getName()).log(Level.SEVERE, null, ex);
         }
 
     }

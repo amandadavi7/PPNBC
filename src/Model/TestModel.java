@@ -18,6 +18,7 @@ import Protocol.OIS;
 import Protocol.OR_XOR;
 import Protocol.Truncation;
 import Protocol.Utility.BatchMultiplicationReal;
+import Protocol.Utility.BatchTruncation;
 import Protocol.Utility.MatrixMultiplication;
 import TrustedInitializer.TripleByte;
 import TrustedInitializer.TripleInteger;
@@ -304,8 +305,9 @@ public class TestModel extends Model {
         // pass 1 - multiplication, 2 - dot product and 3 - comparison
         //callProtocol(2);
         //callMatrixInversion();
-        callTruncation();
+        //callTruncation();
         //callMatrixMultiplication();
+        //callMultiplicationReal();
         teardownModelHandlers();
 
     }
@@ -482,7 +484,7 @@ public class TestModel extends Model {
         for (int i = 0; i < totalCases; i++) {
 
             initQueueMap(recQueues, i);
-            Truncation truncationPair = new Truncation(xBigInt[i],
+            BatchTruncation truncationPair = new BatchTruncation(xBigInt[i],
                     tiTruncationPair.subList(tiTruncationStartIndex,
                             tiTruncationStartIndex + xBigInt[i].length),
                     commonSender, recQueues.get(i), new LinkedList<>(protocolIdQueue),

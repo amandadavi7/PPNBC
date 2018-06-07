@@ -14,9 +14,11 @@ import Model.TestModel;
 import TrustedInitializer.TIShare;
 import Utility.Logging;
 import java.io.BufferedReader;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
@@ -114,6 +116,8 @@ public class Party {
             System.exit(0);
         }
 
+        
+
         socketServer = Connection.createServerSocket(port);
         if (socketServer == null) {
             System.out.println("Socket creation error");
@@ -123,11 +127,6 @@ public class Party {
     }
 
     public static void main(String[] args) {
-        if (args.length < 7) {
-            Logging.partyUsage();
-            System.exit(0);
-        }
-
         initalizeVariables(args);
 
         initalizeModelVariables(args);
