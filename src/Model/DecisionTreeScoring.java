@@ -166,11 +166,10 @@ public class DecisionTreeScoring extends Model {
     int[] nodeToAttributeIndexMapping;            //internal node index to the attribute intex mapping (stored by the party that has the tree)
     int[] attributeThresholds;                    //each internal node's attribute threshold
     List<List<Integer>> attributeThresholdsBitShares; //attribute thresholds as bits
-    int leafNodes, tiBinaryStartIndex, tiDecimalStartIndex, classLabelCount, alpha, pid; //leafNode - no. of leafnodes, classlabelcount - total number of class labels
+    int leafNodes, tiBinaryStartIndex, classLabelCount, alpha, pid; //leafNode - no. of leafnodes, classlabelcount - total number of class labels
     int[] comparisonOutputs, finalOutputs;
     List<TripleByte> binaryTiShares;
-    List<TripleInteger> decimalTiShares;
-
+    
     /**
      * Constructor 2 party DT scoring: one party has the tree, one party has the
      * feature vector 
@@ -186,16 +185,11 @@ public class DecisionTreeScoring extends Model {
      * @param receiverQueue
      * @param clientId
      * @param binaryTriples
-     * @param decimalTriple
-     * @param depth
-     * @param attributeCount
-     * @param bitLength
      * @param partyCount
      * @param args
      */
     public DecisionTreeScoring(int asymmetricBit, BlockingQueue<Message> senderQueue,
             BlockingQueue<Message> receiverQueue, int clientId, List<TripleByte> binaryTriples,
-            List<TripleInteger> decimalTriple, int depth, int attributeCount, int bitLength,
             int partyCount, String[] args) {
 
         super(senderQueue, receiverQueue, clientId, asymmetricBit, partyCount);
@@ -203,9 +197,7 @@ public class DecisionTreeScoring extends Model {
         initializeModelVariables(args);
         pid = 0;
         tiBinaryStartIndex = 0;
-        tiDecimalStartIndex = 0;
         this.binaryTiShares = binaryTriples;
-        this.decimalTiShares = decimalTriple;
     }
 
     /**

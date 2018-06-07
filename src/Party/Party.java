@@ -196,7 +196,7 @@ public class Party {
                 // DT Scoring
                 DecisionTreeScoring DTree = new DecisionTreeScoring(asymmetricBit, 
                         senderQueue, receiverQueue, partyId, tiShares.binaryShares,
-                        tiShares.decimalShares, 2, 3, 5, partyCount, args);
+                        partyCount, args);
                 DTree.ScoreDecisionTree();
                 break;
 
