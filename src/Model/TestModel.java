@@ -37,13 +37,19 @@ public class TestModel extends Model {
     List<List<Integer>> x;
     List<List<Integer>> y;
     List<List<List<Integer>>> v;
+    List<TripleByte> binaryTiShares;
+    List<TripleInteger> decimalTiShares;
+    List<TripleReal> realTiShares;
 
     public TestModel(List<TripleByte> binaryTriples, List<TripleInteger> decimalTriples,
             List<TripleReal> realTiShares, int asymmetricBit, BlockingQueue<Message> senderQueue,
             BlockingQueue<Message> receiverQueue, int clientId, int partyCount, String[] args) {
 
-        super(senderQueue, receiverQueue, clientId, asymmetricBit, binaryTriples, decimalTriples, realTiShares, partyCount);
+        super(senderQueue, receiverQueue, clientId, asymmetricBit, partyCount);
 
+        this.binaryTiShares = binaryTriples;
+        this.decimalTiShares = decimalTriples;
+        this.realTiShares = realTiShares;
         initalizeModelVariables(args);
 
     }

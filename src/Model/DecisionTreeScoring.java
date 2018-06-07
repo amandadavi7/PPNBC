@@ -152,6 +152,9 @@ public class DecisionTreeScoring extends Model {
     List<List<Integer>> attributeThresholdsBitShares;
     int leafNodes, tiBinaryStartIndex, tiDecimalStartIndex, classLabelCount, alpha, pid;
     int[] comparisonOutputs, finalOutputs;
+    List<TripleByte> binaryTiShares;
+    List<TripleInteger> decimalTiShares;
+    
 
     /**
      * Constructor
@@ -172,13 +175,14 @@ public class DecisionTreeScoring extends Model {
             BlockingQueue<Message> receiverQueue, int clientId, List<TripleByte> binaryTriples,
             List<TripleInteger> decimalTriple, int depth, int attributeCount, int bitLength, int partyCount, String[] args) {
 
-        super(senderQueue, receiverQueue, clientId, asymmetricBit, binaryTriples, decimalTriple, null, partyCount);
+        super(senderQueue, receiverQueue, clientId, asymmetricBit, partyCount);
 
         initializeModelVariables(args);
         pid = 0;
         tiBinaryStartIndex = 0;
         tiDecimalStartIndex = 0;
-
+        this.binaryTiShares = binaryTriples;
+        this.decimalTiShares = decimalTriple;
     }
 
     /**

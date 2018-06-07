@@ -53,7 +53,6 @@ public class Party {
 
     private static List<List<List<Integer>>> vShares;
     private static int asymmetricBit;
-    
 
     private static int modelId;
     private static Socket clientSocket;
@@ -123,8 +122,6 @@ public class Party {
         }
 
         initalizeVariables(args);
-
-        initalizeModelVariables(args);
 
         getSharesFromTI();  // This is a blocking call
 
@@ -197,15 +194,16 @@ public class Party {
         switch (modelId) {
             case 1:
                 // DT Scoring
-                DecisionTreeScoring DTree = new DecisionTreeScoring(asymmetricBit, senderQueue, receiverQueue, partyId, tiShares.binaryShares,
-                            tiShares.decimalShares, 2, 3, 5, partyCount, args);
+                DecisionTreeScoring DTree = new DecisionTreeScoring(asymmetricBit, 
+                        senderQueue, receiverQueue, partyId, tiShares.binaryShares,
+                        tiShares.decimalShares, 2, 3, 5, partyCount, args);
                 DTree.ScoreDecisionTree();
                 break;
 
             case 2:
                 // LR Evaluation
                 LinearRegressionEvaluation regressionModel
-                        = new LinearRegressionEvaluation(tiShares.bigIntShares, 
+                        = new LinearRegressionEvaluation(tiShares.bigIntShares,
                                 asymmetricBit, senderQueue,
                                 receiverQueue, partyId, partyCount, args);
 
@@ -214,57 +212,13 @@ public class Party {
 
             default:
                 // test model
-                TestModel testModel = new TestModel(tiShares.binaryShares, 
+                TestModel testModel = new TestModel(tiShares.binaryShares,
                         tiShares.decimalShares, tiShares.bigIntShares,
-                        asymmetricBit, senderQueue, receiverQueue, partyId, 
+                        asymmetricBit, senderQueue, receiverQueue, partyId,
                         partyCount, args);
 
                 testModel.compute();
                 break;
         }
     }
-
-    private static void initalizeModelVariables(String[] args) {
-
-        switch (modelId) {
-            case 1:
-                // DT Scoring
-                for (String arg : args) {
-                    String[] currInput = arg.split("=");
-                    if (currInput.length < 2) {
-                        Logging.partyUsage();
-                        System.exit(0);
-                    }
-                    String command = currInput[0];
-                    String value = currInput[1];
-
-                    switch (command) {
-                        case "vShares":
-                            try {
-                                BufferedReader buf = new BufferedReader(new FileReader(value));
-                                String line = null;
-                                while ((line = buf.readLine()) != null) {
-                                    String[] vListShares = line.split(";");
-                                    List<List<Integer>> vline = new ArrayList<>();
-                                    for (String str : vListShares) {
-                                        int lineInt[] = Arrays.stream(str.split(",")).mapToInt(Integer::parseInt).toArray();
-                                        vline.add(Arrays.stream(lineInt).boxed().collect(Collectors.toList()));
-                                    }
-                                    vShares.add(vline);
-                                }
-                            } catch (FileNotFoundException ex) {
-                                Logger.getLogger(Party.class.getName()).log(Level.SEVERE, null, ex);
-                            } catch (IOException ex) {
-                                Logger.getLogger(Party.class.getName()).log(Level.SEVERE, null, ex);
-                            }
-                            break;
-                    }
-
-                }
-
-                break;
-
-        }
-    }
-
 }
