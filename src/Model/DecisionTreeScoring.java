@@ -6,13 +6,11 @@
 package Model;
 
 import Communication.Message;
-import Protocol.BitDecomposition;
 import Protocol.Comparison;
 import Protocol.CompositeProtocol;
 import Protocol.OIS;
 import Protocol.Utility.BatchMultiplicationByte;
 import TrustedInitializer.TripleByte;
-import TrustedInitializer.TripleInteger;
 import Utility.Constants;
 import Utility.FileIO;
 import Utility.Logging;
@@ -169,17 +167,21 @@ public class DecisionTreeScoring extends Model {
     int leafNodes, tiBinaryStartIndex, classLabelCount, alpha, pid; //leafNode - no. of leafnodes, classlabelcount - total number of class labels
     int[] comparisonOutputs, finalOutputs;
     List<TripleByte> binaryTiShares;
-    
+
     /**
-     * Constructor 2 party DT scoring: one party has the tree, one party has the
-     * feature vector 
-     * In args, 
+     * Constructor 
+     * 2 party DT scoring: 
+     * 
+     * one party has the tree, one party has the
+     * feature vector In args, 
+     * 
      * party1: pass the feature vector as csv file
      * (testCsv) pass the tree properties (depth, attribute count, attribute
      * bitlength, class label count in properties file (treeproperties) 
+     * 
      * party2:
      * pass the tree as a properties file (storedtree)
-     * 
+     *
      * @param asymmetricBit
      * @param senderQueue
      * @param receiverQueue
@@ -187,12 +189,13 @@ public class DecisionTreeScoring extends Model {
      * @param binaryTriples
      * @param partyCount
      * @param args
+     * @param protocolIdQueue
      */
     public DecisionTreeScoring(int asymmetricBit, BlockingQueue<Message> senderQueue,
             BlockingQueue<Message> receiverQueue, int clientId, List<TripleByte> binaryTriples,
-            int partyCount, String[] args) {
+            int partyCount, String[] args, LinkedList<Integer> protocolIdQueue) {
 
-        super(senderQueue, receiverQueue, clientId, asymmetricBit, partyCount);
+        super(senderQueue, receiverQueue, clientId, asymmetricBit, partyCount, protocolIdQueue);
 
         initializeModelVariables(args);
         pid = 0;
@@ -474,6 +477,7 @@ public class DecisionTreeScoring extends Model {
 
     /**
      * calls the polynomialcomputing class and gets the final output
+     *
      * @param startpid
      */
     void computePolynomialEquation() {

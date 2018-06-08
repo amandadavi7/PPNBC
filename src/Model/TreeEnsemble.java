@@ -12,6 +12,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.BlockingQueue;
@@ -23,43 +24,42 @@ import java.util.logging.Logger;
  * @author keerthanaa
  */
 public class TreeEnsemble extends Model {
-    
+
     String csvPath;
     boolean partyHasTrees;
     String[] propertyFiles;
-    int noOfTrees;
-    
+    int treeCount;
+
     /**
      * Constructor:
-     * 
-     * Party 1: contains the decision trees
-     * Each tree is stored in a properties file
-     * the metadata is passed to party as "randomforeststored"
-     * contains number of trees and the name of the property files
-     * 
-     * party 2:
-     * csv file,
-     * properties file with randomforestproperties about all the trees
-     *  
+     *
+     * Party 1: contains the decision trees Each tree is stored in a properties
+     * file the metadata is passed to party as "randomforeststored" contains
+     * number of trees and the name of the property files
+     *
+     * party 2: csv file, properties file with randomforestproperties about all
+     * the trees
+     *
      * @param asymmetricBit
      * @param senderQueue
      * @param receiverQueue
      * @param clientId
      * @param binaryTriples
      * @param partyCount
-     * @param args 
+     * @param args
+     * @param protocolIdQueue
      */
     public TreeEnsemble(int asymmetricBit, BlockingQueue<Message> senderQueue,
             BlockingQueue<Message> receiverQueue, int clientId, List<TripleByte> binaryTriples,
-            int partyCount, String[] args) {
-        
-        super(senderQueue, receiverQueue, clientId, asymmetricBit, partyCount);
-        
+            int partyCount, String[] args, LinkedList<Integer> protocolIdQueue) {
+
+        super(senderQueue, receiverQueue, clientId, asymmetricBit, partyCount, protocolIdQueue);
+
         initializeModelVariables(args);
-        
+
     }
-    
-     private void initializeModelVariables(String[] args) {
+
+    private void initializeModelVariables(String[] args) {
 
         for (String arg : args) {
             String[] currInput = arg.split("=");
@@ -89,7 +89,7 @@ public class TreeEnsemble extends Model {
                     } catch (IOException ex) {
                         Logger.getLogger(DecisionTreeScoring.class.getName()).log(Level.SEVERE, null, ex);
                     }
-                    noOfTrees = Integer.parseInt(prop.getProperty("treecount"));
+                    treeCount = Integer.parseInt(prop.getProperty("treecount"));
                     String str = prop.getProperty("propertyfiles");
                     propertyFiles = str.split(",");
                     break;
@@ -106,19 +106,29 @@ public class TreeEnsemble extends Model {
                     } catch (IOException ex) {
                         Logger.getLogger(DecisionTreeScoring.class.getName()).log(Level.SEVERE, null, ex);
                     }
-                    noOfTrees = Integer.parseInt(prop.getProperty("treecount"));
+                    treeCount = Integer.parseInt(prop.getProperty("treecount"));
                     str = prop.getProperty("propertyfiles");
                     propertyFiles = str.split(",");
                     break;
             }
         }
     }
-     
+
     public void runTreeEnsembles() {
         startModelHandlers();
-        
+
         long startTime = System.currentTimeMillis();
-        
+
+        if (partyHasTrees) {
+            for (int i = 0; i < treeCount; i++) {
+
+            }
+        } else {
+            for (int i = 0; i < treeCount; i++) {
+
+            }
+        }
+
         long stopTime = System.currentTimeMillis();
         long elapsedTime = stopTime - startTime;
 
@@ -126,5 +136,5 @@ public class TreeEnsemble extends Model {
 
         teardownModelHandlers();
     }
-    
+
 }

@@ -11,22 +11,15 @@ import Model.LinearRegressionEvaluation;
 import Utility.Connection;
 import Model.TestModel;
 import TrustedInitializer.TIShare;
-import Utility.Constants;
-import Utility.FileIO;
 import Utility.Logging;
-import java.io.BufferedReader;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.math.BigInteger;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.logging.*;
-import java.util.stream.Collectors;
 
 /**
  * A party involved in computing a function
@@ -51,11 +44,12 @@ public class Party {
     private static int baPort;
     private static int partyCount;
 
-    private static List<List<List<Integer>>> vShares;
     private static int asymmetricBit;
 
     private static int modelId;
     private static Socket clientSocket;
+
+    private static Queue<Integer> protocolIdQueue;
 
     /**
      * Initialize class variables
@@ -63,13 +57,15 @@ public class Party {
      * @param args
      */
     public static void initalizeVariables(String[] args) {
-        vShares = new ArrayList<>();
         senderQueue = new LinkedBlockingQueue<>();
         receiverQueue = new LinkedBlockingQueue<>();
         partySocketEs = Executors.newFixedThreadPool(2);
         socketFutureList = new ArrayList<>();
         tiShares = new TIShare();
         partyId = -1;
+
+        protocolIdQueue = new LinkedList<>();
+        protocolIdQueue.add(1);
 
         for (String arg : args) {
             String[] currInput = arg.split("=");
@@ -194,9 +190,9 @@ public class Party {
         switch (modelId) {
             case 1:
                 // DT Scoring
-                DecisionTreeScoring DTree = new DecisionTreeScoring(asymmetricBit, 
+                DecisionTreeScoring DTree = new DecisionTreeScoring(asymmetricBit,
                         senderQueue, receiverQueue, partyId, tiShares.binaryShares,
-                        partyCount, args);
+                        partyCount, args, new LinkedList<>(protocolIdQueue));
                 DTree.ScoreDecisionTree();
                 break;
 
@@ -205,7 +201,7 @@ public class Party {
                 LinearRegressionEvaluation regressionModel
                         = new LinearRegressionEvaluation(tiShares.bigIntShares,
                                 asymmetricBit, senderQueue,
-                                receiverQueue, partyId, partyCount, args);
+                                receiverQueue, partyId, partyCount, args, new LinkedList<>(protocolIdQueue));
 
                 regressionModel.predictValues();
                 break;
@@ -215,7 +211,7 @@ public class Party {
                 TestModel testModel = new TestModel(tiShares.binaryShares,
                         tiShares.decimalShares, tiShares.bigIntShares,
                         asymmetricBit, senderQueue, receiverQueue, partyId,
-                        partyCount, args);
+                        partyCount, args, new LinkedList<>(protocolIdQueue));
 
                 testModel.compute();
                 break;
