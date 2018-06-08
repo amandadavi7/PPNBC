@@ -17,6 +17,12 @@ import Protocol.Utility.JaccardDistance;
 import TrustedInitializer.TripleByte;
 import TrustedInitializer.TripleInteger;
 import Utility.Constants;
+import Utility.FileIO;
+import Utility.Logging;
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -31,6 +37,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 /**
  *
@@ -47,27 +54,61 @@ public class KNN extends Model {
     List<TripleInteger> decimalTiShares;
     List<TripleByte> binaryTiShares;
     
+    
     public KNN(int asymmetricBit, BlockingQueue<Message> senderQueue,
             BlockingQueue<Message> receiverQueue, int clientId, List<TripleByte> binaryTriples, 
-            List<TripleInteger> decimalTriples, List<List<Integer>> trainingShares, List<Integer> testShare, 
-            List<Integer> classLabels, int K, int partyCount) {
+            List<TripleInteger> decimalTriples, int partyCount, String[] args) {
         
         super(senderQueue, receiverQueue, clientId, asymmetricBit, partyCount);
-        this.trainingShares = trainingShares;
-        this.testShare = testShare;
-        this.classLabels = classLabels;
         pid = 0;
+        
+        initalizeModelVariables(args);
+        
         this.attrLength = testShare.size();
-        this.K = K; //K is not shares
-        this.decimalTiIndex = 0;
-        this.binaryTiIndex = 0;
         this.trainingSharesCount = trainingShares.size();
+        
         this.binaryTiShares = binaryTriples;
         this.decimalTiShares = decimalTriples;
+        
+        this.decimalTiIndex = 0;
+        this.binaryTiIndex = 0;
+                
         KjaccardDistances = new ArrayList<>();
       //  comparisonTICount = (8*Constants.bitLength) - 4 + ((Constants.bitLength*(Constants.bitLength-1))/2);
         ccTICount = Constants.comparisonTICount + 2*Constants.bitDTiCount;
         
+    }
+    
+    private void initalizeModelVariables(String[] args) {
+
+        for (String arg : args) {
+            String[] currInput = arg.split("=");
+            if (currInput.length < 2) {
+                Logging.partyUsage();
+                System.exit(0);
+            }
+            String command = currInput[0];
+            String value = currInput[1];
+
+            switch (command) {
+                case "trainingShares":
+                    trainingShares = FileIO.loadIntListFromFile(value);
+                    break;
+                case "testShares":
+                    testShare = (FileIO.loadIntListFromFile(value)).get(0);
+                    break;
+                case "classLabels":
+                    classLabels = (FileIO.loadIntListFromFile(value)).get(0);
+                    break;
+                case "K":
+                    K = Integer.parseInt(value);
+                    break;
+
+            }
+
+        }
+        
+        System.out.println("Test Print: training="+trainingShares+" test="+testShare+" classL="+classLabels+" K="+K);
     }
     
     void swapCircuitSorting(int leftIndex, int rightIndex, int comparisonOutput) {

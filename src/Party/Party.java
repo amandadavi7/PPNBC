@@ -156,7 +156,7 @@ public class Party {
         ObjectOutputStream oStream = null;
         ObjectInputStream iStream = null;
 
-        if(partyCount==2 && asymmetricBit==1) {
+        /*if(partyCount==2 && asymmetricBit==1) {
             socketServer = Connection.createServerSocket(port);
             if (socketServer == null) {
                 System.out.println("Socket creation error");
@@ -168,10 +168,10 @@ public class Party {
                 Logger.getLogger(Party.class.getName()).log(Level.SEVERE, null, ex);
             }
             
-        } else {
-            clientSocket = Connection.initializeClientConnection(
+        } else {*/
+        clientSocket = Connection.initializeClientConnection(
                         baIP, baPort);   
-        }
+        //}
         
         try {
             oStream = new ObjectOutputStream(clientSocket.getOutputStream());
@@ -216,11 +216,10 @@ public class Party {
             case 3:
                 // KNN
                 
-                /*KNN knnModel = new KNN(asymmetricBit, senderQueue, receiverQueue, partyId, 
-                        tiShares.binaryShares, tiShares.decimalShares, xShares, yShares.get(0), 
-                        yShares.get(1), 8, partyCount);
+                KNN knnModel = new KNN(asymmetricBit, senderQueue, receiverQueue, partyId, 
+                        tiShares.binaryShares, tiShares.decimalShares, partyCount, args);
         
-                knnModel.KNN_Model();*/
+                knnModel.KNN_Model();
                 break;
                 
             default:
