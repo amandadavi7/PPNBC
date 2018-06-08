@@ -40,7 +40,7 @@ public class ArgMax extends CompositeProtocol implements Callable<Integer[]> {
      *
      * @param vShares
      * @param tiShares
-     * @param oneShare
+     * @param asymmetricBit
      * @param senderQueue
      * @param receiverQueue
      * @param protocolIdQueue
@@ -49,12 +49,12 @@ public class ArgMax extends CompositeProtocol implements Callable<Integer[]> {
      * @param protocolID
      */
     public ArgMax(List<List<Integer>> vShares, List<TripleByte> tiShares,
-            int oneShare, BlockingQueue<Message> senderQueue,
+            int asymmetricBit, BlockingQueue<Message> senderQueue,
             BlockingQueue<Message> receiverQueue, Queue<Integer> protocolIdQueue,
             int clientId, int prime,
             int protocolID, int partyCount) {
         
-        super(protocolID, senderQueue, receiverQueue, protocolIdQueue, clientId, oneShare, partyCount);
+        super(protocolID, senderQueue, receiverQueue, protocolIdQueue, clientId, asymmetricBit, partyCount);
         
         this.vShares = vShares;
         this.tiShares = tiShares;
@@ -123,7 +123,7 @@ public class ArgMax extends CompositeProtocol implements Callable<Integer[]> {
                     //each comparison needs tiCount shares
                     
                     Comparison comparisonModule = new Comparison(vShares.get(i), vShares.get(j), 
-                            tiShares.subList(tiIndex, tiIndex+tiCount), oneShare, 
+                            tiShares.subList(tiIndex, tiIndex+tiCount), asymmetricBit, 
                             senderQueue, recQueues.get(key), new LinkedList<>(protocolIdQueue),
                             clientID, prime, key, partyCount);
                     tiIndex += tiCount;
@@ -168,7 +168,7 @@ public class ArgMax extends CompositeProtocol implements Callable<Integer[]> {
             
             ParallelMultiplication rowMultiplication = new ParallelMultiplication(
                     wIntermediate.get(i), tiShares.subList(tiIndex, tiIndex+tiCount), clientID, prime, i, 
-                    oneShare, senderQueue, recQueues.get(i), 
+                    asymmetricBit, senderQueue, recQueues.get(i), 
                     new LinkedList<>(protocolIdQueue), partyCount);
             tiIndex += tiCount;
             

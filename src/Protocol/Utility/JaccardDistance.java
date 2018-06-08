@@ -8,7 +8,6 @@ package Protocol.Utility;
 import Communication.Message;
 import Protocol.CompositeProtocol;
 import Protocol.OR_XOR;
-import TrustedInitializer.Triple;
 import TrustedInitializer.TripleInteger;
 import Utility.Constants;
 import java.util.ArrayList;
@@ -39,22 +38,23 @@ public class JaccardDistance extends CompositeProtocol implements Callable<List<
      * 
      * @param trainingShares
      * @param testShare
-     * @param oneShare
+     * @param asymmetricBit
      * @param tiShares
      * @param senderQueue
      * @param receiverQueue
      * @param clientId
      * @param prime
      * @param protocolID 
+     * @param partyCount 
      * @param protocolIdQueue 
      */
     public JaccardDistance(List<List<Integer>> trainingShares,
-            List<Integer> testShare, int oneShare, List<TripleInteger> tiShares, 
+            List<Integer> testShare, int asymmetricBit, List<TripleInteger> tiShares, 
             BlockingQueue<Message> senderQueue,
             BlockingQueue<Message> receiverQueue, int clientId, int prime,
             int protocolID, Queue<Integer> protocolIdQueue, int partyCount){
         
-        super(protocolID, senderQueue, receiverQueue, protocolIdQueue, clientId, oneShare,partyCount);
+        super(protocolID, senderQueue, receiverQueue, protocolIdQueue, clientId, asymmetricBit,partyCount);
         
         this.trainingShares = trainingShares;
         this.testShare = testShare;
@@ -79,7 +79,7 @@ public class JaccardDistance extends CompositeProtocol implements Callable<List<
             initQueueMap(recQueues, startpid);
             OR_XOR orModule = new OR_XOR(trainingShares.get(i), testShare, 
                     decimalTiShares.subList(tiStartIndex, tiStartIndex+attrLength), 
-                    oneShare, 1, senderQueue, recQueues.get(startpid), 
+                    asymmetricBit, 1, senderQueue, recQueues.get(startpid), 
                     new LinkedList<>(protocolIdQueue), clientID, prime, startpid, partyCount);
             
             Future<Integer[]> orTask = es.submit(orModule);
@@ -90,7 +90,7 @@ public class JaccardDistance extends CompositeProtocol implements Callable<List<
             initQueueMap(recQueues, startpid);
             OR_XOR xorModule = new OR_XOR(trainingShares.get(i), testShare, 
                     decimalTiShares.subList(tiStartIndex, tiStartIndex+attrLength),
-                    oneShare, 2, senderQueue, recQueues.get(startpid), 
+                    asymmetricBit, 2, senderQueue, recQueues.get(startpid), 
                     new LinkedList<>(protocolIdQueue), clientID, prime, startpid, partyCount);
             
             Future<Integer[]> xorTask = es.submit(xorModule);

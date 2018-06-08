@@ -6,7 +6,6 @@
 package Protocol;
 
 import Communication.Message;
-import TrustedInitializer.Triple;
 import TrustedInitializer.TripleByte;
 import Utility.Constants;
 import java.util.ArrayList;
@@ -22,27 +21,29 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 /**
- * Takes a feature vector, k (index (0 index) of the feature that needs to be selected and returns shares of xk
- * asymmetric computation one party sends k=-1 and feature vector, another party sends k and featurevector = null
- * 
+ * Takes a feature vector, k (index (0 index) of the feature that needs to be
+ * selected and returns shares of xk asymmetric computation one party sends k=-1
+ * and feature vector, another party sends k and featurevector = null
+ *
  * Uses bitlength*count no. of binaryTiShares
- * 
+ *
  * @author keerthanaa
  */
-public class OIS extends CompositeProtocol implements Callable<Integer[]>{
+public class OIS extends CompositeProtocol implements Callable<Integer[]> {
+
     List<List<Integer>> featureVectorTransposed;
     List<Integer> yShares;
     List<TripleByte> tiShares;
-    int numberCount,bitLength, prime;
-    
+    int numberCount, bitLength, prime;
+
     /**
      * Constructor
-     * 
+     *
      * Uses bitLength*count no. of binaryTIShares
-     * 
+     *
      * @param features
      * @param tiShares
-     * @param oneShare
+     * @param asymmetricBit
      * @param senderQueue
      * @param receiverQueue
      * @param protocolIdQueue
@@ -51,95 +52,96 @@ public class OIS extends CompositeProtocol implements Callable<Integer[]>{
      * @param protocolID
      * @param bitLength
      * @param k
-     * @param numberCount 
+     * @param numberCount
+     * @param partyCount
      */
     public OIS(List<List<Integer>> features, List<TripleByte> tiShares,
-            int oneShare, BlockingQueue<Message> senderQueue,
+            int asymmetricBit, BlockingQueue<Message> senderQueue,
             BlockingQueue<Message> receiverQueue, Queue<Integer> protocolIdQueue,
             int clientId, int prime,
-            int protocolID, int bitLength, int k, int numberCount, int partyCount){
-        
-        super(protocolID, senderQueue, receiverQueue, protocolIdQueue,clientId, oneShare, partyCount);
+            int protocolID, int bitLength, int k, int numberCount, int partyCount) {
+
+        super(protocolID, senderQueue, receiverQueue, protocolIdQueue, clientId, asymmetricBit, partyCount);
         this.numberCount = numberCount;
         this.bitLength = bitLength;
         this.tiShares = tiShares;
         this.prime = prime;
-        
-        
+
         featureVectorTransposed = new ArrayList<>();
-        if(features==null) {
+        if (features == null) {
             //System.out.println("features is null");
-            for(int i=0;i<bitLength;i++){
+            for (int i = 0; i < bitLength; i++) {
                 List<Integer> temp = new ArrayList<>();
-                for(int j=0;j<numberCount;j++){
+                for (int j = 0; j < numberCount; j++) {
                     temp.add(0);
                 }
                 featureVectorTransposed.add(temp);
             }
         } else {
             //System.out.println("features is not null");
-            for(int i=0;i<bitLength;i++){
+            for (int i = 0; i < bitLength; i++) {
                 featureVectorTransposed.add(new ArrayList<>());
             }
-            for(int j=0;j<numberCount;j++){
-                for(int i=0;i<bitLength;i++){
+            for (int j = 0; j < numberCount; j++) {
+                for (int i = 0; i < bitLength; i++) {
                     featureVectorTransposed.get(i).add(features.get(j).get(i));
                 }
             }
-            
+
         }
-        
+
         yShares = new ArrayList<>(Collections.nCopies(numberCount, 0));
-        if(k!=-1){
+        if (k != -1) {
             //System.out.println("setting 1 for "+k);
             yShares.set(k, 1);
         }
     }
-    
+
     /**
-     * for each bit, call dot product between all the nth bits of the features and yshares vector
+     * for each bit, call dot product between all the nth bits of the features
+     * and yshares vector
+     *
      * @return
-     * @throws Exception 
+     * @throws Exception
      */
     @Override
     public Integer[] call() throws Exception {
         //System.out.println("numcount "+numberCount+" bitlen "+bitLength);
         Integer[] output = new Integer[bitLength];
         //System.out.println("yshares is "+yShares+" featuretransposed " +featureVectorTransposed);
-        
+
         startHandlers();
-        
+
         ExecutorService es = Executors.newFixedThreadPool(Constants.threadCount);
         List<Future<Integer>> taskList = new ArrayList<>();
         int tiStartIndex = 0;
-        
-        for(int i=0;i<bitLength;i++){
-            
+
+        for (int i = 0; i < bitLength; i++) {
+
             initQueueMap(recQueues, i);
-            
+
             //System.out.println("parentID-"+ protocolId +", dp with pid "+ i + " - " +featureVectorTransposed.get(i)+" and "+yShares);
-            
-            DotProductByte dp = new DotProductByte(featureVectorTransposed.get(i), yShares, 
-                    tiShares.subList(tiStartIndex, tiStartIndex+numberCount), senderQueue, 
+            DotProductByte dp = new DotProductByte(featureVectorTransposed.get(i), yShares,
+                    tiShares.subList(tiStartIndex, tiStartIndex + numberCount), senderQueue,
                     recQueues.get(i), new LinkedList<>(protocolIdQueue),
-                    clientID, prime, i, oneShare, partyCount);
-            
+                    clientID, prime, i, asymmetricBit, partyCount);
+
             Future<Integer> dpTask = es.submit(dp);
             taskList.add(dpTask);
-            
+
             tiStartIndex += numberCount;
         }
-        
+
         es.shutdown();
-        
-        for(int i=0;i<bitLength;i++){
+
+        for (int i = 0; i < bitLength; i++) {
             Future<Integer> dotprod = taskList.get(i);
             output[i] = dotprod.get();
         }
-        
+
         tearDownHandlers();
-        System.out.println("OIS PID: "+protocolId+"-returning " + Arrays.toString(output));
+        System.out.println("OIS PID: " + protocolId + "-returning " + Arrays.toString(output));
         return output;
     }
-    
+
 }

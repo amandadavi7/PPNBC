@@ -65,7 +65,8 @@ public class Logging {
                 + "partyCount=<total number of parties involved> \n"
                 + "party_id=<Party Id> \n"
                 + "model=<Model Id(1: DT Scoring 2:LR Evaluation 3:KNN "
-                + "4:DT Learning default:TestModel)> ");
+                + "4:DT Learning default:TestModel)> "
+                + "<Model specific arguments>");
     }
 
     /**

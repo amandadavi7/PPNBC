@@ -43,7 +43,7 @@ public class BatchMultiplicationInteger extends BatchMultiplication
      * @param clientId
      * @param prime
      * @param protocolID
-     * @param oneShare
+     * @param asymmetricBit
      * @param parentID
      */
     public BatchMultiplicationInteger(List<Integer> x, List<Integer> y, 
@@ -51,10 +51,10 @@ public class BatchMultiplicationInteger extends BatchMultiplication
             BlockingQueue<Message> senderQueue,
             BlockingQueue<Message> receiverQueue, Queue<Integer> protocolIdQueue,
             int clientId, int prime,
-            int protocolID, int oneShare, int parentID, int partyCount) {
+            int protocolID, int asymmetricBit, int parentID, int partyCount) {
 
         super(senderQueue, receiverQueue, protocolIdQueue,clientId, protocolID, 
-                oneShare, parentID, partyCount);
+                asymmetricBit, parentID, partyCount);
         this.x = x;
         this.y = y;
         this.prime = prime;
@@ -96,7 +96,7 @@ public class BatchMultiplicationInteger extends BatchMultiplication
         for(int i=0;i<batchSize;i++){
             int D = Math.floorMod(x.get(i) - tiShares.get(i).u + d.get(i), prime);
             int E = Math.floorMod(y.get(i) - tiShares.get(i).v + e.get(i), prime);
-            int product = tiShares.get(i).w + (D * tiShares.get(i).v) + (tiShares.get(i).u * E) + (D * E * oneShare);
+            int product = tiShares.get(i).w + (D * tiShares.get(i).v) + (tiShares.get(i).u * E) + (D * E * asymmetricBit);
             product = Math.floorMod(product, prime);
             products[i] = product;
         }
@@ -121,7 +121,7 @@ public class BatchMultiplicationInteger extends BatchMultiplication
             diffList.add(newRow);
         }
         
-        Message senderMessage = new Message(Constants.localShares, diffList,
+        Message senderMessage = new Message(diffList,
                 clientID, protocolIdQueue);
         
         try {

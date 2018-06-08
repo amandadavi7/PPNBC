@@ -31,14 +31,15 @@ public class CompositeProtocol extends Protocol {
      * @param receiverQueue
      * @param protocolIdQueue
      * @param clientId 
-     * @param oneShare 
+     * @param asymmetricBit 
+     * @param partyCount 
      */
     public CompositeProtocol(int protocolId, BlockingQueue<Message> senderQueue,
             BlockingQueue<Message> receiverQueue, Queue<Integer> protocolIdQueue,
-            int clientId, int oneShare, int partyCount) {
+            int clientId, int asymmetricBit, int partyCount) {
         
         super(protocolId, senderQueue, receiverQueue, protocolIdQueue, clientId, 
-                oneShare, partyCount);
+                asymmetricBit, partyCount);
         
         recQueues = new ConcurrentHashMap<>();
         queueHandlers = Executors.newSingleThreadExecutor();

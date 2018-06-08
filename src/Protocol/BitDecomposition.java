@@ -45,7 +45,7 @@ public class BitDecomposition extends CompositeProtocol implements
      *
      * @param input
      * @param tiShares
-     * @param oneShare
+     * @param asymmetricBit
      * @param bitLength
      * @param senderQueue
      * @param receiverQueue
@@ -56,13 +56,13 @@ public class BitDecomposition extends CompositeProtocol implements
      * @param partyCount
      */
     public BitDecomposition(Integer input, List<TripleByte> tiShares,
-            int oneShare, int bitLength, BlockingQueue<Message> senderQueue,
+            int asymmetricBit, int bitLength, BlockingQueue<Message> senderQueue,
             BlockingQueue<Message> receiverQueue, Queue<Integer> protocolIdQueue,
             int clientId, int prime,
             int protocolID, int partyCount) {
 
         super(protocolID, senderQueue, receiverQueue, protocolIdQueue, clientId, 
-                oneShare, partyCount);
+                asymmetricBit, partyCount);
 
         this.input = input;
         this.bitLength = bitLength;
@@ -121,7 +121,6 @@ public class BitDecomposition extends CompositeProtocol implements
         cShares[0] = Math.floorMod(first_c_share, prime);
         //System.out.println("the first c share: " + cShares[0]);
 
-
         computeDShares();
         for (int i = 1; i < bitLength; i++) {
             //System.out.println("The current index " + i);
@@ -164,7 +163,7 @@ public class BitDecomposition extends CompositeProtocol implements
                 senderQueue,
                 recQueues.get(globalPid), new LinkedList<>(protocolIdQueue),
                 clientID,
-                prime, globalPid, oneShare, 1, partyCount);
+                prime, globalPid, asymmetricBit, 1, partyCount);
 
         tiIndex++;
         globalPid++;
@@ -182,8 +181,8 @@ public class BitDecomposition extends CompositeProtocol implements
     }
 
     /**
-     * Compute [di] = [ai]*[bi] + oneShare using distributed multiplication and
-     * set
+     * Compute [di] = [ai]*[bi] + asymmetricBit using distributed multiplication and
+ set
      *
      * @throws InterruptedException
      * @throws ExecutionException
@@ -211,7 +210,7 @@ public class BitDecomposition extends CompositeProtocol implements
                     inputShares.get(1).subList(i, toIndex),
                     tiShares.subList(tiIndex, tiIndex + tiCount),
                     senderQueue, recQueues.get(globalPid), new LinkedList<>(protocolIdQueue),
-                    clientID, prime, globalPid, oneShare, protocolId, partyCount);
+                    clientID, prime, globalPid, asymmetricBit, protocolId, partyCount);
 
             Future<Integer[]> multiplicationTask = es.submit(batchMultiplication);
             taskList.add(multiplicationTask);
@@ -235,7 +234,7 @@ public class BitDecomposition extends CompositeProtocol implements
 
                 // Iterate through each batch to do computations and save values in dShares
                 for (int index = 0; index < d_batch.length; index++) {
-                    int d = d_batch[index] + oneShare;
+                    int d = d_batch[index] + asymmetricBit;
                     dShares[globalIndex++] = Math.floorMod(d, prime);
                 }
             } catch (InterruptedException | ExecutionException ex) {
@@ -275,7 +274,7 @@ public class BitDecomposition extends CompositeProtocol implements
             public void run() {
                 try {
                     int e_result = bitMultiplication(yShares[index],
-                            cShares[index - 1]) + oneShare;
+                            cShares[index - 1]) + asymmetricBit;
                     e_result = Math.floorMod(e_result, prime);
                     eShares[index] = e_result;
                     //System.out.println("e result for id: " + e_result);
@@ -308,7 +307,7 @@ public class BitDecomposition extends CompositeProtocol implements
             threadsCompleted = es.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
             if (threadsCompleted) {
                 int c_result = bitMultiplication(eShares[index],
-                        dShares[index]) + oneShare;
+                        dShares[index]) + asymmetricBit;
                 c_result = Math.floorMod(c_result, prime);
                 cShares[index] = c_result;
                 //System.out.println("c result for id: " + c_result);

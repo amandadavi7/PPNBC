@@ -5,25 +5,34 @@
  */
 package Utility;
 
+import Party.Party;
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.RoundingMode;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
- * The class deals with all input/ output utils. Have functions related to 
+ * The class deals with all input/ output utils. Have functions related to
  * reading from files, saving to files, and converting data to relevant forms.
+ *
  * @author anisha
  */
 public class FileIO {
-    
+
     /**
      * @param x value in reals
      * @param f bit resolution of decimal component
@@ -55,16 +64,17 @@ public class FileIO {
         return Q;
         // return Zk.divide(new BigDecimal(inverse), BigDecimal.ROUND_HALF_UP);
     }
-    
+
     /**
      * Reads a matrix from a csv and converts it to Zq.
+     *
      * @param sourceFile
      * @param Zq
-     * @return 
+     * @return
      */
-    public static List<List<BigInteger>> loadMatrixFromFile(String sourceFile, 
+    public static List<List<BigInteger>> loadMatrixFromFile(String sourceFile,
             BigInteger Zq) {
-        
+
         File file = new File(sourceFile);
         Scanner inputStream;
         List<List<BigInteger>> x = new ArrayList<>();
@@ -96,10 +106,10 @@ public class FileIO {
         return x;
 
     }
-    
+
     public static List<List<BigInteger>> loadMatrixFromFile(String sourceFile) {
-        
-        File file = new File("./"+sourceFile);
+
+        File file = new File("./" + sourceFile);
         Scanner inputStream;
         List<List<BigInteger>> x = new ArrayList<>();
 
@@ -130,18 +140,17 @@ public class FileIO {
 
     }
 
-
-    
     /**
      * Reads a matrix from a csv and converts it to Zq.
+     *
      * @param sourceFile
      * @param Zq
-     * @return 
+     * @return
      */
-    public static List<BigInteger> loadListFromFile(String sourceFile, 
+    public static List<BigInteger> loadListFromFile(String sourceFile,
             BigInteger Zq) {
-        
-        File file = new File("./"+sourceFile);
+
+        File file = new File("./" + sourceFile);
         Scanner inputStream;
         List<BigInteger> x = new ArrayList<>();
 
@@ -154,9 +163,9 @@ public class FileIO {
                         .map(Double::valueOf).toArray(Double[]::new);
 
                 int col = doubleValues.length;
-                
+
                 x.add(realToZq(doubleValues[0],
-                            Constants.decimal_precision, Zq));
+                        Constants.decimal_precision, Zq));
 
             }
 
@@ -168,6 +177,37 @@ public class FileIO {
         return x;
 
     }
-    
-    
+
+    public static List<List<Integer>> loadIntListFromFile(String csvFile) {
+        BufferedReader buf = null;
+        List<List<Integer>> value = new ArrayList<>();
+        try {
+            buf = new BufferedReader(new FileReader(csvFile));
+
+            try {
+                buf = new BufferedReader(new FileReader(csvFile));
+                String line = null;
+                while ((line = buf.readLine()) != null) {
+                    int lineInt[] = Arrays.stream(line.split(",")).mapToInt(Integer::parseInt).toArray();
+                    List<Integer> yline = Arrays.stream(lineInt).boxed().collect(Collectors.toList());
+                    value.add(yline);
+                }
+            } catch (FileNotFoundException ex) {
+                Logger.getLogger(Party.class.getName()).log(Level.SEVERE, null, ex);
+            } catch (IOException ex) {
+                Logger.getLogger(Party.class.getName()).log(Level.SEVERE, null, ex);
+            }
+
+        } catch (FileNotFoundException ex) {
+            Logger.getLogger(FileIO.class.getName()).log(Level.SEVERE, null, ex);
+        } finally {
+            try {
+                buf.close();
+            } catch (IOException ex) {
+                Logger.getLogger(FileIO.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+        return value;
+    }
+
 }

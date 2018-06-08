@@ -36,30 +36,20 @@ public class Model {
 
     int clientId;
     int partyCount;
-    int oneShare;
-    List<TripleByte> binaryTiShares;
-    List<TripleInteger> decimalTiShares;
-    List<TripleReal> realTiShares;
+    int asymmetricBit;
+    
 
     /**
      *
      * @param senderQueue
      * @param receiverQueue
      * @param clientId
-     * @param oneShares
-     * @param binaryTiShares
-     * @param decimalTiShares
-     * @param realTiShares
+     * @param asymmetricBit
      */
     public Model(BlockingQueue<Message> senderQueue,
-            BlockingQueue<Message> receiverQueue, int clientId, int oneShares,
-            List<TripleByte> binaryTiShares, List<TripleInteger> decimalTiShares,
-            List<TripleReal> realTiShares, int partyCount) {
+            BlockingQueue<Message> receiverQueue, int clientId, int asymmetricBit, int partyCount) {
 
-        this.binaryTiShares = binaryTiShares;
-        this.decimalTiShares = decimalTiShares;
-        this.realTiShares = realTiShares;
-        this.oneShare = oneShares;
+        this.asymmetricBit = asymmetricBit;
         this.partyCount = partyCount;
         this.commonSender = senderQueue;
         this.commonReceiver = receiverQueue;
