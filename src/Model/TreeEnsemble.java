@@ -7,15 +7,21 @@ package Model;
 
 import Communication.Message;
 import TrustedInitializer.TripleByte;
+import Utility.Constants;
 import Utility.Logging;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -28,7 +34,9 @@ public class TreeEnsemble extends Model {
     String csvPath;
     boolean partyHasTrees;
     String[] propertyFiles;
-    int treeCount;
+    int treeCount, pid;
+    List<TripleByte> binaryTiShares;
+    List<List<Integer[]>> treeOutputs;
 
     /**
      * Constructor:
@@ -57,6 +65,9 @@ public class TreeEnsemble extends Model {
         super(senderQueue, receiverQueue, clientId, asymmetricBit, partyCount, protocolIdQueue, protocolID);
 
         initializeModelVariables(args);
+        pid = 0;
+        this.binaryTiShares = binaryTriples;
+        treeOutputs = new ArrayList<>();
 
     }
 
@@ -116,23 +127,57 @@ public class TreeEnsemble extends Model {
     }
 
     public void runTreeEnsembles() {
+
         startModelHandlers();
 
-        long startTime = System.currentTimeMillis();
-        
-        /*public DecisionTreeScoring(int asymmetricBit, BlockingQueue<Message> senderQueue,
-            BlockingQueue<Message> receiverQueue, int clientId, List<TripleByte> binaryTriples,
-            int partyCount, String[] args, LinkedList<Integer> protocolIdQueue) */
+        ExecutorService es = Executors.newFixedThreadPool(Constants.threadCount);
+        List<Future<List<Integer[]>>> taskList = new ArrayList<>();
 
+        long startTime = System.currentTimeMillis();
+
+        // TODO - How to handle TiShares here????
         if (partyHasTrees) {
             for (int i = 0; i < treeCount; i++) {
+
+                initQueueMap(recQueues, pid);
+
+                String args[] = {"storedtree=" + propertyFiles[i]};
+
+                DecisionTreeScoring DTScoreModule = new DecisionTreeScoring(asymmetricBit,
+                        commonSender, recQueues.get(pid), clientId,
+                        binaryTiShares, partyCount, args, new LinkedList<>(protocolIdQueue), pid);
+
+                taskList.add(es.submit(DTScoreModule));
+                pid++;
 
             }
         } else {
             for (int i = 0; i < treeCount; i++) {
 
+                initQueueMap(recQueues, pid);
+
+                String args[] = {"testCsv=" + csvPath, "treeproperties=" + propertyFiles[i]};
+
+                DecisionTreeScoring DTScoreModule = new DecisionTreeScoring(asymmetricBit,
+                        commonSender, recQueues.get(pid), clientId,
+                        binaryTiShares, partyCount, args, new LinkedList<>(protocolIdQueue), pid);
+
+                taskList.add(es.submit(DTScoreModule));
+                pid++;
             }
         }
+
+        for (int i = 0; i < treeCount; i++) {
+            Future<List<Integer[]>> DTScoreTask = taskList.get(i);
+            try {
+                treeOutputs.add(DTScoreTask.get());
+            } catch (InterruptedException | ExecutionException ex) {
+                Logger.getLogger(TreeEnsemble.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            
+        }
+        
+        //bitwise addition and argmax
 
         long stopTime = System.currentTimeMillis();
         long elapsedTime = stopTime - startTime;
