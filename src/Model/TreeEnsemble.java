@@ -48,12 +48,13 @@ public class TreeEnsemble extends Model {
      * @param partyCount
      * @param args
      * @param protocolIdQueue
+     * @param protocolID
      */
     public TreeEnsemble(int asymmetricBit, BlockingQueue<Message> senderQueue,
             BlockingQueue<Message> receiverQueue, int clientId, List<TripleByte> binaryTriples,
-            int partyCount, String[] args, LinkedList<Integer> protocolIdQueue) {
+            int partyCount, String[] args, LinkedList<Integer> protocolIdQueue, int protocolID) {
 
-        super(senderQueue, receiverQueue, clientId, asymmetricBit, partyCount, protocolIdQueue);
+        super(senderQueue, receiverQueue, clientId, asymmetricBit, partyCount, protocolIdQueue, protocolID);
 
         initializeModelVariables(args);
 
@@ -118,6 +119,10 @@ public class TreeEnsemble extends Model {
         startModelHandlers();
 
         long startTime = System.currentTimeMillis();
+        
+        /*public DecisionTreeScoring(int asymmetricBit, BlockingQueue<Message> senderQueue,
+            BlockingQueue<Message> receiverQueue, int clientId, List<TripleByte> binaryTriples,
+            int partyCount, String[] args, LinkedList<Integer> protocolIdQueue) */
 
         if (partyHasTrees) {
             for (int i = 0; i < treeCount; i++) {

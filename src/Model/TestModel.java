@@ -53,12 +53,14 @@ public class TestModel extends Model {
      * @param partyCount
      * @param args
      * @param protocolIdQueue
+     * @param protocolID
      */
     public TestModel(List<TripleByte> binaryTriples, List<TripleInteger> decimalTriples,
             List<TripleReal> realTiShares, int asymmetricBit, BlockingQueue<Message> senderQueue,
-            BlockingQueue<Message> receiverQueue, int clientId, int partyCount, String[] args, LinkedList<Integer> protocolIdQueue) {
+            BlockingQueue<Message> receiverQueue, int clientId, int partyCount, String[] args, 
+            LinkedList<Integer> protocolIdQueue, int protocolID) {
 
-        super(senderQueue, receiverQueue, clientId, asymmetricBit, partyCount, protocolIdQueue);
+        super(senderQueue, receiverQueue, clientId, asymmetricBit, partyCount, protocolIdQueue, protocolID);
 
         this.binaryTiShares = binaryTriples;
         this.decimalTiShares = decimalTriples;

@@ -33,6 +33,7 @@ public class Model {
     int clientId;
     int partyCount;
     int asymmetricBit;
+    int modelProtocolId;
 
     /**
      *
@@ -42,10 +43,11 @@ public class Model {
      * @param asymmetricBit
      * @param partyCount
      * @param protocolIdQueue
+     * @param protocolID
      */
     public Model(BlockingQueue<Message> senderQueue,
             BlockingQueue<Message> receiverQueue, int clientId, int asymmetricBit,
-            int partyCount, LinkedList<Integer> protocolIdQueue) {
+            int partyCount, LinkedList<Integer> protocolIdQueue, int protocolID) {
 
         this.asymmetricBit = asymmetricBit;
         this.partyCount = partyCount;
@@ -55,6 +57,8 @@ public class Model {
 
         recQueues = new ConcurrentHashMap<>(50, 0.9f, 1);
         this.protocolIdQueue = protocolIdQueue;
+        protocolIdQueue.add(protocolID);
+        this.modelProtocolId = protocolID;
 
         queueHandlers = Executors.newSingleThreadExecutor();
         receiverThread = new ReceiverQueueHandler(1, commonReceiver, recQueues);

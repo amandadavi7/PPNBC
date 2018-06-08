@@ -191,12 +191,13 @@ public class DecisionTreeScoring extends Model implements Callable<List<Integer[
      * @param partyCount
      * @param args
      * @param protocolIdQueue
+     * @param protocolID
      */
     public DecisionTreeScoring(int asymmetricBit, BlockingQueue<Message> senderQueue,
             BlockingQueue<Message> receiverQueue, int clientId, List<TripleByte> binaryTriples,
-            int partyCount, String[] args, LinkedList<Integer> protocolIdQueue) {
+            int partyCount, String[] args, LinkedList<Integer> protocolIdQueue, int protocolID) {
 
-        super(senderQueue, receiverQueue, clientId, asymmetricBit, partyCount, protocolIdQueue);
+        super(senderQueue, receiverQueue, clientId, asymmetricBit, partyCount, protocolIdQueue, protocolID);
 
         initializeModelVariables(args);
         pid = 0;

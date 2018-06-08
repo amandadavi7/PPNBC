@@ -65,7 +65,7 @@ public class Party {
         partyId = -1;
 
         protocolIdQueue = new LinkedList<>();
-        protocolIdQueue.add(1);
+        //protocolIdQueue.add(1);
 
         for (String arg : args) {
             String[] currInput = arg.split("=");
@@ -192,7 +192,7 @@ public class Party {
                 // DT Scoring
                 DecisionTreeScoring DTree = new DecisionTreeScoring(asymmetricBit,
                         senderQueue, receiverQueue, partyId, tiShares.binaryShares,
-                        partyCount, args, new LinkedList<>(protocolIdQueue));
+                        partyCount, args, new LinkedList<>(protocolIdQueue),1);
                 DTree.call();
                 break;
 
@@ -201,7 +201,7 @@ public class Party {
                 LinearRegressionEvaluation regressionModel
                         = new LinearRegressionEvaluation(tiShares.bigIntShares,
                                 asymmetricBit, senderQueue,
-                                receiverQueue, partyId, partyCount, args, new LinkedList<>(protocolIdQueue));
+                                receiverQueue, partyId, partyCount, args, new LinkedList<>(protocolIdQueue),1);
 
                 regressionModel.predictValues();
                 break;
@@ -211,7 +211,7 @@ public class Party {
                 TestModel testModel = new TestModel(tiShares.binaryShares,
                         tiShares.decimalShares, tiShares.bigIntShares,
                         asymmetricBit, senderQueue, receiverQueue, partyId,
-                        partyCount, args, new LinkedList<>(protocolIdQueue));
+                        partyCount, args, new LinkedList<>(protocolIdQueue),1);
 
                 testModel.compute();
                 break;

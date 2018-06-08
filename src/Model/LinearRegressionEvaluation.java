@@ -47,14 +47,15 @@ public class LinearRegressionEvaluation extends Model {
      * @param partyCount
      * @param args
      * @param protocolIdQueue
+     * @param protocolID
      *
      */
     public LinearRegressionEvaluation(List<TripleReal> realTriples,
             int asymmetricBit, BlockingQueue<Message> senderQueue,
             BlockingQueue<Message> receiverQueue, int clientId,
-            int partyCount, String[] args, LinkedList<Integer> protocolIdQueue) {
+            int partyCount, String[] args, LinkedList<Integer> protocolIdQueue, int protocolID) {
 
-        super(senderQueue, receiverQueue, clientId, asymmetricBit, partyCount, protocolIdQueue);
+        super(senderQueue, receiverQueue, clientId, asymmetricBit, partyCount, protocolIdQueue, protocolID);
         this.realTiShares = realTriples;
 
         y = new ArrayList<>();
