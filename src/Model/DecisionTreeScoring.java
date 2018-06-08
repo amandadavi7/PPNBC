@@ -152,7 +152,7 @@ class PolynomialComputing extends CompositeProtocol implements Callable<Integer[
  *
  * @author keerthanaa
  */
-public class DecisionTreeScoring extends Model {
+public class DecisionTreeScoring extends Model implements Callable<List<Integer[]>>{
 
     int depth, attributeBitLength, attributeCount;//depth d, bitlength for each attribute value, total no. of attributes
     boolean partyHasTree;                         //true if the party has the tree, false if it has the test case
@@ -165,7 +165,8 @@ public class DecisionTreeScoring extends Model {
     int[] attributeThresholds;                    //each internal node's attribute threshold
     List<List<Integer>> attributeThresholdsBitShares; //attribute thresholds as bits
     int leafNodes, tiBinaryStartIndex, classLabelCount, alpha, pid; //leafNode - no. of leafnodes, classlabelcount - total number of class labels
-    int[] comparisonOutputs, finalOutputs;
+    int[] comparisonOutputs;
+    Integer[] finalOutputs;
     List<TripleByte> binaryTiShares;
 
     /**
@@ -306,14 +307,13 @@ public class DecisionTreeScoring extends Model {
         attributeThresholdsBitShares = new ArrayList<>();
         comparisonOutputs = new int[leafNodes - 1];
         alpha = (int) Math.ceil(Math.log(classLabelCount) / Math.log(2.0));
-        finalOutputs = new int[alpha];
+        finalOutputs = new Integer[alpha];
     }
 
     /**
      * Main method for the DT Scoring algorithm
      */
-    public void ScoreDecisionTree() {
-
+    public List<Integer[]> call() {
         startModelHandlers();
 
         init();
@@ -330,7 +330,7 @@ public class DecisionTreeScoring extends Model {
 
         getFeatureVectors();
 
-        System.out.println("got the feature vectors");
+        System.out.println("got the feature vectors:" + Arrays.deepToString(featureVectors));
 
         doThresholdComparisons();
 
@@ -343,6 +343,10 @@ public class DecisionTreeScoring extends Model {
         System.out.println("Avg time duration:" + elapsedTime);
 
         teardownModelHandlers();
+        
+        List<Integer[]> result = new ArrayList<>();
+        result.add(finalOutputs);
+        return result;
     }
 
     /**
@@ -538,6 +542,7 @@ public class DecisionTreeScoring extends Model {
 
         System.out.println("final:" + Arrays.toString(finalOutputs));
         for (int i = 0; i < alpha; i++) {
+            finalOutputs[i] = 0;
             for (int j = 0; j < leafNodes; j++) {
                 finalOutputs[i] += yShares[j][i];
             }

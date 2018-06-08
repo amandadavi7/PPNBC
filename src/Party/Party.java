@@ -193,7 +193,7 @@ public class Party {
                 DecisionTreeScoring DTree = new DecisionTreeScoring(asymmetricBit,
                         senderQueue, receiverQueue, partyId, tiShares.binaryShares,
                         partyCount, args, new LinkedList<>(protocolIdQueue));
-                DTree.ScoreDecisionTree();
+                DTree.call();
                 break;
 
             case 2:
