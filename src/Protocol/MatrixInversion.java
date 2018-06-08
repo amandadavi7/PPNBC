@@ -6,13 +6,12 @@
 package Protocol;
 
 import Communication.Message;
-import Protocol.Utility.BatchTruncation;
 import Protocol.Utility.MatrixMultiplication;
 import TrustedInitializer.TripleReal;
 import TrustedInitializer.TruncationPair;
 import Utility.Constants;
 import Utility.FileIO;
-import java.math.BigDecimal;
+import Utility.Logging;
 import java.math.BigInteger;
 import java.util.LinkedList;
 import java.util.List;
@@ -34,13 +33,15 @@ import java.util.logging.Logger;
 public class MatrixInversion extends CompositeProtocol implements
         Callable<BigInteger[][]> {
 
-    private static BigInteger[][] Ashares, I;
+    private static BigInteger[][] Ashares, I, I2;
     private static int n;
     private static int globalPid;
     private static int nrRounds;
     List<TripleReal> tishares;
     List<TruncationPair> tiTruncationPair;
     private BigInteger prime;
+    private int tiRealIndex;
+    private int tiTruncationIndex;
 
     public MatrixInversion(BigInteger[][] Ashares, List<TripleReal> tishares,
             List<TruncationPair> tiTruncationPair,
@@ -58,14 +59,19 @@ public class MatrixInversion extends CompositeProtocol implements
         this.nrRounds = 10;
         //this.nrRounds = Constants.decimal_precision/2;
         n = Ashares.length;
-        I = createIdentity();
+        I = createIdentity(1);
+        I2 = createIdentity(2);
         globalPid = 0;
+        tiRealIndex = 0;
+        tiTruncationIndex = 0;
+        Logging.logMatrix("Our matrix:", Ashares);
     }
 
     @Override
     public BigInteger[][] call() throws Exception {
         startHandlers();
         BigInteger c = calculateTrace(Ashares);
+        System.out.println("Trace:" + c);
 
         // compute cinv using Newton Raphson
         BigInteger cInv = computeCInv(c);
@@ -76,26 +82,34 @@ public class MatrixInversion extends CompositeProtocol implements
 
         // Number of rounds = k = f+e
         X = newtonRaphsonAlgorithm(Ashares, X, nrRounds);
+        System.out.println("Inverse of the matrix:");
+        Logging.logMatrix("Inverse", X);
         tearDownHandlers();
         return X;
 
     }
 
+    /**
+     * Sum of diagonal elements of the matrix. The trace returned is over Zq.
+     *
+     * @param matrix
+     * @return
+     */
     private BigInteger calculateTrace(BigInteger[][] matrix) {
-        BigInteger trace = BigInteger.ZERO;
+        BigInteger trace = FileIO.realToZq(0, Constants.decimal_precision, prime);
         for (int i = 0; i < n; i++) {
             trace = trace.add(matrix[i][i]).mod(prime);
         }
-
         return trace;
     }
 
-    private BigInteger[][] createIdentity() {
+    private BigInteger[][] createIdentity(int number) {
         BigInteger[][] I = new BigInteger[n][n];
+        BigInteger diagonalElements = FileIO.realToZq(number, Constants.decimal_precision, prime);
         for (int i = 0; i < n; i++) {
             for (int j = 0; j < n; j++) {
                 if (i == j) {
-                    I[i][j] = BigInteger.ONE;
+                    I[i][j] = diagonalElements;
                 } else {
                     I[i][j] = BigInteger.ZERO;
                 }
@@ -105,17 +119,20 @@ public class MatrixInversion extends CompositeProtocol implements
         return I;
     }
 
+    /**
+     * Compute C inverse. this is done using distributed newton Raphson
+     * algorithm start with a very small value (Xs). one party takes 0.01 rest
+     * all take 0
+     *
+     * @param c
+     * @return
+     */
     private BigInteger computeCInv(BigInteger c) {
-        // compute cnv using newton raphson method
-        // start with a very small value
-        c = FileIO.realToZq(5, Constants.decimal_precision, prime);
-        System.out.println("C:" + c);
-        // one party takes 0.01 rest all take 0
         BigInteger Xs = BigInteger.ZERO;
         if (asymmetricBit == 1) {
             Xs = FileIO.realToZq(0.01, Constants.decimal_precision, prime);
         }
-        return newtonRaphsonAlgorithmScalar(c, Xs, nrRounds);
+        return newtonRaphsonAlgorithmScalar(c, Xs);
     }
 
     private BigInteger[][] computeX0(BigInteger cInv) {
@@ -123,6 +140,8 @@ public class MatrixInversion extends CompositeProtocol implements
         for (int i = 0; i < n; i++) {
             for (int j = 0; j < n; j++) {
                 X[i][j] = cInv.multiply(I[i][j]);
+                BigInteger scaleFactor = BigInteger.valueOf(2).pow(Constants.decimal_precision);
+                X[i][j] = X[i][j].divide(scaleFactor).mod(prime);
             }
         }
         return X;
@@ -133,15 +152,10 @@ public class MatrixInversion extends CompositeProtocol implements
         BigInteger[][] subtractedAX = new BigInteger[marixSize][marixSize];
         for (int i = 0; i < marixSize; i++) {
             for (int j = 0; j < marixSize; j++) {
-                subtractedAX[i][j] = BigInteger.valueOf(2 * asymmetricBit).subtract(AX[i][j]).mod(prime);
+                subtractedAX[i][j] = I2[i][j].multiply(BigInteger.valueOf(asymmetricBit))
+                        .subtract(AX[i][j]).mod(prime);
             }
         }
-        return subtractedAX;
-    }
-
-    private BigInteger subtractFromTwoScalar(BigInteger AX) {
-        BigInteger subtractedAX = BigInteger.valueOf(2 * asymmetricBit).
-                subtract(AX).mod(prime);
         return subtractedAX;
     }
 
@@ -153,13 +167,11 @@ public class MatrixInversion extends CompositeProtocol implements
 
         for (int i = 0; i < rounds; i++) {
             // AX = DM(A.X)
-            System.out.println("Newton Raphson: round " + i + " on A:" + A.length
-                    + "," + A[0].length + " and X:" + X.length + ", " + X[0].length + ", globalPid:" + globalPid);
-            int tiRealIndex = 0;
-            int tiTruncationIndex = 0;
+            System.out.println("Newton Raphson: round " + i + ", globalPid:" + globalPid);
             initQueueMap(recQueues, globalPid);
 
-            FileIO.writeToCSV(X, "/home/anisha/PPML Tests/output/", "X", clientID, prime);
+            //FileIO.writeToCSV(X, "/home/anisha/PPML Tests/output/", "X", clientID, prime);
+//            Logging.logMatrix("X", X);
 
             MatrixMultiplication matrixMultiplication = new MatrixMultiplication(
                     A, X, tishares.subList(tiRealIndex, (int) (tiRealIndex + Math.pow(n, 3))),
@@ -176,16 +188,19 @@ public class MatrixInversion extends CompositeProtocol implements
             BigInteger[][] AX = null;
             try {
                 AX = multiplicationTask.get();
-
+                System.out.println("AX computed:"+ globalPid);
             } catch (InterruptedException | ExecutionException ex) {
                 Logger.getLogger(MatrixInversion.class.getName()).log(Level.SEVERE, null, ex);
             }
 
-            FileIO.writeToCSV(AX, "/home/anisha/PPML Tests/output/", "matrixMultiplication", clientID, prime);
+            //FileIO.writeToCSV(AX, "/home/anisha/PPML Tests/output/", "matrixMultiplication", clientID, prime);
+//            Logging.logMatrix("AX", AX);
 
             BigInteger[][] subtractedAX = subtractFromTwo(AX);
+            System.out.println("AX subtracted:"+ globalPid);
 
-            FileIO.writeToCSV(subtractedAX, "/home/anisha/PPML Tests/output/", "subtractedAX", clientID, prime);
+            //FileIO.writeToCSV(subtractedAX, "/home/anisha/PPML Tests/output/", "subtractedAX", clientID, prime);
+//            Logging.logMatrix("subtractedAX", subtractedAX);
 
             // X = DM(X.temp2)
             initQueueMap(recQueues, globalPid);
@@ -209,92 +224,79 @@ public class MatrixInversion extends CompositeProtocol implements
                 Logger.getLogger(MatrixInversion.class.getName()).log(Level.SEVERE, null, ex);
             }
 
-            FileIO.writeToCSV(Xs1, "/home/anisha/PPML Tests/output/", "matrixMultiplication2", clientID, prime);
+            System.out.println("Xs+1 computed:"+ globalPid);
+            //FileIO.writeToCSV(Xs1, "/home/anisha/PPML Tests/output/", "XS+1", clientID, prime);
+//            Logging.logMatrix("Xs+1", Xs1);
             X = Xs1;
+//            Logging.logMatrix("New X:", X);
+            System.out.println("Xs: " + FileIO.ZqToReal(X[0][0], 
+                    Constants.decimal_precision, prime));
+
 
         }
         es.shutdown();
 
+        FileIO.writeToCSV(X, "/home/anisha/PPML Tests/output/", "matrixInversion", clientID, prime);
         //System.out.println("returning matrix inversion");
         return X;
     }
 
+    /**
+     * Newton Raphson for scalar values
+     *
+     * @param A
+     * @param X
+     * @return
+     */
     private BigInteger newtonRaphsonAlgorithmScalar(BigInteger A,
-            BigInteger X, int rounds) {
+            BigInteger X) {
         ExecutorService es = Executors.newSingleThreadExecutor();
 
-        for (int i = 0; i < rounds; i++) {
-            // AX = DM(A.X)
-            int tiRealIndex = 0;
-            int tiTruncationIndex = 0;
-            initQueueMap(recQueues, globalPid);
+        //TODO revert nrRounds
+        for (int i = 0; i < 10; i++) {
 
+            // AX = DM(A.X)
+            initQueueMap(recQueues, globalPid);
             MultiplicationReal multiplicationModule = new MultiplicationReal(A,
-                    X,
-                    tishares.get(tiRealIndex),
-                    senderQueue,
+                    X, tishares.get(tiRealIndex), senderQueue,
                     recQueues.get(globalPid), new LinkedList<>(protocolIdQueue),
-                    clientID,
-                    prime, globalPid, asymmetricBit, partyCount);
+                    clientID, prime, globalPid, asymmetricBit, partyCount);
 
             // TODO uncomment to not reuse the shares
-            //tiRealIndex += Math.pow(n, 3);
-            //tiTruncationIndex += (n*n);
+            //tiRealIndex++;
             globalPid++;
+
             Future<BigInteger> multiplicationTask = es.submit(multiplicationModule);
             BigInteger AX = null;
             try {
                 AX = multiplicationTask.get();
-                System.out.println("AX:" + AX + ", for A:" + A + ",X:" + X);
-
             } catch (InterruptedException | ExecutionException ex) {
                 Logger.getLogger(MatrixInversion.class.getName()).log(Level.SEVERE, null, ex);
             }
 
             initQueueMap(recQueues, globalPid);
-            
-            BigInteger[] axMatrix = new BigInteger[1];
-            axMatrix[0] = AX;
-
-//            BatchTruncation truncationModule = new BatchTruncation(axMatrix,
-//                    tiTruncationPair.subList(0,
-//                            1),
-//                    senderQueue, recQueues.get(globalPid),
-//                    new LinkedList<>(protocolIdQueue),
-//                    clientID, prime, globalPid++, asymmetricBit, partyCount);
-//            Future<BigInteger[]> truncationTask = es.submit(truncationModule);
-//            
-//            BigInteger[] c = null;
-//            try {
-//                c = truncationTask.get();
-//            } catch (InterruptedException | ExecutionException ex) {
-//                Logger.getLogger(MatrixInversion.class.getName())
-//                        .log(Level.SEVERE, null, ex);
-//            }
-//            
-//            BigInteger truncatedAX = c[0];
-//            System.out.println("truncatedAX:"+ truncatedAX);
-            
-
             Truncation truncationModule = new Truncation(AX,
-                    tiTruncationPair.get(tiTruncationIndex),
-                    senderQueue, recQueues.get(globalPid),
-                    new LinkedList<>(protocolIdQueue),
+                    tiTruncationPair.get(tiTruncationIndex), senderQueue,
+                    recQueues.get(globalPid), new LinkedList<>(protocolIdQueue),
                     clientID, prime, globalPid, asymmetricBit, partyCount);
+
+            // TODO uncomment to not reuse the shares
+            //tiTruncationIndex++;
+            globalPid++;
             Future<BigInteger> truncationTask = es.submit(truncationModule);
 
             BigInteger truncatedAX = null;
             try {
                 truncatedAX = truncationTask.get();
-                System.out.println("truncatedAX:"+ truncatedAX);
             } catch (InterruptedException | ExecutionException ex) {
                 Logger.getLogger(MultiplicationReal.class.getName())
                         .log(Level.SEVERE, null, ex);
             }
-            globalPid++;
 
-            BigInteger subtractedAX = subtractFromTwoScalar(truncatedAX);
-            System.out.println("subAX:" + subtractedAX);
+            // subtracted AX = (2-AX). this computation is local
+            BigInteger subtractedAX = FileIO.realToZq(2 * asymmetricBit,
+                    Constants.decimal_precision, prime)
+                    .subtract(truncatedAX).mod(prime);
 
             // X = DM(X.temp2)
             initQueueMap(recQueues, globalPid);
@@ -309,15 +311,17 @@ public class MatrixInversion extends CompositeProtocol implements
             //tiTruncationIndex += (n*n);
             globalPid++;
             multiplicationTask = es.submit(multiplicationModuleNext);
+
+            BigInteger XsNext = null;
             try {
-                X = multiplicationTask.get();
+                XsNext = multiplicationTask.get();
             } catch (InterruptedException | ExecutionException ex) {
                 Logger.getLogger(MatrixInversion.class.getName()).log(Level.SEVERE, null, ex);
             }
 
             initQueueMap(recQueues, globalPid);
 
-            Truncation truncationModuleNext = new Truncation(X,
+            Truncation truncationModuleNext = new Truncation(XsNext,
                     tiTruncationPair.get(tiTruncationIndex),
                     senderQueue, recQueues.get(globalPid),
                     new LinkedList<>(protocolIdQueue),
@@ -335,7 +339,6 @@ public class MatrixInversion extends CompositeProtocol implements
             globalPid++;
             X = truncatedX;
 
-            System.out.println("result:" + truncatedX);
         }
         es.shutdown();
 

@@ -304,7 +304,7 @@ public class TestModel extends Model {
         //callBitDecomposition();
         // pass 1 - multiplication, 2 - dot product and 3 - comparison
         //callProtocol(2);
-        //callMatrixInversion();
+        callMatrixInversion();
         //callTruncation();
         //callMatrixMultiplication();
         //callMultiplicationReal();
@@ -383,7 +383,7 @@ public class TestModel extends Model {
         MatrixInversion matrixInversion = new MatrixInversion(xBigInt, realTiShares,
                 tiTruncationPair,
                 1, commonSender, recQueues.get(1), new LinkedList<>(protocolIdQueue),
-                clientId, asymmetricBit, partyCount, BigInteger.valueOf(11));
+                clientId, asymmetricBit, partyCount, prime);
 
         Future<BigInteger[][]> matrixInversionTask = es.submit(matrixInversion);
 

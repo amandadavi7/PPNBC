@@ -5,7 +5,9 @@
  */
 package Utility;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -27,6 +29,22 @@ public class Logging {
         System.out.print(variableName + ": ");
         for (int share : shares) {
             System.out.print(share + " ");
+        }
+        System.out.println("");
+    }
+    
+    /**
+     * Log matrix
+     *
+     * @param variableName
+     * @param matrix
+     */
+    public static void logMatrix(String variableName, BigInteger[][] matrix) {
+        int n = matrix.length;
+        int m = matrix[0].length;
+        System.out.print(variableName + ": ");
+        for(int i=0;i<n;i++) {
+            System.out.println(Arrays.asList(matrix[i]));
         }
         System.out.println("");
     }

@@ -112,7 +112,7 @@ public class Random {
         int f = Constants.decimal_precision;
         int k = Constants.integer_precision + Constants.decimal_precision;
         //TODO take lambda as a parameter
-        int lambda = 10;
+        int lambda = 0;
 
         for (int i = 0; i < truncationPairs; i++) {
             // generate a random Rp of f bit length

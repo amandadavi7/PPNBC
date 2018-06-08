@@ -9,9 +9,6 @@ import Communication.Message;
 import TrustedInitializer.TruncationPair;
 import Utility.Constants;
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
@@ -44,7 +41,6 @@ public class Truncation extends CompositeProtocol implements Callable<BigInteger
                 asymmetricBit, partyCount);
 
         this.wShares = wShares;
-        System.out.println("W:"+wShares);
         this.prime = prime;
         this.truncationShares = tiShares;
 
@@ -100,11 +96,6 @@ public class Truncation extends CompositeProtocol implements Callable<BigInteger
         BigInteger S = wShares.add(truncationShares.rp).mod(prime).
                 subtract(cp.multiply(BigInteger.valueOf(asymmetricBit)));
         T = S.multiply(fInv).mod(prime);
-        System.out.println("R:"+truncationShares.r);
-        System.out.println("Z:"+ zShares);
-        System.out.println("Cp:"+ cp);
-        System.out.println("S:"+ S);
-        System.out.println("T:"+ T);
 
     }
 

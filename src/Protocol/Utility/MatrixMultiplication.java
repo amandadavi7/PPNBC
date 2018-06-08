@@ -9,7 +9,6 @@ import Communication.Message;
 import Model.LinearRegressionTraining;
 import Protocol.CompositeProtocol;
 import Protocol.DotProductReal;
-import Protocol.Truncation;
 import TrustedInitializer.TripleReal;
 import TrustedInitializer.TruncationPair;
 import Utility.Constants;
@@ -176,7 +175,7 @@ public class MatrixMultiplication extends CompositeProtocol implements
 
         es.shutdown();
         tearDownHandlers();
-
+        
         return c;
 
     }

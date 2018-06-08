@@ -83,6 +83,7 @@ public class LinearRegressionTraining extends Model {
         long startTime = System.currentTimeMillis();
         
         transposeMatrix();
+        FileIO.writeToCSV(xT, outputPath, "xT", clientId, prime);
 
         //TODO can do both local matrix multiplication in parallel
         BigInteger[][] gamma1 = localMatrixMultiplication(xT, x);
@@ -185,7 +186,7 @@ public class LinearRegressionTraining extends Model {
                 // dot product of ith row of a and jth row of b
                 BigInteger sum = BigInteger.ZERO;
                 for (int k = 0; k < m; k++) {
-                    sum = sum.add(a[i][k].multiply(b[k][j])).mod(prime);
+                    sum = sum.add(a[i][k].multiply(b[k][j]).mod(prime)).mod(prime);
                 }
                 //System.out.println("sum:"+sum);
                 c[i][j] = localScale(sum);
