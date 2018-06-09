@@ -7,7 +7,9 @@ package Model;
 
 import Communication.Message;
 import Protocol.DotProductReal;
+import Protocol.Utility.BatchTruncation;
 import TrustedInitializer.TripleReal;
+import TrustedInitializer.TruncationPair;
 import Utility.Constants;
 import Utility.FileIO;
 import Utility.Logging;
@@ -28,41 +30,41 @@ public class LinearRegressionEvaluation extends Model {
 
     List<List<BigInteger>> x;
     List<BigInteger> beta;
-    List<BigInteger> y;
+    BigInteger[] y;
     BigInteger prime;
     String outputPath;
     int testCases;
     List<TripleReal> realTiShares;
+    List<TruncationPair> truncationTiShares;
 
     /**
      * Constructor
      *
      * @param realTriples
+     * @param truncationShares
      * @param asymmetricBit
      * @param senderQueue
      * @param receiverQueue
      * @param clientId
      * @param partyCount
      * @param args
-     * 
+     *
      */
     public LinearRegressionEvaluation(List<TripleReal> realTriples,
+            List<TruncationPair> truncationShares,
             int asymmetricBit, BlockingQueue<Message> senderQueue,
             BlockingQueue<Message> receiverQueue, int clientId,
             int partyCount, String[] args) {
 
         super(senderQueue, receiverQueue, clientId, asymmetricBit, partyCount);
         this.realTiShares = realTriples;
-
-        y = new ArrayList<>();
+        this.truncationTiShares = truncationShares;
 
         prime = BigInteger.valueOf(2).pow(Constants.integer_precision
                 + 2 * Constants.decimal_precision + 1).nextProbablePrime();  //Zq must be a prime field
 
         initalizeModelVariables(args);
-        System.out.println("sample X:"+ x.get(0).get(0));
-        System.out.println("sample beta:"+ beta.get(0));
-
+        
     }
 
     /**
@@ -77,9 +79,9 @@ public class LinearRegressionEvaluation extends Model {
         long elapsedTime = stopTime - startTime;
         //TODO: push time to a csv file
         System.out.println("Avg time duration:" + elapsedTime + " for partyId:"
-                + clientId + ", for size:" + y.size());
+                + clientId + ", for size:" + y.length);
         teardownModelHandlers();
-        FileIO.writeToCSV(y, outputPath, "y",clientId);
+        FileIO.writeToCSV(y, outputPath, "y", clientId);
 
     }
 
@@ -108,13 +110,14 @@ public class LinearRegressionEvaluation extends Model {
             tiStartIndex += x.get(i).size();
         }
 
-        es.shutdown();
+        
 
+        BigInteger[] dotProductResult = new BigInteger[testCases];
         for (int i = 0; i < testCases; i++) {
             Future<BigInteger> dWorkerResponse = taskList.get(i);
             try {
                 BigInteger result = dWorkerResponse.get();
-                y.add(result);
+                dotProductResult[i] = result;
                 //System.out.println(" #:" + i+ ", result:"+ result);
             } catch (InterruptedException ex) {
                 Logger.getLogger(LinearRegressionEvaluation.class.getName()).log(Level.SEVERE, null, ex);
@@ -122,6 +125,23 @@ public class LinearRegressionEvaluation extends Model {
                 Logger.getLogger(LinearRegressionEvaluation.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
+
+        initQueueMap(recQueues, testCases);
+        BatchTruncation truncationModule = new BatchTruncation(dotProductResult,
+                truncationTiShares,
+                commonSender, recQueues.get(testCases),
+                new LinkedList<>(protocolIdQueue),
+                clientId, prime, testCases, asymmetricBit, partyCount);
+        Future<BigInteger[]> truncationTask = es.submit(truncationModule);
+
+        try {
+            y = truncationTask.get();
+        } catch (InterruptedException | ExecutionException ex) {
+            Logger.getLogger(LinearRegressionTraining.class.getName())
+                    .log(Level.SEVERE, null, ex);
+        }
+        
+        es.shutdown();
     }
 
     private void initalizeModelVariables(String[] args) {
@@ -149,6 +169,7 @@ public class LinearRegressionEvaluation extends Model {
 
         }
         testCases = x.size();
+        y = new BigInteger[testCases];
     }
 
 }

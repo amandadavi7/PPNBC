@@ -199,14 +199,14 @@ public class FileIO {
 
     }
 
-    public static void writeToCSV(List<BigInteger> y, String outputPath,
+    public static void writeToCSV(BigInteger[] y, String outputPath,
             String filePrefix, int clientId) {
-        int len = y.size();
+        int len = y.length;
         try {
             try (FileWriter writer = new FileWriter(outputPath + filePrefix + 
                     "_" + clientId + ".csv")) {
                 for (int i = 0; i < len; i++) {
-                    writer.write(y.get(i).toString());
+                    writer.write(y[i].toString());
                     writer.write("\n");
                 }
             }

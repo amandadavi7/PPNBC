@@ -204,6 +204,7 @@ public class Party {
                 // LR Evaluation
                 LinearRegressionEvaluation regressionEvaluationModel
                         = new LinearRegressionEvaluation(tiShares.bigIntShares,
+                                tiShares.truncationPair,
                                 asymmetricBit, senderQueue,
                                 receiverQueue, partyId, partyCount, args);
 
