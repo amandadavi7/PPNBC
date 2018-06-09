@@ -198,7 +198,7 @@ public class LinearRegressionTraining extends Model {
 
     //TODO convert this to matrix scaling
     BigInteger localScale(BigInteger value) {
-
+        
         BigInteger scaleFactor = BigInteger.valueOf(2).pow(Constants.decimal_precision);
         value = value.divide(scaleFactor).mod(prime);
         return value;

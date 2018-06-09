@@ -33,7 +33,7 @@ import java.util.logging.Logger;
 public class MatrixInversion extends CompositeProtocol implements
         Callable<BigInteger[][]> {
 
-    private static BigInteger[][] Ashares, I, I2;
+    private static BigInteger[][] Ashares, I2;
     private static int n;
     private static int globalPid;
     private static int nrRounds;
@@ -56,10 +56,9 @@ public class MatrixInversion extends CompositeProtocol implements
         this.tishares = tishares;
         this.tiTruncationPair = tiTruncationPair;
         this.prime = prime;
-        this.nrRounds = 10;
+        this.nrRounds = 20;
         //this.nrRounds = Constants.decimal_precision/2;
         n = Ashares.length;
-        I = createIdentity(1);
         I2 = createIdentity(2);
         globalPid = 0;
         tiRealIndex = 0;
@@ -78,12 +77,12 @@ public class MatrixInversion extends CompositeProtocol implements
 
         System.out.println("cinv:" + cInv);
 
-        BigInteger[][] X = computeX0(cInv);
+        BigInteger[][] X = createIdentity(cInv);
 
         // Number of rounds = k = f+e
         X = newtonRaphsonAlgorithm(Ashares, X, nrRounds);
         System.out.println("Inverse of the matrix:");
-        Logging.logMatrix("Inverse", X);
+        //Logging.logMatrix("Inverse", X);
         tearDownHandlers();
         return X;
 
@@ -103,9 +102,25 @@ public class MatrixInversion extends CompositeProtocol implements
         return trace;
     }
 
+    private BigInteger[][] createIdentity(BigInteger number) {
+        BigInteger[][] I = new BigInteger[n][n];
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                if (i == j) {
+                    I[i][j] = number;
+                } else {
+                    I[i][j] = BigInteger.ZERO;
+                }
+
+            }
+        }
+        return I;
+    }
+    
     private BigInteger[][] createIdentity(int number) {
         BigInteger[][] I = new BigInteger[n][n];
-        BigInteger diagonalElements = FileIO.realToZq(number, Constants.decimal_precision, prime);
+        BigInteger diagonalElements = FileIO.realToZq(number*asymmetricBit, 
+                Constants.decimal_precision, prime);
         for (int i = 0; i < n; i++) {
             for (int j = 0; j < n; j++) {
                 if (i == j) {
@@ -130,21 +145,9 @@ public class MatrixInversion extends CompositeProtocol implements
     private BigInteger computeCInv(BigInteger c) {
         BigInteger Xs = BigInteger.ZERO;
         if (asymmetricBit == 1) {
-            Xs = FileIO.realToZq(0.01, Constants.decimal_precision, prime);
+            Xs = FileIO.realToZq(0.00000001, Constants.decimal_precision, prime);
         }
         return newtonRaphsonAlgorithmScalar(c, Xs);
-    }
-
-    private BigInteger[][] computeX0(BigInteger cInv) {
-        BigInteger[][] X = new BigInteger[n][n];
-        for (int i = 0; i < n; i++) {
-            for (int j = 0; j < n; j++) {
-                X[i][j] = cInv.multiply(I[i][j]);
-                BigInteger scaleFactor = BigInteger.valueOf(2).pow(Constants.decimal_precision);
-                X[i][j] = X[i][j].divide(scaleFactor).mod(prime);
-            }
-        }
-        return X;
     }
 
     private BigInteger[][] subtractFromTwo(BigInteger[][] AX) {
@@ -152,8 +155,7 @@ public class MatrixInversion extends CompositeProtocol implements
         BigInteger[][] subtractedAX = new BigInteger[marixSize][marixSize];
         for (int i = 0; i < marixSize; i++) {
             for (int j = 0; j < marixSize; j++) {
-                subtractedAX[i][j] = I2[i][j].multiply(BigInteger.valueOf(asymmetricBit))
-                        .subtract(AX[i][j]).mod(prime);
+                subtractedAX[i][j] = I2[i][j].subtract(AX[i][j]).mod(prime);
             }
         }
         return subtractedAX;
@@ -188,7 +190,7 @@ public class MatrixInversion extends CompositeProtocol implements
             BigInteger[][] AX = null;
             try {
                 AX = multiplicationTask.get();
-                System.out.println("AX computed:"+ globalPid);
+//                System.out.println("AX computed:"+ globalPid);
             } catch (InterruptedException | ExecutionException ex) {
                 Logger.getLogger(MatrixInversion.class.getName()).log(Level.SEVERE, null, ex);
             }
@@ -197,7 +199,7 @@ public class MatrixInversion extends CompositeProtocol implements
 //            Logging.logMatrix("AX", AX);
 
             BigInteger[][] subtractedAX = subtractFromTwo(AX);
-            System.out.println("AX subtracted:"+ globalPid);
+//            System.out.println("AX subtracted:"+ globalPid);
 
             //FileIO.writeToCSV(subtractedAX, "/home/anisha/PPML Tests/output/", "subtractedAX", clientID, prime);
 //            Logging.logMatrix("subtractedAX", subtractedAX);
@@ -224,13 +226,13 @@ public class MatrixInversion extends CompositeProtocol implements
                 Logger.getLogger(MatrixInversion.class.getName()).log(Level.SEVERE, null, ex);
             }
 
-            System.out.println("Xs+1 computed:"+ globalPid);
+//            System.out.println("Xs+1 computed:"+ globalPid);
             //FileIO.writeToCSV(Xs1, "/home/anisha/PPML Tests/output/", "XS+1", clientID, prime);
 //            Logging.logMatrix("Xs+1", Xs1);
             X = Xs1;
 //            Logging.logMatrix("New X:", X);
-            System.out.println("Xs: " + FileIO.ZqToReal(X[0][0], 
-                    Constants.decimal_precision, prime));
+//            System.out.println("Xs: " + FileIO.ZqToReal(X[0][0], 
+//                    Constants.decimal_precision, prime));
 
 
         }
@@ -253,7 +255,7 @@ public class MatrixInversion extends CompositeProtocol implements
         ExecutorService es = Executors.newSingleThreadExecutor();
 
         //TODO revert nrRounds
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < nrRounds; i++) {
 
             // AX = DM(A.X)
             initQueueMap(recQueues, globalPid);
