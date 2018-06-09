@@ -129,8 +129,6 @@ public class Party {
     public static void main(String[] args) {
         initalizeVariables(args);
 
-        initalizeModelVariables(args);
-
         getSharesFromTI();  // This is a blocking call
 
         startPartyConnections();
@@ -202,31 +200,10 @@ public class Party {
         switch (modelId) {
             case 1:
                 // DT Scoring
-                if (partyId == 1) {
-                    int[] leafToClassIndexMapping = new int[5];
-                    leafToClassIndexMapping[1] = 1;
-                    leafToClassIndexMapping[2] = 2;
-                    leafToClassIndexMapping[3] = 3;
-                    leafToClassIndexMapping[4] = 1;
-                    int[] nodeToAttributeIndexMapping = new int[3];
-                    nodeToAttributeIndexMapping[0] = 0;
-                    nodeToAttributeIndexMapping[1] = 1;
-                    nodeToAttributeIndexMapping[2] = 2;
-                    int[] attributeThresholds = new int[3];
-                    attributeThresholds[0] = 10;
-                    attributeThresholds[1] = 5;
-                    attributeThresholds[2] = 20;
-                    DecisionTreeScoring DTree = new DecisionTreeScoring(asymmetricBit, senderQueue, receiverQueue, partyId, tiShares.binaryShares,
-                            tiShares.decimalShares, 2, 3, 5, leafToClassIndexMapping, nodeToAttributeIndexMapping, attributeThresholds, 3, partyCount);
-                    DTree.ScoreDecisionTree();
-
-                } else if (partyId == 2) {
-
-                    DecisionTreeScoring DScore = new DecisionTreeScoring(asymmetricBit, senderQueue, receiverQueue, partyId, tiShares.binaryShares,
-                            tiShares.decimalShares, 2, 3, 5, vShares.get(0), 3, partyCount);
-
-                    DScore.ScoreDecisionTree();
-                }
+                DecisionTreeScoring DTree = new DecisionTreeScoring(asymmetricBit, 
+                        senderQueue, receiverQueue, partyId, tiShares.binaryShares,
+                        partyCount, args);
+                DTree.ScoreDecisionTree();
                 break;
 
             case 2:
@@ -262,48 +239,4 @@ public class Party {
                 break;
         }
     }
-
-    private static void initalizeModelVariables(String[] args) {
-
-        switch (modelId) {
-            case 1:
-                // DT Scoring
-                for (String arg : args) {
-                    String[] currInput = arg.split("=");
-                    if (currInput.length < 2) {
-                        Logging.partyUsage();
-                        System.exit(0);
-                    }
-                    String command = currInput[0];
-                    String value = currInput[1];
-
-                    switch (command) {
-                        case "vShares":
-                            try {
-                                BufferedReader buf = new BufferedReader(new FileReader(value));
-                                String line = null;
-                                while ((line = buf.readLine()) != null) {
-                                    String[] vListShares = line.split(";");
-                                    List<List<Integer>> vline = new ArrayList<>();
-                                    for (String str : vListShares) {
-                                        int lineInt[] = Arrays.stream(str.split(",")).mapToInt(Integer::parseInt).toArray();
-                                        vline.add(Arrays.stream(lineInt).boxed().collect(Collectors.toList()));
-                                    }
-                                    vShares.add(vline);
-                                }
-                            } catch (FileNotFoundException ex) {
-                                Logger.getLogger(Party.class.getName()).log(Level.SEVERE, null, ex);
-                            } catch (IOException ex) {
-                                Logger.getLogger(Party.class.getName()).log(Level.SEVERE, null, ex);
-                            }
-                            break;
-                    }
-
-                }
-
-                break;
-
-        }
-    }
-
 }

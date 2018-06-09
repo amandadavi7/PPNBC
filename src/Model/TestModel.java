@@ -52,17 +52,23 @@ public class TestModel extends Model {
     List<TruncationPair> tiTruncationPair;
     BigInteger prime;
     String outputPath;
+    List<TripleByte> binaryTiShares;
+    List<TripleInteger> decimalTiShares;
+    List<TripleReal> realTiShares;
 
     public TestModel(List<TripleByte> binaryTriples, List<TripleInteger> decimalTriples,
             List<TripleReal> realTiShares, List<TruncationPair> tiTruncationPair,
             int asymmetricBit, BlockingQueue<Message> senderQueue,
             BlockingQueue<Message> receiverQueue, int clientId, int partyCount, String[] args) {
 
-        super(senderQueue, receiverQueue, clientId, asymmetricBit, binaryTriples, decimalTriples, realTiShares, partyCount);
+        super(senderQueue, receiverQueue, clientId, asymmetricBit, partyCount);
 
         this.tiTruncationPair = tiTruncationPair;
         prime = BigInteger.valueOf(2).pow(Constants.integer_precision
                 + 2 * Constants.decimal_precision + 1).nextProbablePrime();
+        this.binaryTiShares = binaryTriples;
+        this.decimalTiShares = decimalTriples;
+        this.realTiShares = realTiShares;
         initalizeModelVariables(args);
 
     }

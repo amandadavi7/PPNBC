@@ -31,6 +31,7 @@ public class LinearRegressionTraining extends Model {
     BigInteger[][] y;
 
     List<TruncationPair> tiTruncationPair;
+    List<TripleReal> realTriples;
 
     BigInteger prime;
     String outputPath;
@@ -54,9 +55,9 @@ public class LinearRegressionTraining extends Model {
             BlockingQueue<Message> receiverQueue, int clientId, int asymmetricBit,
             int partyCount, String[] args) {
 
-        super(senderQueue, receiverQueue, clientId, asymmetricBit, null,
-                null, realTriples, partyCount);
+        super(senderQueue, receiverQueue, clientId, asymmetricBit, partyCount);
         this.tiTruncationPair = tiTruncationPair;
+        this.realTriples = realTriples;
         globalProtocolId = 0;
         prime = BigInteger.valueOf(2).pow(Constants.integer_precision
                 + 2 * Constants.decimal_precision + 1).nextProbablePrime();  //Zq must be a prime field
@@ -95,7 +96,7 @@ public class LinearRegressionTraining extends Model {
         
         initQueueMap(recQueues, globalProtocolId);
         MatrixInversion matrixInversion = new MatrixInversion(gamma1,
-                realTiShares, tiTruncationPair, globalProtocolId, commonSender,
+                realTriples, tiTruncationPair, globalProtocolId, commonSender,
                 recQueues.get(globalProtocolId),
                 new LinkedList<>(protocolIdQueue), clientId, asymmetricBit,
                 partyCount, prime);
@@ -114,7 +115,7 @@ public class LinearRegressionTraining extends Model {
         System.out.println("gammainv:"+gamma1Inv.length+","+gamma1Inv[0].length);
         initQueueMap(recQueues, globalProtocolId);
         MatrixMultiplication matrixMultiplication = new MatrixMultiplication(gamma1Inv,
-                gamma2, realTiShares, tiTruncationPair, clientId, prime, globalProtocolId,
+                gamma2, realTriples, tiTruncationPair, clientId, prime, globalProtocolId,
                 asymmetricBit, commonSender,
                 recQueues.get(globalProtocolId), new LinkedList<>(protocolIdQueue), partyCount);
 

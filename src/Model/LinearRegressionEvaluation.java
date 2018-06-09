@@ -34,6 +34,7 @@ public class LinearRegressionEvaluation extends Model {
     BigInteger prime;
     String outputPath;
     int testCases;
+    List<TripleReal> realTiShares;
 
     /**
      * Constructor
@@ -52,8 +53,8 @@ public class LinearRegressionEvaluation extends Model {
             BlockingQueue<Message> receiverQueue, int clientId,
             int partyCount, String[] args) {
 
-        super(senderQueue, receiverQueue, clientId, asymmetricBit, null,
-                null, realTriples, partyCount);
+        super(senderQueue, receiverQueue, clientId, asymmetricBit, partyCount);
+        this.realTiShares = realTriples;
 
         y = new ArrayList<>();
 

@@ -38,10 +38,6 @@ public class Model {
     int clientId;
     int partyCount;
     int asymmetricBit;
-    // TODO: this should be model specific. not global
-    List<TripleByte> binaryTiShares;
-    List<TripleInteger> decimalTiShares;
-    List<TripleReal> realTiShares;
 
     /**
      *
@@ -49,18 +45,10 @@ public class Model {
      * @param receiverQueue
      * @param clientId
      * @param asymmetricBit
-     * @param binaryTiShares
-     * @param decimalTiShares
-     * @param realTiShares
      */
     public Model(BlockingQueue<Message> senderQueue,
-            BlockingQueue<Message> receiverQueue, int clientId, int asymmetricBit,
-            List<TripleByte> binaryTiShares, List<TripleInteger> decimalTiShares,
-            List<TripleReal> realTiShares, int partyCount) {
+            BlockingQueue<Message> receiverQueue, int clientId, int asymmetricBit, int partyCount) {
 
-        this.binaryTiShares = binaryTiShares;
-        this.decimalTiShares = decimalTiShares;
-        this.realTiShares = realTiShares;
         this.asymmetricBit = asymmetricBit;
         this.partyCount = partyCount;
         this.commonSender = senderQueue;
