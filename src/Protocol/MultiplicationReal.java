@@ -42,6 +42,7 @@ public class MultiplicationReal extends Protocol implements Callable<BigInteger>
      * @param prime
      * @param protocolID
      * @param asymmetricBit
+     * @param partyCount
      *
      */
     public MultiplicationReal(BigInteger x, BigInteger y, TripleReal tiShares,
@@ -67,14 +68,12 @@ public class MultiplicationReal extends Protocol implements Callable<BigInteger>
     @Override
     public BigInteger call() {
         initProtocol();
-        Message receivedMessage = null;
         BigInteger d = BigInteger.ZERO;
         BigInteger e = BigInteger.ZERO;
-        List<BigInteger> diffList = null;
         for (int i = 0; i < partyCount - 1; i++) {
             try {
-                receivedMessage = receiverQueue.take();
-                diffList = (List<BigInteger>) receivedMessage.getValue();
+                Message receivedMessage = receiverQueue.take();
+                List<BigInteger> diffList = (List<BigInteger>) receivedMessage.getValue();
                 d = d.add(diffList.get(0));
                 e = e.add(diffList.get(1));
             } catch (InterruptedException ex) {

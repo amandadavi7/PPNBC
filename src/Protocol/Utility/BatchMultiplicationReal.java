@@ -44,6 +44,7 @@ public class BatchMultiplicationReal extends BatchMultiplication
      * @param protocolID
      * @param asymmetricBit
      * @param parentID
+     * @param partyCount
      */
     public BatchMultiplicationReal(List<BigInteger> x, List<BigInteger> y, 
             List<TripleReal> tiShares, 

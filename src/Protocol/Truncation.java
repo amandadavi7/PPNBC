@@ -57,14 +57,12 @@ public class Truncation extends CompositeProtocol implements Callable<BigInteger
     private void computeAndShareZShare() {
 
         zShares = wShares.add(truncationShares.r).mod(prime);
-
         // broadcast it to n parties
         Message senderMessage = new Message(zShares,
                 clientID, protocolIdQueue);
 
         try {
             senderQueue.put(senderMessage);
-            //System.out.println("sending message for protocol id:"+ protocolId);
         } catch (InterruptedException ex) {
             ex.printStackTrace();
             Logger.getLogger(Truncation.class.getName()).log(Level.SEVERE, null, ex);
@@ -85,12 +83,14 @@ public class Truncation extends CompositeProtocol implements Callable<BigInteger
             }
         }
 
+        // Constants
         BigInteger roundOffBit = BigInteger.valueOf(2).pow(Constants.integer_precision
                 + 2 * Constants.decimal_precision - 1);
         BigInteger fInv = prime.add(BigInteger.ONE).divide(BigInteger.valueOf(2)).
                 pow(Constants.decimal_precision).mod(prime);
         BigInteger fpow2 = BigInteger.valueOf(2).pow(Constants.decimal_precision);
 
+        
         BigInteger c = zShares.add(roundOffBit);
         BigInteger cp = c.mod(fpow2);
         BigInteger S = wShares.add(truncationShares.rp).mod(prime).

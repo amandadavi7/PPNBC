@@ -6,8 +6,6 @@
 package Model;
 
 import Communication.Message;
-import Communication.ReceiverQueueHandler;
-import static Model.LinearRegressionTraining.x;
 import Protocol.ArgMax;
 import Protocol.BitDecomposition;
 import Protocol.Comparison;
@@ -16,8 +14,6 @@ import Protocol.MatrixInversion;
 import Protocol.MultiplicationInteger;
 import Protocol.OIS;
 import Protocol.OR_XOR;
-import Protocol.Truncation;
-import Protocol.Utility.BatchMultiplicationReal;
 import Protocol.Utility.BatchTruncation;
 import Protocol.Utility.MatrixMultiplication;
 import TrustedInitializer.TripleByte;
@@ -27,6 +23,7 @@ import TrustedInitializer.TruncationPair;
 import Utility.Constants;
 import Utility.FileIO;
 import Utility.Logging;
+import Utility.Math;
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
@@ -406,7 +403,7 @@ public class TestModel extends Model {
         long elapsedTime = stopTime - startTime;
         System.out.println("Avg time duration:" + elapsedTime);
 
-        FileIO.writeToCSV(result, outputPath, "matrixInversion", clientId, prime);
+        FileIO.writeToCSV(result, outputPath, "matrixInversion", clientId);
     }
 
     private void callMatrixMultiplication() {
@@ -416,7 +413,7 @@ public class TestModel extends Model {
         int n = xBigInt.length;
         int l = xBigInt[0].length;
 
-        BigInteger xT[][] = transposeMatrix(xBigInt);
+        BigInteger xT[][] = Math.transposeMatrix(xBigInt);
         int m = xT[0].length;
 
         long startTime = System.currentTimeMillis();
@@ -444,23 +441,7 @@ public class TestModel extends Model {
         long elapsedTime = stopTime - startTime;
         System.out.println("Avg time duration:" + elapsedTime);
 
-        FileIO.writeToCSV(result, outputPath, "matrixMultiplication", clientId, prime);
-
-    }
-
-    BigInteger[][] transposeMatrix(BigInteger[][] x) {
-        int rows = x.length;
-        int cols = x[0].length;
-        BigInteger[][] xT = new BigInteger[cols][rows];
-
-        for (int i = 0; i < rows; i++) {
-            for (int j = 0; j < cols; j++) {
-                xT[j][i] = x[i][j];
-            }
-        }
-
-        return xT;
-        //printMatrix(xT);
+        FileIO.writeToCSV(result, outputPath, "matrixMultiplication", clientId);
 
     }
 
@@ -518,7 +499,7 @@ public class TestModel extends Model {
         long elapsedTime = stopTime - startTime;
         System.out.println("Avg time duration:" + elapsedTime);
 
-        FileIO.writeToCSV(truncationOutput, outputPath, "truncation", clientId, prime);
+        FileIO.writeToCSV(truncationOutput, outputPath, "truncation", clientId);
 
     }
 

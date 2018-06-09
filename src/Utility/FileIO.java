@@ -116,13 +116,10 @@ public class FileIO {
             int row = 0;
             while (inputStream.hasNext()) {
                 String line = inputStream.next();
-                Double[] doubleValues = Stream.of(line.split(","))
-                        .map(Double::valueOf).toArray(Double[]::new);
-
-                int col = doubleValues.length;
+                String[] values = line.split(",");
                 List<BigInteger> bigIntegerlist = new ArrayList<>();
-                for (int i = 0; i < col; i++) {
-                    bigIntegerlist.add(BigDecimal.valueOf(doubleValues[i]).toBigInteger());
+                for (int i = 0; i < values.length; i++) {
+                    bigIntegerlist.add(new BigInteger(values[i]));
                 }
 
                 x.add(bigIntegerlist);
@@ -175,15 +172,41 @@ public class FileIO {
         return x;
 
     }
+    
+    public static List<BigInteger> loadListFromFile(String sourceFile) {
+
+        File file = new File(sourceFile);
+        Scanner inputStream;
+        List<BigInteger> x = new ArrayList<>();
+
+        try {
+            inputStream = new Scanner(file);
+            int row = 0;
+            while (inputStream.hasNext()) {
+                String line = inputStream.next();
+                int i = 0;
+                for(String value: line.split(",")) {
+                    x.add(new BigInteger(value));
+                }
+            }
+
+            inputStream.close();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+
+        return x;
+
+    }
 
     public static void writeToCSV(List<BigInteger> y, String outputPath,
-            String filePrefix, int clientId, BigInteger Zq) {
+            String filePrefix, int clientId) {
         int len = y.size();
         try {
             try (FileWriter writer = new FileWriter(outputPath + filePrefix + 
                     "_" + clientId + ".csv")) {
                 for (int i = 0; i < len; i++) {
-                    writer.write(ZqToReal(y.get(i), Constants.decimal_precision, Zq).toPlainString());
+                    writer.write(y.get(i).toString());
                     writer.write("\n");
                 }
             }
@@ -195,7 +218,7 @@ public class FileIO {
     }
 
     public static void writeToCSV(BigInteger[][] y, String outputPath, 
-            String filePrefix, int clientId, BigInteger Zq) {
+            String filePrefix, int clientId) {
         int rows = y.length;
         int cols = y[0].length;
         try {
@@ -203,7 +226,7 @@ public class FileIO {
                     "_" + clientId + ".csv")) {
                 for (int i = 0; i < rows; i++) {
                     for (int j = 0; j < cols; j++) {
-                        writer.write(y[i][j] + ",");
+                        writer.write(y[i][j].toString() + ",");
                     }
                     writer.write("\n");
                 }

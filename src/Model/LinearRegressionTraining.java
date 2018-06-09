@@ -13,6 +13,7 @@ import TrustedInitializer.TruncationPair;
 import Utility.Constants;
 import Utility.FileIO;
 import Utility.Logging;
+import Utility.Math;
 import java.math.BigInteger;
 import java.util.LinkedList;
 import java.util.List;
@@ -21,7 +22,10 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- *
+ * Takes as input horizontally partitioned data and computed shares of the 
+ * coefficients
+ * 
+ * Computes <beta> = (xT.x)^(-1).(xT.y)
  * @author anisha
  */
 public class LinearRegressionTraining extends Model {
@@ -52,8 +56,8 @@ public class LinearRegressionTraining extends Model {
     public LinearRegressionTraining(List<TripleReal> realTriples,
             List<TruncationPair> tiTruncationPair,
             BlockingQueue<Message> senderQueue,
-            BlockingQueue<Message> receiverQueue, int clientId, int asymmetricBit,
-            int partyCount, String[] args) {
+            BlockingQueue<Message> receiverQueue, 
+            int clientId, int asymmetricBit, int partyCount, String[] args) {
 
         super(senderQueue, receiverQueue, clientId, asymmetricBit, partyCount);
         this.tiTruncationPair = tiTruncationPair;
@@ -64,17 +68,6 @@ public class LinearRegressionTraining extends Model {
         initalizeModelVariables(args);
     }
 
-    private void printMatrix(BigInteger[][] x) {
-        int rows = x.length;
-        int cols = x[0].length;
-        for (int i = 0; i < rows; i++) {
-            for (int j = 0; j < cols; j++) {
-                System.err.print(x[i][j] + " ");
-            }
-            System.out.println();
-        }
-    }
-
     /**
      * Compute shares of the coefficients for the training dataset
      */
@@ -83,16 +76,11 @@ public class LinearRegressionTraining extends Model {
         startModelHandlers();
         long startTime = System.currentTimeMillis();
         
-        transposeMatrix();
-        FileIO.writeToCSV(xT, outputPath, "xT", clientId, prime);
-
-        //TODO can do both local matrix multiplication in parallel
-        BigInteger[][] gamma1 = localMatrixMultiplication(xT, x);
-        FileIO.writeToCSV(gamma1, outputPath, "gamma1", clientId, prime);
+        xT = Math.transposeMatrix(x);
         
-        //printMatrix(gamma1);
-        BigInteger[][] gamma2 = localMatrixMultiplication(xT, y);
-        FileIO.writeToCSV(gamma2, outputPath, "gamma2", clientId, prime);
+        //TODO can do both local matrix multiplication in parallel
+        BigInteger[][] gamma1 = Math.localMatrixMultiplication(xT, x, prime);
+        BigInteger[][] gamma2 = Math.localMatrixMultiplication(xT, y, prime);
         
         initQueueMap(recQueues, globalProtocolId);
         MatrixInversion matrixInversion = new MatrixInversion(gamma1,
@@ -111,8 +99,6 @@ public class LinearRegressionTraining extends Model {
                     .log(Level.SEVERE, null, ex);
         }
 
-        System.out.println("Matrix multiplication");
-        System.out.println("gammainv:"+gamma1Inv.length+","+gamma1Inv[0].length);
         initQueueMap(recQueues, globalProtocolId);
         MatrixMultiplication matrixMultiplication = new MatrixMultiplication(gamma1Inv,
                 gamma2, realTriples, tiTruncationPair, clientId, prime, globalProtocolId,
@@ -120,7 +106,6 @@ public class LinearRegressionTraining extends Model {
                 recQueues.get(globalProtocolId), new LinkedList<>(protocolIdQueue), partyCount);
 
         BigInteger[][] beta = null;
-
         try {
             beta = matrixMultiplication.call();
         } catch (Exception ex) {
@@ -128,18 +113,6 @@ public class LinearRegressionTraining extends Model {
                     .log(Level.SEVERE, null, ex);
         }
         
-        int row = beta.length;
-        int col = beta[0].length;
-        
-        System.out.println("Printing beta");
-        for(int i=0;i<row;i++) {
-            for(int j=0;j<col;j++) {
-                System.out.print(beta[i][j]+" ");
-            }
-            System.out.println("");
-        }
-        
-        System.out.println("beta:"+beta.length+","+beta[0].length);
         long stopTime = System.currentTimeMillis();
         long elapsedTime = stopTime - startTime;
         //TODO: push time to a csv file
@@ -147,62 +120,8 @@ public class LinearRegressionTraining extends Model {
                 + clientId);
 
         teardownModelHandlers();
-        FileIO.writeToCSV(beta, outputPath, "beta_less_rounds", clientId, prime);
-        FileIO.writeToCSV(gamma1Inv, outputPath, "gammaInv", clientId, prime);
-
-    }
-
-    /**
-     * Transpose a matrix
-     */
-    void transposeMatrix() {
-        int rows = x.length;
-        int cols = x[0].length;
-        xT = new BigInteger[cols][rows];
-
-        for (int i = 0; i < rows; i++) {
-            for (int j = 0; j < cols; j++) {
-                xT[j][i] = x[i][j];
-            }
-        }
-    }
-
-    /**
-     * Local matrix Multiplication
-     *
-     * @param a input matrix a
-     * @param b input matrix b
-     * @param c output matrix c
-     */
-    BigInteger[][] localMatrixMultiplication(BigInteger[][] a,
-            BigInteger[][] b) {
-
-        int crows = a.length;
-        int ccol = b[0].length;
-        BigInteger[][] c = new BigInteger[crows][ccol];
-        int m = a[0].length;
-
-        for (int i = 0; i < crows; i++) {
-            for (int j = 0; j < ccol; j++) {
-                // dot product of ith row of a and jth row of b
-                BigInteger sum = BigInteger.ZERO;
-                for (int k = 0; k < m; k++) {
-                    sum = sum.add(a[i][k].multiply(b[k][j]).mod(prime)).mod(prime);
-                }
-                //System.out.println("sum:"+sum);
-                c[i][j] = localScale(sum);
-
-            }
-        }
-        return c;
-    }
-
-    //TODO convert this to matrix scaling
-    BigInteger localScale(BigInteger value) {
+        FileIO.writeToCSV(beta, outputPath, "beta", clientId);
         
-        BigInteger scaleFactor = BigInteger.valueOf(2).pow(Constants.decimal_precision);
-        value = value.divide(scaleFactor).mod(prime);
-        return value;
     }
 
     private void initalizeModelVariables(String[] args) {
@@ -225,7 +144,6 @@ public class LinearRegressionTraining extends Model {
                     }
                     break;
                 case "yCsv":
-                    //TODO generalize it
                     List<BigInteger> yList = FileIO.loadListFromFile(value, prime);
                     int len = yList.size();
                     y = new BigInteger[len][1];

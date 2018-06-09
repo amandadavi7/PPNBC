@@ -11,8 +11,6 @@ import TrustedInitializer.TripleReal;
 import Utility.Constants;
 import Utility.FileIO;
 import Utility.Logging;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -62,6 +60,8 @@ public class LinearRegressionEvaluation extends Model {
                 + 2 * Constants.decimal_precision + 1).nextProbablePrime();  //Zq must be a prime field
 
         initalizeModelVariables(args);
+        System.out.println("sample X:"+ x.get(0).get(0));
+        System.out.println("sample beta:"+ beta.get(0));
 
     }
 
@@ -79,7 +79,7 @@ public class LinearRegressionEvaluation extends Model {
         System.out.println("Avg time duration:" + elapsedTime + " for partyId:"
                 + clientId + ", for size:" + y.size());
         teardownModelHandlers();
-        FileIO.writeToCSV(y, outputPath, "y",clientId, prime);
+        FileIO.writeToCSV(y, outputPath, "y",clientId);
 
     }
 
@@ -115,7 +115,7 @@ public class LinearRegressionEvaluation extends Model {
             try {
                 BigInteger result = dWorkerResponse.get();
                 y.add(result);
-                //System.out.println(" #:" + i);
+                //System.out.println(" #:" + i+ ", result:"+ result);
             } catch (InterruptedException ex) {
                 Logger.getLogger(LinearRegressionEvaluation.class.getName()).log(Level.SEVERE, null, ex);
             } catch (ExecutionException ex) {
@@ -139,8 +139,7 @@ public class LinearRegressionEvaluation extends Model {
                     x = FileIO.loadMatrixFromFile(value);
                     break;
                 case "beta":
-                    //TODO generalize it
-                    beta = FileIO.loadListFromFile(value, prime);
+                    beta = FileIO.loadListFromFile(value);
                     break;
                 case "output":
                     outputPath = value;

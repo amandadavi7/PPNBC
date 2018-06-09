@@ -74,6 +74,7 @@ public class MatrixMultiplication extends CompositeProtocol implements
         this.tiRealShares = tiRealshares;
         this.tiTruncationPair = tiTruncationPair;
         this.prime = prime;
+        
         globalProtocolId = 0;
         bT = new ArrayList<>();
         n = a.length;
@@ -110,9 +111,7 @@ public class MatrixMultiplication extends CompositeProtocol implements
 
         for (int i = 0; i < n; i++) {
             List<BigInteger> row = Arrays.asList(a[i]);
-            //TODO use apache commons to improve this
             for (int j = 0; j < l; j++) {
-                // get jth col from b
                 initQueueMap(recQueues, globalProtocolId);
                 DotProductReal DPModule = new DotProductReal(row,
                         bT.get(j), tiRealShares.subList(
