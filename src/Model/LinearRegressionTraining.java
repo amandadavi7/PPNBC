@@ -13,7 +13,7 @@ import TrustedInitializer.TruncationPair;
 import Utility.Constants;
 import Utility.FileIO;
 import Utility.Logging;
-import Utility.Math;
+import Utility.LocalMath;
 import java.math.BigInteger;
 import java.util.LinkedList;
 import java.util.List;
@@ -76,11 +76,11 @@ public class LinearRegressionTraining extends Model {
         startModelHandlers();
         long startTime = System.currentTimeMillis();
         
-        xT = Math.transposeMatrix(x);
+        xT = LocalMath.transposeMatrix(x);
         
         //TODO can do both local matrix multiplication in parallel
-        BigInteger[][] gamma1 = Math.localMatrixMultiplication(xT, x, prime);
-        BigInteger[][] gamma2 = Math.localMatrixMultiplication(xT, y, prime);
+        BigInteger[][] gamma1 = LocalMath.localMatrixMultiplication(xT, x, prime);
+        BigInteger[][] gamma2 = LocalMath.localMatrixMultiplication(xT, y, prime);
         
         initQueueMap(recQueues, globalProtocolId);
         MatrixInversion matrixInversion = new MatrixInversion(gamma1,
@@ -98,6 +98,9 @@ public class LinearRegressionTraining extends Model {
             Logger.getLogger(LinearRegressionTraining.class.getName())
                     .log(Level.SEVERE, null, ex);
         }
+        
+        System.out.println("Party: "+ clientId+" inverse done");
+        
 
         initQueueMap(recQueues, globalProtocolId);
         MatrixMultiplication matrixMultiplication = new MatrixMultiplication(gamma1Inv,

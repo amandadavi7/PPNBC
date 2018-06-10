@@ -23,7 +23,7 @@ import TrustedInitializer.TruncationPair;
 import Utility.Constants;
 import Utility.FileIO;
 import Utility.Logging;
-import Utility.Math;
+import Utility.LocalMath;
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
@@ -413,7 +413,7 @@ public class TestModel extends Model {
         int n = xBigInt.length;
         int l = xBigInt[0].length;
 
-        BigInteger xT[][] = Math.transposeMatrix(xBigInt);
+        BigInteger xT[][] = LocalMath.transposeMatrix(xBigInt);
         int m = xT[0].length;
 
         long startTime = System.currentTimeMillis();

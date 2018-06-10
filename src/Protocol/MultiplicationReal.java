@@ -73,6 +73,7 @@ public class MultiplicationReal extends Protocol implements Callable<BigInteger>
         for (int i = 0; i < partyCount - 1; i++) {
             try {
                 Message receivedMessage = receiverQueue.take();
+                System.out.println("Party "+ clientID+" received messages #:"+i);
                 List<BigInteger> diffList = (List<BigInteger>) receivedMessage.getValue();
                 d = d.add(diffList.get(0));
                 e = e.add(diffList.get(1));
@@ -80,6 +81,8 @@ public class MultiplicationReal extends Protocol implements Callable<BigInteger>
                 ex.printStackTrace();
             }
         }
+        
+        System.out.println("Party "+ clientID+" received all messages");
 
         d = x.subtract(tiRealShares.u).add(d).mod(prime);
         e = y.subtract(tiRealShares.v).add(e).mod(prime);
@@ -103,6 +106,7 @@ public class MultiplicationReal extends Protocol implements Callable<BigInteger>
 
         Message senderMessage = new Message(diffList,
                 clientID, protocolIdQueue);
+        System.out.println("Party "+ clientID+" sent message");
         try {
             senderQueue.put(senderMessage);
         } catch (InterruptedException ex) {

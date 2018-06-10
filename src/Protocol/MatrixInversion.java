@@ -176,6 +176,7 @@ public class MatrixInversion extends CompositeProtocol implements
             // AX = DM(A.X)
             initQueueMap(recQueues, globalPid);
 
+            System.out.println("Party: "+clientID+" NR round: "+i);
             MatrixMultiplication matrixMultiplication = new MatrixMultiplication(
                     A, X, tishares.subList(tiRealIndex, (int) (tiRealIndex + Math.pow(n, 3))),
                     tiTruncationPair.subList(tiTruncationIndex, tiTruncationIndex + n * n),
@@ -241,6 +242,7 @@ public class MatrixInversion extends CompositeProtocol implements
 
             // AX = DM(A.X)
             initQueueMap(recQueues, globalPid);
+            System.out.println("Party: "+clientID+" NR scalar round: "+i);
             MultiplicationReal multiplicationModule = new MultiplicationReal(A,
                     X, tishares.get(tiRealIndex), senderQueue,
                     recQueues.get(globalPid), new LinkedList<>(protocolIdQueue),

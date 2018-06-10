@@ -11,13 +11,14 @@ import java.math.BigInteger;
  * Local computations
  * @author anisha
  */
-public class Math {
+public class LocalMath {
     /**
      * Local matrix Multiplication
      *
      * @param a input matrix a
      * @param b input matrix b
-     * @param c output matrix c
+     * @param prime
+     * @return 
      */
     public static BigInteger[][] localMatrixMultiplication(BigInteger[][] a,
             BigInteger[][] b, BigInteger prime) {
@@ -52,6 +53,8 @@ public class Math {
     
     /**
      * Transpose a matrix
+     * @param x
+     * @return 
      */
     public static BigInteger[][] transposeMatrix(BigInteger[][] x) {
         int rows = x.length;
