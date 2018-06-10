@@ -42,8 +42,7 @@ public class BA {
     static int baPort, partyCount;
     private static BlockingQueue<BaMessagePacket> receiverQueue;
     protected static ConcurrentHashMap<Integer, BlockingQueue<Message>> senderQueues;
-    private static int clientId;
-
+    
     public static void main(String[] args) {
         if (args.length < 2) {
             Logging.baUsage();
@@ -63,7 +62,6 @@ public class BA {
      * @param args command line arguments
      */
     private static void initializeVariables(String[] args) {
-        clientId = 0;
         receiverQueue = new LinkedBlockingQueue<>();
         senderQueues = new ConcurrentHashMap<>();
         clientHandlerThreads = Executors.newFixedThreadPool(Constants.threadCount);
@@ -116,17 +114,15 @@ public class BA {
                 
                 // Start Receiver and Sender thread for this client
                 BaClientReceiver receiverHandler = new BaClientReceiver(socket,
-                        iStream, receiverQueue, clientId, partyCount);
+                        iStream, receiverQueue, i, partyCount);
 
-                senderQueues.putIfAbsent(clientId, new LinkedBlockingQueue<>());
+                senderQueues.putIfAbsent(i, new LinkedBlockingQueue<>());
                 BaClientSender senderHandler = new BaClientSender(socket,
-                        oStream, senderQueues.get(clientId));
+                        oStream, senderQueues.get(i));
 
                 receiverFutureList.add(clientHandlerThreads.submit(receiverHandler));
                 senderFutureList.add(clientHandlerThreads.submit(senderHandler));
-                System.out.println("client ID:" + clientId + " connected to BA");
-                clientId++;
-
+                
             } catch (IOException ex) {
                 Logger.getLogger(BA.class.getName()).log(Level.SEVERE, null, ex);
             }

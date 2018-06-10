@@ -47,7 +47,7 @@ public class PartyServer implements Runnable {
                 Message msg = senderQueue.take();
                 oStream.writeObject(msg);
                 oStream.reset();
-                //oStream.flush();
+                oStream.flush();
             } catch (InterruptedException | IOException ex) {
                 break;
             } 
