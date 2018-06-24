@@ -242,7 +242,6 @@ public class MatrixInversion extends CompositeProtocol implements
 
             // AX = DM(A.X)
             initQueueMap(recQueues, globalPid);
-            System.out.println("Party: "+clientID+" NR scalar round: "+i);
             MultiplicationReal multiplicationModule = new MultiplicationReal(A,
                     X, tishares.get(tiRealIndex), senderQueue,
                     recQueues.get(globalPid), new LinkedList<>(protocolIdQueue),

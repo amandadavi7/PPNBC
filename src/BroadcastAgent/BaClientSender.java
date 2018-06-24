@@ -36,7 +36,7 @@ public class BaClientSender implements Callable<Boolean> {
         this.senderQueue = senderQueue;
         this.oStream = oStream;
     }
-
+    
     /**
      * Continuously running thread that takes entries from senderqueue and send
      * them to other parties

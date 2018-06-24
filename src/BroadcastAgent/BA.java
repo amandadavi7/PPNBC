@@ -64,7 +64,7 @@ public class BA {
     private static void initializeVariables(String[] args) {
         receiverQueue = new LinkedBlockingQueue<>();
         senderQueues = new ConcurrentHashMap<>();
-        clientHandlerThreads = Executors.newFixedThreadPool(Constants.threadCount);
+        clientHandlerThreads = Executors.newCachedThreadPool();
         senderFutureList = new ArrayList<>();
         receiverFutureList = new ArrayList<>();
 
