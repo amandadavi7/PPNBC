@@ -15,35 +15,41 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 /**
+ * Trusted Initializer that generates the randomness
  *
  * @author keerthanaa
  */
 public class TI {
 
-    static int tiPort, decTriples, binTriples, bigIntTriples, clientCount;
+    static int clientCount, tiPort;
+    static int decTriples, binTriples, bigIntTriples;
     static TIShare[] uvw;
 
     /**
      * Constructor
      *
      * @param port
-     * @param count1
-     * @param count2
-     * @param count3
+     * @param partyCount
+     * @param decimalCount
+     * @param binaryCount
+     * @param bigIntegerCount
      */
-    public static void initializeVariables(String port, String partyCount, 
-            String count1, String count2, String count3) {
+    public static void initializeVariables(String port, String partyCount,
+            String decimalCount, String binaryCount, String bigIntegerCount) {
         tiPort = Integer.parseInt(port);
         clientCount = Integer.parseInt(partyCount);
-        decTriples = Integer.parseInt(count1);
-        binTriples = Integer.parseInt(count2);
-        bigIntTriples = Integer.parseInt(count3);
+        decTriples = Integer.parseInt(decimalCount);
+        binTriples = Integer.parseInt(binaryCount);
+        bigIntTriples = Integer.parseInt(bigIntegerCount);
         uvw = new TIShare[clientCount];
         for (int i = 0; i < clientCount; i++) {
             uvw[i] = new TIShare();
         }
     }
 
+    /**
+     * Generate Decimal Triples
+     */
     public static void generateDecimalTriples() {
         Random rand = new Random();
         for (int i = 0; i < decTriples; i++) {
@@ -69,6 +75,9 @@ public class TI {
         }
     }
 
+    /**
+     * Generate Binary Triples
+     */
     public static void generateBinaryTriples() {
         Random rand = new Random();
         for (int i = 0; i < binTriples; i++) {
@@ -94,6 +103,9 @@ public class TI {
         }
     }
 
+    /**
+     * Generate Big Integer Triples
+     */
     public static void generateBigIntTriples() {
         Random rand = new Random();
         BigInteger Zq = BigInteger.valueOf(2).pow(Constants.integer_precision
@@ -142,6 +154,11 @@ public class TI {
         send.shutdown();
     }
 
+    /**
+     * Main method
+     *
+     * @param args
+     */
     public static void main(String[] args) {
         if (args.length < 4) {
             Logging.tiUsage();

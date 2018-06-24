@@ -9,19 +9,19 @@ import java.io.Serializable;
 import java.math.BigInteger;
 
 /**
- *
+ * Real Triples
  * @author keerthanaa
  */
-public class TripleReal implements Triple, Serializable{
-    
-    public BigInteger u,v,w;
-    
+public class TripleReal implements Triple, Serializable {
+
+    public BigInteger u, v, w;
+
     /**
      * Logs the Triplet
      */
     @Override
     public void log() {
-        System.out.println("ti share: u:" + u + ", v:" + v + ", w:" +w);
+        System.out.println("ti share: u:" + u + ", v:" + v + ", w:" + w);
     }
-    
+
 }
