@@ -7,8 +7,6 @@ package Protocol;
 
 import Communication.Message;
 import Protocol.Utility.BatchMultiplicationByte;
-import Protocol.Utility.BatchMultiplicationInteger;
-import TrustedInitializer.Triple;
 import TrustedInitializer.TripleByte;
 import Utility.Constants;
 import java.util.LinkedList;
@@ -21,6 +19,8 @@ import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -33,7 +33,7 @@ public class DotProductByte extends DotProduct implements Callable<Integer> {
     int prime;
 
     /**
-     * Constructor
+     * Constructor for DotProduct on byte data type
      *
      * @param xShares
      * @param yShares
@@ -45,25 +45,26 @@ public class DotProductByte extends DotProduct implements Callable<Integer> {
      * @param prime
      * @param protocolID
      * @param asymmetricBit
+     * @param partyCount
      */
-    public DotProductByte(List<Integer> xShares, List<Integer> yShares, List<TripleByte> tiShares,
-            BlockingQueue<Message> senderqueue, BlockingQueue<Message> receiverqueue,
-            Queue<Integer> protocolIdQueue,
+    public DotProductByte(List<Integer> xShares, List<Integer> yShares, 
+            List<TripleByte> tiShares, BlockingQueue<Message> senderqueue, 
+            BlockingQueue<Message> receiverqueue, Queue<Integer> protocolIdQueue,
             int clientID, int prime, int protocolID, int asymmetricBit, int partyCount) {
-        
-        super(senderqueue, receiverqueue, protocolIdQueue,clientID, protocolID, asymmetricBit, partyCount);
-        
+
+        super(senderqueue, receiverqueue, protocolIdQueue, clientID, protocolID, asymmetricBit, partyCount);
+
         this.xShares = xShares;
         this.yShares = yShares;
         this.tiShares = tiShares;
         this.prime = prime;
-        
+
     }
 
     /**
-     * Do a batch multiplication on chunks of vector, collate the results and 
+     * Do a batch multiplication on chunks of vector, collate the results and
      * return
-     * 
+     *
      * @return
      */
     @Override
@@ -72,28 +73,28 @@ public class DotProductByte extends DotProduct implements Callable<Integer> {
         int dotProduct = 0;
         int vectorLength = xShares.size();
         startHandlers();
-        
+
         ExecutorService mults = Executors.newFixedThreadPool(Constants.threadCount);
         ExecutorCompletionService<Integer[]> multCompletionService = new ExecutorCompletionService<>(mults);
-        
-        int i=0;
+
+        int i = 0;
         int startpid = 0;
-        
+
         do {
-            int toIndex = Math.min(i+Constants.batchSize,vectorLength);
-            
-            System.out.println("Protocol "+protocolId+" batch "+startpid);
+            int toIndex = Math.min(i + Constants.batchSize, vectorLength);
+
+            System.out.println("Protocol " + protocolId + " batch " + startpid);
             initQueueMap(recQueues, startpid);
-            
-            multCompletionService.submit(new BatchMultiplicationByte(xShares.subList(i, toIndex), 
-                    yShares.subList(i, toIndex), tiShares.subList(i, toIndex), senderQueue, 
+
+            multCompletionService.submit(new BatchMultiplicationByte(xShares.subList(i, toIndex),
+                    yShares.subList(i, toIndex), tiShares.subList(i, toIndex), senderQueue,
                     recQueues.get(startpid), new LinkedList<>(protocolIdQueue),
                     clientID, prime, startpid, asymmetricBit, protocolId, partyCount));
-            
+
             startpid++;
             i = toIndex;
-            
-        } while(i < vectorLength);
+
+        } while (i < vectorLength);
 
         mults.shutdown();
 
@@ -101,16 +102,16 @@ public class DotProductByte extends DotProduct implements Callable<Integer> {
             try {
                 Future<Integer[]> prod = multCompletionService.take();
                 Integer[] products = prod.get();
-                for(int j: products){
-                    dotProduct+=j;
+                for (int j : products) {
+                    dotProduct += j;
                 }
             } catch (InterruptedException | ExecutionException ex) {
-                    ex.printStackTrace();
+                Logger.getLogger(DotProductByte.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
 
         tearDownHandlers();
-        
+
         dotProduct = Math.floorMod(dotProduct, prime);
         System.out.println("dot product:" + dotProduct + ", protocol id:" + protocolId);
         return dotProduct;
