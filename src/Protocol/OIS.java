@@ -101,7 +101,7 @@ public class OIS extends CompositeProtocol implements Callable<Integer[]> {
 
     /**
      * for each bit, call dot product between all the nth bits of the features
-     * and yshares vector
+     * and yShares vector
      *
      * @return
      * @throws Exception
