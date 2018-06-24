@@ -88,8 +88,8 @@ public class Logging {
      * Guideline to use the Client class
      */
     public static void clientUsage() {
-        System.out.println("java ShareDistribution <number of client> "
-                + "<inputfilePath> <output path>");
+        System.out.println("java ShareDistribution partyCount=<number of parties> "
+                + "sourceFile=<inputfilePath> destPath=<output path>");
     }
 
 }

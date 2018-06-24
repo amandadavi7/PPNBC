@@ -15,38 +15,48 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 
 /**
+ * Base class to layout contract for a higher level protocol to be created
  *
  * @author anisha
  */
 public class CompositeProtocol extends Protocol {
 
     protected ConcurrentHashMap<Integer, BlockingQueue<Message>> recQueues;
-    
+
     ExecutorService queueHandlers;
     ReceiverQueueHandler receiverThread;
 
     /**
-     * 
+     * Constructor
+     *
      * @param protocolId
      * @param senderQueue
      * @param receiverQueue
      * @param protocolIdQueue
-     * @param clientId 
-     * @param asymmetricBit 
+     * @param clientId
+     * @param asymmetricBit
+     * @param partyCount
      */
     public CompositeProtocol(int protocolId, BlockingQueue<Message> senderQueue,
             BlockingQueue<Message> receiverQueue, Queue<Integer> protocolIdQueue,
             int clientId, int asymmetricBit, int partyCount) {
-        
-        super(protocolId, senderQueue, receiverQueue, protocolIdQueue, clientId, 
+
+        super(protocolId, senderQueue, receiverQueue, protocolIdQueue, clientId,
                 asymmetricBit, partyCount);
-        
+
         recQueues = new ConcurrentHashMap<>();
         queueHandlers = Executors.newSingleThreadExecutor();
-        receiverThread = new ReceiverQueueHandler(protocolId, super.receiverQueue, recQueues);
+        receiverThread = new ReceiverQueueHandler(protocolId,
+                super.receiverQueue, recQueues);
 
     }
-    
+
+    /**
+     * Initialize the receiver map for the protocol ID = key
+     *
+     * @param recQueues
+     * @param key
+     */
     public void initQueueMap(
             ConcurrentHashMap<Integer, BlockingQueue<Message>> recQueues,
             int key) {
@@ -60,9 +70,9 @@ public class CompositeProtocol extends Protocol {
     public void startHandlers() {
         queueHandlers.submit(receiverThread);
     }
-    
+
     /**
-     * Teardown all local threads
+     * Teardown all local threads for the protocol
      */
     public void tearDownHandlers() {
         receiverThread.setProtocolStatus();

@@ -50,7 +50,6 @@ public class BaClientSender implements Callable<Boolean> {
                 msg = senderQueue.take();
                 oStream.writeObject(msg);
             } catch (InterruptedException | IOException ex) {
-                System.out.println("breaking from sender thread");
                 break;
             }
         }
