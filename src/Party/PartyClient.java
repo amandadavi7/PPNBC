@@ -25,12 +25,12 @@ public class PartyClient implements Runnable {
 
     /**
      * Constructor
-     *
+     * takes common receiver queue, socket and input stream object
      * @param queue
      * @param socket
      * @param iStream
      */
-    public PartyClient(BlockingQueue<Message> queue, Socket socket, 
+    public PartyClient(BlockingQueue<Message> queue, Socket socket,
             ObjectInputStream iStream) {
         this.receiverQueue = queue;
         this.receiveSocket = socket;
@@ -38,29 +38,29 @@ public class PartyClient implements Runnable {
     }
 
     /**
-     * receive message and add to receiver queue
+     * receive message from BA and add to receiver queue
      */
     @Override
     public void run() {
 
-            while (!(Thread.currentThread().isInterrupted())) {
-                    Message msgs;
-                    try {
-                        msgs = (Message) iStream.readObject();
-                        receiverQueue.put(msgs);
-                    } catch (InterruptedException | IOException ex) {
-                        try {
-                            iStream.close();
-                        } catch (IOException ex1) {
-                            Logger.getLogger(PartyClient.class.getName()).log(Level.SEVERE, null, ex1);
-                        }
+        while (!(Thread.currentThread().isInterrupted())) {
+            Message msgs;
+            try {
+                msgs = (Message) iStream.readObject();
+                receiverQueue.put(msgs);
+            } catch (InterruptedException | IOException ex) {
+                try {
+                    iStream.close();
+                } catch (IOException ex1) {
+                    Logger.getLogger(PartyClient.class.getName()).log(Level.SEVERE, null, ex1);
+                }
 
-                        break;
-                    } catch (ClassNotFoundException ex) {
-                        break;
-                    } 
-                
+                break;
+            } catch (ClassNotFoundException ex) {
+                break;
             }
+
+        }
 
     }
 }
