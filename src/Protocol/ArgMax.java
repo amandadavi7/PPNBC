@@ -105,7 +105,7 @@ public class ArgMax extends CompositeProtocol implements Callable<Integer[]> {
 
     /**
      * each number in (1,..,k) to be compared with (k-1) other numbers does
-     * multithreaded k*(k-1) comparisons and stores the results in wIntermediate
+     * multi-threaded k*(k-1) comparisons and stores the results in wIntermediate
      *
      * @throws InterruptedException
      * @throws ExecutionException

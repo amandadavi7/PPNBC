@@ -8,6 +8,8 @@ package Communication;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -52,18 +54,13 @@ public class ReceiverQueueHandler implements Runnable {
             if (!commonQueue.isEmpty()) {
                 try {
                     Message strippedObj = commonQueue.take();
-                    int parentID = strippedObj.pollProtocolID();
                     int ID = strippedObj.getProtocolID();
-                    //System.out.println("adding to receiverqueue from " + 
-                    //        parentID + " to subqueue " + ID + " message " + 
-                    //        strippedObj.getValue());
                     subQueues.putIfAbsent(ID, new LinkedBlockingQueue<>());
                     subQueues.get(ID).put(strippedObj);
                 } catch (InterruptedException ex) {                   
-                    ex.printStackTrace();
+                    Logger.getLogger(ReceiverQueueHandler.class.getName()).log(Level.SEVERE, null, ex);
                 }
             } else if (isProtocolCompleted) {
-                //System.out.println("Shutting down receiver handler:"+protocolId);
                 break;
             }
         }

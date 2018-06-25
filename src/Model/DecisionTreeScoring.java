@@ -6,13 +6,11 @@
 package Model;
 
 import Communication.Message;
-import Protocol.BitDecomposition;
 import Protocol.Comparison;
 import Protocol.CompositeProtocol;
 import Protocol.OIS;
 import Protocol.Utility.BatchMultiplicationByte;
 import TrustedInitializer.TripleByte;
-import TrustedInitializer.TripleInteger;
 import Utility.Constants;
 import Utility.FileIO;
 import Utility.Logging;
@@ -72,7 +70,8 @@ class PolynomialComputing extends CompositeProtocol implements Callable<Integer[
             BlockingQueue<Message> senderQueue, BlockingQueue<Message> receiverQueue,
             int protocolID, int clientId, int asymmetricBit, int partyCount) {
 
-        super(protocolID, senderQueue, receiverQueue, protocolIdQueue, clientId, asymmetricBit, partyCount);
+        super(protocolID, senderQueue, receiverQueue, protocolIdQueue, clientId, 
+                asymmetricBit, partyCount);
 
         this.s = depth;
         u = 1;
@@ -130,9 +129,7 @@ class PolynomialComputing extends CompositeProtocol implements Callable<Integer[
                         y_j[globalIndex] = arr[l];
                         globalIndex++;
                     }
-                } catch (InterruptedException ex) {
-                    Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
-                } catch (ExecutionException ex) {
+                } catch (InterruptedException | ExecutionException ex) {
                     Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
                 }
             }
@@ -410,7 +407,7 @@ public class DecisionTreeScoring extends Model {
             }
         } else {
             for (int i = 0; i < leafNodes - 1; i++) {
-                attributeThresholdsBitShares.add(new ArrayList<Integer>(Collections.nCopies(attributeBitLength, 0)));
+                attributeThresholdsBitShares.add(new ArrayList<>(Collections.nCopies(attributeBitLength, 0)));
             }
         }
 
@@ -473,7 +470,7 @@ public class DecisionTreeScoring extends Model {
     }
 
     /**
-     * calls the polynomialcomputing class and gets the final output
+     * calls the PolynomialComputing class and gets the final output
      * @param startpid
      */
     void computePolynomialEquation() {
@@ -508,7 +505,8 @@ public class DecisionTreeScoring extends Model {
             initQueueMap(recQueues, pid);
 
             PolynomialComputing pc = new PolynomialComputing(yShares[j], jBinary, alpha,
-                    depth, comparisonOutputs, binaryTiShares.subList(tiBinaryStartIndex, tiBinaryStartIndex + polynomialComputationTiCount),
+                    depth, comparisonOutputs, binaryTiShares.subList(tiBinaryStartIndex, 
+                            tiBinaryStartIndex + polynomialComputationTiCount),
                     new LinkedList<>(protocolIdQueue), commonSender, recQueues.get(pid),
                     pid, clientId, asymmetricBit, partyCount);
 
@@ -525,9 +523,7 @@ public class DecisionTreeScoring extends Model {
             try {
                 yShares[j] = taskResponse.get();
                 System.out.println("j=" + j + ", y[j]=" + Arrays.toString(yShares[j]));
-            } catch (InterruptedException ex) {
-                Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
-            } catch (ExecutionException ex) {
+            } catch (InterruptedException | ExecutionException ex) {
                 Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
