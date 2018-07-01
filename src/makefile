@@ -21,10 +21,11 @@ default: classes
 classes: $(CLASSES:.java=.class)
 
 jar: $(CLASSES:.java=.class)
-	jar cvf ../build/Client.jar $(CLASSPATH)Client/* $(CLASSPATH)Utility/* 
-	jar cvf ../build/Party.jar $(CLASSPATH)Model/* $(CLASSPATH)Party/* $(CLASSPATH)Protocol/* $(CLASSPATH)Utility/* $(CLASSPATH)Communication/*
-	jar cvf ../build/TI.jar $(CLASSPATH)TrustedInitializer/* $(CLASSPATH)Utility/* $(CLASSPATH)/Communication/*
-	jar cvf ../build/BA.jar $(CLASSPATH)BroadcastAgent/* $(CLASSPATH)Utility/* $(CLASSPATH)Communication/*
+	jar cvfe ../build/Client.jar Client.LinearRegressionClient -C $(CLASSPATH) Client -C $(CLASSPATH) Utility 
+	jar cvfe ../build/Party.jar Party.Party -C $(CLASSPATH) Model -C $(CLASSPATH) Party -C $(CLASSPATH) Protocol -C $(CLASSPATH) Utility -C $(CLASSPATH) Communication
+	jar cvfe ../build/TI.jar TrustedInitializer.TI -C $(CLASSPATH) TrustedInitializer -C $(CLASSPATH) Utility -C $(CLASSPATH) Communication
+	jar cvfe ../build/BA.jar BroadcastAgent.BA -C $(CLASSPATH) BroadcastAgent -C $(CLASSPATH) Utility -C $(CLASSPATH) Communication
 
 clean:
 	rm -rf $(CLASSPATH)*
+	rm ../build/*.jar
