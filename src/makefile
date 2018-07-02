@@ -1,8 +1,11 @@
 JFLAGS = -g -d
 JC = javac
 CLASSPATH = ../build/classes/
+MKDIR_P = mkdir -p
 .SUFFIXES: .java .class
 .java.class:
+	$(MKDIR_P) ../build/
+	$(MKDIR_P) $(CLASSPATH)
 	$(JC) $(JFLAGS) $(CLASSPATH) $*.java
 
 CLASSES = \
@@ -27,5 +30,5 @@ jar: $(CLASSES:.java=.class)
 	jar cvfe ../build/BA.jar BroadcastAgent.BA -C $(CLASSPATH) BroadcastAgent -C $(CLASSPATH) Utility -C $(CLASSPATH) Communication
 
 clean:
-	rm -rf $(CLASSPATH)*
-	rm ../build/*.jar
+	rm -rf $(CLASSPATH)
+	rm -f ../build/*.jar
