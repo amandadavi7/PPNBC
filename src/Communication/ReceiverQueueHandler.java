@@ -54,7 +54,8 @@ public class ReceiverQueueHandler implements Runnable {
             if (!commonQueue.isEmpty()) {
                 try {
                     Message strippedObj = commonQueue.take();
-                    int ID = strippedObj.getProtocolID();
+                    strippedObj.pollProtocolID(); //To strip off the parentID
+                    int ID = strippedObj.getProtocolID(); //To get the ID for the receiver queue in the next level
                     subQueues.putIfAbsent(ID, new LinkedBlockingQueue<>());
                     subQueues.get(ID).put(strippedObj);
                 } catch (InterruptedException ex) {                   

@@ -321,7 +321,7 @@ public class TestModel extends Model {
         //callOR_XOR();
         //callBitDecomposition();
         // pass 1 - multiplication, 2 - dot product and 3 - comparison
-        callProtocol(2);
+        callProtocol(1);
         teardownModelHandlers();
 
     }
