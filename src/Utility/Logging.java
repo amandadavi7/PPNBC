@@ -9,7 +9,6 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Contains all logging functions for cleaner code, and easy debugging.
@@ -27,9 +26,9 @@ public class Logging {
     public static void logShares(String variableName, ArrayList<Integer> shares) {
         int n = 0;
         System.out.print(variableName + ": ");
-        for (int share : shares) {
+        shares.forEach((share) -> {
             System.out.print(share + " ");
-        }
+        });
         System.out.println("");
     }
     
@@ -55,12 +54,13 @@ public class Logging {
      * @param variableName
      * @param shares
      */
-    public static void logShares(String variableName, HashMap<Integer, Integer> shares) {
+    public static void logShares(String variableName, 
+            HashMap<Integer, Integer> shares) {
         int n = 0;
         System.out.print(variableName + ": ");
-        for (Map.Entry<Integer, Integer> share : shares.entrySet()) {
+        shares.entrySet().forEach((share) -> {
             System.out.print(share.getValue() + " ");
-        }
+        });
         System.out.println("");
     }
 
@@ -111,8 +111,8 @@ public class Logging {
      * Guideline to use the Client class
      */
     public static void clientUsage() {
-        System.out.println("java LinearRegressionClient <number of parties> "
-                + "<inputfilePath> <output path>");
+        System.out.println("java ShareDistribution partyCount=<number of parties> "
+                + "sourceFile=<inputfilePath> destPath=<output path>");
     }
     
     /**

@@ -39,7 +39,6 @@ public class FileIO {
      */
     public static BigInteger realToZq(double x, int f, BigInteger q) {
         // Our integer space must be at least 2^k
-        // TODO: Does this need to be larger given more parties?
         BigDecimal X = BigDecimal.valueOf(x);
         BigDecimal fac = BigDecimal.valueOf(2).pow(f);
         X = X.multiply(fac);
@@ -48,7 +47,8 @@ public class FileIO {
     }
 
     public static BigDecimal ZqToReal(BigInteger x, int f, BigInteger q) {
-        BigInteger partition = q.subtract(BigInteger.ONE).divide(BigInteger.valueOf(2));
+        BigInteger partition = q.subtract(BigInteger.ONE)
+                .divide(BigInteger.valueOf(2));
         BigInteger inverse = BigInteger.valueOf(2).pow(f);
         BigDecimal Zk;
         
@@ -59,7 +59,8 @@ public class FileIO {
             Zk = new BigDecimal(x);
         }
 
-        BigDecimal Q = Zk.divide(new BigDecimal(inverse), f, RoundingMode.CEILING);
+        BigDecimal Q = Zk.divide(new BigDecimal(inverse), f, 
+                RoundingMode.CEILING);
         return Q;
     }
 
@@ -97,8 +98,8 @@ public class FileIO {
             }
 
             inputStream.close();
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
+        } catch (FileNotFoundException ex) {
+            Logger.getLogger(FileIO.class.getName()).log(Level.SEVERE, null, ex);
         }
 
         return x;
@@ -127,8 +128,8 @@ public class FileIO {
             }
 
             inputStream.close();
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
+        } catch (FileNotFoundException ex) {
+            Logger.getLogger(FileIO.class.getName()).log(Level.SEVERE, null, ex);
         }
 
         return x;
@@ -165,8 +166,8 @@ public class FileIO {
             }
 
             inputStream.close();
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
+        } catch (FileNotFoundException ex) {
+            Logger.getLogger(FileIO.class.getName()).log(Level.SEVERE, null, ex);
         }
 
         return x;
@@ -247,14 +248,16 @@ public class FileIO {
                 buf = new BufferedReader(new FileReader(csvFile));
                 String line = null;
                 while ((line = buf.readLine()) != null) {
-                    int lineInt[] = Arrays.stream(line.split(",")).mapToInt(Integer::parseInt).toArray();
-                    List<Integer> yline = Arrays.stream(lineInt).boxed().collect(Collectors.toList());
+                    int lineInt[] = Arrays.stream(line.split(","))
+                            .mapToInt(Integer::parseInt).toArray();
+                    List<Integer> yline = Arrays.stream(lineInt)
+                            .boxed().collect(Collectors.toList());
                     value.add(yline);
                 }
             } catch (FileNotFoundException ex) {
-                Logger.getLogger(Party.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(FileIO.class.getName()).log(Level.SEVERE, null, ex);
             } catch (IOException ex) {
-                Logger.getLogger(Party.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(FileIO.class.getName()).log(Level.SEVERE, null, ex);
             }
 
         } catch (FileNotFoundException ex) {

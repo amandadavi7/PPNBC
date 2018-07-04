@@ -8,18 +8,19 @@ package TrustedInitializer;
 import java.io.Serializable;
 
 /**
- *
+ * Integer Triples
  * @author keerthanaa
  */
-public class TripleInteger implements Triple, Serializable{
-    public int u,v,w;
-    
+public class TripleInteger implements Triple, Serializable {
+
+    public int u, v, w;
+
     /**
      * Logs the Triplet
      */
     @Override
     public void log() {
-        System.out.println("ti share: u:" + u +", v:"+ v +", w:" + w);
+        System.out.println("ti share: u:" + u + ", v:" + v + ", w:" + w);
     }
-    
+
 }

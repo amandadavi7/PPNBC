@@ -51,7 +51,6 @@ public class BaClientSender implements Callable<Boolean> {
                 oStream.flush();
                 oStream.reset();
             } catch (InterruptedException | IOException ex) {
-                System.out.println("breaking from sender thread");
                 break;
             }
         }

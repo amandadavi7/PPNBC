@@ -17,9 +17,10 @@ import java.util.concurrent.LinkedBlockingQueue;
  */
 public class BaQueueHandler implements Runnable {
 
-    int partyCount;
     BlockingQueue<BaMessagePacket> receiverQueue;
     ConcurrentHashMap<Integer, BlockingQueue<Message>> senderQueues;
+    
+    int partyCount;
 
     /**
      * Constructor
@@ -49,12 +50,10 @@ public class BaQueueHandler implements Runnable {
                 for (int i = 0; i < partyCount; i++) {
                     if (i != msgIndex) {
                         senderQueues.putIfAbsent(i, new LinkedBlockingQueue<>());
-                        //System.out.println("adding message to senderQueue "+i);
                         senderQueues.get(i).put(msg.message);
                     }
                 }
             } catch (InterruptedException ex) {
-                System.out.println("Breaking out of BAQueueHandler");
                 break;
             }
         }

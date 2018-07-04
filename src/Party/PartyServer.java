@@ -23,12 +23,13 @@ public class PartyServer implements Runnable {
 
     /**
      * Constructor
-     *
+     * takes common sender queue, socket and output stream object
+     * 
      * @param socket
      * @param queue
      * @param oStream
      */
-    public PartyServer(Socket socket, BlockingQueue<Message> queue, 
+    public PartyServer(Socket socket, BlockingQueue<Message> queue,
             ObjectOutputStream oStream) {
         this.socket = socket;
         this.senderQueue = queue;
@@ -36,8 +37,8 @@ public class PartyServer implements Runnable {
     }
 
     /**
-     * Continuously running thread that takes entries from senderqueue and send
-     * them to other parties
+     * Continuously running thread that takes entries from sender queue and send
+     * them to BA
      */
     @Override
     public void run() {
@@ -50,15 +51,15 @@ public class PartyServer implements Runnable {
                 oStream.flush();
             } catch (InterruptedException | IOException ex) {
                 break;
-            } 
+            }
         }
-        
+
         try {
             oStream.close();
         } catch (IOException ex) {
-            //Logger.getLogger(PartyServer.class.getName()).log(Level.SEVERE, null, ex);
+            
         }
-        
+
         System.out.println("Server closed");
 
     }

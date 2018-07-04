@@ -17,45 +17,48 @@ import java.util.logging.Logger;
  * @author keerthanaa
  */
 public class TItoPeerCommunication implements Runnable {
+
     ServerSocket tiSocket;
     TIShare tishare;
     Socket socket;
-    
+
     /**
      * Constructor
+     *
      * @param tiSocket
-     * @param tishare 
+     * @param tishare
      */
-    public TItoPeerCommunication(ServerSocket tiSocket, TIShare tishare){
+    public TItoPeerCommunication(ServerSocket tiSocket, TIShare tishare) {
         this.tiSocket = tiSocket;
         this.tishare = tishare;
     }
-    
-    
+
     /**
-     * Connects to a party and send tishares
+     * Connects to a party and send tiShares
      */
     @Override
     public void run() {
-        try{
+        try {
             socket = tiSocket.accept();
             System.out.println("Connected to:" + socket + ": sending,");
             ObjectOutputStream oStream = new ObjectOutputStream(socket.getOutputStream());
             oStream.writeObject(tishare);
-            System.out.println("Sent "+ tishare.bigIntShares.size() +" shares to "+ socket.getInetAddress());
-            //TODO the socket life depends on the below print now
-            for(TripleInteger t: tishare.decimalShares){
+            System.out.println("Sent " + tishare.bigIntShares.size() + " shares to "
+                    + socket.getInetAddress());
+            //TODO the socket life depends on the below print now 
+            //(TI will be made offline, So it doesn't matter)
+            tishare.decimalShares.forEach((t) -> {
                 System.out.println("u : " + t.u + ",v : " + t.v + ",w : " + t.w);
-            }
-            for(TripleByte t: tishare.binaryShares){
+            });
+            tishare.binaryShares.forEach((t) -> {
                 System.out.println("u : " + t.u + ",v : " + t.v + ",w : " + t.w);
-            }
-            for(TripleReal t: tishare.bigIntShares){
+            });
+            tishare.bigIntShares.forEach((t) -> {
                 System.out.println("u : " + t.u + ",v : " + t.v + ",w : " + t.w);
-            }
-            for(TruncationPair t: tishare.truncationPair){
+            });
+            tishare.truncationPair.forEach((t) -> {
                 System.out.println("r : " + t.r + ",rp : " + t.rp);
-            }
+            });
         } catch (IOException ex){
             Logger.getLogger(TItoPeerCommunication.class.getName()).log(Level.SEVERE, null, ex);
         }

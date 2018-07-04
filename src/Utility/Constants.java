@@ -11,9 +11,8 @@ package Utility;
  */
 public class Constants {
 
-    //public static final int prime = 10007;             // Prime 
     public static final int prime = 32;
-    public static final int binaryPrime = 2;             // Prime for bit calculation
+    public static final int binaryPrime = 2;        // Prime for bit calculation
     public static final int bitLength = 5;
     
     public static final int threadCount = 10; 

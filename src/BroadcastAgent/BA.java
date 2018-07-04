@@ -7,7 +7,6 @@ package BroadcastAgent;
 
 import Communication.Message;
 import Utility.Connection;
-import Utility.Constants;
 import Utility.Logging;
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -35,14 +34,21 @@ import java.util.logging.Logger;
 public class BA {
 
     private static ServerSocket socketServer;       // Server to broadcast messages
+
     private static ExecutorService clientHandlerThreads, es;
     private static List<Future<Boolean>> senderFutureList;
     private static List<Future<Boolean>> receiverFutureList;
 
-    static int baPort, partyCount;
     private static BlockingQueue<BaMessagePacket> receiverQueue;
     protected static ConcurrentHashMap<Integer, BlockingQueue<Message>> senderQueues;
-    
+
+    private static int baPort, partyCount;
+    private static int clientId;
+
+    /**
+     * 
+     * @param args 
+     */
     public static void main(String[] args) {
         if (args.length < 2) {
             Logging.baUsage();
@@ -62,6 +68,9 @@ public class BA {
      * @param args command line arguments
      */
     private static void initializeVariables(String[] args) {
+        clientId = 0;
+        baPort = -1;
+        partyCount = -1;
         receiverQueue = new LinkedBlockingQueue<>();
         senderQueues = new ConcurrentHashMap<>();
         clientHandlerThreads = Executors.newCachedThreadPool();
@@ -87,6 +96,11 @@ public class BA {
             }
         }
 
+        if (baPort == -1 || partyCount == -1) {
+            Logging.baUsage();
+            System.exit(0);
+        }
+
         socketServer = Connection.createServerSocket(baPort);
         if (socketServer == null) {
             System.out.println("Socket creation error");
@@ -96,8 +110,8 @@ public class BA {
     }
 
     /**
-     * Accept a connection from party and create two threads to send and receive
-     * data
+     * Accept a connection from each party and create two threads to send and 
+     * receive data for each
      */
     private static void initiateConnections() {
         //start n server threads to broadcast
@@ -111,7 +125,7 @@ public class BA {
                         .getOutputStream());
                 ObjectInputStream iStream = new ObjectInputStream(socket
                         .getInputStream());
-                
+
                 // Start Receiver and Sender thread for this client
                 BaClientReceiver receiverHandler = new BaClientReceiver(socket,
                         iStream, receiverQueue, i, partyCount);
@@ -125,6 +139,7 @@ public class BA {
                 
             } catch (IOException ex) {
                 Logger.getLogger(BA.class.getName()).log(Level.SEVERE, null, ex);
+                checkAndTeardownThreads();
             }
 
         }
@@ -132,11 +147,11 @@ public class BA {
     }
 
     /**
-     * Send message to all other client queues
+     * Start a thread to route incoming message to all other client queues
      */
     private static void startQueueMappingThread() {
         es = Executors.newSingleThreadExecutor();
-        BaQueueHandler queueHandler = new BaQueueHandler(partyCount, 
+        BaQueueHandler queueHandler = new BaQueueHandler(partyCount,
                 receiverQueue, senderQueues);
         es.submit(queueHandler);
     }
@@ -145,12 +160,11 @@ public class BA {
      * Teardown threads when all clients are done with the computation
      */
     private static void checkAndTeardownThreads() {
-        System.out.println("checking...");
+        System.out.println("Cleaning up and shutting down");
         for (int i = 0; i < partyCount; i++) {
             Future<Boolean> recThread = receiverFutureList.get(i);
             try {
                 Boolean done = recThread.get();
-                System.out.println("cancelling sender");
                 senderFutureList.get(i).cancel(true);
             } catch (InterruptedException | ExecutionException ex) {
                 Logger.getLogger(BA.class.getName()).log(Level.SEVERE, null, ex);

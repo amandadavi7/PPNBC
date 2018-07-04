@@ -18,6 +18,13 @@ import java.math.BigInteger;
  */
 public class Random {
 
+    /**
+     * Generate Decimal Triples
+     *
+     * @param decTriples
+     * @param clientCount
+     * @param tiShare
+     */
     public static void generateDecimalTriples(int decTriples, int clientCount,
             TIShare[] tiShare) {
         java.util.Random rand = new java.util.Random();
@@ -44,6 +51,13 @@ public class Random {
         }
     }
 
+    /**
+     * Generate Binary Triples
+     *
+     * @param binTriples
+     * @param clientCount
+     * @param tiShare
+     */
     public static void generateBinaryTriples(int binTriples, int clientCount,
             TIShare[] tiShare) {
         java.util.Random rand = new java.util.Random();
@@ -70,6 +84,13 @@ public class Random {
         }
     }
 
+    /**
+     * Generate Big Integer Triples
+     *
+     * @param bigIntTriples
+     * @param clientCount
+     * @param tiShare
+     */
     public static void generateBigIntTriples(int bigIntTriples, int clientCount,
             TIShare[] tiShare) {
         java.util.Random rand = new java.util.Random();
@@ -102,9 +123,16 @@ public class Random {
 
     }
 
+    /**
+     * Generate Truncation Pairs
+     *
+     * @param truncationPairs
+     * @param clientCount
+     * @param tiShare
+     */
     public static void generateTruncationPairs(int truncationPairs,
             int clientCount, TIShare[] tiShare) {
-        System.out.println("Generating "+ truncationPairs+" truncation shares");
+        System.out.println("Generating " + truncationPairs + " truncation shares");
         java.util.Random rand = new java.util.Random();
         BigInteger Zq = BigInteger.valueOf(2).pow(Constants.integer_precision
                 + 2 * Constants.decimal_precision + 1).nextProbablePrime();
@@ -117,14 +145,14 @@ public class Random {
         for (int i = 0; i < truncationPairs; i++) {
             // generate a random Rp of f bit length
             BigInteger Rp = new BigInteger(f, rand);
-            
+
             // generate a random Rp of lambda+k bit length
-            BigInteger R2p = new BigInteger(lambda+k, rand);
+            BigInteger R2p = new BigInteger(lambda + k, rand);
 
             BigInteger f2 = BigInteger.valueOf(2).pow(f);
 
             BigInteger R = R2p.multiply(f2).add(Rp);
-            
+
             BigInteger rsum = BigInteger.ZERO, rpsum = BigInteger.ZERO;
             for (int j = 0; j < clientCount - 1; j++) {
                 TruncationPair t = new TruncationPair();

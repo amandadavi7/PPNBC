@@ -15,6 +15,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 /**
+ * Trusted Initializer that generates the randomness
  *
  * @author keerthanaa
  */
@@ -87,6 +88,11 @@ public class TI {
         send.shutdown();
     }
 
+    /**
+     * Main method
+     *
+     * @param args
+     */
     public static void main(String[] args) {
         if (args.length < 4) {
             Logging.tiUsage();

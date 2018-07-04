@@ -24,8 +24,10 @@ import java.util.logging.Logger;
 public class BaClientReceiver implements Callable<Boolean> {
 
     Socket clientSocket;
+    
     BlockingQueue<BaMessagePacket> receiverQueue;
     ObjectInputStream iStream = null;
+    
     int clientId, totalClients;
     static AtomicInteger counter = new AtomicInteger();
 
@@ -58,14 +60,12 @@ public class BaClientReceiver implements Callable<Boolean> {
                 receiverQueue.add(new BaMessagePacket(msg, clientId));
             } catch (IOException ex) {
                 if (counter.incrementAndGet() >= totalClients) {
-                    System.out.println("breaking in BaClientReceiver thread " + 
-                            counter);
                     break;
                 }
             } catch (ClassNotFoundException ex) {
                 Logger.getLogger(BaClientReceiver.class.getName())
                         .log(Level.SEVERE, null, ex);
-            }
+            } 
 
         }
 

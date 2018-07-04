@@ -7,8 +7,6 @@ package Protocol.Utility;
 
 import Communication.Message;
 import Protocol.Protocol;
-import TrustedInitializer.Triple;
-import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
 
@@ -23,24 +21,25 @@ public abstract class BatchMultiplication extends Protocol {
 
     /**
      * Constructor
-     * 
+     *
      * TODO - parent ID is only for testing - to be removed in the future
      *
-     * @param tiShares
      * @param senderQueue
      * @param receiverQueue
      * @param protocolIdQueue
      * @param clientId
      * @param protocolID
      * @param asymmetricBit
+     * @param partyCount
      * @param parentID
      */
     public BatchMultiplication(BlockingQueue<Message> senderQueue,
             BlockingQueue<Message> receiverQueue, Queue<Integer> protocolIdQueue,
-            int clientId, 
+            int clientId,
             int protocolID, int asymmetricBit, int parentID, int partyCount) {
 
-        super(protocolID, senderQueue, receiverQueue, protocolIdQueue, clientId, asymmetricBit, partyCount);
+        super(protocolID, senderQueue, receiverQueue, protocolIdQueue, clientId,
+                asymmetricBit, partyCount);
         this.parentID = parentID;
     }
 

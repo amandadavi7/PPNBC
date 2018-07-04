@@ -23,33 +23,33 @@ import java.util.concurrent.*;
 import java.util.logging.*;
 
 /**
- * A party involved in computing a function
+ * A party involved in computing a function 
+ * Starting point of the application
  *
  * @author anisha
  */
 public class Party {
 
-    private static ServerSocket socketServer;       // The socket connection for Peer acting as server
-
     private static ExecutorService partySocketEs;
     private static List<Future<?>> socketFutureList;
+    private static Socket clientSocket;
     private static TIShare tiShares;
 
     private static BlockingQueue<Message> senderQueue;
     private static BlockingQueue<Message> receiverQueue;
+
     private static int partyId;
     private static int port;
-    private static String tiIP;
-    private static int tiPort;
-    private static String baIP;
-    private static int baPort;
     private static int partyCount;
 
-    private static List<List<List<Integer>>> vShares;
-    private static int asymmetricBit;
+    private static String tiIP;
+    private static int tiPort;
 
+    private static String baIP;
+    private static int baPort;
+
+    private static int asymmetricBit;
     private static int modelId;
-    private static Socket clientSocket;
 
     /**
      * Initialize class variables
@@ -57,7 +57,6 @@ public class Party {
      * @param args
      */
     public static void initalizeVariables(String[] args) {
-        vShares = new ArrayList<>();
         senderQueue = new LinkedBlockingQueue<>();
         receiverQueue = new LinkedBlockingQueue<>();
         partySocketEs = Executors.newFixedThreadPool(2);
@@ -67,6 +66,10 @@ public class Party {
         asymmetricBit = -1;
         port = -1;
         partyCount = -1;
+        tiIP = null;
+        tiPort = -1;
+        baIP = null;
+        baPort = -1;
 
         for (String arg : args) {
             String[] currInput = arg.split("=");
@@ -104,22 +107,20 @@ public class Party {
 
         }
 
-        if (tiIP == null || baIP == null || port <= 0 || asymmetricBit == -1
-                || partyCount <= 0 || partyId < 0) {
+        if (tiIP == null || baIP == null || tiPort == -1 || baPort == -1 
+                || port <= 0 || asymmetricBit == -1 || partyCount <= 0 
+                || partyId < 0) {
             Logging.partyUsage();
-            System.exit(0);
-        }
-
-        
-
-        socketServer = Connection.createServerSocket(port);
-        if (socketServer == null) {
-            System.out.println("Socket creation error");
             System.exit(0);
         }
 
     }
 
+    /**
+     * Main method
+     * 
+     * @param args 
+     */
     public static void main(String[] args) {
         initalizeVariables(args);
 
@@ -163,6 +164,9 @@ public class Party {
 
     }
 
+    /**
+     * Initiate connections with the BA as a client
+     */
     private static void startPartyConnections() {
         System.out.println("creating a party socket");
         clientSocket = Connection.initializeClientConnection(
@@ -186,15 +190,22 @@ public class Party {
         socketFutureList.add(partySocketEs.submit(partyServer));
     }
 
+    /**
+     * shut down the party sockets
+     */
     private static void tearDownSocket() {
         partySocketEs.shutdownNow();
     }
 
+    /**
+     * Call the model class with the input args
+     * @param args 
+     */
     private static void callModel(String[] args) {
         switch (modelId) {
             case 1:
                 // DT Scoring
-                DecisionTreeScoring DTree = new DecisionTreeScoring(asymmetricBit, 
+                DecisionTreeScoring DTree = new DecisionTreeScoring(asymmetricBit,
                         senderQueue, receiverQueue, partyId, tiShares.binaryShares,
                         partyCount, args);
                 DTree.ScoreDecisionTree();
