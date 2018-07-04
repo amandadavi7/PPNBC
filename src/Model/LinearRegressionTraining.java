@@ -99,9 +99,6 @@ public class LinearRegressionTraining extends Model {
                     .log(Level.SEVERE, null, ex);
         }
         
-        System.out.println("Party: "+ clientId+" inverse done");
-        
-
         initQueueMap(recQueues, globalProtocolId);
         MatrixMultiplication matrixMultiplication = new MatrixMultiplication(gamma1Inv,
                 gamma2, realTriples, tiTruncationPair, clientId, prime, globalProtocolId,
@@ -127,6 +124,10 @@ public class LinearRegressionTraining extends Model {
         
     }
 
+    /**
+     * Initialize the input matrix, the label vector and the output file path
+     * @param args 
+     */
     private void initalizeModelVariables(String[] args) {
 
         for (String arg : args) {

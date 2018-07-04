@@ -9,7 +9,7 @@ import java.io.Serializable;
 import java.math.BigInteger;
 
 /**
- *
+ * Truncation pairs r and rp over Zq
  * @author anisha
  */
 public class TruncationPair implements Serializable{

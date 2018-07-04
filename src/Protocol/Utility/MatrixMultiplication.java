@@ -6,7 +6,6 @@
 package Protocol.Utility;
 
 import Communication.Message;
-import Model.LinearRegressionTraining;
 import Protocol.CompositeProtocol;
 import Protocol.DotProductReal;
 import TrustedInitializer.TripleReal;
@@ -46,6 +45,7 @@ public class MatrixMultiplication extends CompositeProtocol implements
     int n, m, l;
 
     /**
+     * Constructor
      * Uses n-1 tiShares
      *
      * @param a
@@ -139,7 +139,7 @@ public class MatrixMultiplication extends CompositeProtocol implements
                 try {
                     c2f[i][j] = dWorkerResponse.get();
                 } catch (InterruptedException | ExecutionException ex) {
-                    Logger.getLogger(LinearRegressionTraining.class.getName())
+                    Logger.getLogger(MatrixMultiplication.class.getName())
                             .log(Level.SEVERE, null, ex);
                 }
             }
@@ -166,7 +166,7 @@ public class MatrixMultiplication extends CompositeProtocol implements
             try {
                 c[i] = dWorkerResponse.get();
             } catch (InterruptedException | ExecutionException ex) {
-                Logger.getLogger(LinearRegressionTraining.class.getName())
+                Logger.getLogger(MatrixMultiplication.class.getName())
                         .log(Level.SEVERE, null, ex);
             }
 

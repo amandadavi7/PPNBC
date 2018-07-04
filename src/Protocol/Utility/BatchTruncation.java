@@ -36,6 +36,19 @@ public class BatchTruncation extends CompositeProtocol implements Callable<BigIn
     BigInteger prime;
     int batchSize;
 
+    /**
+     * Contructor
+     * @param wShares
+     * @param tiShares
+     * @param senderqueue
+     * @param receiverqueue
+     * @param protocolIdQueue
+     * @param clientID
+     * @param prime
+     * @param protocolID
+     * @param asymmetricBit
+     * @param partyCount 
+     */
     public BatchTruncation(BigInteger[] wShares,
             List<TruncationPair> tiShares, BlockingQueue<Message> senderqueue,
             BlockingQueue<Message> receiverqueue, Queue<Integer> protocolIdQueue,
@@ -62,6 +75,9 @@ public class BatchTruncation extends CompositeProtocol implements Callable<BigIn
         return T;
     }
 
+    /**
+     * Compute Z = [[w]] + [[r]] mod prime 
+     */
     private void computeAndShareZShare() {
 
         // broadcast it to n parties
@@ -82,6 +98,9 @@ public class BatchTruncation extends CompositeProtocol implements Callable<BigIn
         }
     }
 
+    /**
+     * Compute the shares of the truncated value
+     */
     private void computeSecretShare() {
         Message receivedMessage = null;
         List<BigInteger> diffList = null;

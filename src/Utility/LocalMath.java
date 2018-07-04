@@ -43,7 +43,13 @@ public class LocalMath {
         return c;
     }
     
-    //TODO convert this to matrix scaling
+    /**
+     * Scale down the value from 2*f to f over Zq
+     * TODO convert this to matrix scaling
+     * @param value
+     * @param prime
+     * @return 
+     */
     public static BigInteger localScale(BigInteger value, BigInteger prime) {
         
         BigInteger scaleFactor = BigInteger.valueOf(2).pow(Constants.decimal_precision);

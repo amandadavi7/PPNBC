@@ -174,6 +174,11 @@ public class FileIO {
 
     }
     
+    /**
+     * Load list of values from file as BigInteger
+     * @param sourceFile
+     * @return 
+     */
     public static List<BigInteger> loadListFromFile(String sourceFile) {
 
         File file = new File(sourceFile);

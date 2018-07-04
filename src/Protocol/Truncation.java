@@ -64,7 +64,6 @@ public class Truncation extends CompositeProtocol implements Callable<BigInteger
         try {
             senderQueue.put(senderMessage);
         } catch (InterruptedException ex) {
-            ex.printStackTrace();
             Logger.getLogger(Truncation.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
@@ -79,7 +78,6 @@ public class Truncation extends CompositeProtocol implements Callable<BigInteger
                 diffList = (BigInteger) receivedMessage.getValue();
                 zShares = zShares.add(diffList).mod(prime);
             } catch (InterruptedException ex) {
-                ex.printStackTrace();
             }
         }
 

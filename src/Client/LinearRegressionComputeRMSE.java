@@ -8,18 +8,12 @@ package Client;
 import Utility.Constants;
 import Utility.FileIO;
 import Utility.Logging;
-import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.math.BigInteger;
-import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * The client is responsible to split the dataset among n parties over Zq. The
@@ -30,7 +24,6 @@ import java.util.logging.Logger;
 public class LinearRegressionComputeRMSE {
 
     static BigInteger Zq;
-    static int row, col;
     static int noOfParties;
     
     static List<Double> actualYList;
@@ -86,6 +79,12 @@ public class LinearRegressionComputeRMSE {
 
     }
     
+    /**
+     * Load list of actual values from file
+     * TODO: move it to FileIO 
+     * @param sourceFile
+     * @return 
+     */
     public static List<Double> loadListFromFile(String sourceFile) {
 
         File file = new File(sourceFile);
@@ -94,7 +93,6 @@ public class LinearRegressionComputeRMSE {
 
         try {
             inputStream = new Scanner(file);
-            int row = 0;
             while (inputStream.hasNext()) {
                 String line = inputStream.next();
                 Double value = new Double(line.split(",")[0]);

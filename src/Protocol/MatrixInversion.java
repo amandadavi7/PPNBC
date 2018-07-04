@@ -37,9 +37,9 @@ public class MatrixInversion extends CompositeProtocol implements
     List<TripleReal> tishares;
     List<TruncationPair> tiTruncationPair;
     
-    private int matrixSize;
+    private final int matrixSize;
     private int globalPid;
-    private int nrRounds;
+    private final int nrRounds;
     private int tiRealIndex;
     private int tiTruncationIndex;
     
@@ -95,6 +95,12 @@ public class MatrixInversion extends CompositeProtocol implements
         return trace;
     }
 
+    /**
+     * Create a matrix I.number
+     * TODO: Can be moved to Utility
+     * @param number
+     * @return 
+     */
     private BigInteger[][] createIdentity(BigInteger number) {
         BigInteger[][] I = new BigInteger[matrixSize][matrixSize];
         for (int i = 0; i < matrixSize; i++) {
@@ -110,6 +116,12 @@ public class MatrixInversion extends CompositeProtocol implements
         return I;
     }
     
+    /**
+     * Create a matrix I*number over Zq
+     * TODO: Can be moved to Utility
+     * @param number
+     * @return 
+     */
     private BigInteger[][] createIdentity(int number) {
         BigInteger[][] I = new BigInteger[matrixSize][matrixSize];
         BigInteger diagonalElements = FileIO.realToZq(number*asymmetricBit, 
@@ -274,7 +286,7 @@ public class MatrixInversion extends CompositeProtocol implements
             try {
                 truncatedAX = truncationTask.get();
             } catch (InterruptedException | ExecutionException ex) {
-                Logger.getLogger(MultiplicationReal.class.getName())
+                Logger.getLogger(MatrixInversion.class.getName())
                         .log(Level.SEVERE, null, ex);
             }
 
@@ -317,7 +329,7 @@ public class MatrixInversion extends CompositeProtocol implements
             try {
                 truncatedX = truncationTaskNext.get();
             } catch (InterruptedException | ExecutionException ex) {
-                Logger.getLogger(MultiplicationReal.class.getName())
+                Logger.getLogger(MatrixInversion.class.getName())
                         .log(Level.SEVERE, null, ex);
             }
 
