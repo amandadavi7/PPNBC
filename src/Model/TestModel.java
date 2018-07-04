@@ -77,6 +77,7 @@ public class TestModel extends Model {
         this.tiTruncationPair = tiTruncationPair;
         prime = BigInteger.valueOf(2).pow(Constants.integer_precision
                 + 2 * Constants.decimal_precision + 1).nextProbablePrime();
+        v = new ArrayList<>();
         this.binaryTiShares = binaryTriples;
         this.decimalTiShares = decimalTriples;
         this.realTiShares = realTiShares;
@@ -332,12 +333,12 @@ public class TestModel extends Model {
 
         startModelHandlers();
 
-        //callArgMax();
+        callArgMax();
         //callOIS();
         //callOR_XOR();
         //callBitDecomposition();
         // pass 1 - multiplication, 2 - dot product and 3 - comparison
-        callProtocol(1);
+        //callProtocol(1);
         teardownModelHandlers();
 
     }
