@@ -61,6 +61,7 @@ public class TestModel extends Model {
 
         super(senderQueue, receiverQueue, clientId, asymmetricBit, partyCount);
 
+        v = new ArrayList<>();
         this.binaryTiShares = binaryTriples;
         this.decimalTiShares = decimalTriples;
         this.realTiShares = realTiShares;
@@ -316,12 +317,12 @@ public class TestModel extends Model {
 
         startModelHandlers();
 
-        //callArgMax();
+        callArgMax();
         //callOIS();
         //callOR_XOR();
         //callBitDecomposition();
         // pass 1 - multiplication, 2 - dot product and 3 - comparison
-        callProtocol(1);
+        //callProtocol(1);
         teardownModelHandlers();
 
     }
