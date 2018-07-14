@@ -1,7 +1,9 @@
 
 # Lynx: A Framework for Privacy Preserving Machine Learning
 
-Lynx is a framework to do privacy preserving machine learning. It helps the users with sensitive information to apply various machine learning models without other users or the server getting to know any information on the data. This framework uses secure multiparty computation, a field of cryptography where parties compute a mathematical function on the inputs without getting to know the inputs by working on shares of the inputs. The framework uses beavers triples to create a randomization to ensure the security of the data. The framework supports honest-but-curious security model. 
+Lynx is a framework to do privacy preserving machine learning. It helps the users with sensitive information to apply various machine learning models without other users or the server getting to know any information on the data. This framework uses secure multiparty computation, a field of cryptography where parties compute a mathematical function on the inputs without getting to know the inputs by working on shares of the inputs. The framework uses beavers triples to create a randomization to ensure the security of the data. The framework supports honest-but-curious security model. The architecture looks like follows:  
+
+![Lynx Architecture](doc/lynx_architecture.png)
 
 ## Prerequisites
 
@@ -53,6 +55,10 @@ java -jar Party.jar party_port=<Party Port> ti=<TrustedInitializer-IP:TrustedIni
  ```
  java -jar Client.jar ShareDistribution partyCount=<number of parties> sourceFile=<input file path> destPath=<output path>
  ```
+
+## Documentation
+
+The code documentation is present at the url https://uwtppml.bitbucket.io/ 
 
 ## Acknowledgments
 
