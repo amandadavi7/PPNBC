@@ -90,10 +90,6 @@ public class BitDecomposition extends CompositeProtocol implements
             }
         }
 
-//        System.out.println("a shares: " + a_decimal);
-//        System.out.println("b shares: " + b_decimal);
-//        System.out.println("a as list: " + a);
-//        System.out.println("b as list: " + b);
         this.tiShares = tiShares;
         tiStartIndex = 0;
         eShares = new Integer[bitLength];
