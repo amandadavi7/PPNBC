@@ -5,13 +5,16 @@
  */
 package TrustedInitializer;
 
-
 /**
+ * Triple interface
  *
  * @author keerthanaa
  */
 public interface Triple {
-    
+
+    /**
+     *
+     */
     public void log();
-    
+
 }

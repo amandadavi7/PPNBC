@@ -7,11 +7,7 @@ package Model;
 
 import Communication.Message;
 import Communication.ReceiverQueueHandler;
-import TrustedInitializer.TripleByte;
-import TrustedInitializer.TripleInteger;
-import TrustedInitializer.TripleReal;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
@@ -37,17 +33,19 @@ public class Model {
     int clientId;
     int partyCount;
     int asymmetricBit;
-    
 
     /**
+     * Constructor
      *
      * @param senderQueue
      * @param receiverQueue
      * @param clientId
      * @param asymmetricBit
+     * @param partyCount
      */
     public Model(BlockingQueue<Message> senderQueue,
-            BlockingQueue<Message> receiverQueue, int clientId, int asymmetricBit, int partyCount) {
+            BlockingQueue<Message> receiverQueue, int clientId,
+            int asymmetricBit, int partyCount) {
 
         this.asymmetricBit = asymmetricBit;
         this.partyCount = partyCount;
@@ -63,15 +61,27 @@ public class Model {
         receiverThread = new ReceiverQueueHandler(1, commonReceiver, recQueues);
     }
 
+    /**
+     * Start Model Handlers
+     */
     public void startModelHandlers() {
         queueHandlers.submit(receiverThread);
     }
 
+    /**
+     * Shut down model handlers
+     */
     public void teardownModelHandlers() {
         receiverThread.setProtocolStatus();
         queueHandlers.shutdown();
     }
 
+    /**
+     * Initialize Receiver Queue HashMap
+     *
+     * @param recQueues
+     * @param key
+     */
     public void initQueueMap(
             ConcurrentHashMap<Integer, BlockingQueue<Message>> recQueues,
             int key) {

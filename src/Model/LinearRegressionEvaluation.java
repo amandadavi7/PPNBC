@@ -46,7 +46,7 @@ public class LinearRegressionEvaluation extends Model {
      * @param clientId
      * @param partyCount
      * @param args
-     * 
+     *
      */
     public LinearRegressionEvaluation(List<TripleReal> realTriples,
             int asymmetricBit, BlockingQueue<Message> senderQueue,

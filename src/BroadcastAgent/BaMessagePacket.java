@@ -8,7 +8,8 @@ package BroadcastAgent;
 import Communication.Message;
 
 /**
- * Bundle the Message and the client Id together for BA
+ * Bundle the Message and the client Id together for BA to broadcast it to the 
+ * correct party
  * @author anisha
  */
 public class BaMessagePacket {

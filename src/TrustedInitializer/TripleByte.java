@@ -8,13 +8,13 @@ package TrustedInitializer;
 import java.io.Serializable;
 
 /**
- *
+ * Byte Triples
  * @author keerthanaa
  */
 public class TripleByte implements Triple, Serializable {
-    
-    public byte u,v,w;
-    
+
+    public byte u, v, w;
+
     /**
      * Logs the Triplet
      */
@@ -22,5 +22,5 @@ public class TripleByte implements Triple, Serializable {
     public void log() {
         System.out.println("ti share: u:" + u + ", v:" + v + ", w:" + w);
     }
-    
+
 }

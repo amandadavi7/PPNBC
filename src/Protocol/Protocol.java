@@ -10,11 +10,12 @@ import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
 
 /**
+ * Base class to layout contract for a protocol to be created
  *
  * @author anisha
  */
 public class Protocol {
-    
+
     protected BlockingQueue<Message> senderQueue;
     protected BlockingQueue<Message> receiverQueue;
     protected int protocolId, clientID, asymmetricBit, partyCount;

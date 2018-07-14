@@ -15,23 +15,24 @@ import java.util.concurrent.BlockingQueue;
  */
 public abstract class DotProduct extends CompositeProtocol {
 
-
     /**
-     * Constructor
+     * Constructor for Dot Product abstract
+     * Class Initializes queue and protocol
+     * ID details
      *
-     * @param tiShares
      * @param senderqueue
      * @param receiverqueue
      * @param protocolIdQueue
      * @param clientID
      * @param protocolID
      * @param asymmetricBit
+     * @param partyCount
      */
     public DotProduct(BlockingQueue<Message> senderqueue, BlockingQueue<Message> receiverqueue,
             Queue<Integer> protocolIdQueue,
             int clientID, int protocolID, int asymmetricBit, int partyCount) {
 
-        super(protocolID, senderqueue, receiverqueue, protocolIdQueue,clientID, 
+        super(protocolID, senderqueue, receiverqueue, protocolIdQueue, clientID,
                 asymmetricBit, partyCount);
 
     }

@@ -30,6 +30,7 @@ import java.util.logging.*;
 import java.util.stream.Collectors;
 
 /**
+ * A Dummy Model class to test all protocols
  *
  * @author anisha
  */
@@ -42,12 +43,26 @@ public class TestModel extends Model {
     List<TripleInteger> decimalTiShares;
     List<TripleReal> realTiShares;
 
+    /**
+     * Constructor
+     *
+     * @param binaryTriples
+     * @param decimalTriples
+     * @param realTiShares
+     * @param asymmetricBit
+     * @param senderQueue
+     * @param receiverQueue
+     * @param clientId
+     * @param partyCount
+     * @param args
+     */
     public TestModel(List<TripleByte> binaryTriples, List<TripleInteger> decimalTriples,
             List<TripleReal> realTiShares, int asymmetricBit, BlockingQueue<Message> senderQueue,
             BlockingQueue<Message> receiverQueue, int clientId, int partyCount, String[] args) {
 
         super(senderQueue, receiverQueue, clientId, asymmetricBit, partyCount);
 
+        v = new ArrayList<>();
         this.binaryTiShares = binaryTriples;
         this.decimalTiShares = decimalTriples;
         this.realTiShares = realTiShares;
@@ -55,18 +70,18 @@ public class TestModel extends Model {
 
     }
 
+    /**
+     * Call bitD protocol for testing 1 test case
+     */
     public void callBitDecomposition() {
 
         ExecutorService es = Executors.newFixedThreadPool(1);
         initQueueMap(recQueues, 1);
-        //TODO: change this to just take integers instead of wasting memory on List<Integer> 
-//        BitDecomposition bitTest = new BitDecomposition(x.get(0).get(0), y.get(0).get(0),
-//                binaryTiShares, asymmetricBit, Constants.bitLength, sendQueues.get(1),
-//                recQueues.get(1), clientId, Constants.binaryPrime, 1);
 
         BitDecomposition bitTest = new BitDecomposition(2, binaryTiShares,
                 asymmetricBit, Constants.bitLength, commonSender,
-                recQueues.get(1), new LinkedList<>(protocolIdQueue), clientId, Constants.binaryPrime, 1, partyCount);
+                recQueues.get(1), new LinkedList<>(protocolIdQueue), clientId,
+                Constants.binaryPrime, 1, partyCount);
 
         Future<List<Integer>> bitdecompositionTask = es.submit(bitTest);
 
@@ -80,6 +95,9 @@ public class TestModel extends Model {
         teardownModelHandlers();
     }
 
+    /**
+     * Calling ArgMax protocol in parallel for n test cases
+     */
     public void callArgMax() {
 
         ExecutorService es = Executors.newFixedThreadPool(100);
@@ -93,8 +111,9 @@ public class TestModel extends Model {
 
             initQueueMap(recQueues, i);
 
-            ArgMax argmaxModule = new ArgMax(v.get(i), binaryTiShares, asymmetricBit, commonSender,
-                    recQueues.get(i), new LinkedList<>(protocolIdQueue), clientId, Constants.binaryPrime, i, partyCount);
+            ArgMax argmaxModule = new ArgMax(v.get(i), binaryTiShares, asymmetricBit,
+                    commonSender, recQueues.get(i), new LinkedList<>(protocolIdQueue),
+                    clientId, Constants.binaryPrime, i, partyCount);
 
             System.out.println("submitted " + i + " argmax");
 
@@ -123,6 +142,9 @@ public class TestModel extends Model {
 
     }
 
+    /**
+     * Call OR_XOR protocol in parallel for n test cases
+     */
     public void callOR_XOR() {
 
         System.out.println("calling or_xor with x=" + x + " y=" + y);
@@ -163,6 +185,9 @@ public class TestModel extends Model {
 
     }
 
+    /**
+     * Call Oblivious Input Selection for 1 test case
+     */
     public void callOIS() {
 
         System.out.println("calling OIS with v" + v);
@@ -177,13 +202,13 @@ public class TestModel extends Model {
 
         if (v.isEmpty()) {
             System.out.println("v is null");
-            ois = new OIS(null, binaryTiShares, asymmetricBit, commonSender, recQueues.get(0),
-                    new LinkedList<>(protocolIdQueue), clientId,
+            ois = new OIS(null, binaryTiShares, asymmetricBit, commonSender,
+                    recQueues.get(0), new LinkedList<>(protocolIdQueue), clientId,
                     Constants.binaryPrime, 0, 4, 1, 3, partyCount);
         } else {
             System.out.println("v is not null");
-            ois = new OIS(v.get(0), binaryTiShares, asymmetricBit, commonSender, recQueues.get(0),
-                    new LinkedList<>(protocolIdQueue), clientId,
+            ois = new OIS(v.get(0), binaryTiShares, asymmetricBit, commonSender,
+                    recQueues.get(0), new LinkedList<>(protocolIdQueue), clientId,
                     Constants.binaryPrime, 0, 4, -1, 3, partyCount);
         }
 
@@ -205,6 +230,12 @@ public class TestModel extends Model {
         System.out.println("Avg time duration:" + elapsedTime);
     }
 
+    /**
+     * Call multiplication/dot product/comparison protocol for n test cases in
+     * parallel
+     *
+     * @param protocolType
+     */
     public void callProtocol(int protocolType) {
         ExecutorService es = Executors.newFixedThreadPool(100);
         List<Future<Integer>> taskList = new ArrayList<>();
@@ -284,12 +315,7 @@ public class TestModel extends Model {
         ExecutorService es = Executors.newFixedThreadPool(1);
         initQueueMap(recQueues, 0);
        
-//        BitDecomposition bitTest = new BitDecomposition(x.get(0).get(0), y.get(0).get(0),
-//                binaryTiShares, oneShares, Constants.bitLength, sendQueues.get(1),
-//                recQueues.get(1), clientId, Constants.binaryPrime, 1);
-
-
-          JaccardDistance jdistance = new JaccardDistance(x, y.get(0), asymmetricBit, 
+        JaccardDistance jdistance = new JaccardDistance(x, y.get(0), asymmetricBit, 
                                     decimalTiShares, commonSender, 
                                     recQueues.get(0), clientId, Constants.prime, 0, 
                                     new LinkedList<>(protocolIdQueue),partyCount);
@@ -300,10 +326,7 @@ public class TestModel extends Model {
         try {
             List<List<Integer>> result = jaccardTask.get();
             System.out.println("result of jaccard distance comparison: " + result);
-        } catch (InterruptedException ex) {
-            Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (ExecutionException ex) {
-
+        } catch (InterruptedException | ExecutionException ex) {
             Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
         }
         
@@ -311,24 +334,29 @@ public class TestModel extends Model {
         queueHandlers.shutdown();
         
     }
+
+    /**
+     * Main compute model function for the protocols
+     */
     public void compute() {
 
         startModelHandlers();
 
-        //callArgMax();
+        callArgMax();
         //callOIS();
-        callJaccard();
+        //callJaccard();
         //callOR_XOR();
         //callBitDecomposition();
         // pass 1 - multiplication, 2 - dot product and 3 - comparison
-
-        //callProtocol(3);
-        
-
+        //callProtocol(1);
         teardownModelHandlers();
 
     }
 
+    /**
+     * Input variable initializations
+     * @param args 
+     */
     private void initalizeModelVariables(String[] args) {
 
         for (String arg : args) {

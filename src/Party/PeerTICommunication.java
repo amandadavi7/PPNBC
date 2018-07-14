@@ -15,6 +15,7 @@ import java.util.logging.Logger;
 
 /**
  * Receive all Ti shares
+ *
  * @author anisha
  */
 public class PeerTICommunication implements Callable<TIShare> {
@@ -22,7 +23,12 @@ public class PeerTICommunication implements Callable<TIShare> {
     Socket socket = null;
     ObjectInputStream iStream = null;
     TIShare tiShares;
-    
+
+    /**
+     * 
+     * @param socket
+     * @param tiShares 
+     */
     public PeerTICommunication(Socket socket, TIShare tiShares) {
         this.socket = socket;
         this.tiShares = tiShares;
@@ -34,6 +40,11 @@ public class PeerTICommunication implements Callable<TIShare> {
 
     }
 
+    /**
+     * 
+     * @return
+     * @throws Exception 
+     */
     @Override
     public TIShare call() throws Exception {
 
@@ -45,16 +56,6 @@ public class PeerTICommunication implements Callable<TIShare> {
             Logger.getLogger(PeerTICommunication.class.getName()).log(Level.SEVERE, null, ex);
         }
 
-        /*
-        System.out.println("tiSharesReceived:");
-        for(Triple t: tiShares.decimalShares){
-            System.out.println("u : " + t.u + ",v : " + t.v + ",w : " + t.w);
-        }
-        for(Triple t: tiShares.binaryShares){
-            System.out.println("u : " + t.u + ",v : " + t.v + ",w : " + t.w);
-        }
-*/
-        
         return tiShares;
     }
 }
