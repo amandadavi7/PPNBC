@@ -41,7 +41,7 @@ public class BitDecomposition extends CompositeProtocol implements
 
     /**
      * Constructor
-     * 
+     *
      * Takes 3(bitLength) - 2 binary ti shares
      *
      * @param input
@@ -70,7 +70,6 @@ public class BitDecomposition extends CompositeProtocol implements
         this.tiIndex = 0;
         this.globalPid = 0;
 
-
         // convert decimal to binary notation
         // TODO - generalize to n parties with a for loop
         inputShares = new ArrayList<>();
@@ -90,12 +89,11 @@ public class BitDecomposition extends CompositeProtocol implements
                 inputShares.add(temp0);
             }
         }
-        
+
 //        System.out.println("a shares: " + a_decimal);
 //        System.out.println("b shares: " + b_decimal);
 //        System.out.println("a as list: " + a);
 //        System.out.println("b as list: " + b);
-
         this.tiShares = tiShares;
         tiStartIndex = 0;
         eShares = new Integer[bitLength];
@@ -121,7 +119,6 @@ public class BitDecomposition extends CompositeProtocol implements
         initY();
 
         // Initialize c[1] 
-
         int first_c_share = bitMultiplication(inputShares.get(0).get(0),
                 inputShares.get(1).get(0));
         cShares[0] = Math.floorMod(first_c_share, prime);
@@ -274,7 +271,6 @@ public class BitDecomposition extends CompositeProtocol implements
      *
      * @throws InterruptedException
      */
-
     private void computeVariables(int index) {
         ExecutorService es = Executors.newFixedThreadPool(2);
 
