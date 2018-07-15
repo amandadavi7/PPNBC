@@ -84,8 +84,8 @@ public class BatchMultiplicationInteger extends BatchMultiplication
                 receivedMessage = receiverQueue.take();
                 diffList = (List<List<Integer>>) receivedMessage.getValue();
                 for (int j = 0; j < batchSize; j++) {
-                    d.set(j, d.get(j) + diffList.get(j).get(0));
-                    e.set(j, e.get(j) + diffList.get(j).get(1));
+                    d.set(j, Math.floorMod(d.get(j) + diffList.get(j).get(0), prime));
+                    e.set(j, Math.floorMod(e.get(j) + diffList.get(j).get(1), prime));
                 }
             } catch (InterruptedException ex) {
                 Logger.getLogger(BatchMultiplicationInteger.class.getName())

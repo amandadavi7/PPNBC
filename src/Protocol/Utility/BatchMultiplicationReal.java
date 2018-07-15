@@ -86,9 +86,9 @@ public class BatchMultiplicationReal extends BatchMultiplication
             try {
                 receivedMessage = receiverQueue.take();
                 diffList = (List<List<BigInteger>>) receivedMessage.getValue();
-                for (int j = 0; j < batchSize; j++) {
-                    d.set(j, d.get(j).add(diffList.get(j).get(0)));
-                    e.set(j, e.get(j).add(diffList.get(j).get(1)));
+                for(int j=0;j<batchSize;j++) {
+                    d.set(j, d.get(j).add(diffList.get(j).get(0)).mod(prime));
+                    e.set(j, e.get(j).add(diffList.get(j).get(1)).mod(prime));
                 }
             } catch (InterruptedException ex) {
                 Logger.getLogger(BatchMultiplicationReal.class.getName())

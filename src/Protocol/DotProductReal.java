@@ -24,7 +24,10 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- *
+ * Dot product of two matrices x and y, shared element wise
+ * 
+ * uses xShares.size() tiShares
+ * 
  * @author anisha
  */
 public class DotProductReal extends DotProduct implements Callable<BigInteger> {

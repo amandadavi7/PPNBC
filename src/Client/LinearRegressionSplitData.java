@@ -24,7 +24,7 @@ import java.util.logging.Logger;
  *
  * @author anisha
  */
-public class LinearRegressionClient {
+public class LinearRegressionSplitData {
 
     protected static List<List<BigInteger>> x;
 
@@ -132,7 +132,7 @@ public class LinearRegressionClient {
                     baseFileName + partyId + ".csv"))) {
                 for (int rowIndex = 0; rowIndex < row; rowIndex++) {
                     for (int colIndex = 0; colIndex < col; colIndex++) {
-                        br.append(partyInput[partyId][rowIndex][colIndex] + ",");
+                        br.append(partyInput[partyId][rowIndex][colIndex].toString()+",");
                     }
                     br.append("\n");
                     br.flush();
@@ -140,7 +140,7 @@ public class LinearRegressionClient {
                 br.close();
 
             } catch (IOException ex) {
-                Logger.getLogger(LinearRegressionClient.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(LinearRegressionSplitData.class.getName()).log(Level.SEVERE, null, ex);
             }
 
         }

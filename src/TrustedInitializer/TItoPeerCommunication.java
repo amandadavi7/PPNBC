@@ -47,16 +47,19 @@ public class TItoPeerCommunication implements Runnable {
                     + socket.getInetAddress());
             //TODO the socket life depends on the below print now 
             //(TI will be made offline, So it doesn't matter)
-            for (TripleInteger t : tishare.decimalShares) {
+            tishare.decimalShares.forEach((t) -> {
                 System.out.println("u : " + t.u + ",v : " + t.v + ",w : " + t.w);
-            }
-            for (TripleByte t : tishare.binaryShares) {
+            });
+            tishare.binaryShares.forEach((t) -> {
                 System.out.println("u : " + t.u + ",v : " + t.v + ",w : " + t.w);
-            }
-            for (TripleReal t : tishare.bigIntShares) {
+            });
+            tishare.bigIntShares.forEach((t) -> {
                 System.out.println("u : " + t.u + ",v : " + t.v + ",w : " + t.w);
-            }
-        } catch (IOException ex) {
+            });
+            tishare.truncationPair.forEach((t) -> {
+                System.out.println("r : " + t.r + ",rp : " + t.rp);
+            });
+        } catch (IOException ex){
             Logger.getLogger(TItoPeerCommunication.class.getName()).log(Level.SEVERE, null, ex);
         }
     }

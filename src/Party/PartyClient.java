@@ -54,7 +54,6 @@ public class PartyClient implements Runnable {
                 } catch (IOException ex1) {
                     Logger.getLogger(PartyClient.class.getName()).log(Level.SEVERE, null, ex1);
                 }
-
                 break;
             } catch (ClassNotFoundException ex) {
                 break;

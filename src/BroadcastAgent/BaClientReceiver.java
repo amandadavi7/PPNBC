@@ -54,10 +54,9 @@ public class BaClientReceiver implements Callable<Boolean> {
     @Override
     public Boolean call() {
 
-        Message msg;
         while (!(Thread.currentThread().isInterrupted())) {
             try {
-                msg = (Message) iStream.readObject();
+                Message msg = (Message) iStream.readObject();
                 receiverQueue.add(new BaMessagePacket(msg, clientId));
             } catch (IOException ex) {
                 if (counter.incrementAndGet() >= totalClients) {
