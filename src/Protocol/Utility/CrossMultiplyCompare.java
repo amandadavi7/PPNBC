@@ -126,7 +126,7 @@ public class CrossMultiplyCompare extends CompositeProtocol implements Callable<
         initQueueMap(recQueues, pid);
         BitDecomposition firstTask = new BitDecomposition(first, binaryTiShares.subList(binaryTiIndex, 
                                         binaryTiIndex + bitDTICount),
-                                        asymmetricBit, bitDTICount, senderQueue, 
+                                        asymmetricBit, bitLength, senderQueue, 
                                         recQueues.get(pid), new LinkedList<>(protocolIdQueue), 
                                         clientID, binaryPrime, pid,partyCount);
         pid++;
