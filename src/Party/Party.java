@@ -9,6 +9,7 @@ import Communication.Message;
 import Model.DecisionTreeScoring;
 import Model.KNN;
 import Model.LinearRegressionEvaluation;
+import Model.LinearRegressionTraining;
 import Utility.Connection;
 import Model.TestModel;
 import TrustedInitializer.TIShare;
@@ -62,6 +63,7 @@ public class Party {
         socketFutureList = new ArrayList<>();
         tiShares = new TIShare();
         partyId = -1;
+        asymmetricBit = -1;
         port = -1;
         partyCount = -1;
         tiIP = null;
@@ -105,8 +107,9 @@ public class Party {
 
         }
 
-        if (partyId == -1 || port == -1 || partyCount == -1 || tiIP == null 
-                || tiPort == -1 || baIP == null || baPort == -1) {
+        if (tiIP == null || baIP == null || tiPort == -1 || baPort == -1 
+                || port <= 0 || asymmetricBit == -1 || partyCount <= 0 
+                || partyId < 0) {
             Logging.partyUsage();
             System.exit(0);
         }
@@ -119,11 +122,6 @@ public class Party {
      * @param args 
      */
     public static void main(String[] args) {
-        if (args.length < 6) {
-            Logging.partyUsage();
-            System.exit(0);
-        }
-
         initalizeVariables(args);
 
         getSharesFromTI();  // This is a blocking call
@@ -216,15 +214,27 @@ public class Party {
 
             case 2:
                 // LR Evaluation
-                LinearRegressionEvaluation regressionModel
+                LinearRegressionEvaluation regressionEvaluationModel
                         = new LinearRegressionEvaluation(tiShares.bigIntShares,
+                                tiShares.truncationPair,
                                 asymmetricBit, senderQueue,
                                 receiverQueue, partyId, partyCount, args);
 
-                regressionModel.predictValues();
+                regressionEvaluationModel.predictValues();
+                break;
+
+            case 3:
+                // LR Evaluation
+                LinearRegressionTraining regressionTrainingModel
+                        = new LinearRegressionTraining(tiShares.bigIntShares,
+                                tiShares.truncationPair,
+                                senderQueue, receiverQueue, partyId,
+                                asymmetricBit, partyCount, args);
+
+                regressionTrainingModel.trainModel();
                 break;
                 
-            case 3:
+            case 4:
                 // KNN
                 
                 KNN knnModel = new KNN(asymmetricBit, senderQueue, receiverQueue, partyId, 
@@ -237,6 +247,7 @@ public class Party {
                 // test model
                 TestModel testModel = new TestModel(tiShares.binaryShares,
                         tiShares.decimalShares, tiShares.bigIntShares,
+                        tiShares.truncationPair,
                         asymmetricBit, senderQueue, receiverQueue, partyId,
                         partyCount, args);
 

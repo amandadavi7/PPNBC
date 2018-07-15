@@ -5,6 +5,7 @@
         <group>
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
             <file>file:/home/keerthanaa/bitbucket_repo/ppml-framework/src/Client/LinearRegressionClient.java</file>
 >>>>>>> master
@@ -60,6 +61,12 @@
             <file>file:/home/keerthanaa/bitbucket_repo/ppml-framework/src/Party/PartyServer.java</file>
             <file>file:/home/keerthanaa/bitbucket_repo/ppml-framework/src/Utility/Logging.java</file>
 =======
+            <file>file:/home/anisha/PPML%20Framework/src/Model/LinearRegressionEvaluation.java</file>
+            <file>file:/home/anisha/PPML%20Framework/src/Client/LinearRegressionComputeRMSE.java</file>
+            <file>file:/home/anisha/PPML%20Framework/src/Utility/FileIO.java</file>
+            <file>file:/home/anisha/PPML%20Framework/src/Client/LinearRegressionSplitData.java</file>
+>>>>>>> master
+=======
             <file>file:/home/keerthanaa/bitbucket_repo/lynx/src/TrustedInitializer/TripleByte.java</file>
             <file>file:/home/keerthanaa/bitbucket_repo/lynx/src/TrustedInitializer/TI.java</file>
             <file>file:/home/keerthanaa/bitbucket_repo/lynx/src/Communication/ReceiverQueueHandler.java</file>
@@ -86,6 +93,10 @@
             <file>file:/home/keerthanaa/bitbucket_repo/lynx/src/TrustedInitializer/Triple.java</file>
             <file>file:/home/keerthanaa/bitbucket_repo/lynx/src/Protocol/DotProductInteger.java</file>
             <file>file:/home/keerthanaa/bitbucket_repo/lynx/src/Protocol/Utility/ParallelMultiplication.java</file>
+<<<<<<< HEAD
+>>>>>>> master
+=======
+>>>>>>> f898977f01be6478d12aadd7271e1bc26af8b984
 >>>>>>> master
         </group>
     </open-files>

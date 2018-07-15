@@ -128,17 +128,15 @@ public class BA {
 
                 // Start Receiver and Sender thread for this client
                 BaClientReceiver receiverHandler = new BaClientReceiver(socket,
-                        iStream, receiverQueue, clientId, partyCount);
+                        iStream, receiverQueue, i, partyCount);
 
-                senderQueues.putIfAbsent(clientId, new LinkedBlockingQueue<>());
+                senderQueues.putIfAbsent(i, new LinkedBlockingQueue<>());
                 BaClientSender senderHandler = new BaClientSender(socket,
-                        oStream, senderQueues.get(clientId));
+                        oStream, senderQueues.get(i));
 
                 receiverFutureList.add(clientHandlerThreads.submit(receiverHandler));
                 senderFutureList.add(clientHandlerThreads.submit(senderHandler));
-                System.out.println("client ID:" + clientId + " connected to BA");
-                clientId++;
-
+                
             } catch (IOException ex) {
                 Logger.getLogger(BA.class.getName()).log(Level.SEVERE, null, ex);
                 checkAndTeardownThreads();
