@@ -7,6 +7,7 @@ package Client;
 
 import Utility.Constants;
 import Utility.FileIO;
+import Utility.LocalMath;
 import Utility.Logging;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -72,7 +73,7 @@ public class LinearRegressionComputeRMSE {
 
         predictedYList = new ArrayList<>(actualYList.size());
         for (int i = 0; i < datasetSize; i++) {
-            predictedYList.add(FileIO.ZqToReal(predictedYListBigInt.get(i), 
+            predictedYList.add(LocalMath.ZqToReal(predictedYListBigInt.get(i), 
                     Constants.decimal_precision, Zq).doubleValue());
             
         }

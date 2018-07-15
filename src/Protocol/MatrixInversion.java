@@ -11,6 +11,7 @@ import TrustedInitializer.TripleReal;
 import TrustedInitializer.TruncationPair;
 import Utility.Constants;
 import Utility.FileIO;
+import Utility.LocalMath;
 import java.math.BigInteger;
 import java.util.LinkedList;
 import java.util.List;
@@ -88,7 +89,7 @@ public class MatrixInversion extends CompositeProtocol implements
      * @return
      */
     private BigInteger calculateTrace(BigInteger[][] matrix) {
-        BigInteger trace = FileIO.realToZq(0, Constants.decimal_precision, prime);
+        BigInteger trace = LocalMath.realToZq(0, Constants.decimal_precision, prime);
         for (int i = 0; i < matrixSize; i++) {
             trace = trace.add(matrix[i][i]).mod(prime);
         }
@@ -124,7 +125,7 @@ public class MatrixInversion extends CompositeProtocol implements
      */
     private BigInteger[][] createIdentity(int number) {
         BigInteger[][] I = new BigInteger[matrixSize][matrixSize];
-        BigInteger diagonalElements = FileIO.realToZq(number*asymmetricBit, 
+        BigInteger diagonalElements = LocalMath.realToZq(number*asymmetricBit, 
                 Constants.decimal_precision, prime);
         for (int i = 0; i < matrixSize; i++) {
             for (int j = 0; j < matrixSize; j++) {
@@ -150,7 +151,7 @@ public class MatrixInversion extends CompositeProtocol implements
     private BigInteger computeCInv(BigInteger c) {
         BigInteger Xs = BigInteger.ZERO;
         if (asymmetricBit == 1) {
-            Xs = FileIO.realToZq(0.00000001, Constants.decimal_precision, prime);
+            Xs = LocalMath.realToZq(0.00000001, Constants.decimal_precision, prime);
         }
         return newtonRaphsonAlgorithmScalar(c, Xs);
     }
@@ -291,7 +292,7 @@ public class MatrixInversion extends CompositeProtocol implements
             }
 
             // subtracted AX = (2-AX). this computation is local
-            BigInteger subtractedAX = FileIO.realToZq(2 * asymmetricBit,
+            BigInteger subtractedAX = LocalMath.realToZq(2 * asymmetricBit,
                     Constants.decimal_precision, prime)
                     .subtract(truncatedAX).mod(prime);
 
