@@ -3,20 +3,16 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package Utility;
+package TrustedInitializer;
 
-import TrustedInitializer.TIShare;
-import TrustedInitializer.TripleByte;
-import TrustedInitializer.TripleInteger;
-import TrustedInitializer.TripleReal;
-import TrustedInitializer.TruncationPair;
+import Utility.Constants;
 import java.math.BigInteger;
 
 /**
  *
  * @author anisha
  */
-public class Random {
+public class RandomGenerator {
 
     /**
      * Generate Decimal Triples

@@ -8,8 +8,6 @@ package TrustedInitializer;
 import Utility.Connection;
 import Utility.Constants;
 import Utility.Logging;
-import Utility.Random;
-import java.math.BigInteger;
 import java.net.ServerSocket;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -108,10 +106,10 @@ public class TI {
     }
 
     private static void generateRandomShares() {
-        Random.generateDecimalTriples(decTriples, clientCount, tiShare);
-        Random.generateBinaryTriples(binTriples, clientCount, tiShare);
-        Random.generateBigIntTriples(bigIntTriples, clientCount, tiShare);
-        Random.generateTruncationPairs(truncationPairs, clientCount, tiShare);
+        RandomGenerator.generateDecimalTriples(decTriples, clientCount, tiShare);
+        RandomGenerator.generateBinaryTriples(binTriples, clientCount, tiShare);
+        RandomGenerator.generateBigIntTriples(bigIntTriples, clientCount, tiShare);
+        RandomGenerator.generateTruncationPairs(truncationPairs, clientCount, tiShare);
     }
 
     

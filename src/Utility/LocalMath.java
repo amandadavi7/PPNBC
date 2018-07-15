@@ -5,13 +5,58 @@
  */
 package Utility;
 
+import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.math.RoundingMode;
 
 /**
  * Local computations
  * @author anisha
  */
 public class LocalMath {
+    
+    /**
+     * convert a decimal value to over Zq
+     * @param x value in reals
+     * @param f bit resolution of decimal component
+     * @param q
+     * @return BigInteger of x in Z_q
+     */
+    public static BigInteger realToZq(double x, int f, BigInteger q) {
+        // Our integer space must be at least 2^k
+        BigDecimal X = BigDecimal.valueOf(x);
+        BigDecimal fac = BigDecimal.valueOf(2).pow(f);
+        X = X.multiply(fac);
+
+        return X.toBigInteger().mod(q);
+    }
+
+    /**
+     * convert a Zq value to decimal
+     * @param x value in reals
+     * @param f bit resolution of decimal component
+     * @param q prime field
+     * @return BigDecimal of x 
+     */
+    public static BigDecimal ZqToReal(BigInteger x, int f, BigInteger q) {
+        BigInteger partition = q.subtract(BigInteger.ONE)
+                .divide(BigInteger.valueOf(2));
+        BigInteger inverse = BigInteger.valueOf(2).pow(f);
+        BigDecimal Zk;
+        
+        // If x is more than half of the field size, it is negative.
+        if (x.compareTo(partition) > 0) {
+            Zk = new BigDecimal(x.subtract(q));
+        } else {
+            Zk = new BigDecimal(x);
+        }
+
+        BigDecimal Q = Zk.divide(new BigDecimal(inverse), f, 
+                RoundingMode.CEILING);
+        return Q;
+    }
+    
+    
     /**
      * Local matrix Multiplication
      *

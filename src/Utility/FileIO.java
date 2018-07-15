@@ -33,38 +33,6 @@ import java.util.stream.Stream;
 public class FileIO {
 
     /**
-     * @param x value in reals
-     * @param f bit resolution of decimal component
-     * @return SMPCVariable of x in Z_q
-     */
-    public static BigInteger realToZq(double x, int f, BigInteger q) {
-        // Our integer space must be at least 2^k
-        BigDecimal X = BigDecimal.valueOf(x);
-        BigDecimal fac = BigDecimal.valueOf(2).pow(f);
-        X = X.multiply(fac);
-
-        return X.toBigInteger().mod(q);
-    }
-
-    public static BigDecimal ZqToReal(BigInteger x, int f, BigInteger q) {
-        BigInteger partition = q.subtract(BigInteger.ONE)
-                .divide(BigInteger.valueOf(2));
-        BigInteger inverse = BigInteger.valueOf(2).pow(f);
-        BigDecimal Zk;
-        
-        // If x is more than half of the field size, it is negative.
-        if (x.compareTo(partition) > 0) {
-            Zk = new BigDecimal(x.subtract(q));
-        } else {
-            Zk = new BigDecimal(x);
-        }
-
-        BigDecimal Q = Zk.divide(new BigDecimal(inverse), f, 
-                RoundingMode.CEILING);
-        return Q;
-    }
-
-    /**
      * Reads a matrix from a csv and converts it to Zq.
      *
      * @param sourceFile
@@ -89,7 +57,7 @@ public class FileIO {
                 int col = doubleValues.length;
                 List<BigInteger> bigIntegerlist = new ArrayList<>();
                 for (int i = 0; i < col; i++) {
-                    bigIntegerlist.add(realToZq(doubleValues[i],
+                    bigIntegerlist.add(LocalMath.realToZq(doubleValues[i],
                             Constants.decimal_precision, Zq));
                 }
 
@@ -160,7 +128,7 @@ public class FileIO {
 
                 int col = doubleValues.length;
 
-                x.add(realToZq(doubleValues[0],
+                x.add(LocalMath.realToZq(doubleValues[0],
                         Constants.decimal_precision, Zq));
 
             }
