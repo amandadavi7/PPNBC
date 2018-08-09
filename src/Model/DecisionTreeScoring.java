@@ -151,7 +151,7 @@ class PolynomialComputing extends CompositeProtocol implements Callable<Integer[
  *
  * @author keerthanaa
  */
-public class DecisionTreeScoring extends Model implements Callable<List<Integer[]>>{
+public class DecisionTreeScoring extends Model implements Callable<Integer[]>{
 
     int depth, attributeBitLength, attributeCount;//depth d, bitlength for each attribute value, total no. of attributes
     boolean partyHasTree;                         //true if the party has the tree, false if it has the test case
@@ -313,7 +313,7 @@ public class DecisionTreeScoring extends Model implements Callable<List<Integer[
     /**
      * Main method for the DT Scoring algorithm
      */
-    public List<Integer[]> call() {
+    public Integer[] call() {
         startModelHandlers();
 
         init();
@@ -322,6 +322,7 @@ public class DecisionTreeScoring extends Model implements Callable<List<Integer[
 
         convertThresholdsToBits();
         System.out.println("converting decimal thresholds to bitshares: from " + Arrays.toString(attributeThresholds) + " to " + attributeThresholdsBitShares);
+        System.out.println("leaftoclassindexmapping:" + Arrays.toString(leafToClassIndexMapping));
 
         if (!partyHasTree) {
             convertTestVectorToBits(testVectorsDecimal.get(0));
@@ -346,7 +347,7 @@ public class DecisionTreeScoring extends Model implements Callable<List<Integer[
         
         List<Integer[]> result = new ArrayList<>();
         result.add(finalOutputs);
-        return result;
+        return finalOutputs;
     }
 
     /**
@@ -480,12 +481,7 @@ public class DecisionTreeScoring extends Model implements Callable<List<Integer[
     }
 
     /**
-<<<<<<< HEAD
-     * calls the polynomialcomputing class and gets the final output
-     *
-=======
      * calls the PolynomialComputing class and gets the final output
->>>>>>> master
      * @param startpid
      */
     void computePolynomialEquation() {
@@ -543,7 +539,7 @@ public class DecisionTreeScoring extends Model implements Callable<List<Integer[
             }
         }
 
-        System.out.println("final:" + Arrays.toString(finalOutputs));
+        //System.out.println("final:" + Arrays.toString(finalOutputs));
         for (int i = 0; i < alpha; i++) {
             finalOutputs[i] = 0;
             for (int j = 0; j < leafNodes; j++) {

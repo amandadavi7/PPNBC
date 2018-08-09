@@ -55,14 +55,12 @@ public class TestModel extends Model {
     List<TripleReal> realTiShares;
 
     /**
-<<<<<<< HEAD
-=======
      * Constructor
->>>>>>> master
      *
      * @param binaryTriples
      * @param decimalTriples
      * @param realTiShares
+     * @param tiTruncationPair
      * @param asymmetricBit
      * @param senderQueue
      * @param receiverQueue

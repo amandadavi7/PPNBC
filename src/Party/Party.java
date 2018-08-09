@@ -11,6 +11,7 @@ import Model.LinearRegressionEvaluation;
 import Model.LinearRegressionTraining;
 import Utility.Connection;
 import Model.TestModel;
+import Model.TreeEnsemble;
 import TrustedInitializer.TIShare;
 import Utility.Logging;
 import java.io.IOException;
@@ -236,6 +237,14 @@ public class Party {
                                 asymmetricBit, partyCount, args);
 
                 regressionTrainingModel.trainModel();
+                break;
+            
+            case 5:
+                //Random Forest
+                TreeEnsemble TEModel = new TreeEnsemble(asymmetricBit, senderQueue, 
+                        receiverQueue, partyId, tiShares.binaryShares, partyCount, args, 
+                        new LinkedList<>(protocolIdQueue), 1);
+                TEModel.runTreeEnsembles();
                 break;
 
             default:

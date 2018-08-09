@@ -14,6 +14,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Properties;
@@ -36,16 +37,16 @@ public class TreeEnsemble extends Model {
     String[] propertyFiles;
     int treeCount, pid;
     List<TripleByte> binaryTiShares;
-    List<List<Integer[]>> treeOutputs;
+    List<Integer[]> treeOutputs;
 
     /**
      * Constructor:
      *
      * Party 1: contains the decision trees Each tree is stored in a properties
      * file the metadata is passed to party as "randomforeststored" contains
-     * number of trees and the name of the property files
+     * number of trees and the names of the property files
      *
-     * party 2: csv file, properties file with randomforestproperties about all
+     * party 2: csv file, properties file with name "randomforestproperties" - list of properties filenames about all
      * the trees
      *
      * @param asymmetricBit
@@ -131,7 +132,7 @@ public class TreeEnsemble extends Model {
         startModelHandlers();
 
         ExecutorService es = Executors.newFixedThreadPool(Constants.threadCount);
-        List<Future<List<Integer[]>>> taskList = new ArrayList<>();
+        List<Future<Integer[]>> taskList = new ArrayList<>();
 
         long startTime = System.currentTimeMillis();
 
@@ -168,7 +169,7 @@ public class TreeEnsemble extends Model {
         }
 
         for (int i = 0; i < treeCount; i++) {
-            Future<List<Integer[]>> DTScoreTask = taskList.get(i);
+            Future<Integer[]> DTScoreTask = taskList.get(i);
             try {
                 treeOutputs.add(DTScoreTask.get());
             } catch (InterruptedException | ExecutionException ex) {
@@ -182,6 +183,9 @@ public class TreeEnsemble extends Model {
         long stopTime = System.currentTimeMillis();
         long elapsedTime = stopTime - startTime;
 
+        for(Integer[] output: treeOutputs) {
+            System.out.println("output:" + Arrays.toString(output));
+        }
         System.out.println("Avg time duration:" + elapsedTime);
 
         teardownModelHandlers();
