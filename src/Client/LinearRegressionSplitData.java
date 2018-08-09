@@ -19,19 +19,23 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * The client is responsible to split the dataset among n parties over Zq. 
- * The shares are then sent to the parties to evaluate the model
+ * The client is responsible to split the dataset among n parties over Zq. The
+ * shares are then sent to the parties to evaluate the model
+ *
  * @author anisha
  */
-public class LinearRegressionClient {
+public class LinearRegressionSplitData {
+
+    protected static List<List<BigInteger>> x;
 
     static String sourceFile;
     static String destDir;
-    protected static List<List<BigInteger>> x;
+
     static BigInteger Zq;
     static int row, col;
-    static BigInteger[][][] partyInput;
     static int noOfParties;
+
+    static BigInteger[][][] partyInput;
 
     public static void main(String[] args) {
         if (args.length < 3) {
@@ -41,12 +45,12 @@ public class LinearRegressionClient {
         initalizeVariables(args);
 
         x = FileIO.loadMatrixFromFile(sourceFile, Zq);
-        
+
         row = x.size();
         col = x.get(0).size();
 
         partyInput = new BigInteger[noOfParties][row][col];
-        
+
         splitInput();
         saveToCSV();
     }
@@ -57,18 +61,47 @@ public class LinearRegressionClient {
      * @param args command line arguments
      */
     private static void initalizeVariables(String[] args) {
-        noOfParties = Integer.parseInt(args[0]);
-        System.out.println("Num of parties:"+ noOfParties);
-        sourceFile = args[1];
-        destDir = args[2];
-        Zq = BigInteger.valueOf(2).pow(Constants.integer_precision
-                + 2 * Constants.decimal_precision + 1).nextProbablePrime();  //Zq must be a prime field
-        x = new ArrayList<>();
 
+        noOfParties = -1;
+        sourceFile = null;
+        destDir = null;
+        x = new ArrayList<>();
+        Zq = BigInteger.valueOf(2).pow(Constants.integer_precision
+                + 2 * Constants.decimal_precision + 1)
+                .nextProbablePrime();  //Zq must be a prime field
+
+        for (String arg : args) {
+            String[] currInput = arg.split("=");
+            if (currInput.length < 2) {
+                Logging.baUsage();
+                System.exit(0);
+            }
+            String command = currInput[0];
+            String value = currInput[1];
+            switch (command) {
+                case "sourceFile":
+                    sourceFile = value;
+                    break;
+                case "destPath":
+                    destDir = value;
+                    break;
+                case "partyCount":
+                    noOfParties = Integer.valueOf(value);
+                    break;
+
+            }
+        }
+
+        if (noOfParties == -1 || sourceFile == null || destDir == null) {
+            Logging.clientUsage();
+            System.exit(0);
+        }
+
+        System.out.println("Num of parties:" + noOfParties);
     }
 
     /**
-     * Split input between n parties
+     * Convert the input to Zq and split it between n parties
      */
     private static void splitInput() {
         SecureRandom srng = new SecureRandom();
@@ -96,10 +129,10 @@ public class LinearRegressionClient {
         String baseFileName = destDir + "/thetaPower_";
         for (int partyId = 0; partyId < noOfParties; partyId++) {
             try (BufferedWriter br = new BufferedWriter(new FileWriter(
-                    baseFileName + partyId+".csv"))) {
+                    baseFileName + partyId + ".csv"))) {
                 for (int rowIndex = 0; rowIndex < row; rowIndex++) {
                     for (int colIndex = 0; colIndex < col; colIndex++) {
-                        br.append(partyInput[partyId][rowIndex][colIndex]+",");
+                        br.append(partyInput[partyId][rowIndex][colIndex].toString()+",");
                     }
                     br.append("\n");
                     br.flush();
@@ -107,11 +140,11 @@ public class LinearRegressionClient {
                 br.close();
 
             } catch (IOException ex) {
-                Logger.getLogger(LinearRegressionClient.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(LinearRegressionSplitData.class.getName()).log(Level.SEVERE, null, ex);
             }
 
         }
-        
+
     }
 
 }

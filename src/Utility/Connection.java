@@ -19,8 +19,7 @@ import java.util.logging.Logger;
  * @author anisha
  */
 public class Connection {
-    //TODO handle all exceptions here
-
+    
     /**
      * Given a port, create a socket for the server
      *
@@ -32,7 +31,8 @@ public class Connection {
         try {
             socket = new ServerSocket(port);
         } catch (IOException ex) {
-            Logger.getLogger(Connection.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(Connection.class.getName())
+                    .log(Level.SEVERE, null, ex);
         }
         return socket;
     }
@@ -48,12 +48,11 @@ public class Connection {
         try {
             serverSocket.close();
         } catch (IOException ex) {
-            Logger.getLogger(Connection.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(Connection.class.getName())
+                    .log(Level.SEVERE, null, ex);
             return false;
         }
-
         return true;
-
     }
 
     /**
@@ -71,7 +70,8 @@ public class Connection {
         } catch (ConnectException ex) {
             socket = null;
         } catch (IOException ex) {
-            Logger.getLogger(Connection.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(Connection.class.getName())
+                    .log(Level.SEVERE, null, ex);
         }
         return socket;
 

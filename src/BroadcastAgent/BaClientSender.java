@@ -36,7 +36,7 @@ public class BaClientSender implements Callable<Boolean> {
         this.senderQueue = senderQueue;
         this.oStream = oStream;
     }
-
+    
     /**
      * Continuously running thread that takes entries from senderqueue and send
      * them to other parties
@@ -44,13 +44,13 @@ public class BaClientSender implements Callable<Boolean> {
     @Override
     public Boolean call() {
 
-        Message msg;
         while (!(Thread.currentThread().isInterrupted())) {
             try {
-                msg = senderQueue.take();
+                Message msg = senderQueue.take();
                 oStream.writeObject(msg);
+                oStream.flush();
+                oStream.reset();
             } catch (InterruptedException | IOException ex) {
-                System.out.println("breaking from sender thread");
                 break;
             }
         }

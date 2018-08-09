@@ -7,7 +7,6 @@ package Protocol;
 
 import Communication.Message;
 import TrustedInitializer.TripleByte;
-import Utility.Constants;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
@@ -27,6 +26,7 @@ public class MultiplicationByte extends Protocol implements Callable {
     int x;
     int y;
     TripleByte tiShares;
+
     int parentID;
     int prime;
 
@@ -44,12 +44,13 @@ public class MultiplicationByte extends Protocol implements Callable {
      * @param protocolID
      * @param asymmetricBit
      * @param parentID
+     * @param partyCount
      */
     public MultiplicationByte(int x, int y, TripleByte tiShares,
             BlockingQueue<Message> senderQueue,
             BlockingQueue<Message> receiverQueue, Queue<Integer> protocolIdQueue,
-            int clientId, int prime,
-            int protocolID, int asymmetricBit, int parentID, int partyCount) {
+            int clientId, int prime, int protocolID, int asymmetricBit,
+            int parentID, int partyCount) {
 
         super(protocolID, senderQueue, receiverQueue, protocolIdQueue,
                 clientId, asymmetricBit, partyCount);
@@ -69,27 +70,26 @@ public class MultiplicationByte extends Protocol implements Callable {
     @Override
     public Object call() {
         initProtocol();
-        //System.out.println("Waiting for receiver. parentID=" + parentID + " mult ID=" + protocolID);
         Message receivedMessage = null;
         List<Integer> diffList = null;
         int d = 0, e = 0;
-        for(int i=0;i<partyCount-1;i++) {
+        for (int i = 0; i < partyCount - 1; i++) {
             try {
                 receivedMessage = receiverQueue.take();
                 diffList = (List<Integer>) receivedMessage.getValue();
                 d += diffList.get(0);
                 e += diffList.get(1);
             } catch (InterruptedException ex) {
-                ex.printStackTrace();
+                Logger.getLogger(MultiplicationByte.class.getName())
+                        .log(Level.SEVERE, null, ex);
             }
         }
 
         d = Math.floorMod(x - tiShares.u + d, prime);
         e = Math.floorMod(y - tiShares.v + e, prime);
-        int product = tiShares.w + (d * tiShares.v) + (tiShares.u * e) + (d * e * asymmetricBit);
+        int product = tiShares.w + (d * tiShares.v) + (tiShares.u * e)
+                + (d * e * asymmetricBit);
         product = Math.floorMod(product, prime);
-        //System.out.println("ti("+tiShares.u+","+tiShares.v+","+tiShares.w+"), "+"x*y("+x+","+y+"):"+product);
-        //System.out.println("parent ID=" + parentID + " mult ID=" + protocolID + " successful, product returned");
         return product;
 
     }
@@ -102,14 +102,12 @@ public class MultiplicationByte extends Protocol implements Callable {
         diffList.add(Math.floorMod(x - tiShares.u, prime));
         diffList.add(Math.floorMod(y - tiShares.v, prime));
 
-        Message senderMessage = new Message(diffList,
-                clientID, protocolIdQueue);
+        Message senderMessage = new Message(diffList, clientID, protocolIdQueue);
         try {
             senderQueue.put(senderMessage);
-            //System.out.println("sending message for protocol id:"+ protocolID);
         } catch (InterruptedException ex) {
-            ex.printStackTrace();
-            Logger.getLogger(MultiplicationByte.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(MultiplicationByte.class.getName())
+                    .log(Level.SEVERE, null, ex);
         }
 
     }

@@ -36,6 +36,7 @@ public class Model {
     int modelProtocolId;
 
     /**
+     * Constructor
      *
      * @param senderQueue
      * @param receiverQueue
@@ -64,15 +65,27 @@ public class Model {
         receiverThread = new ReceiverQueueHandler(1, commonReceiver, recQueues);
     }
 
+    /**
+     * Start Model Handlers
+     */
     public void startModelHandlers() {
         queueHandlers.submit(receiverThread);
     }
 
+    /**
+     * Shut down model handlers
+     */
     public void teardownModelHandlers() {
         receiverThread.setProtocolStatus();
         queueHandlers.shutdown();
     }
 
+    /**
+     * Initialize Receiver Queue HashMap
+     *
+     * @param recQueues
+     * @param key
+     */
     public void initQueueMap(
             ConcurrentHashMap<Integer, BlockingQueue<Message>> recQueues,
             int key) {

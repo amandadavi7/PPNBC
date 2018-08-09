@@ -20,9 +20,14 @@ import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
- *
+ * Dot product of two matrices x and y, shared element wise
+ * 
+ * uses xShares.size() tiShares
+ * 
  * @author anisha
  */
 public class DotProductReal extends DotProduct implements Callable<BigInteger> {
@@ -32,7 +37,7 @@ public class DotProductReal extends DotProduct implements Callable<BigInteger> {
     List<TripleReal> tiShares;
 
     /**
-     * Constructor
+     * Constructor for DotProduct on Real Numbers
      *
      * @param xShares
      * @param yShares
@@ -44,26 +49,28 @@ public class DotProductReal extends DotProduct implements Callable<BigInteger> {
      * @param prime
      * @param protocolID
      * @param asymmetricBit
+     * @param partyCount
      */
-    public DotProductReal(List<BigInteger> xShares, List<BigInteger> yShares, 
-            List<TripleReal> tiShares, BlockingQueue<Message> senderqueue, 
+    public DotProductReal(List<BigInteger> xShares, List<BigInteger> yShares,
+            List<TripleReal> tiShares, BlockingQueue<Message> senderqueue,
             BlockingQueue<Message> receiverqueue, Queue<Integer> protocolIdQueue,
-            int clientID, BigInteger prime, 
+            int clientID, BigInteger prime,
             int protocolID, int asymmetricBit, int partyCount) {
-        
-        super(senderqueue, receiverqueue, protocolIdQueue,clientID, protocolID, 
+
+        super(senderqueue, receiverqueue, protocolIdQueue, clientID, protocolID,
                 asymmetricBit, partyCount);
-        
+
         this.xShares = xShares;
         this.yShares = yShares;
         this.prime = prime;
         this.tiShares = tiShares;
-        
+
     }
 
     /**
-     * Do a batchmultiplication on chunks of vector, collate the results and return (10 mults per batch)
-     * 
+     * Do a BatchMultiplication on chunks of vector, collate the results and
+     * return
+     *
      * @return
      */
     @Override
@@ -72,27 +79,27 @@ public class DotProductReal extends DotProduct implements Callable<BigInteger> {
         BigInteger dotProduct = BigInteger.ZERO;
         int vectorLength = xShares.size();
         startHandlers();
-        
+
         ExecutorService mults = Executors.newFixedThreadPool(Constants.threadCount);
         ExecutorCompletionService<BigInteger[]> multCompletionService = new ExecutorCompletionService<>(mults);
-        
-        int i=0;
+
+        int i = 0;
         int startpid = 0;
-        
+
         do {
-            int toIndex = Math.min(i+Constants.batchSize,vectorLength);
-            
+            int toIndex = Math.min(i + Constants.batchSize, vectorLength);
+
             initQueueMap(recQueues, startpid);
-            
-            multCompletionService.submit(new BatchMultiplicationReal(xShares.subList(i, toIndex), 
-                    yShares.subList(i, toIndex), tiShares.subList(i, toIndex), senderQueue, 
+
+            multCompletionService.submit(new BatchMultiplicationReal(xShares.subList(i, toIndex),
+                    yShares.subList(i, toIndex), tiShares.subList(i, toIndex), senderQueue,
                     recQueues.get(startpid), new LinkedList<>(protocolIdQueue),
                     clientID, prime, startpid, asymmetricBit, protocolId, partyCount));
-            
+
             startpid++;
             i = toIndex;
-            
-        } while(i < vectorLength);
+
+        } while (i < vectorLength);
 
         mults.shutdown();
 
@@ -100,16 +107,16 @@ public class DotProductReal extends DotProduct implements Callable<BigInteger> {
             try {
                 Future<BigInteger[]> prod = multCompletionService.take();
                 BigInteger[] products = prod.get();
-                for(BigInteger j: products){
+                for (BigInteger j : products) {
                     dotProduct = dotProduct.add(j);
                 }
             } catch (InterruptedException | ExecutionException ex) {
-                    ex.printStackTrace();
+                Logger.getLogger(DotProductReal.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
 
         tearDownHandlers();
-        
+
         dotProduct = dotProduct.mod(prime);
         return dotProduct;
 

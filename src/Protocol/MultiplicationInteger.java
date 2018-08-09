@@ -7,7 +7,6 @@ package Protocol;
 
 import Communication.Message;
 import TrustedInitializer.TripleInteger;
-import Utility.Constants;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
@@ -44,6 +43,7 @@ public class MultiplicationInteger extends Protocol implements Callable {
      * @param protocolID
      * @param asymmetricBit
      * @param parentID
+     * @param partyCount
      */
     public MultiplicationInteger(int x, int y, TripleInteger tiShares,
             BlockingQueue<Message> senderQueue,
@@ -69,27 +69,26 @@ public class MultiplicationInteger extends Protocol implements Callable {
     @Override
     public Object call() {
         initProtocol();
-        //System.out.println("Waiting for receiver. parentID=" + parentID + " mult ID=" + protocolID);
         Message receivedMessage = null;
-        int d = 0,e = 0;
+        int d = 0, e = 0;
         List<Integer> diffList = null;
-        for(int i=0;i<partyCount-1;i++) {
+        for (int i = 0; i < partyCount - 1; i++) {
             try {
                 receivedMessage = receiverQueue.take();
                 diffList = (List<Integer>) receivedMessage.getValue();
                 d += diffList.get(0);
                 e += diffList.get(1);
             } catch (InterruptedException ex) {
-                ex.printStackTrace();
+                Logger.getLogger(MultiplicationInteger.class.getName())
+                    .log(Level.SEVERE, null, ex);
             }
         }
 
         d = Math.floorMod(x - tiShares.u + d, prime);
         e = Math.floorMod(y - tiShares.v + e, prime);
-        int product = tiShares.w + (d * tiShares.v) + (tiShares.u * e) + (d * e * asymmetricBit);
+        int product = tiShares.w + (d * tiShares.v) + (tiShares.u * e) + 
+                (d * e * asymmetricBit);
         product = Math.floorMod(product, prime);
-        //System.out.println("ti("+tiShares.u+","+tiShares.v+","+tiShares.w+"), "+"x*y("+x+","+y+"):"+product);
-        //System.out.println("parent ID=" + parentID + " mult ID=" + protocolID + " successful, product returned");
         return product;
 
     }
@@ -106,10 +105,9 @@ public class MultiplicationInteger extends Protocol implements Callable {
                 clientID, protocolIdQueue);
         try {
             senderQueue.put(senderMessage);
-            //System.out.println("sending message for protocol id:"+ protocolID);
         } catch (InterruptedException ex) {
-            ex.printStackTrace();
-            Logger.getLogger(MultiplicationInteger.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(MultiplicationInteger.class.getName())
+                    .log(Level.SEVERE, null, ex);
         }
 
     }

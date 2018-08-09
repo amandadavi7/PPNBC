@@ -8,6 +8,7 @@ package Party;
 import Communication.Message;
 import Model.DecisionTreeScoring;
 import Model.LinearRegressionEvaluation;
+import Model.LinearRegressionTraining;
 import Utility.Connection;
 import Model.TestModel;
 import TrustedInitializer.TIShare;
@@ -22,32 +23,33 @@ import java.util.concurrent.*;
 import java.util.logging.*;
 
 /**
- * A party involved in computing a function
+ * A party involved in computing a function 
+ * Starting point of the application
  *
  * @author anisha
  */
 public class Party {
 
-    private static ServerSocket socketServer;       // The socket connection for Peer acting as server
-
     private static ExecutorService partySocketEs;
     private static List<Future<?>> socketFutureList;
+    private static Socket clientSocket;
     private static TIShare tiShares;
 
     private static BlockingQueue<Message> senderQueue;
     private static BlockingQueue<Message> receiverQueue;
+
     private static int partyId;
     private static int port;
-    private static String tiIP;
-    private static int tiPort;
-    private static String baIP;
-    private static int baPort;
     private static int partyCount;
 
-    private static int asymmetricBit;
+    private static String tiIP;
+    private static int tiPort;
 
+    private static String baIP;
+    private static int baPort;
+
+    private static int asymmetricBit;
     private static int modelId;
-    private static Socket clientSocket;
 
     private static Queue<Integer> protocolIdQueue;
 
@@ -63,6 +65,13 @@ public class Party {
         socketFutureList = new ArrayList<>();
         tiShares = new TIShare();
         partyId = -1;
+        asymmetricBit = -1;
+        port = -1;
+        partyCount = -1;
+        tiIP = null;
+        tiPort = -1;
+        baIP = null;
+        baPort = -1;
 
         protocolIdQueue = new LinkedList<>();
         //protocolIdQueue.add(1);
@@ -103,20 +112,21 @@ public class Party {
 
         }
 
-        socketServer = Connection.createServerSocket(port);
-        if (socketServer == null) {
-            System.out.println("Socket creation error");
+        if (tiIP == null || baIP == null || tiPort == -1 || baPort == -1 
+                || port <= 0 || asymmetricBit == -1 || partyCount <= 0 
+                || partyId < 0) {
+            Logging.partyUsage();
             System.exit(0);
         }
 
     }
 
+    /**
+     * Main method
+     * 
+     * @param args 
+     */
     public static void main(String[] args) {
-        if (args.length < 6) {
-            Logging.partyUsage();
-            System.exit(0);
-        }
-
         initalizeVariables(args);
 
         getSharesFromTI();  // This is a blocking call
@@ -159,6 +169,9 @@ public class Party {
 
     }
 
+    /**
+     * Initiate connections with the BA as a client
+     */
     private static void startPartyConnections() {
         System.out.println("creating a party socket");
         clientSocket = Connection.initializeClientConnection(
@@ -182,10 +195,17 @@ public class Party {
         socketFutureList.add(partySocketEs.submit(partyServer));
     }
 
+    /**
+     * shut down the party sockets
+     */
     private static void tearDownSocket() {
         partySocketEs.shutdownNow();
     }
 
+    /**
+     * Call the model class with the input args
+     * @param args 
+     */
     private static void callModel(String[] args) {
         switch (modelId) {
             case 1:
@@ -198,18 +218,31 @@ public class Party {
 
             case 2:
                 // LR Evaluation
-                LinearRegressionEvaluation regressionModel
+                LinearRegressionEvaluation regressionEvaluationModel
                         = new LinearRegressionEvaluation(tiShares.bigIntShares,
+                                tiShares.truncationPair,
                                 asymmetricBit, senderQueue,
                                 receiverQueue, partyId, partyCount, args, new LinkedList<>(protocolIdQueue),1);
 
-                regressionModel.predictValues();
+                regressionEvaluationModel.predictValues();
+                break;
+
+            case 3:
+                // LR Evaluation
+                LinearRegressionTraining regressionTrainingModel
+                        = new LinearRegressionTraining(tiShares.bigIntShares,
+                                tiShares.truncationPair,
+                                senderQueue, receiverQueue, partyId,
+                                asymmetricBit, partyCount, args);
+
+                regressionTrainingModel.trainModel();
                 break;
 
             default:
                 // test model
                 TestModel testModel = new TestModel(tiShares.binaryShares,
                         tiShares.decimalShares, tiShares.bigIntShares,
+                        tiShares.truncationPair,
                         asymmetricBit, senderQueue, receiverQueue, partyId,
                         partyCount, args, new LinkedList<>(protocolIdQueue),1);
 

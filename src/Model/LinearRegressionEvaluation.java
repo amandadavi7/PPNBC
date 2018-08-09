@@ -7,12 +7,12 @@ package Model;
 
 import Communication.Message;
 import Protocol.DotProductReal;
+import Protocol.Utility.BatchTruncation;
 import TrustedInitializer.TripleReal;
+import TrustedInitializer.TruncationPair;
 import Utility.Constants;
 import Utility.FileIO;
 import Utility.Logging;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -30,41 +30,46 @@ public class LinearRegressionEvaluation extends Model {
 
     List<List<BigInteger>> x;
     List<BigInteger> beta;
-    List<BigInteger> y;
+    BigInteger[] y;
     BigInteger prime;
     String outputPath;
     int testCases;
     List<TripleReal> realTiShares;
+    List<TruncationPair> truncationTiShares;
 
     /**
      * Constructor
      *
      * @param realTriples
+     * @param truncationShares
      * @param asymmetricBit
      * @param senderQueue
      * @param receiverQueue
      * @param clientId
      * @param partyCount
      * @param args
+<<<<<<< HEAD
      * @param protocolIdQueue
      * @param protocolID
+=======
+>>>>>>> master
      *
      */
     public LinearRegressionEvaluation(List<TripleReal> realTriples,
+            List<TruncationPair> truncationShares,
             int asymmetricBit, BlockingQueue<Message> senderQueue,
             BlockingQueue<Message> receiverQueue, int clientId,
             int partyCount, String[] args, LinkedList<Integer> protocolIdQueue, int protocolID) {
 
         super(senderQueue, receiverQueue, clientId, asymmetricBit, partyCount, protocolIdQueue, protocolID);
         this.realTiShares = realTriples;
-
-        y = new ArrayList<>();
+        this.truncationTiShares = truncationShares;
 
         prime = BigInteger.valueOf(2).pow(Constants.integer_precision
                 + 2 * Constants.decimal_precision + 1).nextProbablePrime();  //Zq must be a prime field
 
         initalizeModelVariables(args);
-
+        
     }
 
     /**
@@ -73,9 +78,15 @@ public class LinearRegressionEvaluation extends Model {
     public void predictValues() {
 
         startModelHandlers();
+        long startTime = System.currentTimeMillis();
         computeDotProduct();
+        long stopTime = System.currentTimeMillis();
+        long elapsedTime = stopTime - startTime;
+        //TODO: push time to a csv file
+        System.out.println("Avg time duration:" + elapsedTime + " for partyId:"
+                + clientId + ", for size:" + y.length);
         teardownModelHandlers();
-        writeToCSV();
+        FileIO.writeToCSV(y, outputPath, "y", clientId);
 
     }
 
@@ -88,7 +99,6 @@ public class LinearRegressionEvaluation extends Model {
         List<Future<BigInteger>> taskList = new ArrayList<>();
 
         int tiStartIndex = 0;
-        long startTime = System.currentTimeMillis();
         for (int i = 0; i < testCases; i++) {
 
             initQueueMap(recQueues, i);
@@ -105,14 +115,15 @@ public class LinearRegressionEvaluation extends Model {
             tiStartIndex += x.get(i).size();
         }
 
-        es.shutdown();
+        
 
+        BigInteger[] dotProductResult = new BigInteger[testCases];
         for (int i = 0; i < testCases; i++) {
             Future<BigInteger> dWorkerResponse = taskList.get(i);
             try {
                 BigInteger result = dWorkerResponse.get();
-                y.add(result);
-                //System.out.println(" #:" + i);
+                dotProductResult[i] = result;
+                //System.out.println(" #:" + i+ ", result:"+ result);
             } catch (InterruptedException ex) {
                 Logger.getLogger(LinearRegressionEvaluation.class.getName()).log(Level.SEVERE, null, ex);
             } catch (ExecutionException ex) {
@@ -120,32 +131,22 @@ public class LinearRegressionEvaluation extends Model {
             }
         }
 
-        long stopTime = System.currentTimeMillis();
-        long elapsedTime = stopTime - startTime;
-        //TODO: push time to a csv file
-        System.out.println("Avg time duration:" + elapsedTime + " for partyId:"
-                + clientId + ", for size:" + y.size());
-    }
+        initQueueMap(recQueues, testCases);
+        BatchTruncation truncationModule = new BatchTruncation(dotProductResult,
+                truncationTiShares,
+                commonSender, recQueues.get(testCases),
+                new LinkedList<>(protocolIdQueue),
+                clientId, prime, testCases, asymmetricBit, partyCount);
+        Future<BigInteger[]> truncationTask = es.submit(truncationModule);
 
-    /**
-     * Push results of the prediction (shares) to a csv to send it to the client
-     *
-     * TODO: Move this to FileIO Utility
-     */
-    private void writeToCSV() {
         try {
-            try (FileWriter writer = new FileWriter(outputPath + "y_" + clientId
-                    + ".csv")) {
-                for (int i = 0; i < testCases; i++) {
-                    writer.write(y.get(i).toString());
-                    writer.write("\n");
-                }
-            }
-            System.out.println("Written all lines");
-        } catch (IOException ex) {
-            Logger.getLogger(LinearRegressionEvaluation.class.getName()).log(Level.SEVERE, null, ex);
+            y = truncationTask.get();
+        } catch (InterruptedException | ExecutionException ex) {
+            Logger.getLogger(LinearRegressionTraining.class.getName())
+                    .log(Level.SEVERE, null, ex);
         }
-
+        
+        es.shutdown();
     }
 
     private void initalizeModelVariables(String[] args) {
@@ -162,9 +163,8 @@ public class LinearRegressionEvaluation extends Model {
                 case "xCsv":
                     x = FileIO.loadMatrixFromFile(value);
                     break;
-                case "yCsv":
-                    //TODO generalize it
-                    beta = FileIO.loadListFromFile(value, prime);
+                case "beta":
+                    beta = FileIO.loadListFromFile(value);
                     break;
                 case "output":
                     outputPath = value;
@@ -174,6 +174,7 @@ public class LinearRegressionEvaluation extends Model {
 
         }
         testCases = x.size();
+        y = new BigInteger[testCases];
     }
 
 }

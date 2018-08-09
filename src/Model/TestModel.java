@@ -10,38 +10,55 @@ import Protocol.ArgMax;
 import Protocol.BitDecomposition;
 import Protocol.Comparison;
 import Protocol.DotProductInteger;
+import Protocol.MatrixInversion;
 import Protocol.MultiplicationInteger;
 import Protocol.OIS;
 import Protocol.OR_XOR;
+import Protocol.Utility.BatchTruncation;
+import Protocol.Utility.MatrixMultiplication;
 import TrustedInitializer.TripleByte;
 import TrustedInitializer.TripleInteger;
 import TrustedInitializer.TripleReal;
+import TrustedInitializer.TruncationPair;
 import Utility.Constants;
 import Utility.FileIO;
 import Utility.Logging;
+import Utility.LocalMath;
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.math.BigInteger;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.logging.*;
 import java.util.stream.Collectors;
 
 /**
+ * A Dummy Model class to test all protocols
  *
  * @author anisha
  */
 public class TestModel extends Model {
 
     List<List<Integer>> x;
+    BigInteger[][] xBigInt;
     List<List<Integer>> y;
     List<List<List<Integer>>> v;
+    double a, b;
+
+    List<TruncationPair> tiTruncationPair;
+    BigInteger prime;
+    String outputPath;
     List<TripleByte> binaryTiShares;
     List<TripleInteger> decimalTiShares;
     List<TripleReal> realTiShares;
 
     /**
+<<<<<<< HEAD
+=======
+     * Constructor
+>>>>>>> master
      *
      * @param binaryTriples
      * @param decimalTriples
@@ -56,12 +73,17 @@ public class TestModel extends Model {
      * @param protocolID
      */
     public TestModel(List<TripleByte> binaryTriples, List<TripleInteger> decimalTriples,
-            List<TripleReal> realTiShares, int asymmetricBit, BlockingQueue<Message> senderQueue,
+            List<TripleReal> realTiShares, List<TruncationPair> tiTruncationPair, 
+            int asymmetricBit, BlockingQueue<Message> senderQueue,
             BlockingQueue<Message> receiverQueue, int clientId, int partyCount, String[] args, 
             LinkedList<Integer> protocolIdQueue, int protocolID) {
 
         super(senderQueue, receiverQueue, clientId, asymmetricBit, partyCount, protocolIdQueue, protocolID);
 
+        this.tiTruncationPair = tiTruncationPair;
+        prime = BigInteger.valueOf(2).pow(Constants.integer_precision
+                + 2 * Constants.decimal_precision + 1).nextProbablePrime();
+        v = new ArrayList<>();
         this.binaryTiShares = binaryTriples;
         this.decimalTiShares = decimalTriples;
         this.realTiShares = realTiShares;
@@ -69,18 +91,18 @@ public class TestModel extends Model {
 
     }
 
+    /**
+     * Call bitD protocol for testing 1 test case
+     */
     public void callBitDecomposition() {
 
         ExecutorService es = Executors.newFixedThreadPool(1);
         initQueueMap(recQueues, 1);
-        //TODO: change this to just take integers instead of wasting memory on List<Integer> 
-//        BitDecomposition bitTest = new BitDecomposition(x.get(0).get(0), y.get(0).get(0),
-//                binaryTiShares, asymmetricBit, Constants.bitLength, sendQueues.get(1),
-//                recQueues.get(1), clientId, Constants.binaryPrime, 1);
 
         BitDecomposition bitTest = new BitDecomposition(2, binaryTiShares,
                 asymmetricBit, Constants.bitLength, commonSender,
-                recQueues.get(1), new LinkedList<>(protocolIdQueue), clientId, Constants.binaryPrime, 1, partyCount);
+                recQueues.get(1), new LinkedList<>(protocolIdQueue), clientId,
+                Constants.binaryPrime, 1, partyCount);
 
         Future<List<Integer>> bitdecompositionTask = es.submit(bitTest);
 
@@ -94,6 +116,9 @@ public class TestModel extends Model {
         teardownModelHandlers();
     }
 
+    /**
+     * Calling ArgMax protocol in parallel for n test cases
+     */
     public void callArgMax() {
 
         ExecutorService es = Executors.newFixedThreadPool(100);
@@ -107,8 +132,9 @@ public class TestModel extends Model {
 
             initQueueMap(recQueues, i);
 
-            ArgMax argmaxModule = new ArgMax(v.get(i), binaryTiShares, asymmetricBit, commonSender,
-                    recQueues.get(i), new LinkedList<>(protocolIdQueue), clientId, Constants.binaryPrime, i, partyCount);
+            ArgMax argmaxModule = new ArgMax(v.get(i), binaryTiShares, asymmetricBit,
+                    commonSender, recQueues.get(i), new LinkedList<>(protocolIdQueue),
+                    clientId, Constants.binaryPrime, i, partyCount);
 
             System.out.println("submitted " + i + " argmax");
 
@@ -137,6 +163,9 @@ public class TestModel extends Model {
 
     }
 
+    /**
+     * Call OR_XOR protocol in parallel for n test cases
+     */
     public void callOR_XOR() {
 
         System.out.println("calling or_xor with x=" + x + " y=" + y);
@@ -177,6 +206,9 @@ public class TestModel extends Model {
 
     }
 
+    /**
+     * Call Oblivious Input Selection for 1 test case
+     */
     public void callOIS() {
 
         System.out.println("calling OIS with v" + v);
@@ -191,13 +223,13 @@ public class TestModel extends Model {
 
         if (v.isEmpty()) {
             System.out.println("v is null");
-            ois = new OIS(null, binaryTiShares, asymmetricBit, commonSender, recQueues.get(0),
-                    new LinkedList<>(protocolIdQueue), clientId,
+            ois = new OIS(null, binaryTiShares, asymmetricBit, commonSender,
+                    recQueues.get(0), new LinkedList<>(protocolIdQueue), clientId,
                     Constants.binaryPrime, 0, 4, 1, 3, partyCount);
         } else {
             System.out.println("v is not null");
-            ois = new OIS(v.get(0), binaryTiShares, asymmetricBit, commonSender, recQueues.get(0),
-                    new LinkedList<>(protocolIdQueue), clientId,
+            ois = new OIS(v.get(0), binaryTiShares, asymmetricBit, commonSender,
+                    recQueues.get(0), new LinkedList<>(protocolIdQueue), clientId,
                     Constants.binaryPrime, 0, 4, -1, 3, partyCount);
         }
 
@@ -219,6 +251,12 @@ public class TestModel extends Model {
         System.out.println("Avg time duration:" + elapsedTime);
     }
 
+    /**
+     * Call multiplication/dot product/comparison protocol for n test cases in
+     * parallel
+     *
+     * @param protocolType
+     */
     public void callProtocol(int protocolType) {
         ExecutorService es = Executors.newFixedThreadPool(100);
         List<Future<Integer>> taskList = new ArrayList<>();
@@ -282,9 +320,7 @@ public class TestModel extends Model {
             try {
                 Integer result = dWorkerResponse.get();
                 System.out.println("result:" + result + ", #:" + i);
-            } catch (InterruptedException ex) {
-                Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
-            } catch (ExecutionException ex) {
+            } catch (InterruptedException | ExecutionException ex) {
                 Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
@@ -296,20 +332,27 @@ public class TestModel extends Model {
         System.out.println("Avg time duration:" + elapsedTime);
     }
 
+    /**
+     * Main compute model function for the protocols
+     */
     public void compute() {
 
         startModelHandlers();
 
-        //callArgMax();
+        callArgMax();
         //callOIS();
         //callOR_XOR();
         //callBitDecomposition();
         // pass 1 - multiplication, 2 - dot product and 3 - comparison
-        callProtocol(2);
+        //callProtocol(1);
         teardownModelHandlers();
 
     }
 
+    /**
+     * Input variable initializations
+     * @param args 
+     */
     private void initalizeModelVariables(String[] args) {
 
         for (String arg : args) {
@@ -347,10 +390,155 @@ public class TestModel extends Model {
                         Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
                     }
                     break;
+                case "xCsv":
+                    List<List<BigInteger>> xList = FileIO.loadMatrixFromFile(value, prime);
+                    int row = xList.size();
+                    int col = xList.get(0).size();
+                    xBigInt = new BigInteger[row][col];
+                    for (int i = 0; i < row; i++) {
+                        for (int j = 0; j < col; j++) {
+                            xBigInt[i][j] = xList.get(i).get(j);
+                        }
+                    }
+                    break;
+                case "output":
+                    outputPath = value;
+                    break;
+                case "a":
+                    a = Double.parseDouble(value);
+                    break;
+                case "b":
+                    b = Double.parseDouble(value);
+                    break;
 
             }
 
         }
+    }
+
+    private void callMatrixInversion() {
+        ExecutorService es = Executors.newFixedThreadPool(1);
+        initQueueMap(recQueues, 1);
+
+        long startTime = System.currentTimeMillis();
+        MatrixInversion matrixInversion = new MatrixInversion(xBigInt, realTiShares,
+                tiTruncationPair,
+                1, commonSender, recQueues.get(1), new LinkedList<>(protocolIdQueue),
+                clientId, asymmetricBit, partyCount, prime);
+
+        Future<BigInteger[][]> matrixInversionTask = es.submit(matrixInversion);
+
+        BigInteger[][] result = null;
+        try {
+            result = matrixInversionTask.get();
+
+        } catch (InterruptedException | ExecutionException ex) {
+            Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
+        teardownModelHandlers();
+        long stopTime = System.currentTimeMillis();
+        long elapsedTime = stopTime - startTime;
+        System.out.println("Avg time duration:" + elapsedTime);
+
+        FileIO.writeToCSV(result, outputPath, "matrixInversion", clientId);
+    }
+
+    private void callMatrixMultiplication() {
+        ExecutorService es = Executors.newFixedThreadPool(1);
+        initQueueMap(recQueues, 1);
+
+        int n = xBigInt.length;
+        int l = xBigInt[0].length;
+
+        BigInteger xT[][] = LocalMath.transposeMatrix(xBigInt);
+        int m = xT[0].length;
+
+        long startTime = System.currentTimeMillis();
+
+        //TODO fix ti share count
+        MatrixMultiplication matrixMultiplication = new MatrixMultiplication(
+                xBigInt, xT, realTiShares,
+                tiTruncationPair,
+                clientId, prime, 1, asymmetricBit, commonSender,
+                recQueues.get(1), new LinkedList<>(protocolIdQueue),
+                partyCount);
+
+        Future<BigInteger[][]> matrixMultiplicationTask = es.submit(matrixMultiplication);
+
+        BigInteger[][] result = null;
+        try {
+            result = matrixMultiplicationTask.get();
+
+        } catch (InterruptedException | ExecutionException ex) {
+            Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
+        teardownModelHandlers();
+        long stopTime = System.currentTimeMillis();
+        long elapsedTime = stopTime - startTime;
+        System.out.println("Avg time duration:" + elapsedTime);
+
+        FileIO.writeToCSV(result, outputPath, "matrixMultiplication", clientId);
+
+    }
+
+    private void callTruncation() {
+        System.out.println("calling truncation");
+
+        //Prepare matrix for truncation. Multiply the elements with 2^f
+        int rows = xBigInt.length;
+        int cols = xBigInt[0].length;
+        BigInteger fac = BigInteger.valueOf(2).pow(Constants.decimal_precision);
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < cols; j++) {
+                xBigInt[i][j] = xBigInt[i][j].multiply(fac).mod(prime);
+
+            }
+        }
+        BigInteger[][] truncationOutput = new BigInteger[rows][cols];
+
+        ExecutorService es = Executors.newFixedThreadPool(Constants.threadCount);
+        List<Future<BigInteger[]>> taskList = new ArrayList<>();
+
+        long startTime = System.currentTimeMillis();
+        int totalCases = xBigInt.length;
+        int tiTruncationStartIndex = 0;
+
+        System.out.println("Total testcases:" + totalCases);
+        for (int i = 0; i < totalCases; i++) {
+
+            initQueueMap(recQueues, i);
+            BatchTruncation truncationPair = new BatchTruncation(xBigInt[i],
+                    tiTruncationPair.subList(tiTruncationStartIndex,
+                            tiTruncationStartIndex + xBigInt[i].length),
+                    commonSender, recQueues.get(i), new LinkedList<>(protocolIdQueue),
+                    clientId, prime, i, asymmetricBit, partyCount);
+
+            Future<BigInteger[]> task = es.submit(truncationPair);
+            taskList.add(task);
+        }
+
+        es.shutdown();
+
+        for (int i = 0; i < totalCases; i++) {
+            try {
+                Future<BigInteger[]> task = taskList.get(i);
+                truncationOutput[i] = task.get();
+
+            } catch (InterruptedException | ExecutionException ex) {
+                Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+
+        teardownModelHandlers();
+
+        long stopTime = System.currentTimeMillis();
+        long elapsedTime = stopTime - startTime;
+        System.out.println("Avg time duration:" + elapsedTime);
+
+        FileIO.writeToCSV(truncationOutput, outputPath, "truncation", clientId);
+
     }
 
 }
