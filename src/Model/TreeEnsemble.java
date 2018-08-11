@@ -6,7 +6,10 @@
 package Model;
 
 import Communication.Message;
+import Protocol.ArgMax;
+import Protocol.BitDecomposition;
 import TrustedInitializer.TripleByte;
+import TrustedInitializer.TripleInteger;
 import Utility.Constants;
 import Utility.Logging;
 import java.io.FileInputStream;
@@ -35,9 +38,10 @@ public class TreeEnsemble extends Model {
     String csvPath;
     boolean partyHasTrees;
     String[] propertyFiles;
-    int treeCount, pid;
+    int treeCount, pid, prime;
     List<TripleByte> binaryTiShares;
     List<Integer[]> treeOutputs;
+    List<TripleInteger> decimalTiShares;
 
     /**
      * Constructor:
@@ -54,20 +58,23 @@ public class TreeEnsemble extends Model {
      * @param receiverQueue
      * @param clientId
      * @param binaryTriples
+     * @param decimalTriples
      * @param partyCount
      * @param args
      * @param protocolIdQueue
      * @param protocolID
      */
     public TreeEnsemble(int asymmetricBit, BlockingQueue<Message> senderQueue,
-            BlockingQueue<Message> receiverQueue, int clientId, List<TripleByte> binaryTriples,
-            int partyCount, String[] args, LinkedList<Integer> protocolIdQueue, int protocolID) {
+            BlockingQueue<Message> receiverQueue, int clientId, List<TripleByte> binaryTriples, 
+            List<TripleInteger> decimalTriples, int partyCount, String[] args,
+            LinkedList<Integer> protocolIdQueue, int protocolID) {
 
         super(senderQueue, receiverQueue, clientId, asymmetricBit, partyCount, protocolIdQueue, protocolID);
 
         initializeModelVariables(args);
         pid = 0;
         this.binaryTiShares = binaryTriples;
+        this.decimalTiShares = decimalTriples;
         treeOutputs = new ArrayList<>();
 
     }
@@ -85,6 +92,9 @@ public class TreeEnsemble extends Model {
             String value = currInput[1];
 
             switch (command) {
+                case "prime":
+                    prime = Integer.parseInt(value);
+                    break;
                 case "testCsv":
                     //party has feature vector
                     csvPath = value;
@@ -142,11 +152,11 @@ public class TreeEnsemble extends Model {
 
                 initQueueMap(recQueues, pid);
 
-                String args[] = {"storedtree=" + propertyFiles[i]};
+                String args[] = {"storedtree=" + propertyFiles[i], "prime=" + prime};
 
-                DecisionTreeScoring DTScoreModule = new DecisionTreeScoring(asymmetricBit,
+                RandomForestDTScoring DTScoreModule = new RandomForestDTScoring(asymmetricBit,
                         commonSender, recQueues.get(pid), clientId,
-                        binaryTiShares, partyCount, args, new LinkedList<>(protocolIdQueue), pid);
+                        binaryTiShares, decimalTiShares, partyCount, args, new LinkedList<>(protocolIdQueue), pid);
 
                 taskList.add(es.submit(DTScoreModule));
                 pid++;
@@ -157,11 +167,11 @@ public class TreeEnsemble extends Model {
 
                 initQueueMap(recQueues, pid);
 
-                String args[] = {"testCsv=" + csvPath, "treeproperties=" + propertyFiles[i]};
+                String args[] = {"testCsv=" + csvPath, "treeproperties=" + propertyFiles[i], "prime=" + prime};
 
-                DecisionTreeScoring DTScoreModule = new DecisionTreeScoring(asymmetricBit,
+                RandomForestDTScoring DTScoreModule = new RandomForestDTScoring(asymmetricBit,
                         commonSender, recQueues.get(pid), clientId,
-                        binaryTiShares, partyCount, args, new LinkedList<>(protocolIdQueue), pid);
+                        binaryTiShares, decimalTiShares, partyCount, args, new LinkedList<>(protocolIdQueue), pid);
 
                 taskList.add(es.submit(DTScoreModule));
                 pid++;
@@ -178,16 +188,66 @@ public class TreeEnsemble extends Model {
             
         }
         
-        //bitwise addition and argmax
+        for(Integer[] output: treeOutputs) {
+            System.out.println("output of trees:" + Arrays.toString(output));
+        }
 
+        
+        
+        int classLabelCount = treeOutputs.get(0).length;
+        int[] weightedProbabilityVector = new int[classLabelCount];
+        
+        for(Integer[] output: treeOutputs) {
+            for(int i=0; i<classLabelCount;i++) {
+                weightedProbabilityVector[i] += output[i];
+            }
+        }
+        
+        System.out.println("weighted prob vector output" + Arrays.toString(weightedProbabilityVector));
+        
+        List<Future<List<Integer>>> bitDtaskList = new ArrayList<>();
+        for(int i=0;i<classLabelCount;i++) {
+            initQueueMap(recQueues, pid);
+            BitDecomposition bitDModule = new BitDecomposition(weightedProbabilityVector[i], 
+                    binaryTiShares, asymmetricBit, 6, commonSender, recQueues.get(pid), 
+                    new LinkedList<>(protocolIdQueue), clientId, Constants.binaryPrime, pid, partyCount);
+            bitDtaskList.add(es.submit(bitDModule));
+            pid++;
+        }
+        
+        List<List<Integer>> bitSharesProbs = new ArrayList<>();
+        for(int i=0;i<classLabelCount;i++) {
+            Future<List<Integer>> bitDResult = bitDtaskList.get(i);
+            try {
+                bitSharesProbs.add(bitDResult.get());
+            } catch (InterruptedException | ExecutionException ex) {
+                Logger.getLogger(TreeEnsemble.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+
+        System.out.println("bitD result" + bitSharesProbs);
+        initQueueMap(recQueues, pid);
+        ArgMax argmaxModule = new ArgMax(bitSharesProbs, binaryTiShares, asymmetricBit, commonSender, recQueues.get(pid),
+                new LinkedList<>(protocolIdQueue), clientId, Constants.binaryPrime, pid, partyCount);
+        pid++;
+        
+        Future<Integer[]> classIndexResult = es.submit(argmaxModule);
+        Integer[] finalClassIndex = null;
+        try {
+            finalClassIndex = classIndexResult.get();
+        } catch (InterruptedException | ExecutionException ex) {
+            Logger.getLogger(TreeEnsemble.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        
+        System.out.println("output final:" + Arrays.toString(finalClassIndex));
+        
         long stopTime = System.currentTimeMillis();
         long elapsedTime = stopTime - startTime;
 
-        for(Integer[] output: treeOutputs) {
-            System.out.println("output:" + Arrays.toString(output));
-        }
+        
         System.out.println("Avg time duration:" + elapsedTime);
-
+        
+        
         teardownModelHandlers();
     }
 

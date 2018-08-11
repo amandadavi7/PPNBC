@@ -242,7 +242,7 @@ public class Party {
             case 5:
                 //Random Forest
                 TreeEnsemble TEModel = new TreeEnsemble(asymmetricBit, senderQueue, 
-                        receiverQueue, partyId, tiShares.binaryShares, partyCount, args, 
+                        receiverQueue, partyId, tiShares.binaryShares, tiShares.decimalShares, partyCount, args, 
                         new LinkedList<>(protocolIdQueue), 1);
                 TEModel.runTreeEnsembles();
                 break;

@@ -20,29 +20,30 @@ public class RandomGenerator {
      * @param decTriples
      * @param clientCount
      * @param tiShare
+     * @param prime
      */
     public static void generateDecimalTriples(int decTriples, int clientCount,
-            TIShare[] tiShare) {
+            TIShare[] tiShare, int prime) {
         java.util.Random rand = new java.util.Random();
         for (int i = 0; i < decTriples; i++) {
-            int U = rand.nextInt(Constants.prime);
-            int V = rand.nextInt(Constants.prime);
-            int W = Math.floorMod(U * V, Constants.prime);
+            int U = rand.nextInt(prime);
+            int V = rand.nextInt(prime);
+            int W = Math.floorMod(U * V, prime);
             int usum = 0, vsum = 0, wsum = 0;
             for (int j = 0; j < clientCount - 1; j++) {
                 TripleInteger t = new TripleInteger();
-                t.u = rand.nextInt(Constants.prime);
-                t.v = rand.nextInt(Constants.prime);
-                t.w = rand.nextInt(Constants.prime);
+                t.u = rand.nextInt(prime);
+                t.v = rand.nextInt(prime);
+                t.w = rand.nextInt(prime);
                 usum += t.u;
                 vsum += t.v;
                 wsum += t.w;
                 tiShare[j].addDecimal(t);
             }
             TripleInteger t = new TripleInteger();
-            t.u = Math.floorMod(U - usum, Constants.prime);
-            t.v = Math.floorMod(V - vsum, Constants.prime);
-            t.w = Math.floorMod(W - wsum, Constants.prime);
+            t.u = Math.floorMod(U - usum, prime);
+            t.v = Math.floorMod(V - vsum, prime);
+            t.w = Math.floorMod(W - wsum, prime);
             tiShare[clientCount - 1].addDecimal(t);
         }
     }

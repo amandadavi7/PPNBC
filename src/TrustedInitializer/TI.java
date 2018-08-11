@@ -20,7 +20,7 @@ import java.util.concurrent.Executors;
 public class TI {
 
     static int tiPort, clientCount, decTriples, binTriples, bigIntTriples, 
-            truncationPairs;
+            truncationPairs, prime;
     static TIShare[] tiShare;
 
     /**
@@ -56,6 +56,9 @@ public class TI {
                     break;
                 case "truncation":
                     truncationPairs = Integer.valueOf(value);
+                    break;
+                case "prime":
+                    prime = Integer.parseInt(value);
                     break;
 
             }
@@ -106,7 +109,7 @@ public class TI {
     }
 
     private static void generateRandomShares() {
-        RandomGenerator.generateDecimalTriples(decTriples, clientCount, tiShare);
+        RandomGenerator.generateDecimalTriples(decTriples, clientCount, tiShare, prime);
         RandomGenerator.generateBinaryTriples(binTriples, clientCount, tiShare);
         RandomGenerator.generateBigIntTriples(bigIntTriples, clientCount, tiShare);
         RandomGenerator.generateTruncationPairs(truncationPairs, clientCount, tiShare);
