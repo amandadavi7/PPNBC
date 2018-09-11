@@ -9,6 +9,7 @@ import Communication.Message;
 import Protocol.Protocol;
 import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Batch multiplication of list of xshares with yshares
@@ -40,6 +41,31 @@ public abstract class BatchMultiplication extends Protocol {
 
         super(protocolID, senderQueue, receiverQueue, protocolIdQueue, clientId,
                 asymmetricBit, partyCount);
+        this.parentID = parentID;
+    }
+    
+    /**
+     * Constructor
+     *
+     * TODO - parent ID is only for testing - to be removed in the future
+     *
+     * @param senderQueue
+     * @param receiverQueue
+     * @param protocolIdQueue
+     * @param clientId
+     * @param protocolID
+     * @param asymmetricBit
+     * @param partyCount
+     * @param parentID
+     */
+    public BatchMultiplication(BlockingQueue<Message> senderQueue,
+            BlockingQueue<Message> receiverQueue, Queue<Integer> protocolIdQueue,
+            int clientId,
+            int protocolID, int asymmetricBit, int parentID, int partyCount,
+            ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper) {
+
+        super(protocolID, senderQueue, receiverQueue, protocolIdQueue, clientId,
+                asymmetricBit, partyCount, pidMapper);
         this.parentID = parentID;
     }
 

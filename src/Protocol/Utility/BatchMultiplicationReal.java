@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -63,6 +64,39 @@ public class BatchMultiplicationReal extends BatchMultiplication
     }
 
     /**
+     * Constructor
+     *
+     * @param x share of x
+     * @param y share of y
+     * @param tiShares
+     * @param senderQueue
+     * @param receiverQueue
+     * @param protocolIdQueue
+     * @param clientId
+     * @param prime
+     * @param protocolID
+     * @param asymmetricBit
+     * @param parentID
+     * @param partyCount
+     */
+    public BatchMultiplicationReal(List<BigInteger> x, List<BigInteger> y,
+            List<TripleReal> tiShares,
+            BlockingQueue<Message> senderQueue,
+            BlockingQueue<Message> receiverQueue, Queue<Integer> protocolIdQueue,
+            int clientId, BigInteger prime, int protocolID, int asymmetricBit,
+            int parentID, int partyCount,
+            ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper) {
+
+        super(senderQueue, receiverQueue, protocolIdQueue, clientId, protocolID,
+                asymmetricBit, parentID, partyCount, pidMapper);
+        this.x = x;
+        this.y = y;
+        this.prime = prime;
+        this.tiShares = tiShares;
+    }
+
+    
+    /**
      * Waits for the shares of (x-u) and (y-v), computes the product and returns
      * the value
      *
@@ -86,7 +120,7 @@ public class BatchMultiplicationReal extends BatchMultiplication
             try {
                 // TODO cleanup
                 //receivedMessage = receiverQueue.take();
-                receivedMessage = pIdMapper.get(protocolIdQueue);
+                receivedMessage = pidMapper.get(protocolIdQueue).take();
                 diffList = (List<List<BigInteger>>) receivedMessage.getValue();
                 for(int j=0;j<batchSize;j++) {
                     d.set(j, d.get(j).add(diffList.get(j).get(0)).mod(prime));

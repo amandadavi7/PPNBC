@@ -50,6 +50,8 @@ public class Party {
 
     private static int asymmetricBit;
     private static int modelId;
+    
+    private static ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper;
 
     /**
      * Initialize class variables
@@ -70,6 +72,8 @@ public class Party {
         tiPort = -1;
         baIP = null;
         baPort = -1;
+        
+        pidMapper = new ConcurrentHashMap<>();
 
         for (String arg : args) {
             String[] currInput = arg.split("=");
@@ -182,7 +186,9 @@ public class Party {
         }
 
         System.out.println("Client thread starting");
-        PartyClient partyClient = new PartyClient(receiverQueue, clientSocket, iStream);
+        PartyClient partyClient = new PartyClient(pidMapper, clientSocket, iStream);
+        // TODO cleanup
+        //PartyClient partyClient = new PartyClient(receiverQueue, clientSocket, iStream);
         socketFutureList.add(partySocketEs.submit(partyClient));
 
         System.out.println("Server thread starting");

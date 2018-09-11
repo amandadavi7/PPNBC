@@ -8,6 +8,7 @@ package Protocol;
 import Communication.Message;
 import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Base class to layout contract for a protocol to be created
@@ -20,6 +21,7 @@ public class Protocol {
     protected BlockingQueue<Message> receiverQueue;
     protected int protocolId, clientID, asymmetricBit, partyCount;
     protected Queue<Integer> protocolIdQueue;
+    protected ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper;
 
     public Protocol(int protocolId, BlockingQueue<Message> senderQueue,
             BlockingQueue<Message> receiverQueue, Queue<Integer> protocolIdQueue,
@@ -32,5 +34,13 @@ public class Protocol {
         this.partyCount = partyCount;
         this.protocolIdQueue = protocolIdQueue;
         this.protocolIdQueue.add(protocolId);
+    }
+    
+    public Protocol(int protocolId, BlockingQueue<Message> senderQueue,
+            BlockingQueue<Message> receiverQueue, Queue<Integer> protocolIdQueue,
+            int clientID, int asymmetricBit, int partyCount, 
+            ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper) {
+        this(protocolId, senderQueue, receiverQueue, protocolIdQueue, clientID, asymmetricBit, partyCount);
+        this.pidMapper = pidMapper;
     }
 }
