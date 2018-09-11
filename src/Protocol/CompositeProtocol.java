@@ -22,6 +22,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 public class CompositeProtocol extends Protocol {
 
     protected ConcurrentHashMap<Integer, BlockingQueue<Message>> recQueues;
+    protected ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper;
     
     ExecutorService queueHandlers;
     ReceiverQueueHandler receiverThread;
@@ -51,11 +52,11 @@ public class CompositeProtocol extends Protocol {
 
     }
     
-    public CompositeProtocol(int protocolId, BlockingQueue<Message> senderQueue, BlockingQueue<Message> receiverQueue,
+    public CompositeProtocol(int protocolId, BlockingQueue<Message> senderQueue,
             ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper, Queue<Integer> protocolIdQueue,
             int clientId, int asymmetricBit, int partyCount) {
 
-        super(protocolId, senderQueue, receiverQueue, protocolIdQueue, clientId, asymmetricBit,
+        super(protocolId, senderQueue, protocolIdQueue, clientId, asymmetricBit,
                 partyCount, pidMapper);
 
         //recQueues = new ConcurrentHashMap<>();

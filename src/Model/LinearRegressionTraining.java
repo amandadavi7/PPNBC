@@ -113,9 +113,8 @@ public class LinearRegressionTraining extends Model {
         //initQueueMap(recQueues, globalProtocolId);
         MatrixInversion matrixInversion = new MatrixInversion(gamma1,
                 realTriples, tiTruncationPair, globalProtocolId, commonSender,
-                pidMapper.get(protocolIdQueue),
                 new LinkedList<>(protocolIdQueue), clientId, asymmetricBit,
-                partyCount, prime);
+                partyCount, prime, pidMapper);
 
         globalProtocolId++;
 

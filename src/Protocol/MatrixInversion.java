@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -54,6 +55,29 @@ public class MatrixInversion extends CompositeProtocol implements
             int clientId, int asymmetricBit, int partyCount, BigInteger prime) {
 
         super(protocolId, senderQueue, receiverQueue, protocolIdQueue, clientId,
+                asymmetricBit, partyCount);
+        this.Ashares = Ashares;
+        this.tishares = tishares;
+        this.tiTruncationPair = tiTruncationPair;
+        this.prime = prime;
+        this.nrRounds = 20;         // Number of rounds = k = f+e
+        
+        matrixSize = Ashares.length;
+        I2 = createIdentity(2);
+        globalPid = 0;
+        tiRealIndex = 0;
+        tiTruncationIndex = 0;
+    }
+    
+    public MatrixInversion(BigInteger[][] Ashares, List<TripleReal> tishares,
+            List<TruncationPair> tiTruncationPair,
+            int protocolId,
+            BlockingQueue<Message> senderQueue,
+            Queue<Integer> protocolIdQueue,
+            int clientId, int asymmetricBit, int partyCount, BigInteger prime, 
+            ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper) {
+
+        super(protocolId, senderQueue, pidMapper, protocolIdQueue, clientId,
                 asymmetricBit, partyCount);
         this.Ashares = Ashares;
         this.tishares = tishares;
