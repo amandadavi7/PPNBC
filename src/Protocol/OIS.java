@@ -134,12 +134,13 @@ public class OIS extends CompositeProtocol implements Callable<Integer[]> {
         es.shutdown();
 
         for (int i = 0; i < bitLength; i++) {
+            //System.out.println("waiting for dp:" + i);
             Future<Integer> dotprod = taskList.get(i);
             output[i] = dotprod.get();
         }
 
         tearDownHandlers();
-        System.out.println("OIS PID: " + protocolId + "-returning " + Arrays.toString(output));
+        System.out.println("OIS PID: " + protocolId + "-returning "); //+ Arrays.toString(output));
         return output;
     }
 

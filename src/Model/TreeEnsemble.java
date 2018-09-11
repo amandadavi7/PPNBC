@@ -142,7 +142,7 @@ public class TreeEnsemble extends Model {
         startModelHandlers();
 
         ExecutorService es = Executors.newFixedThreadPool(Constants.threadCount);
-        List<Future<Integer[]>> taskList = new ArrayList<>();
+        //List<Future<Integer[]>> taskList = new ArrayList<>();
 
         long startTime = System.currentTimeMillis();
 
@@ -151,14 +151,22 @@ public class TreeEnsemble extends Model {
             for (int i = 0; i < treeCount; i++) {
 
                 initQueueMap(recQueues, pid);
-
+                System.out.println("calling RF: " + pid);
                 String args[] = {"storedtree=" + propertyFiles[i], "prime=" + prime};
 
                 RandomForestDTScoring DTScoreModule = new RandomForestDTScoring(asymmetricBit,
                         commonSender, recQueues.get(pid), clientId,
                         binaryTiShares, decimalTiShares, partyCount, args, new LinkedList<>(protocolIdQueue), pid);
 
-                taskList.add(es.submit(DTScoreModule));
+                //taskList.add(es.submit(DTScoreModule));
+                Future<Integer[]> output = es.submit(DTScoreModule);
+                try {
+                    Integer[] result = output.get();
+                    treeOutputs.add(result);
+                    System.out.println("Output" + Arrays.toString(result));
+                } catch (InterruptedException | ExecutionException ex) {
+                    Logger.getLogger(TreeEnsemble.class.getName()).log(Level.SEVERE, null, ex);
+                }
                 pid++;
 
             }
@@ -166,19 +174,27 @@ public class TreeEnsemble extends Model {
             for (int i = 0; i < treeCount; i++) {
 
                 initQueueMap(recQueues, pid);
-
+                System.out.println("calling RF: " + pid);
                 String args[] = {"testCsv=" + csvPath, "treeproperties=" + propertyFiles[i], "prime=" + prime};
 
                 RandomForestDTScoring DTScoreModule = new RandomForestDTScoring(asymmetricBit,
                         commonSender, recQueues.get(pid), clientId,
                         binaryTiShares, decimalTiShares, partyCount, args, new LinkedList<>(protocolIdQueue), pid);
 
-                taskList.add(es.submit(DTScoreModule));
+                //taskList.add(es.submit(DTScoreModule));
+                Future<Integer[]> output = es.submit(DTScoreModule);
+                try {
+                    Integer[] result = output.get();
+                    treeOutputs.add(result);
+                    System.out.println("Output" + Arrays.toString(result));
+                } catch (InterruptedException | ExecutionException ex) {
+                    Logger.getLogger(TreeEnsemble.class.getName()).log(Level.SEVERE, null, ex);
+                }
                 pid++;
             }
         }
 
-        for (int i = 0; i < treeCount; i++) {
+        /*for (int i = 0; i < treeCount; i++) {
             Future<Integer[]> DTScoreTask = taskList.get(i);
             try {
                 treeOutputs.add(DTScoreTask.get());
@@ -186,7 +202,7 @@ public class TreeEnsemble extends Model {
                 Logger.getLogger(TreeEnsemble.class.getName()).log(Level.SEVERE, null, ex);
             }
             
-        }
+        }*/
         
         for(Integer[] output: treeOutputs) {
             System.out.println("output of trees:" + Arrays.toString(output));
@@ -246,7 +262,6 @@ public class TreeEnsemble extends Model {
 
         
         System.out.println("Avg time duration:" + elapsedTime);
-        
         
         teardownModelHandlers();
     }

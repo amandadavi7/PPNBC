@@ -15,7 +15,7 @@ public class Constants {
     public static final int binaryPrime = 2;        // Prime for bit calculation
     public static final int bitLength = 5;
     
-    public static final int threadCount = 10; 
+    public static final int threadCount = 6; 
     public static final int batchSize = 30;
     
     public static final int decimal_precision = 64;

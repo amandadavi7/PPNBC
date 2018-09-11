@@ -83,7 +83,7 @@ public class DotProductByte extends DotProduct implements Callable<Integer> {
         do {
             int toIndex = Math.min(i + Constants.batchSize, vectorLength);
 
-            System.out.println("Protocol " + protocolId + " batch " + startpid);
+            //System.out.println("Protocol " + protocolId + " batch " + startpid);
             initQueueMap(recQueues, startpid);
 
             multCompletionService.submit(new BatchMultiplicationByte(xShares.subList(i, toIndex),
@@ -113,7 +113,7 @@ public class DotProductByte extends DotProduct implements Callable<Integer> {
         tearDownHandlers();
 
         dotProduct = Math.floorMod(dotProduct, prime);
-        System.out.println("dot product:" + dotProduct + ", protocol id:" + protocolId);
+        //System.out.println("dot product:" + dotProduct + ", protocol id:" + protocolId);
         return dotProduct;
 
     }

@@ -83,7 +83,7 @@ public class DotProductInteger extends DotProduct implements Callable<Integer> {
         do {
             int toIndex = Math.min(i + Constants.batchSize, vectorLength);
 
-            System.out.println("Protocol " + protocolId + " batch " + startpid);
+            //System.out.println("Protocol " + protocolId + " batch " + startpid);
             initQueueMap(recQueues, startpid);
 
             multCompletionService.submit(new BatchMultiplicationInteger(xShares.subList(i, toIndex),

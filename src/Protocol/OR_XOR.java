@@ -84,7 +84,7 @@ public class OR_XOR extends CompositeProtocol implements Callable<Integer[]> {
         int startpid = 0;
 
         do {
-            System.out.println("Protocol " + protocolId + " batch " + startpid);
+            //System.out.println("Protocol " + protocolId + " batch " + startpid);
             initQueueMap(recQueues, startpid);
 
             int toIndex = Math.min(i + Constants.batchSize, bitLength);
