@@ -113,7 +113,7 @@ public class LinearRegressionTraining extends Model {
         //initQueueMap(recQueues, globalProtocolId);
         MatrixInversion matrixInversion = new MatrixInversion(gamma1,
                 realTriples, tiTruncationPair, globalProtocolId, commonSender,
-                recQueues.get(globalProtocolId),
+                pidMapper.get(protocolIdQueue),
                 new LinkedList<>(protocolIdQueue), clientId, asymmetricBit,
                 partyCount, prime);
 
@@ -131,7 +131,7 @@ public class LinearRegressionTraining extends Model {
         MatrixMultiplication matrixMultiplication = new MatrixMultiplication(gamma1Inv,
                 gamma2, realTriples, tiTruncationPair, clientId, prime, globalProtocolId,
                 asymmetricBit, commonSender,
-                recQueues.get(globalProtocolId), new LinkedList<>(protocolIdQueue), partyCount);
+                pidMapper.get(protocolIdQueue), new LinkedList<>(protocolIdQueue), partyCount);
 
         BigInteger[][] beta = null;
         try {

@@ -116,7 +116,7 @@ public class MatrixMultiplication extends CompositeProtocol implements
                 DotProductReal DPModule = new DotProductReal(row,
                         bT.get(j), tiRealShares.subList(
                         tiRealStartIndex, tiRealStartIndex + m),
-                        senderQueue, recQueues.get(globalProtocolId),
+                        senderQueue, pidMapper.get(protocolIdQueue),
                         new LinkedList<>(protocolIdQueue),
                         clientID, prime, globalProtocolId++, asymmetricBit, partyCount);
 
@@ -152,7 +152,7 @@ public class MatrixMultiplication extends CompositeProtocol implements
             BatchTruncation truncationModule = new BatchTruncation(c2f[i],
                     tiTruncationPair.subList(tiTruncationStartIndex,
                             tiTruncationStartIndex + c2f[i].length),
-                    senderQueue, recQueues.get(globalProtocolId),
+                    senderQueue, pidMapper.get(protocolIdQueue),
                     new LinkedList<>(protocolIdQueue),
                     clientID, prime, globalProtocolId++, asymmetricBit, partyCount);
             Future<BigInteger[]> truncationTask = es.submit(truncationModule);
