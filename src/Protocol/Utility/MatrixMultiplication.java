@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -91,6 +92,53 @@ public class MatrixMultiplication extends CompositeProtocol implements
     }
 
     /**
+     * Constructor
+     * Uses n-1 tiShares
+     *
+     * @param a
+     * @param b
+     * @param tiRealshares
+     * @param tiTruncationPair
+     * @param clientID
+     * @param prime
+     * @param protocolID
+     * @param asymmetricBit
+     * @param senderQueue
+     * @param receiverQueue
+     * @param protocolIdQueue
+     * @param partyCount
+     */
+    public MatrixMultiplication(BigInteger[][] a, BigInteger[][] b,
+            List<TripleReal> tiRealshares, List<TruncationPair> tiTruncationPair,
+            int clientID, BigInteger prime, int protocolID,
+            int asymmetricBit, BlockingQueue<Message> senderQueue,
+            ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper,
+            Queue<Integer> protocolIdQueue, int partyCount) {
+
+        super(protocolID, senderQueue, receiverQueue, protocolIdQueue, clientID,
+                asymmetricBit, partyCount);
+        this.a = a;
+        this.tiRealShares = tiRealshares;
+        this.tiTruncationPair = tiTruncationPair;
+        this.prime = prime;
+        
+        globalProtocolId = 0;
+        bT = new ArrayList<>();
+        n = a.length;
+        m = a[0].length;
+        l = b[0].length;
+        for (int i = 0; i < l; i++) {
+            List<BigInteger> col = new ArrayList<>(m);
+            for (int j = 0; j < m; j++) {
+                col.add(b[j][i]);
+            }
+            bT.add(col);
+        }
+        
+    }
+
+    
+    /**
      * a: n*m, b = m*l Local matrix multiplication of a(n*t) and b(t*m) to give
      * result c(n*m)
      *
@@ -116,7 +164,7 @@ public class MatrixMultiplication extends CompositeProtocol implements
                 DotProductReal DPModule = new DotProductReal(row,
                         bT.get(j), tiRealShares.subList(
                         tiRealStartIndex, tiRealStartIndex + m),
-                        senderQueue, pidMapper.get(protocolIdQueue),
+                        senderQueue, pidMapper,
                         new LinkedList<>(protocolIdQueue),
                         clientID, prime, globalProtocolId++, asymmetricBit, partyCount);
 
@@ -152,7 +200,7 @@ public class MatrixMultiplication extends CompositeProtocol implements
             BatchTruncation truncationModule = new BatchTruncation(c2f[i],
                     tiTruncationPair.subList(tiTruncationStartIndex,
                             tiTruncationStartIndex + c2f[i].length),
-                    senderQueue, pidMapper.get(protocolIdQueue),
+                    senderQueue, pidMapper,
                     new LinkedList<>(protocolIdQueue),
                     clientID, prime, globalProtocolId++, asymmetricBit, partyCount);
             Future<BigInteger[]> truncationTask = es.submit(truncationModule);

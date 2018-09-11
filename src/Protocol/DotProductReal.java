@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
@@ -66,6 +67,37 @@ public class DotProductReal extends DotProduct implements Callable<BigInteger> {
         this.tiShares = tiShares;
 
     }
+    
+    /**
+     * Constructor for DotProduct on Real Numbers
+     *
+     * @param xShares
+     * @param yShares
+     * @param tiShares
+     * @param senderqueue
+     * @param receiverqueue
+     * @param protocolIdQueue
+     * @param clientID
+     * @param prime
+     * @param protocolID
+     * @param asymmetricBit
+     * @param partyCount
+     */
+    public DotProductReal(List<BigInteger> xShares, List<BigInteger> yShares,
+            List<TripleReal> tiShares, BlockingQueue<Message> senderqueue,
+            ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper, Queue<Integer> protocolIdQueue,
+            int clientID, BigInteger prime,
+            int protocolID, int asymmetricBit, int partyCount) {
+
+        super(senderqueue, pidMapper, protocolIdQueue, clientID, protocolID,
+                asymmetricBit, partyCount);
+
+        this.xShares = xShares;
+        this.yShares = yShares;
+        this.prime = prime;
+        this.tiShares = tiShares;
+
+    }
 
     /**
      * Do a BatchMultiplication on chunks of vector, collate the results and
@@ -93,7 +125,7 @@ public class DotProductReal extends DotProduct implements Callable<BigInteger> {
 
             multCompletionService.submit(new BatchMultiplicationReal(xShares.subList(i, toIndex),
                     yShares.subList(i, toIndex), tiShares.subList(i, toIndex), senderQueue,
-                    pidMapper.get(protocolIdQueue), new LinkedList<>(protocolIdQueue),
+                    pidMapper, new LinkedList<>(protocolIdQueue),
                     clientID, prime, startpid, asymmetricBit, protocolId, partyCount));
 
             startpid++;
