@@ -110,12 +110,14 @@ public class LinearRegressionTraining extends Model {
         BigInteger[][] gamma1 = LocalMath.localMatrixMultiplication(xT, x, prime);
         BigInteger[][] gamma2 = LocalMath.localMatrixMultiplication(xT, y, prime);
         
+        System.out.println("Call matrix inversion: pidMapper:" + pidMapper);
+        System.out.println("protocolIdQueue:" + protocolIdQueue);
+        
         //initQueueMap(recQueues, globalProtocolId);
         MatrixInversion matrixInversion = new MatrixInversion(gamma1,
                 realTriples, tiTruncationPair, globalProtocolId, commonSender,
-                pidMapper,
                 new LinkedList<>(protocolIdQueue), clientId, asymmetricBit,
-                partyCount, prime);
+                partyCount, prime, pidMapper);
 
         globalProtocolId++;
 

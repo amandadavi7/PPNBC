@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -56,6 +57,38 @@ public class BatchTruncation extends CompositeProtocol implements Callable<BigIn
             int protocolID, int asymmetricBit, int partyCount) {
 
         super(protocolID, senderqueue, receiverqueue, protocolIdQueue, clientID,
+                asymmetricBit, partyCount);
+
+        this.wShares = wShares;
+        this.prime = prime;
+        this.truncationShares = tiShares;
+
+        batchSize = wShares.length;
+        zShares = new ArrayList<>(batchSize);
+        T = new BigInteger[batchSize];
+    }
+    
+    /**
+     * Contructor
+     * @param wShares
+     * @param tiShares
+     * @param senderqueue
+     * @param receiverqueue
+     * @param protocolIdQueue
+     * @param clientID
+     * @param prime
+     * @param protocolID
+     * @param asymmetricBit
+     * @param partyCount 
+     */
+    public BatchTruncation(BigInteger[] wShares,
+            List<TruncationPair> tiShares, BlockingQueue<Message> senderqueue,
+            ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper,
+            Queue<Integer> protocolIdQueue,
+            int clientID, BigInteger prime,
+            int protocolID, int asymmetricBit, int partyCount) {
+
+        super(protocolID, senderqueue, pidMapper, protocolIdQueue, clientID,
                 asymmetricBit, partyCount);
 
         this.wShares = wShares;

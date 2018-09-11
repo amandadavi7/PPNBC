@@ -62,7 +62,7 @@ public class BatchMultiplicationReal extends BatchMultiplication
         this.prime = prime;
         this.tiShares = tiShares;
     }
-    
+
     /**
      * Constructor
      *
@@ -82,44 +82,12 @@ public class BatchMultiplicationReal extends BatchMultiplication
     public BatchMultiplicationReal(List<BigInteger> x, List<BigInteger> y,
             List<TripleReal> tiShares,
             BlockingQueue<Message> senderQueue,
-            ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper,
             Queue<Integer> protocolIdQueue,
-            int clientId, BigInteger prime, int protocolID, int asymmetricBit,
-            int parentID, int partyCount) {
-
-        super(senderQueue, protocolIdQueue, clientId, protocolID,
-                asymmetricBit, parentID, partyCount, pidMapper);
-        this.x = x;
-        this.y = y;
-        this.prime = prime;
-        this.tiShares = tiShares;
-    }
-
-    /**
-     * Constructor
-     *
-     * @param x share of x
-     * @param y share of y
-     * @param tiShares
-     * @param senderQueue
-     * @param receiverQueue
-     * @param protocolIdQueue
-     * @param clientId
-     * @param prime
-     * @param protocolID
-     * @param asymmetricBit
-     * @param parentID
-     * @param partyCount
-     */
-    public BatchMultiplicationReal(List<BigInteger> x, List<BigInteger> y,
-            List<TripleReal> tiShares,
-            BlockingQueue<Message> senderQueue,
-            BlockingQueue<Message> receiverQueue, Queue<Integer> protocolIdQueue,
             int clientId, BigInteger prime, int protocolID, int asymmetricBit,
             int parentID, int partyCount,
             ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper) {
 
-        super(senderQueue, receiverQueue, protocolIdQueue, clientId, protocolID,
+        super(senderQueue, protocolIdQueue, clientId, protocolID,
                 asymmetricBit, parentID, partyCount, pidMapper);
         this.x = x;
         this.y = y;

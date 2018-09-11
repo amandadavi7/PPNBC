@@ -115,7 +115,7 @@ public class MatrixMultiplication extends CompositeProtocol implements
             ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper,
             Queue<Integer> protocolIdQueue, int partyCount) {
 
-        super(protocolID, senderQueue, receiverQueue, protocolIdQueue, clientID,
+        super(protocolID, senderQueue, pidMapper, protocolIdQueue, clientID,
                 asymmetricBit, partyCount);
         this.a = a;
         this.tiRealShares = tiRealshares;

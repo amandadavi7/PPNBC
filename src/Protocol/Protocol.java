@@ -35,14 +35,22 @@ public class Protocol {
         this.partyCount = partyCount;
         this.protocolIdQueue = protocolIdQueue;
         this.protocolIdQueue.add(protocolId);
-        pidMapper.putIfAbsent(protocolIdQueue, new LinkedBlockingQueue<>());
     }
     
     public Protocol(int protocolId, BlockingQueue<Message> senderQueue,
-            BlockingQueue<Message> receiverQueue, Queue<Integer> protocolIdQueue,
+            Queue<Integer> protocolIdQueue,
             int clientID, int asymmetricBit, int partyCount, 
             ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper) {
-        this(protocolId, senderQueue, receiverQueue, protocolIdQueue, clientID, asymmetricBit, partyCount);
+        this.protocolId = protocolId;
+        this.senderQueue = senderQueue;
+        this.clientID = clientID;
+        this.asymmetricBit = asymmetricBit;
+        this.partyCount = partyCount;
+        this.protocolIdQueue = protocolIdQueue;
+        this.protocolIdQueue.add(protocolId);
         this.pidMapper = pidMapper;
+        System.out.println("pidMapper:" + pidMapper);
+        System.out.println("protocolIdQueue:" + protocolIdQueue);
+        this.pidMapper.putIfAbsent(protocolIdQueue, new LinkedBlockingQueue<>());
     }
 }
