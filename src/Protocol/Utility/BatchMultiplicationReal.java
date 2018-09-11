@@ -84,7 +84,9 @@ public class BatchMultiplicationReal extends BatchMultiplication
         List<List<BigInteger>> diffList = null;
         for (int i = 0; i < partyCount - 1; i++) {
             try {
-                receivedMessage = receiverQueue.take();
+                // TODO cleanup
+                //receivedMessage = receiverQueue.take();
+                receivedMessage = pIdMapper.get(protocolIdQueue);
                 diffList = (List<List<BigInteger>>) receivedMessage.getValue();
                 for(int j=0;j<batchSize;j++) {
                     d.set(j, d.get(j).add(diffList.get(j).get(0)).mod(prime));

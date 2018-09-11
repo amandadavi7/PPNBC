@@ -43,6 +43,15 @@ public class Message implements Serializable {
     }
 
     /**
+     * Get protocol ID
+     *
+     * @return
+     */
+    public Queue<Integer> getProtocolIDs() {
+        return protocolIds;
+    }
+
+    /**
      * remove the top protocol ID and return
      *
      * @return
