@@ -54,7 +54,7 @@ public class Model {
         this.commonReceiver = receiverQueue;
         this.clientId = clientId;
 
-        recQueues = new ConcurrentHashMap<>(50, 0.9f, 1);
+        //recQueues = new ConcurrentHashMap<>(50, 0.9f, 1);
         this.protocolIdQueue = new LinkedList<>();
         this.protocolIdQueue.add(1);
 

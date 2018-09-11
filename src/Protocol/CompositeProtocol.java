@@ -58,7 +58,7 @@ public class CompositeProtocol extends Protocol {
         super(protocolId, senderQueue, receiverQueue, protocolIdQueue, clientId, asymmetricBit,
                 partyCount, pidMapper);
 
-        recQueues = new ConcurrentHashMap<>();
+        //recQueues = new ConcurrentHashMap<>();
         queueHandlers = Executors.newSingleThreadExecutor();
         
         //receiverThread = new ReceiverQueueHandler(protocolId,
