@@ -17,7 +17,9 @@ import Utility.LocalMath;
 import java.math.BigInteger;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -60,6 +62,32 @@ public class LinearRegressionTraining extends Model {
             int clientId, int asymmetricBit, int partyCount, String[] args) {
 
         super(senderQueue, receiverQueue, clientId, asymmetricBit, partyCount);
+        this.tiTruncationPair = tiTruncationPair;
+        this.realTriples = realTriples;
+        globalProtocolId = 0;
+        prime = BigInteger.valueOf(2).pow(Constants.integer_precision
+                + 2 * Constants.decimal_precision + 1).nextProbablePrime();  //Zq must be a prime field
+        initalizeModelVariables(args);
+    }
+    
+    /**
+     * 
+     * @param realTriples
+     * @param tiTruncationPair
+     * @param senderQueue
+     * @param pidMapper
+     * @param clientId
+     * @param asymmetricBit
+     * @param partyCount
+     * @param args 
+     */
+    public LinearRegressionTraining(List<TripleReal> realTriples,
+            List<TruncationPair> tiTruncationPair,
+            BlockingQueue<Message> senderQueue,
+            ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper, 
+            int clientId, int asymmetricBit, int partyCount, String[] args) {
+
+        super(senderQueue, pidMapper, clientId, asymmetricBit, partyCount);
         this.tiTruncationPair = tiTruncationPair;
         this.realTriples = realTriples;
         globalProtocolId = 0;
