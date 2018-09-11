@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -58,6 +59,37 @@ public class MultiplicationReal extends Protocol implements Callable<BigInteger>
         this.tiRealShares = tiShares;
         this.prime = prime;
     }
+    
+     /**
+     * Constructor
+     *
+     * @param x share of x
+     * @param y share of y
+     * @param tiShares
+     * @param senderQueue
+     * @param receiverQueue
+     * @param protocolIdQueue
+     * @param clientId
+     * @param prime
+     * @param protocolID
+     * @param asymmetricBit
+     * @param partyCount
+     *
+     */
+    public MultiplicationReal(BigInteger x, BigInteger y, TripleReal tiShares,
+            BlockingQueue<Message> senderQueue,
+            ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper, Queue<Integer> protocolIdQueue,
+            int clientId, BigInteger prime,
+            int protocolID, int asymmetricBit, int partyCount) {
+
+        
+        super(protocolID, senderQueue, protocolIdQueue,
+                clientId, asymmetricBit, partyCount, pidMapper);
+        this.x = x;
+        this.y = y;
+        this.tiRealShares = tiShares;
+        this.prime = prime;
+    }
 
     /**
      * Waits for the shares of (x-u) and (y-v), computes the product and returns
@@ -72,7 +104,7 @@ public class MultiplicationReal extends Protocol implements Callable<BigInteger>
         BigInteger e = BigInteger.ZERO;
         for (int i = 0; i < partyCount - 1; i++) {
             try {
-                Message receivedMessage = receiverQueue.take();
+                Message receivedMessage = pidMapper.get(protocolIdQueue).take();
                 List<BigInteger> diffList = (List<BigInteger>) receivedMessage.getValue();
                 d = d.add(diffList.get(0));
                 e = e.add(diffList.get(1));

@@ -233,7 +233,7 @@ public class Party {
                 LinearRegressionTraining regressionTrainingModel
                         = new LinearRegressionTraining(tiShares.bigIntShares,
                                 tiShares.truncationPair,
-                                senderQueue, receiverQueue, partyId,
+                                senderQueue, pidMapper, partyId,
                                 asymmetricBit, partyCount, args);
 
                 regressionTrainingModel.trainModel();

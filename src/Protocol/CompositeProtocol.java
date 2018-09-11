@@ -22,7 +22,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 public class CompositeProtocol extends Protocol {
 
     protected ConcurrentHashMap<Integer, BlockingQueue<Message>> recQueues;
-    protected ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper;
+    //protected ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper;
     
     ExecutorService queueHandlers;
     ReceiverQueueHandler receiverThread;

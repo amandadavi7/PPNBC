@@ -12,6 +12,7 @@ import java.math.BigInteger;
 import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -22,7 +23,7 @@ import java.util.logging.Logger;
  *
  * @author anisha
  */
-public class Truncation extends CompositeProtocol implements Callable<BigInteger> {
+public class Truncation extends Protocol implements Callable<BigInteger> {
 
     BigInteger wShares;
     BigInteger zShares;
@@ -39,6 +40,22 @@ public class Truncation extends CompositeProtocol implements Callable<BigInteger
 
         super(protocolID, senderqueue, receiverqueue, protocolIdQueue, clientID,
                 asymmetricBit, partyCount);
+
+        this.wShares = wShares;
+        this.prime = prime;
+        this.truncationShares = tiShares;
+
+    }
+    
+    public Truncation(BigInteger wShares,
+            TruncationPair tiShares, BlockingQueue<Message> senderqueue,
+            Queue<Integer> protocolIdQueue,
+            int clientID, BigInteger prime,
+            int protocolID, int asymmetricBit, int partyCount,
+            ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper) {
+
+        super(protocolID, senderqueue, protocolIdQueue, clientID,
+                asymmetricBit, partyCount, pidMapper);
 
         this.wShares = wShares;
         this.prime = prime;
@@ -74,7 +91,7 @@ public class Truncation extends CompositeProtocol implements Callable<BigInteger
         // Receive all zShares
         for (int i = 0; i < partyCount - 1; i++) {
             try {
-                receivedMessage = receiverQueue.take();
+                receivedMessage = pidMapper.get(protocolIdQueue).take();
                 diffList = (BigInteger) receivedMessage.getValue();
                 zShares = zShares.add(diffList).mod(prime);
             } catch (InterruptedException ex) {

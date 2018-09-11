@@ -49,8 +49,6 @@ public class Protocol {
         this.protocolIdQueue = protocolIdQueue;
         this.protocolIdQueue.add(protocolId);
         this.pidMapper = pidMapper;
-        System.out.println("pidMapper:" + pidMapper);
-        System.out.println("protocolIdQueue:" + protocolIdQueue);
         this.pidMapper.putIfAbsent(protocolIdQueue, new LinkedBlockingQueue<>());
     }
 }

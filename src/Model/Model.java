@@ -85,9 +85,6 @@ public class Model {
         this.protocolIdQueue.add(1);
         pidMapper.putIfAbsent(protocolIdQueue, new LinkedBlockingQueue<>());
 
-        System.out.println("Model: pidMapper:" + pidMapper);
-        System.out.println("protocolIdQueue:" + protocolIdQueue);
-        
         queueHandlers = Executors.newSingleThreadExecutor();
         receiverThread = new ReceiverQueueHandler(1, commonReceiver, recQueues);
     }
