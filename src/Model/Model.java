@@ -21,6 +21,7 @@ import java.util.concurrent.LinkedBlockingQueue;
  */
 public class Model {
 
+    ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper;
     ConcurrentHashMap<Integer, BlockingQueue<Message>> recQueues;
     protected Queue<Integer> protocolIdQueue;
 
@@ -60,6 +61,32 @@ public class Model {
         queueHandlers = Executors.newSingleThreadExecutor();
         receiverThread = new ReceiverQueueHandler(1, commonReceiver, recQueues);
     }
+    
+    /**
+     * 
+     * @param senderQueue
+     * @param pidMapper
+     * @param clientId
+     * @param asymmetricBit
+     * @param partyCount 
+     */
+    public Model(BlockingQueue<Message> senderQueue,
+            ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper, int clientId,
+            int asymmetricBit, int partyCount) {
+
+        this.asymmetricBit = asymmetricBit;
+        this.partyCount = partyCount;
+        this.commonSender = senderQueue;
+        this.clientId = clientId;
+        this.pidMapper = pidMapper;
+
+        recQueues = new ConcurrentHashMap<>(50, 0.9f, 1);
+        this.protocolIdQueue = new LinkedList<>();
+        this.protocolIdQueue.add(1);
+
+        queueHandlers = Executors.newSingleThreadExecutor();
+        receiverThread = new ReceiverQueueHandler(1, commonReceiver, recQueues);
+    }
 
     /**
      * Start Model Handlers
@@ -79,13 +106,18 @@ public class Model {
     /**
      * Initialize Receiver Queue HashMap
      *
-     * @param recQueues
+     * @param pidMapper
      * @param key
      */
     public void initQueueMap(
-            ConcurrentHashMap<Integer, BlockingQueue<Message>> recQueues,
+            ConcurrentHashMap<Integer, BlockingQueue<Message>> pidMapper,
             int key) {
         recQueues.putIfAbsent(key, new LinkedBlockingQueue<>());
+    }
+    
+    public void addPidMapperEntry(ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper,
+            Queue<Integer> key) {
+        pidMapper.putIfAbsent(key, new LinkedBlockingQueue<>());
     }
 
 }
