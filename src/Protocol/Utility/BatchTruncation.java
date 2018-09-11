@@ -140,7 +140,7 @@ public class BatchTruncation extends CompositeProtocol implements Callable<BigIn
         // Receive all zShares
         for (int i = 0; i < partyCount - 1; i++) {
             try {
-                receivedMessage = receiverQueue.take();
+                receivedMessage = pidMapper.get(protocolIdQueue).take();
                 diffList = (List<BigInteger>) receivedMessage.getValue();
                 for (int j = 0; j < batchSize; j++) {
                     zShares.set(j, zShares.get(j).add(diffList.get(j)).mod(prime));
