@@ -51,11 +51,11 @@ public class CompositeProtocol extends Protocol {
 
     }
     
-    public CompositeProtocol(int protocolId, BlockingQueue<Message> senderQueue,
+    public CompositeProtocol(int protocolId, BlockingQueue<Message> senderQueue, BlockingQueue<Message> receiverQueue,
             ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper, Queue<Integer> protocolIdQueue,
             int clientId, int asymmetricBit, int partyCount) {
 
-        super(protocolId, senderQueue, protocolIdQueue, clientId, asymmetricBit,
+        super(protocolId, senderQueue, receiverQueue, protocolIdQueue, clientId, asymmetricBit,
                 partyCount, pidMapper);
 
         recQueues = new ConcurrentHashMap<>();
@@ -92,11 +92,6 @@ public class CompositeProtocol extends Protocol {
     public void tearDownHandlers() {
         //receiverThread.setProtocolStatus();
         //queueHandlers.shutdown();
-    }
-    
-    public void addPidMapperEntry(ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper,
-            Queue<Integer> key) {
-        pidMapper.putIfAbsent(key, new LinkedBlockingQueue<>());
     }
 
 }

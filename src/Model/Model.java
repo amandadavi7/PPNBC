@@ -83,6 +83,7 @@ public class Model {
         recQueues = new ConcurrentHashMap<>(50, 0.9f, 1);
         this.protocolIdQueue = new LinkedList<>();
         this.protocolIdQueue.add(1);
+        pidMapper.putIfAbsent(protocolIdQueue, new LinkedBlockingQueue<>());
 
         queueHandlers = Executors.newSingleThreadExecutor();
         receiverThread = new ReceiverQueueHandler(1, commonReceiver, recQueues);
@@ -106,19 +107,14 @@ public class Model {
     /**
      * Initialize Receiver Queue HashMap
      *
-     * @param pidMapper
+     * @param recQueues
      * @param key
      */
     public void initQueueMap(
-            ConcurrentHashMap<Integer, BlockingQueue<Message>> pidMapper,
+            ConcurrentHashMap<Integer, BlockingQueue<Message>> recQueues,
             int key) {
         recQueues.putIfAbsent(key, new LinkedBlockingQueue<>());
         
-    }
-    
-    public void addPidMapperEntry(ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper,
-            Queue<Integer> key) {
-        pidMapper.putIfAbsent(key, new LinkedBlockingQueue<>());
     }
 
 }

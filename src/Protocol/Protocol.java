@@ -9,6 +9,7 @@ import Communication.Message;
 import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * Base class to layout contract for a protocol to be created
@@ -34,6 +35,7 @@ public class Protocol {
         this.partyCount = partyCount;
         this.protocolIdQueue = protocolIdQueue;
         this.protocolIdQueue.add(protocolId);
+        pidMapper.putIfAbsent(protocolIdQueue, new LinkedBlockingQueue<>());
     }
     
     public Protocol(int protocolId, BlockingQueue<Message> senderQueue,
