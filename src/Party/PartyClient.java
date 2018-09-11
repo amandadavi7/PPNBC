@@ -9,7 +9,9 @@ import Communication.Message;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.net.Socket;
+import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -22,6 +24,7 @@ public class PartyClient implements Runnable {
     BlockingQueue<Message> receiverQueue;
     ObjectInputStream iStream = null;
     Socket receiveSocket = null;
+    ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper;
 
     /**
      * Constructor
@@ -33,6 +36,14 @@ public class PartyClient implements Runnable {
     public PartyClient(BlockingQueue<Message> queue, Socket socket,
             ObjectInputStream iStream) {
         this.receiverQueue = queue;
+        this.receiveSocket = socket;
+        this.iStream = iStream;
+    }
+    
+    
+    public PartyClient(ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper, 
+            Socket socket, ObjectInputStream iStream) {
+        this.pidMapper = pidMapper;
         this.receiveSocket = socket;
         this.iStream = iStream;
     }
