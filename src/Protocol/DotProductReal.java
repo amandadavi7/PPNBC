@@ -89,7 +89,7 @@ public class DotProductReal extends DotProduct implements Callable<BigInteger> {
         do {
             int toIndex = Math.min(i + Constants.batchSize, vectorLength);
 
-            initQueueMap(recQueues, startpid);
+            //initQueueMap(recQueues, startpid);
 
             multCompletionService.submit(new BatchMultiplicationReal(xShares.subList(i, toIndex),
                     yShares.subList(i, toIndex), tiShares.subList(i, toIndex), senderQueue,

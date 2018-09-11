@@ -83,15 +83,15 @@ public class CompositeProtocol extends Protocol {
      * Start the local threads for queue handlers
      */
     public void startHandlers() {
-        queueHandlers.submit(receiverThread);
+        //queueHandlers.submit(receiverThread);
     }
 
     /**
      * Teardown all local threads for the protocol
      */
     public void tearDownHandlers() {
-        receiverThread.setProtocolStatus();
-        queueHandlers.shutdown();
+        //receiverThread.setProtocolStatus();
+        //queueHandlers.shutdown();
     }
     
     public void addPidMapperEntry(ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper,

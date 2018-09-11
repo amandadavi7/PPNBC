@@ -187,7 +187,7 @@ public class MatrixInversion extends CompositeProtocol implements
 
         for (int i = 0; i < rounds; i++) {
             // AX = DM(A.X)
-            initQueueMap(recQueues, globalPid);
+            //initQueueMap(recQueues, globalPid);
 
             System.out.println("Party: "+clientID+" NR round: "+i);
             MatrixMultiplication matrixMultiplication = new MatrixMultiplication(
@@ -212,7 +212,7 @@ public class MatrixInversion extends CompositeProtocol implements
             BigInteger[][] subtractedAX = subtractFromTwo(AX);
 
             // X = DM(X.temp2)
-            initQueueMap(recQueues, globalPid);
+            //initQueueMap(recQueues, globalPid);
             BigInteger[][] Xs1 = null;
             MatrixMultiplication matrixMultiplicationNext = new MatrixMultiplication(
                     X, subtractedAX, tishares.subList(tiRealIndex,
@@ -254,7 +254,7 @@ public class MatrixInversion extends CompositeProtocol implements
         for (int i = 0; i < nrRounds; i++) {
 
             // AX = DM(A.X)
-            initQueueMap(recQueues, globalPid);
+            //initQueueMap(recQueues, globalPid);
             MultiplicationReal multiplicationModule = new MultiplicationReal(A,
                     X, tishares.get(tiRealIndex), senderQueue,
                     recQueues.get(globalPid), new LinkedList<>(protocolIdQueue),
@@ -272,7 +272,7 @@ public class MatrixInversion extends CompositeProtocol implements
                 Logger.getLogger(MatrixInversion.class.getName()).log(Level.SEVERE, null, ex);
             }
 
-            initQueueMap(recQueues, globalPid);
+            //initQueueMap(recQueues, globalPid);
             Truncation truncationModule = new Truncation(AX,
                     tiTruncationPair.get(tiTruncationIndex), senderQueue,
                     recQueues.get(globalPid), new LinkedList<>(protocolIdQueue),
@@ -297,7 +297,7 @@ public class MatrixInversion extends CompositeProtocol implements
                     .subtract(truncatedAX).mod(prime);
 
             // X = DM(X.subtractedAX)
-            initQueueMap(recQueues, globalPid);
+            //initQueueMap(recQueues, globalPid);
             MultiplicationReal multiplicationModuleNext = new MultiplicationReal(
                     X, subtractedAX, tishares.get(tiRealIndex),
                     senderQueue, recQueues.get(globalPid),
@@ -317,7 +317,7 @@ public class MatrixInversion extends CompositeProtocol implements
                 Logger.getLogger(MatrixInversion.class.getName()).log(Level.SEVERE, null, ex);
             }
 
-            initQueueMap(recQueues, globalPid);
+            //initQueueMap(recQueues, globalPid);
 
             Truncation truncationModuleNext = new Truncation(XsNext,
                     tiTruncationPair.get(tiTruncationIndex),

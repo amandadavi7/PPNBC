@@ -92,15 +92,15 @@ public class Model {
      * Start Model Handlers
      */
     public void startModelHandlers() {
-        queueHandlers.submit(receiverThread);
+        //queueHandlers.submit(receiverThread);
     }
 
     /**
      * Shut down model handlers
      */
     public void teardownModelHandlers() {
-        receiverThread.setProtocolStatus();
-        queueHandlers.shutdown();
+        //receiverThread.setProtocolStatus();
+        //queueHandlers.shutdown();
     }
 
     /**
@@ -113,6 +113,7 @@ public class Model {
             ConcurrentHashMap<Integer, BlockingQueue<Message>> pidMapper,
             int key) {
         recQueues.putIfAbsent(key, new LinkedBlockingQueue<>());
+        
     }
     
     public void addPidMapperEntry(ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper,

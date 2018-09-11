@@ -110,7 +110,7 @@ public class LinearRegressionTraining extends Model {
         BigInteger[][] gamma1 = LocalMath.localMatrixMultiplication(xT, x, prime);
         BigInteger[][] gamma2 = LocalMath.localMatrixMultiplication(xT, y, prime);
         
-        initQueueMap(recQueues, globalProtocolId);
+        //initQueueMap(recQueues, globalProtocolId);
         MatrixInversion matrixInversion = new MatrixInversion(gamma1,
                 realTriples, tiTruncationPair, globalProtocolId, commonSender,
                 recQueues.get(globalProtocolId),
@@ -127,7 +127,7 @@ public class LinearRegressionTraining extends Model {
                     .log(Level.SEVERE, null, ex);
         }
         
-        initQueueMap(recQueues, globalProtocolId);
+        //initQueueMap(recQueues, globalProtocolId);
         MatrixMultiplication matrixMultiplication = new MatrixMultiplication(gamma1Inv,
                 gamma2, realTriples, tiTruncationPair, clientId, prime, globalProtocolId,
                 asymmetricBit, commonSender,

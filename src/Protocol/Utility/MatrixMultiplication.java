@@ -112,7 +112,7 @@ public class MatrixMultiplication extends CompositeProtocol implements
         for (int i = 0; i < n; i++) {
             List<BigInteger> row = Arrays.asList(a[i]);
             for (int j = 0; j < l; j++) {
-                initQueueMap(recQueues, globalProtocolId);
+                //initQueueMap(recQueues, globalProtocolId);
                 DotProductReal DPModule = new DotProductReal(row,
                         bT.get(j), tiRealShares.subList(
                         tiRealStartIndex, tiRealStartIndex + m),
@@ -148,7 +148,7 @@ public class MatrixMultiplication extends CompositeProtocol implements
         taskList.clear();
         
         for (int i = 0; i < n; i++) {
-            initQueueMap(recQueues, globalProtocolId);
+            //initQueueMap(recQueues, globalProtocolId);
             BatchTruncation truncationModule = new BatchTruncation(c2f[i],
                     tiTruncationPair.subList(tiTruncationStartIndex,
                             tiTruncationStartIndex + c2f[i].length),
