@@ -93,10 +93,5 @@ public class CompositeProtocol extends Protocol {
         receiverThread.setProtocolStatus();
         queueHandlers.shutdown();
     }
-    
-    public void addPidMapperEntry(ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper,
-            Queue<Integer> key) {
-        pidMapper.putIfAbsent(key, new LinkedBlockingQueue<>());
-    }
 
 }
