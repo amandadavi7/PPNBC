@@ -74,7 +74,7 @@ public class TestModel extends Model {
             List<TripleReal> realTiShares, List<TruncationPair> tiTruncationPair, 
             int asymmetricBit, ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper, 
             BlockingQueue<Message> senderQueue, int clientId, int partyCount, String[] args, 
-            LinkedList<Integer> protocolIdQueue, int protocolID) {
+            Queue<Integer> protocolIdQueue, int protocolID) {
 
         super(pidMapper, senderQueue, clientId, asymmetricBit, partyCount, protocolIdQueue, protocolID);
         this.tiTruncationPair = tiTruncationPair;

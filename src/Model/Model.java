@@ -41,7 +41,7 @@ public class Model {
      */
     public Model(ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper, 
             BlockingQueue<Message> senderQueue, int clientId, int asymmetricBit,
-            int partyCount, LinkedList<Integer> protocolIdQueue, int protocolID) {
+            int partyCount, Queue<Integer> protocolIdQueue, int protocolID) {
 
         this.asymmetricBit = asymmetricBit;
         this.partyCount = partyCount;

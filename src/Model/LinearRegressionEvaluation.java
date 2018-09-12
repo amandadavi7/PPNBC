@@ -57,7 +57,7 @@ public class LinearRegressionEvaluation extends Model {
             List<TruncationPair> truncationShares, int asymmetricBit,
             ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper,
             BlockingQueue<Message> senderQueue, int clientId, int partyCount,
-            String[] args, LinkedList<Integer> protocolIdQueue, int protocolID) {
+            String[] args, Queue<Integer> protocolIdQueue, int protocolID) {
 
         super(pidMapper, senderQueue, clientId, asymmetricBit, partyCount, protocolIdQueue, protocolID);
         this.realTiShares = realTriples;

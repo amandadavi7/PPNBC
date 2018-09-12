@@ -198,7 +198,7 @@ public class RandomForestDTScoring extends Model implements Callable<Integer[]>{
             ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper,
             BlockingQueue<Message> senderQueue, int clientId,
             List<TripleByte> binaryTriples, List<TripleInteger> decimalTriples,
-            int partyCount, String[] args, LinkedList<Integer> protocolIdQueue,
+            int partyCount, String[] args, Queue<Integer> protocolIdQueue,
             int protocolID) {
 
         super(pidMapper, senderQueue, clientId, asymmetricBit, partyCount, protocolIdQueue, protocolID);

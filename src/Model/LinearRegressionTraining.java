@@ -61,7 +61,7 @@ public class LinearRegressionTraining extends Model {
             ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper, 
             BlockingQueue<Message> senderQueue,
             int clientId, int asymmetricBit, int partyCount, String[] args,
-            LinkedList<Integer> protocolIdQueue, int protocolID) {
+            Queue<Integer> protocolIdQueue, int protocolID) {
 
         super(pidMapper, senderQueue, clientId, asymmetricBit, partyCount, protocolIdQueue, protocolID);
         this.tiTruncationPair = tiTruncationPair;
