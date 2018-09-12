@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -37,11 +38,11 @@ public class BatchTruncation extends CompositeProtocol implements Callable<BigIn
     int batchSize;
 
     /**
-     * Contructor
+     * Constructor
      * @param wShares
      * @param tiShares
+     * @param pidMapper
      * @param senderqueue
-     * @param receiverqueue
      * @param protocolIdQueue
      * @param clientID
      * @param prime
@@ -50,12 +51,14 @@ public class BatchTruncation extends CompositeProtocol implements Callable<BigIn
      * @param partyCount 
      */
     public BatchTruncation(BigInteger[] wShares,
-            List<TruncationPair> tiShares, BlockingQueue<Message> senderqueue,
-            BlockingQueue<Message> receiverqueue, Queue<Integer> protocolIdQueue,
+            List<TruncationPair> tiShares, 
+            ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper,
+            BlockingQueue<Message> senderqueue,
+            Queue<Integer> protocolIdQueue,
             int clientID, BigInteger prime,
             int protocolID, int asymmetricBit, int partyCount) {
 
-        super(protocolID, senderqueue, receiverqueue, protocolIdQueue, clientID,
+        super(protocolID, pidMapper, senderqueue, protocolIdQueue, clientID,
                 asymmetricBit, partyCount);
 
         this.wShares = wShares;
@@ -107,7 +110,7 @@ public class BatchTruncation extends CompositeProtocol implements Callable<BigIn
         // Receive all zShares
         for (int i = 0; i < partyCount - 1; i++) {
             try {
-                receivedMessage = receiverQueue.take();
+                receivedMessage = pidMapper.get(protocolIdQueue).take();
                 diffList = (List<BigInteger>) receivedMessage.getValue();
                 for (int j = 0; j < batchSize; j++) {
                     zShares.set(j, zShares.get(j).add(diffList.get(j)).mod(prime));

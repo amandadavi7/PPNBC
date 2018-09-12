@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -58,8 +59,8 @@ public class Comparison extends CompositeProtocol implements Callable<Integer> {
      * @param y List of bits of shares of y
      * @param tiShares
      * @param asymmetricBit [[1]] with the Party
+     * @param pidMapper
      * @param senderQueue
-     * @param receiverQueue
      * @param protocolIdQueue
      * @param clientId
      * @param prime
@@ -67,12 +68,14 @@ public class Comparison extends CompositeProtocol implements Callable<Integer> {
      * @param partyCount
      */
     public Comparison(List<Integer> x, List<Integer> y, List<TripleByte> tiShares,
-            int asymmetricBit, BlockingQueue<Message> senderQueue,
-            BlockingQueue<Message> receiverQueue, Queue<Integer> protocolIdQueue,
+            int asymmetricBit, 
+            ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper,
+            BlockingQueue<Message> senderQueue,
+            Queue<Integer> protocolIdQueue,
             int clientId, int prime,
             int protocolID, int partyCount) {
 
-        super(protocolID, senderQueue, receiverQueue, protocolIdQueue, clientId,
+        super(protocolID, pidMapper, senderQueue, protocolIdQueue, clientId,
                 asymmetricBit, partyCount);
         this.x = x;
         this.y = y;
@@ -97,7 +100,6 @@ public class Comparison extends CompositeProtocol implements Callable<Integer> {
      */
     @Override
     public Integer call() throws Exception {
-        startHandlers();
         int w = -1;
         computeEShares();
 
@@ -135,7 +137,6 @@ public class Comparison extends CompositeProtocol implements Callable<Integer> {
             w = computeW();
         }
 
-        tearDownHandlers();
         return w;
     }
 
@@ -167,15 +168,13 @@ public class Comparison extends CompositeProtocol implements Callable<Integer> {
         // The protocols for computation of d are assigned id 0-bitLength-1
         do {
             //System.out.println("Protocol " + protocolId + " batch " + startpid);
-            initQueueMap(recQueues, startpid);
-
             int toIndex = Math.min(i + Constants.batchSize, bitLength);
 
             BatchMultiplicationByte batchMultiplication
                     = new BatchMultiplicationByte(x.subList(i, toIndex),
                             y.subList(i, toIndex),
                             tiShares.subList(i, toIndex),
-                            senderQueue, recQueues.get(startpid),
+                            pidMapper, senderQueue, 
                             new LinkedList<>(protocolIdQueue),
                             clientID, prime, startpid, asymmetricBit,
                             protocolId, partyCount);
@@ -234,8 +233,6 @@ public class Comparison extends CompositeProtocol implements Callable<Integer> {
 
             // batch multiply each pair of tempMultE[i], tempMult[i+1]
             do {
-                initQueueMap(recQueues, startpid);
-
                 int toIndex = Math.min(i + Constants.batchSize, tempMultE.size());
                 int tiCount = toIndex - i;
 
@@ -244,8 +241,7 @@ public class Comparison extends CompositeProtocol implements Callable<Integer> {
                                 tempMultE.subList(i, toIndex - 1),
                                 tempMultE.subList(i + 1, toIndex),
                                 tiShares.subList(tiStartIndex,
-                                        tiStartIndex + tiCount), senderQueue,
-                                recQueues.get(startpid),
+                                        tiStartIndex + tiCount), pidMapper, senderQueue,
                                 new LinkedList<>(protocolIdQueue), clientID,
                                 prime, startpid, asymmetricBit, protocolId,
                                 partyCount);
@@ -306,8 +302,6 @@ public class Comparison extends CompositeProtocol implements Callable<Integer> {
         int i = 0;
 
         do {
-            initQueueMap(recQueues, startpid);
-
             int toIndex = Math.min(i + Constants.batchSize, bitLength - 1);
             int tiCount = toIndex - i;
 
@@ -316,8 +310,7 @@ public class Comparison extends CompositeProtocol implements Callable<Integer> {
                             multiplicationEList.subList(i + 1, toIndex + 1),
                             dShareList.subList(i, toIndex),
                             tiShares.subList(tiStartIndex, 
-                                    tiStartIndex + tiCount), senderQueue,
-                            recQueues.get(startpid), 
+                                    tiStartIndex + tiCount), pidMapper, senderQueue,
                             new LinkedList<>(protocolIdQueue), clientID, prime, 
                             startpid, asymmetricBit, protocolId, partyCount);
 

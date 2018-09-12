@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -56,19 +57,20 @@ public class MatrixMultiplication extends CompositeProtocol implements
      * @param prime
      * @param protocolID
      * @param asymmetricBit
+     * @param pidMapper
      * @param senderQueue
-     * @param receiverQueue
      * @param protocolIdQueue
      * @param partyCount
      */
     public MatrixMultiplication(BigInteger[][] a, BigInteger[][] b,
             List<TripleReal> tiRealshares, List<TruncationPair> tiTruncationPair,
             int clientID, BigInteger prime, int protocolID,
-            int asymmetricBit, BlockingQueue<Message> senderQueue,
-            BlockingQueue<Message> receiverQueue,
+            int asymmetricBit, 
+            ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper,
+            BlockingQueue<Message> senderQueue,
             Queue<Integer> protocolIdQueue, int partyCount) {
 
-        super(protocolID, senderQueue, receiverQueue, protocolIdQueue, clientID,
+        super(protocolID, pidMapper, senderQueue, protocolIdQueue, clientID,
                 asymmetricBit, partyCount);
         this.a = a;
         this.tiRealShares = tiRealshares;
@@ -90,6 +92,7 @@ public class MatrixMultiplication extends CompositeProtocol implements
         
     }
 
+    
     /**
      * a: n*m, b = m*l Local matrix multiplication of a(n*t) and b(t*m) to give
      * result c(n*m)
@@ -100,7 +103,6 @@ public class MatrixMultiplication extends CompositeProtocol implements
     @Override
     public BigInteger[][] call() throws Exception {
 
-        startHandlers();
         BigInteger[][] c2f = new BigInteger[n][l];
         BigInteger[][] c = new BigInteger[n][l];
 
@@ -112,11 +114,10 @@ public class MatrixMultiplication extends CompositeProtocol implements
         for (int i = 0; i < n; i++) {
             List<BigInteger> row = Arrays.asList(a[i]);
             for (int j = 0; j < l; j++) {
-                initQueueMap(recQueues, globalProtocolId);
                 DotProductReal DPModule = new DotProductReal(row,
                         bT.get(j), tiRealShares.subList(
                         tiRealStartIndex, tiRealStartIndex + m),
-                        senderQueue, recQueues.get(globalProtocolId),
+                        pidMapper, senderQueue, 
                         new LinkedList<>(protocolIdQueue),
                         clientID, prime, globalProtocolId++, asymmetricBit, partyCount);
 
@@ -148,11 +149,10 @@ public class MatrixMultiplication extends CompositeProtocol implements
         taskList.clear();
         
         for (int i = 0; i < n; i++) {
-            initQueueMap(recQueues, globalProtocolId);
             BatchTruncation truncationModule = new BatchTruncation(c2f[i],
                     tiTruncationPair.subList(tiTruncationStartIndex,
                             tiTruncationStartIndex + c2f[i].length),
-                    senderQueue, recQueues.get(globalProtocolId),
+                    pidMapper, senderQueue, 
                     new LinkedList<>(protocolIdQueue),
                     clientID, prime, globalProtocolId++, asymmetricBit, partyCount);
             Future<BigInteger[]> truncationTask = es.submit(truncationModule);
@@ -173,7 +173,6 @@ public class MatrixMultiplication extends CompositeProtocol implements
         }
 
         es.shutdown();
-        tearDownHandlers();
         
         return c;
 

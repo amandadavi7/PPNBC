@@ -8,6 +8,7 @@ package Protocol;
 import Communication.Message;
 import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  *
@@ -20,19 +21,20 @@ public abstract class DotProduct extends CompositeProtocol {
      * Class Initializes queue and protocol
      * ID details
      *
+     * @param pidMapper
      * @param senderqueue
-     * @param receiverqueue
      * @param protocolIdQueue
      * @param clientID
      * @param protocolID
      * @param asymmetricBit
      * @param partyCount
      */
-    public DotProduct(BlockingQueue<Message> senderqueue, BlockingQueue<Message> receiverqueue,
+    public DotProduct(ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper,
+            BlockingQueue<Message> senderqueue, 
             Queue<Integer> protocolIdQueue,
             int clientID, int protocolID, int asymmetricBit, int partyCount) {
 
-        super(protocolID, senderqueue, receiverqueue, protocolIdQueue, clientID,
+        super(protocolID, pidMapper, senderqueue, protocolIdQueue, clientID,
                 asymmetricBit, partyCount);
 
     }

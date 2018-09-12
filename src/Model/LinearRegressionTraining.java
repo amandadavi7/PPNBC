@@ -17,7 +17,9 @@ import Utility.LocalMath;
 import java.math.BigInteger;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -40,26 +42,28 @@ public class LinearRegressionTraining extends Model {
     BigInteger prime;
     String outputPath;
     int globalProtocolId;
-
+    
     /**
-     * Constructor
-     *
+     * 
      * @param realTriples
      * @param tiTruncationPair
+     * @param pidMapper
      * @param senderQueue
-     * @param receiverQueue
      * @param clientId
      * @param asymmetricBit
      * @param partyCount
-     * @param args
+     * @param args 
+     * @param protocolIdQueue 
+     * @param protocolID 
      */
     public LinearRegressionTraining(List<TripleReal> realTriples,
             List<TruncationPair> tiTruncationPair,
+            ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper, 
             BlockingQueue<Message> senderQueue,
-            BlockingQueue<Message> receiverQueue, 
-            int clientId, int asymmetricBit, int partyCount, String[] args) {
+            int clientId, int asymmetricBit, int partyCount, String[] args,
+            LinkedList<Integer> protocolIdQueue, int protocolID) {
 
-        super(senderQueue, receiverQueue, clientId, asymmetricBit, partyCount, null, 0);
+        super(pidMapper, senderQueue, clientId, asymmetricBit, partyCount, protocolIdQueue, protocolID);
         this.tiTruncationPair = tiTruncationPair;
         this.realTriples = realTriples;
         globalProtocolId = 0;
@@ -73,7 +77,6 @@ public class LinearRegressionTraining extends Model {
      */
     public void trainModel() {
 
-        startModelHandlers();
         long startTime = System.currentTimeMillis();
         
         xT = LocalMath.transposeMatrix(x);
@@ -82,10 +85,8 @@ public class LinearRegressionTraining extends Model {
         BigInteger[][] gamma1 = LocalMath.localMatrixMultiplication(xT, x, prime);
         BigInteger[][] gamma2 = LocalMath.localMatrixMultiplication(xT, y, prime);
         
-        initQueueMap(recQueues, globalProtocolId);
         MatrixInversion matrixInversion = new MatrixInversion(gamma1,
-                realTriples, tiTruncationPair, globalProtocolId, commonSender,
-                recQueues.get(globalProtocolId),
+                realTriples, tiTruncationPair, globalProtocolId, pidMapper, commonSender,
                 new LinkedList<>(protocolIdQueue), clientId, asymmetricBit,
                 partyCount, prime);
 
@@ -99,11 +100,10 @@ public class LinearRegressionTraining extends Model {
                     .log(Level.SEVERE, null, ex);
         }
         
-        initQueueMap(recQueues, globalProtocolId);
         MatrixMultiplication matrixMultiplication = new MatrixMultiplication(gamma1Inv,
                 gamma2, realTriples, tiTruncationPair, clientId, prime, globalProtocolId,
-                asymmetricBit, commonSender,
-                recQueues.get(globalProtocolId), new LinkedList<>(protocolIdQueue), partyCount);
+                asymmetricBit, pidMapper, commonSender,
+                new LinkedList<>(protocolIdQueue), partyCount);
 
         BigInteger[][] beta = null;
         try {
@@ -119,7 +119,6 @@ public class LinearRegressionTraining extends Model {
         System.out.println("Avg time duration:" + elapsedTime + " for partyId:"
                 + clientId);
 
-        teardownModelHandlers();
         FileIO.writeToCSV(beta, outputPath, "beta", clientId);
         
     }

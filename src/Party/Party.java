@@ -17,7 +17,6 @@ import Utility.Logging;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.*;
 import java.util.concurrent.*;
@@ -37,8 +36,7 @@ public class Party {
     private static TIShare tiShares;
 
     private static BlockingQueue<Message> senderQueue;
-    private static BlockingQueue<Message> receiverQueue;
-
+    
     private static int partyId;
     private static int port;
     private static int partyCount;
@@ -51,6 +49,8 @@ public class Party {
 
     private static int asymmetricBit;
     private static int modelId;
+    
+    private static ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper;
 
     private static Queue<Integer> protocolIdQueue;
 
@@ -61,7 +61,6 @@ public class Party {
      */
     public static void initalizeVariables(String[] args) {
         senderQueue = new LinkedBlockingQueue<>();
-        receiverQueue = new LinkedBlockingQueue<>();
         partySocketEs = Executors.newFixedThreadPool(2);
         socketFutureList = new ArrayList<>();
         tiShares = new TIShare();
@@ -73,6 +72,8 @@ public class Party {
         tiPort = -1;
         baIP = null;
         baPort = -1;
+        
+        pidMapper = new ConcurrentHashMap<>();
 
         protocolIdQueue = new LinkedList<>();
         //protocolIdQueue.add(1);
@@ -188,7 +189,7 @@ public class Party {
         }
 
         System.out.println("Client thread starting");
-        PartyClient partyClient = new PartyClient(receiverQueue, clientSocket, iStream);
+        PartyClient partyClient = new PartyClient(pidMapper, clientSocket, iStream);
         socketFutureList.add(partySocketEs.submit(partyClient));
 
         System.out.println("Server thread starting");
@@ -212,7 +213,7 @@ public class Party {
             case 1:
                 // DT Scoring
                 DecisionTreeScoring DTree = new DecisionTreeScoring(asymmetricBit,
-                        senderQueue, receiverQueue, partyId, tiShares.binaryShares,
+                        pidMapper, senderQueue, partyId, tiShares.binaryShares, 
                         partyCount, args, new LinkedList<>(protocolIdQueue),1);
                 DTree.call();
                 break;
@@ -221,9 +222,9 @@ public class Party {
                 // LR Evaluation
                 LinearRegressionEvaluation regressionEvaluationModel
                         = new LinearRegressionEvaluation(tiShares.bigIntShares,
-                                tiShares.truncationPair,
-                                asymmetricBit, senderQueue,
-                                receiverQueue, partyId, partyCount, args, new LinkedList<>(protocolIdQueue),1);
+                                tiShares.truncationPair, asymmetricBit,
+                                pidMapper, senderQueue, partyId, partyCount,
+                                args, new LinkedList<>(protocolIdQueue), 1);
 
                 regressionEvaluationModel.predictValues();
                 break;
@@ -232,17 +233,17 @@ public class Party {
                 // LR Evaluation
                 LinearRegressionTraining regressionTrainingModel
                         = new LinearRegressionTraining(tiShares.bigIntShares,
-                                tiShares.truncationPair,
-                                senderQueue, receiverQueue, partyId,
-                                asymmetricBit, partyCount, args);
+                                tiShares.truncationPair, pidMapper, senderQueue, partyId,
+                                asymmetricBit, partyCount, args, new LinkedList<>(protocolIdQueue), 1);
 
                 regressionTrainingModel.trainModel();
                 break;
             
             case 5:
                 //Random Forest
-                TreeEnsemble TEModel = new TreeEnsemble(asymmetricBit, senderQueue, 
-                        receiverQueue, partyId, tiShares.binaryShares, tiShares.decimalShares, partyCount, args, 
+                TreeEnsemble TEModel = new TreeEnsemble(asymmetricBit, pidMapper,
+                        senderQueue,  partyId, tiShares.binaryShares,
+                        tiShares.decimalShares, partyCount, args, 
                         new LinkedList<>(protocolIdQueue), 1);
                 TEModel.runTreeEnsembles();
                 break;
@@ -252,9 +253,8 @@ public class Party {
                 TestModel testModel = new TestModel(tiShares.binaryShares,
                         tiShares.decimalShares, tiShares.bigIntShares,
                         tiShares.truncationPair,
-                        asymmetricBit, senderQueue, receiverQueue, partyId,
+                        asymmetricBit, pidMapper, senderQueue, partyId,
                         partyCount, args, new LinkedList<>(protocolIdQueue),1);
-
                 testModel.compute();
                 break;
         }
