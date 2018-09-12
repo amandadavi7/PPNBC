@@ -19,38 +19,14 @@ import java.util.concurrent.ConcurrentHashMap;
 public abstract class BatchMultiplication extends Protocol {
 
     int parentID;
-
-    /**
-     * Constructor
-     *
-     * TODO - parent ID is only for testing - to be removed in the future
-     *
-     * @param senderQueue
-     * @param receiverQueue
-     * @param protocolIdQueue
-     * @param clientId
-     * @param protocolID
-     * @param asymmetricBit
-     * @param partyCount
-     * @param parentID
-     */
-    public BatchMultiplication(BlockingQueue<Message> senderQueue,
-            BlockingQueue<Message> receiverQueue, Queue<Integer> protocolIdQueue,
-            int clientId,
-            int protocolID, int asymmetricBit, int parentID, int partyCount) {
-
-        super(protocolID, senderQueue, receiverQueue, protocolIdQueue, clientId,
-                asymmetricBit, partyCount);
-        this.parentID = parentID;
-    }
     
     /**
      * Constructor
      *
      * TODO - parent ID is only for testing - to be removed in the future
      *
+     * @param pidMapper
      * @param senderQueue
-     * @param receiverQueue
      * @param protocolIdQueue
      * @param clientId
      * @param protocolID
@@ -58,14 +34,14 @@ public abstract class BatchMultiplication extends Protocol {
      * @param partyCount
      * @param parentID
      */
-    public BatchMultiplication(BlockingQueue<Message> senderQueue,
+    public BatchMultiplication(ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper,
+            BlockingQueue<Message> senderQueue,
             Queue<Integer> protocolIdQueue,
             int clientId,
-            int protocolID, int asymmetricBit, int parentID, int partyCount,
-            ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper) {
+            int protocolID, int asymmetricBit, int parentID, int partyCount) {
 
-        super(protocolID, senderQueue, protocolIdQueue, clientId,
-                asymmetricBit, partyCount, pidMapper);
+        super(protocolID, pidMapper, senderQueue, protocolIdQueue, clientId,
+                asymmetricBit, partyCount);
         this.parentID = parentID;
     }
 

@@ -22,7 +22,6 @@ import java.util.logging.Logger;
  */
 public class PartyClient implements Runnable {
 
-    BlockingQueue<Message> receiverQueue;
     ObjectInputStream iStream = null;
     Socket receiveSocket = null;
     ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper;
@@ -30,18 +29,10 @@ public class PartyClient implements Runnable {
     /**
      * Constructor
      * takes common receiver queue, socket and input stream object
-     * @param queue
+     * @param pidMapper
      * @param socket
      * @param iStream
      */
-    public PartyClient(BlockingQueue<Message> queue, Socket socket,
-            ObjectInputStream iStream) {
-        this.receiverQueue = queue;
-        this.receiveSocket = socket;
-        this.iStream = iStream;
-    }
-    
-    
     public PartyClient(ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper, 
             Socket socket, ObjectInputStream iStream) {
         this.pidMapper = pidMapper;
@@ -59,8 +50,6 @@ public class PartyClient implements Runnable {
             Message msgs;
             try {
                 msgs = (Message) iStream.readObject();
-                // TODO cleanup
-                //receiverQueue.put(msgs);
                 pidMapper.putIfAbsent(msgs.getProtocolIDs(), new LinkedBlockingQueue<>());
                 pidMapper.get(msgs.getProtocolIDs()).add(msgs);
             } catch (IOException ex) {

@@ -38,8 +38,8 @@ public class BatchMultiplicationReal extends BatchMultiplication
      * @param x share of x
      * @param y share of y
      * @param tiShares
+     * @param pidMapper
      * @param senderQueue
-     * @param receiverQueue
      * @param protocolIdQueue
      * @param clientId
      * @param prime
@@ -50,45 +50,14 @@ public class BatchMultiplicationReal extends BatchMultiplication
      */
     public BatchMultiplicationReal(List<BigInteger> x, List<BigInteger> y,
             List<TripleReal> tiShares,
-            BlockingQueue<Message> senderQueue,
-            BlockingQueue<Message> receiverQueue, Queue<Integer> protocolIdQueue,
-            int clientId, BigInteger prime, int protocolID, int asymmetricBit,
-            int parentID, int partyCount) {
-
-        super(senderQueue, receiverQueue, protocolIdQueue, clientId, protocolID,
-                asymmetricBit, parentID, partyCount);
-        this.x = x;
-        this.y = y;
-        this.prime = prime;
-        this.tiShares = tiShares;
-    }
-
-    /**
-     * Constructor
-     *
-     * @param x share of x
-     * @param y share of y
-     * @param tiShares
-     * @param senderQueue
-     * @param receiverQueue
-     * @param protocolIdQueue
-     * @param clientId
-     * @param prime
-     * @param protocolID
-     * @param asymmetricBit
-     * @param parentID
-     * @param partyCount
-     */
-    public BatchMultiplicationReal(List<BigInteger> x, List<BigInteger> y,
-            List<TripleReal> tiShares,
+            ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper,
             BlockingQueue<Message> senderQueue,
             Queue<Integer> protocolIdQueue,
             int clientId, BigInteger prime, int protocolID, int asymmetricBit,
-            int parentID, int partyCount,
-            ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper) {
+            int parentID, int partyCount) {
 
-        super(senderQueue, protocolIdQueue, clientId, protocolID,
-                asymmetricBit, parentID, partyCount, pidMapper);
+        super(pidMapper, senderQueue, protocolIdQueue, clientId, protocolID,
+                asymmetricBit, parentID, partyCount);
         this.x = x;
         this.y = y;
         this.prime = prime;
@@ -118,8 +87,6 @@ public class BatchMultiplicationReal extends BatchMultiplication
         List<List<BigInteger>> diffList = null;
         for (int i = 0; i < partyCount - 1; i++) {
             try {
-                // TODO cleanup
-                //receivedMessage = receiverQueue.take();
                 receivedMessage = pidMapper.get(protocolIdQueue).take();
                 diffList = (List<List<BigInteger>>) receivedMessage.getValue();
                 for(int j=0;j<batchSize;j++) {

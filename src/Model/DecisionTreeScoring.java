@@ -27,6 +27,7 @@ import java.util.Properties;
 import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -58,7 +59,6 @@ class PolynomialComputing extends CompositeProtocol implements Callable<Integer[
      * @param tiShares
      * @param protocolIdQueue
      * @param senderQueue
-     * @param receiverQueue
      * @param protocolID
      * @param clientId
      * @param asymmetricBit
@@ -67,10 +67,11 @@ class PolynomialComputing extends CompositeProtocol implements Callable<Integer[
     public PolynomialComputing(Integer[] y_j, Integer[] jBinary, int alpha, int depth,
             int[] zOutputs, List<TripleByte> tiShares,
             Queue<Integer> protocolIdQueue,
-            BlockingQueue<Message> senderQueue, BlockingQueue<Message> receiverQueue,
+            ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper, 
+            BlockingQueue<Message> senderQueue, 
             int protocolID, int clientId, int asymmetricBit, int partyCount) {
 
-        super(protocolID, senderQueue, receiverQueue, protocolIdQueue, clientId, 
+        super(protocolID, pidMapper, senderQueue, protocolIdQueue, clientId, 
                 asymmetricBit, partyCount);
 
         this.s = depth;
@@ -89,7 +90,6 @@ class PolynomialComputing extends CompositeProtocol implements Callable<Integer[
     @Override
     public Integer[] call() throws Exception {
 
-        startHandlers();
         int pid = 0;
 
         while (s > 0) {
@@ -103,11 +103,10 @@ class PolynomialComputing extends CompositeProtocol implements Callable<Integer[
             int i = 0;
             do {
                 int toIndex = Math.min(i + Constants.batchSize, alpha);
-                initQueueMap(recQueues, pid);
-
+                
                 BatchMultiplicationByte mults = new BatchMultiplicationByte(
                         yj.subList(i, toIndex), z_u, tiShares.subList(i, toIndex),
-                        senderQueue, recQueues.get(pid),
+                        pidMapper, senderQueue, 
                         new LinkedList<>(protocolIdQueue), clientID,
                         Constants.binaryPrime, pid, asymmetricBit, protocolId,
                         partyCount);
@@ -138,7 +137,6 @@ class PolynomialComputing extends CompositeProtocol implements Callable<Integer[
             s--;
         }
 
-        tearDownHandlers();
         System.out.println("pid:" + protocolId + " returning" + Arrays.toString(y_j));
         return y_j;
 
@@ -178,18 +176,20 @@ public class DecisionTreeScoring extends Model {
      * pass the tree as a properties file (storedtree)
      * 
      * @param asymmetricBit
+     * @param pidMapper
      * @param senderQueue
-     * @param receiverQueue
      * @param clientId
      * @param binaryTriples
      * @param partyCount
      * @param args
      */
-    public DecisionTreeScoring(int asymmetricBit, BlockingQueue<Message> senderQueue,
-            BlockingQueue<Message> receiverQueue, int clientId, List<TripleByte> binaryTriples,
+    public DecisionTreeScoring(int asymmetricBit, 
+            ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper, 
+            BlockingQueue<Message> senderQueue,
+            int clientId, List<TripleByte> binaryTriples,
             int partyCount, String[] args) {
 
-        super(senderQueue, receiverQueue, clientId, asymmetricBit, partyCount);
+        super(pidMapper, senderQueue, clientId, asymmetricBit, partyCount);
 
         initializeModelVariables(args);
         pid = 0;
@@ -308,8 +308,6 @@ public class DecisionTreeScoring extends Model {
      */
     public void ScoreDecisionTree() {
 
-        startModelHandlers();
-
         init();
 
         long startTime = System.currentTimeMillis();
@@ -336,7 +334,6 @@ public class DecisionTreeScoring extends Model {
         System.out.println("the output in bits: " + Arrays.toString(finalOutputs));
         System.out.println("Avg time duration:" + elapsedTime);
 
-        teardownModelHandlers();
     }
 
     /**
@@ -352,10 +349,9 @@ public class DecisionTreeScoring extends Model {
             for (int i = 0; i < leafNodes - 1; i++) {
 
                 System.out.println("PID:" + pid + " k=" + nodeToAttributeIndexMapping[i]);
-                initQueueMap(recQueues, pid);
                 OIS ois = new OIS(null, binaryTiShares.subList(tiBinaryStartIndex,
                         tiBinaryStartIndex + (attributeBitLength * attributeCount)),
-                        asymmetricBit, commonSender, recQueues.get(pid), new LinkedList<>(protocolIdQueue),
+                        asymmetricBit, pidMapper, commonSender, new LinkedList<>(protocolIdQueue),
                         clientId, Constants.binaryPrime, pid, attributeBitLength,
                         nodeToAttributeIndexMapping[i], attributeCount, partyCount);
                 tiBinaryStartIndex += attributeBitLength * attributeCount;
@@ -368,10 +364,9 @@ public class DecisionTreeScoring extends Model {
             for (int i = 0; i < leafNodes - 1; i++) {
 
                 System.out.println("PID:" + pid + " k=" + testVector);
-                initQueueMap(recQueues, pid);
                 OIS ois = new OIS(testVector, binaryTiShares.subList(tiBinaryStartIndex,
                         tiBinaryStartIndex + (attributeBitLength * attributeCount)),
-                        asymmetricBit, commonSender, recQueues.get(pid), new LinkedList<>(protocolIdQueue),
+                        asymmetricBit, pidMapper, commonSender, new LinkedList<>(protocolIdQueue),
                         clientId, Constants.binaryPrime, pid,
                         attributeBitLength, -1, attributeCount, partyCount);
                 tiBinaryStartIndex += attributeBitLength * attributeCount;
@@ -426,10 +421,9 @@ public class DecisionTreeScoring extends Model {
 
         int comparisonTiCount = (2 * attributeBitLength) + ((attributeBitLength * (attributeBitLength - 1)) / 2);
         for (int i = 0; i < leafNodes - 1; i++) {
-            initQueueMap(recQueues, pid);
             Comparison comp = new Comparison(Arrays.asList(featureVectors[i]), attributeThresholdsBitShares.get(i),
                     binaryTiShares.subList(tiBinaryStartIndex, tiBinaryStartIndex + comparisonTiCount),
-                    asymmetricBit, commonSender, recQueues.get(pid), new LinkedList<>(protocolIdQueue),
+                    asymmetricBit, pidMapper, commonSender, new LinkedList<>(protocolIdQueue),
                     clientId, Constants.binaryPrime, pid, partyCount);
 
             Future<Integer> task = es.submit(comp);
@@ -502,12 +496,10 @@ public class DecisionTreeScoring extends Model {
         for (int j = 0; j < leafNodes; j++) {
             Integer[] jBinary = convertToBits(j, depth);
 
-            initQueueMap(recQueues, pid);
-
             PolynomialComputing pc = new PolynomialComputing(yShares[j], jBinary, alpha,
                     depth, comparisonOutputs, binaryTiShares.subList(tiBinaryStartIndex, 
                             tiBinaryStartIndex + polynomialComputationTiCount),
-                    new LinkedList<>(protocolIdQueue), commonSender, recQueues.get(pid),
+                    new LinkedList<>(protocolIdQueue), pidMapper, commonSender, 
                     pid, clientId, asymmetricBit, partyCount);
 
             pid++;

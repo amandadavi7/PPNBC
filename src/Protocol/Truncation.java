@@ -33,30 +33,15 @@ public class Truncation extends Protocol implements Callable<BigInteger> {
     BigInteger prime;
 
     public Truncation(BigInteger wShares,
-            TruncationPair tiShares, BlockingQueue<Message> senderqueue,
-            BlockingQueue<Message> receiverqueue, Queue<Integer> protocolIdQueue,
+            TruncationPair tiShares, 
+            ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper,
+            BlockingQueue<Message> senderqueue,
+            Queue<Integer> protocolIdQueue,
             int clientID, BigInteger prime,
             int protocolID, int asymmetricBit, int partyCount) {
 
-        super(protocolID, senderqueue, receiverqueue, protocolIdQueue, clientID,
+        super(protocolID, pidMapper, senderqueue, protocolIdQueue, clientID,
                 asymmetricBit, partyCount);
-
-        this.wShares = wShares;
-        this.prime = prime;
-        this.truncationShares = tiShares;
-
-    }
-    
-    public Truncation(BigInteger wShares,
-            TruncationPair tiShares, BlockingQueue<Message> senderqueue,
-            Queue<Integer> protocolIdQueue,
-            int clientID, BigInteger prime,
-            int protocolID, int asymmetricBit, int partyCount,
-            ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper) {
-
-        super(protocolID, senderqueue, protocolIdQueue, clientID,
-                asymmetricBit, partyCount, pidMapper);
-
         this.wShares = wShares;
         this.prime = prime;
         this.truncationShares = tiShares;

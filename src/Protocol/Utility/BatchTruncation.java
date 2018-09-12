@@ -38,11 +38,11 @@ public class BatchTruncation extends CompositeProtocol implements Callable<BigIn
     int batchSize;
 
     /**
-     * Contructor
+     * Constructor
      * @param wShares
      * @param tiShares
+     * @param pidMapper
      * @param senderqueue
-     * @param receiverqueue
      * @param protocolIdQueue
      * @param clientID
      * @param prime
@@ -51,44 +51,14 @@ public class BatchTruncation extends CompositeProtocol implements Callable<BigIn
      * @param partyCount 
      */
     public BatchTruncation(BigInteger[] wShares,
-            List<TruncationPair> tiShares, BlockingQueue<Message> senderqueue,
-            BlockingQueue<Message> receiverqueue, Queue<Integer> protocolIdQueue,
-            int clientID, BigInteger prime,
-            int protocolID, int asymmetricBit, int partyCount) {
-
-        super(protocolID, senderqueue, receiverqueue, protocolIdQueue, clientID,
-                asymmetricBit, partyCount);
-
-        this.wShares = wShares;
-        this.prime = prime;
-        this.truncationShares = tiShares;
-
-        batchSize = wShares.length;
-        zShares = new ArrayList<>(batchSize);
-        T = new BigInteger[batchSize];
-    }
-    
-    /**
-     * Contructor
-     * @param wShares
-     * @param tiShares
-     * @param senderqueue
-     * @param receiverqueue
-     * @param protocolIdQueue
-     * @param clientID
-     * @param prime
-     * @param protocolID
-     * @param asymmetricBit
-     * @param partyCount 
-     */
-    public BatchTruncation(BigInteger[] wShares,
-            List<TruncationPair> tiShares, BlockingQueue<Message> senderqueue,
+            List<TruncationPair> tiShares, 
             ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper,
+            BlockingQueue<Message> senderqueue,
             Queue<Integer> protocolIdQueue,
             int clientID, BigInteger prime,
             int protocolID, int asymmetricBit, int partyCount) {
 
-        super(protocolID, senderqueue, pidMapper, protocolIdQueue, clientID,
+        super(protocolID, pidMapper, senderqueue, protocolIdQueue, clientID,
                 asymmetricBit, partyCount);
 
         this.wShares = wShares;

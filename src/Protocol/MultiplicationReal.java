@@ -29,36 +29,6 @@ public class MultiplicationReal extends Protocol implements Callable<BigInteger>
     BigInteger y;
     TripleReal tiRealShares;
     BigInteger prime;
-
-    /**
-     * Constructor
-     *
-     * @param x share of x
-     * @param y share of y
-     * @param tiShares
-     * @param senderQueue
-     * @param receiverQueue
-     * @param protocolIdQueue
-     * @param clientId
-     * @param prime
-     * @param protocolID
-     * @param asymmetricBit
-     * @param partyCount
-     *
-     */
-    public MultiplicationReal(BigInteger x, BigInteger y, TripleReal tiShares,
-            BlockingQueue<Message> senderQueue,
-            BlockingQueue<Message> receiverQueue, Queue<Integer> protocolIdQueue,
-            int clientId, BigInteger prime,
-            int protocolID, int asymmetricBit, int partyCount) {
-
-        super(protocolID, senderQueue, receiverQueue, protocolIdQueue,
-                clientId, asymmetricBit, partyCount);
-        this.x = x;
-        this.y = y;
-        this.tiRealShares = tiShares;
-        this.prime = prime;
-    }
     
      /**
      * Constructor
@@ -66,8 +36,8 @@ public class MultiplicationReal extends Protocol implements Callable<BigInteger>
      * @param x share of x
      * @param y share of y
      * @param tiShares
+     * @param pidMapper
      * @param senderQueue
-     * @param receiverQueue
      * @param protocolIdQueue
      * @param clientId
      * @param prime
@@ -77,14 +47,15 @@ public class MultiplicationReal extends Protocol implements Callable<BigInteger>
      *
      */
     public MultiplicationReal(BigInteger x, BigInteger y, TripleReal tiShares,
+            ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper, 
             BlockingQueue<Message> senderQueue,
-            ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper, Queue<Integer> protocolIdQueue,
+            Queue<Integer> protocolIdQueue,
             int clientId, BigInteger prime,
             int protocolID, int asymmetricBit, int partyCount) {
 
         
-        super(protocolID, senderQueue, protocolIdQueue,
-                clientId, asymmetricBit, partyCount, pidMapper);
+        super(protocolID, pidMapper, senderQueue, protocolIdQueue,
+                clientId, asymmetricBit, partyCount);
         this.x = x;
         this.y = y;
         this.tiRealShares = tiShares;

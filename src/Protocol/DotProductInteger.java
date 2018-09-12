@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
@@ -38,8 +39,8 @@ public class DotProductInteger extends DotProduct implements Callable<Integer> {
      * @param xShares
      * @param yShares
      * @param tiShares
+     * @param pidMapper
      * @param senderqueue
-     * @param receiverqueue
      * @param protocolIdQueue
      * @param clientID
      * @param prime
@@ -48,11 +49,13 @@ public class DotProductInteger extends DotProduct implements Callable<Integer> {
      * @param partyCount
      */
     public DotProductInteger(List<Integer> xShares, List<Integer> yShares, 
-            List<TripleInteger> tiShares, BlockingQueue<Message> senderqueue, 
-            BlockingQueue<Message> receiverqueue, Queue<Integer> protocolIdQueue,
+            List<TripleInteger> tiShares, 
+            ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper,
+            BlockingQueue<Message> senderqueue, 
+            Queue<Integer> protocolIdQueue,
             int clientID, int prime, int protocolID, int asymmetricBit, int partyCount) {
 
-        super(senderqueue, receiverqueue, protocolIdQueue, clientID, protocolID, asymmetricBit, partyCount);
+        super(pidMapper, senderqueue, protocolIdQueue, clientID, protocolID, asymmetricBit, partyCount);
 
         this.xShares = xShares;
         this.yShares = yShares;
@@ -72,8 +75,7 @@ public class DotProductInteger extends DotProduct implements Callable<Integer> {
 
         int dotProduct = 0;
         int vectorLength = xShares.size();
-        startHandlers();
-
+        
         ExecutorService mults = Executors.newFixedThreadPool(Constants.threadCount);
         ExecutorCompletionService<Integer[]> multCompletionService = new ExecutorCompletionService<>(mults);
 
@@ -84,11 +86,9 @@ public class DotProductInteger extends DotProduct implements Callable<Integer> {
             int toIndex = Math.min(i + Constants.batchSize, vectorLength);
 
             System.out.println("Protocol " + protocolId + " batch " + startpid);
-            initQueueMap(recQueues, startpid);
-
             multCompletionService.submit(new BatchMultiplicationInteger(xShares.subList(i, toIndex),
                     yShares.subList(i, toIndex), tiShares.subList(i, toIndex), 
-                    senderQueue, recQueues.get(startpid), new LinkedList<>(protocolIdQueue),
+                    pidMapper, senderQueue, new LinkedList<>(protocolIdQueue),
                     clientID, prime, startpid, asymmetricBit, protocolId, partyCount));
 
             startpid++;
@@ -109,8 +109,6 @@ public class DotProductInteger extends DotProduct implements Callable<Integer> {
                 Logger.getLogger(DotProductInteger.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
-
-        tearDownHandlers();
 
         dotProduct = Math.floorMod(dotProduct, prime);
         System.out.println("dot product:" + dotProduct + ", protocol id:" + protocolId);

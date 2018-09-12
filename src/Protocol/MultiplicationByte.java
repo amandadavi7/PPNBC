@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -36,8 +37,8 @@ public class MultiplicationByte extends Protocol implements Callable {
      * @param x share of x
      * @param y share of y
      * @param tiShares
+     * @param pidMapper
      * @param senderQueue
-     * @param receiverQueue
      * @param protocolIdQueue
      * @param clientId
      * @param prime
@@ -47,12 +48,13 @@ public class MultiplicationByte extends Protocol implements Callable {
      * @param partyCount
      */
     public MultiplicationByte(int x, int y, TripleByte tiShares,
+            ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper,
             BlockingQueue<Message> senderQueue,
-            BlockingQueue<Message> receiverQueue, Queue<Integer> protocolIdQueue,
+            Queue<Integer> protocolIdQueue,
             int clientId, int prime, int protocolID, int asymmetricBit,
             int parentID, int partyCount) {
 
-        super(protocolID, senderQueue, receiverQueue, protocolIdQueue,
+        super(protocolID, pidMapper, senderQueue, protocolIdQueue,
                 clientId, asymmetricBit, partyCount);
         this.x = x;
         this.y = y;
@@ -75,7 +77,7 @@ public class MultiplicationByte extends Protocol implements Callable {
         int d = 0, e = 0;
         for (int i = 0; i < partyCount - 1; i++) {
             try {
-                receivedMessage = receiverQueue.take();
+                receivedMessage = pidMapper.get(protocolIdQueue).take();
                 diffList = (List<Integer>) receivedMessage.getValue();
                 d += diffList.get(0);
                 e += diffList.get(1);

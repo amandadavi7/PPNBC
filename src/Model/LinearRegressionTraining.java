@@ -42,40 +42,13 @@ public class LinearRegressionTraining extends Model {
     BigInteger prime;
     String outputPath;
     int globalProtocolId;
-
-    /**
-     * Constructor
-     *
-     * @param realTriples
-     * @param tiTruncationPair
-     * @param senderQueue
-     * @param receiverQueue
-     * @param clientId
-     * @param asymmetricBit
-     * @param partyCount
-     * @param args
-     */
-    public LinearRegressionTraining(List<TripleReal> realTriples,
-            List<TruncationPair> tiTruncationPair,
-            BlockingQueue<Message> senderQueue,
-            BlockingQueue<Message> receiverQueue, 
-            int clientId, int asymmetricBit, int partyCount, String[] args) {
-
-        super(senderQueue, receiverQueue, clientId, asymmetricBit, partyCount);
-        this.tiTruncationPair = tiTruncationPair;
-        this.realTriples = realTriples;
-        globalProtocolId = 0;
-        prime = BigInteger.valueOf(2).pow(Constants.integer_precision
-                + 2 * Constants.decimal_precision + 1).nextProbablePrime();  //Zq must be a prime field
-        initalizeModelVariables(args);
-    }
     
     /**
      * 
      * @param realTriples
      * @param tiTruncationPair
-     * @param senderQueue
      * @param pidMapper
+     * @param senderQueue
      * @param clientId
      * @param asymmetricBit
      * @param partyCount
@@ -83,11 +56,11 @@ public class LinearRegressionTraining extends Model {
      */
     public LinearRegressionTraining(List<TripleReal> realTriples,
             List<TruncationPair> tiTruncationPair,
-            BlockingQueue<Message> senderQueue,
             ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper, 
+            BlockingQueue<Message> senderQueue,
             int clientId, int asymmetricBit, int partyCount, String[] args) {
 
-        super(senderQueue, pidMapper, clientId, asymmetricBit, partyCount);
+        super(pidMapper, senderQueue, clientId, asymmetricBit, partyCount);
         this.tiTruncationPair = tiTruncationPair;
         this.realTriples = realTriples;
         globalProtocolId = 0;
@@ -101,7 +74,6 @@ public class LinearRegressionTraining extends Model {
      */
     public void trainModel() {
 
-        startModelHandlers();
         long startTime = System.currentTimeMillis();
         
         xT = LocalMath.transposeMatrix(x);
@@ -110,11 +82,10 @@ public class LinearRegressionTraining extends Model {
         BigInteger[][] gamma1 = LocalMath.localMatrixMultiplication(xT, x, prime);
         BigInteger[][] gamma2 = LocalMath.localMatrixMultiplication(xT, y, prime);
         
-        //initQueueMap(recQueues, globalProtocolId);
         MatrixInversion matrixInversion = new MatrixInversion(gamma1,
-                realTriples, tiTruncationPair, globalProtocolId, commonSender,
+                realTriples, tiTruncationPair, globalProtocolId, pidMapper, commonSender,
                 new LinkedList<>(protocolIdQueue), clientId, asymmetricBit,
-                partyCount, prime, pidMapper);
+                partyCount, prime);
 
         globalProtocolId++;
 
@@ -126,11 +97,10 @@ public class LinearRegressionTraining extends Model {
                     .log(Level.SEVERE, null, ex);
         }
         
-        //initQueueMap(recQueues, globalProtocolId);
         MatrixMultiplication matrixMultiplication = new MatrixMultiplication(gamma1Inv,
                 gamma2, realTriples, tiTruncationPair, clientId, prime, globalProtocolId,
-                asymmetricBit, commonSender,
-                pidMapper, new LinkedList<>(protocolIdQueue), partyCount);
+                asymmetricBit, pidMapper, commonSender,
+                new LinkedList<>(protocolIdQueue), partyCount);
 
         BigInteger[][] beta = null;
         try {
@@ -146,7 +116,6 @@ public class LinearRegressionTraining extends Model {
         System.out.println("Avg time duration:" + elapsedTime + " for partyId:"
                 + clientId);
 
-        teardownModelHandlers();
         FileIO.writeToCSV(beta, outputPath, "beta", clientId);
         
     }

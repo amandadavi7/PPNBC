@@ -36,37 +36,6 @@ public class DotProductReal extends DotProduct implements Callable<BigInteger> {
     List<BigInteger> xShares, yShares;
     BigInteger prime;
     List<TripleReal> tiShares;
-
-    /**
-     * Constructor for DotProduct on Real Numbers
-     *
-     * @param xShares
-     * @param yShares
-     * @param tiShares
-     * @param senderqueue
-     * @param receiverqueue
-     * @param protocolIdQueue
-     * @param clientID
-     * @param prime
-     * @param protocolID
-     * @param asymmetricBit
-     * @param partyCount
-     */
-    public DotProductReal(List<BigInteger> xShares, List<BigInteger> yShares,
-            List<TripleReal> tiShares, BlockingQueue<Message> senderqueue,
-            BlockingQueue<Message> receiverqueue, Queue<Integer> protocolIdQueue,
-            int clientID, BigInteger prime,
-            int protocolID, int asymmetricBit, int partyCount) {
-
-        super(senderqueue, receiverqueue, protocolIdQueue, clientID, protocolID,
-                asymmetricBit, partyCount);
-
-        this.xShares = xShares;
-        this.yShares = yShares;
-        this.prime = prime;
-        this.tiShares = tiShares;
-
-    }
     
     /**
      * Constructor for DotProduct on Real Numbers
@@ -75,7 +44,7 @@ public class DotProductReal extends DotProduct implements Callable<BigInteger> {
      * @param yShares
      * @param tiShares
      * @param senderqueue
-     * @param receiverqueue
+     * @param pidMapper
      * @param protocolIdQueue
      * @param clientID
      * @param prime
@@ -84,12 +53,14 @@ public class DotProductReal extends DotProduct implements Callable<BigInteger> {
      * @param partyCount
      */
     public DotProductReal(List<BigInteger> xShares, List<BigInteger> yShares,
-            List<TripleReal> tiShares, BlockingQueue<Message> senderqueue,
-            ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper, Queue<Integer> protocolIdQueue,
+            List<TripleReal> tiShares, 
+            ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper, 
+            BlockingQueue<Message> senderqueue,
+            Queue<Integer> protocolIdQueue,
             int clientID, BigInteger prime,
             int protocolID, int asymmetricBit, int partyCount) {
 
-        super(senderqueue, pidMapper, protocolIdQueue, clientID, protocolID,
+        super(pidMapper, senderqueue, protocolIdQueue, clientID, protocolID,
                 asymmetricBit, partyCount);
 
         this.xShares = xShares;
@@ -110,8 +81,7 @@ public class DotProductReal extends DotProduct implements Callable<BigInteger> {
 
         BigInteger dotProduct = BigInteger.ZERO;
         int vectorLength = xShares.size();
-        startHandlers();
-
+        
         ExecutorService mults = Executors.newFixedThreadPool(Constants.threadCount);
         ExecutorCompletionService<BigInteger[]> multCompletionService = new ExecutorCompletionService<>(mults);
 
@@ -121,12 +91,10 @@ public class DotProductReal extends DotProduct implements Callable<BigInteger> {
         do {
             int toIndex = Math.min(i + Constants.batchSize, vectorLength);
 
-            //initQueueMap(recQueues, startpid);
-
             multCompletionService.submit(new BatchMultiplicationReal(xShares.subList(i, toIndex),
-                    yShares.subList(i, toIndex), tiShares.subList(i, toIndex), senderQueue,
+                    yShares.subList(i, toIndex), tiShares.subList(i, toIndex), pidMapper, senderQueue,
                     new LinkedList<>(protocolIdQueue),
-                    clientID, prime, startpid, asymmetricBit, protocolId, partyCount, pidMapper));
+                    clientID, prime, startpid, asymmetricBit, protocolId, partyCount));
 
             startpid++;
             i = toIndex;
@@ -146,8 +114,6 @@ public class DotProductReal extends DotProduct implements Callable<BigInteger> {
                 Logger.getLogger(DotProductReal.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
-
-        tearDownHandlers();
 
         dotProduct = dotProduct.mod(prime);
         return dotProduct;
