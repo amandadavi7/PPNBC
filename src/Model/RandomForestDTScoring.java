@@ -12,6 +12,7 @@ import Protocol.DotProductInteger;
 import Protocol.OIS;
 import Protocol.OR_XOR;
 import Protocol.Utility.BatchMultiplicationByte;
+import Protocol.Utility.PolynomialComputing;
 import TrustedInitializer.TripleByte;
 import TrustedInitializer.TripleInteger;
 import Utility.Constants;
@@ -37,113 +38,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
-/**
- * compute the final tree output by computing the polynomial circuit
- *
- * @author keerthanaa
- */
-class PolynomialComputingRF extends CompositeProtocol implements Callable<Integer[]> {
-
-    int s, u, alpha;
-    int[] comparisonOutputs;
-    Integer[] y_j, jBinary;
-    List<TripleByte> tiShares;
-
-    /**
-     * Constructor (takes initial y[j][r] for a given j and computes the final
-     * y[j][r] output
-     *
-     * @param y_j
-     * @param jBinary
-     * @param alpha
-     * @param depth
-     * @param zOutputs
-     * @param tiShares
-     * @param protocolIdQueue
-     * @param senderQueue
-     * @param receiverQueue
-     * @param protocolID
-     * @param clientId
-     * @param asymmetricBit
-     * @param partyCount
-     */
-    public PolynomialComputingRF(Integer[] y_j, Integer[] jBinary, int alpha, int depth,
-            int[] zOutputs, List<TripleByte> tiShares, Queue<Integer> protocolIdQueue,
-            ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper,
-            BlockingQueue<Message> senderQueue, int protocolID, int clientId,
-            int asymmetricBit, int partyCount) {
-
-        super(protocolID, pidMapper, senderQueue, protocolIdQueue, clientId, 
-                asymmetricBit, partyCount);
-
-        this.s = depth;
-        u = 1;
-        this.alpha = alpha;
-        this.y_j = y_j;
-        this.comparisonOutputs = zOutputs;
-        this.jBinary = jBinary;
-        this.tiShares = tiShares;
-    }
-
-    /**
-     *
-     * @return @throws Exception
-     */
-    @Override
-    public Integer[] call() throws Exception {
-
-        int pid = 0;
-
-        while (s > 0) {
-            ExecutorService es = Executors.newFixedThreadPool(Constants.threadCount);
-            List<Future<Integer[]>> taskList = new ArrayList<>();
-
-            List<Integer> yj = Arrays.asList(y_j);
-            List<Integer> z_u = new ArrayList<>(Collections.<Integer>nCopies(Constants.batchSize,
-                    (comparisonOutputs[u - 1] + asymmetricBit * jBinary[s - 1]) % Constants.binaryPrime));
-
-            int i = 0;
-            do {
-                int toIndex = Math.min(i + Constants.batchSize, alpha);
-                BatchMultiplicationByte mults = new BatchMultiplicationByte(
-                        yj.subList(i, toIndex), z_u, tiShares.subList(i, toIndex),
-                        pidMapper, senderQueue,
-                        new LinkedList<>(protocolIdQueue), clientID,
-                        Constants.binaryPrime, pid, asymmetricBit, protocolId,
-                        partyCount);
-
-                Future<Integer[]> task = es.submit(mults);
-                taskList.add(task);
-                i = toIndex;
-                pid++;
-
-            } while (i < alpha);
-
-            int batches = taskList.size();
-            int globalIndex = 0;
-            for (i = 0; i < batches; i++) {
-                Future<Integer[]> taskResponse = taskList.get(i);
-                try {
-                    Integer[] arr = taskResponse.get();
-                    for (int l = 0; l < arr.length; l++) {
-                        y_j[globalIndex] = arr[l];
-                        globalIndex++;
-                    }
-                } catch (InterruptedException | ExecutionException ex) {
-                    Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
-                }
-            }
-
-            u = 2 * u + jBinary[s - 1];
-            s--;
-        }
-
-        //System.out.println("pid:" + protocolId + " returning" + Arrays.toString(y_j));
-        return y_j;
-
-    }
-}
 
 /**
  * This class takes a row of attributes values and predicts the class label
@@ -526,7 +420,7 @@ public class RandomForestDTScoring extends Model implements Callable<Integer[]>{
         for (int j = 0; j < leafNodes; j++) {
             Integer[] jBinary = convertToBits(j, depth);
 
-            PolynomialComputingRF pc = new PolynomialComputingRF(yShares[j], jBinary, leafNodes,
+            PolynomialComputing pc = new PolynomialComputing(yShares[j], jBinary, leafNodes,
                     depth, comparisonOutputs, binaryTiShares.subList(tiBinaryStartIndex, 
                             tiBinaryStartIndex + polynomialComputationTiCount),
                     new LinkedList<>(protocolIdQueue), pidMapper, commonSender,
@@ -560,6 +454,7 @@ public class RandomForestDTScoring extends Model implements Callable<Integer[]>{
         List<Integer> dummy = new ArrayList<>(Collections.nCopies(leafNodes, 0));
         Integer[] one_hot_encoding_leaf_predicted = null;
         OR_XOR xorModule;
+        
         //asymmetric xor to switch primes
         if(asymmetricBit == 1) {
             xorModule = new OR_XOR(Arrays.asList(result), dummy, decimaTiShares.subList(0, leafNodes), 
