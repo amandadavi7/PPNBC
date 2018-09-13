@@ -9,7 +9,10 @@ import Communication.Message;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.net.Socket;
+import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -19,20 +22,20 @@ import java.util.logging.Logger;
  */
 public class PartyClient implements Runnable {
 
-    BlockingQueue<Message> receiverQueue;
     ObjectInputStream iStream = null;
     Socket receiveSocket = null;
+    ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper;
 
     /**
      * Constructor
      * takes common receiver queue, socket and input stream object
-     * @param queue
+     * @param pidMapper
      * @param socket
      * @param iStream
      */
-    public PartyClient(BlockingQueue<Message> queue, Socket socket,
-            ObjectInputStream iStream) {
-        this.receiverQueue = queue;
+    public PartyClient(ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper, 
+            Socket socket, ObjectInputStream iStream) {
+        this.pidMapper = pidMapper;
         this.receiveSocket = socket;
         this.iStream = iStream;
     }
@@ -47,8 +50,9 @@ public class PartyClient implements Runnable {
             Message msgs;
             try {
                 msgs = (Message) iStream.readObject();
-                receiverQueue.put(msgs);
-            } catch (InterruptedException | IOException ex) {
+                pidMapper.putIfAbsent(msgs.getProtocolIDs(), new LinkedBlockingQueue<>());
+                pidMapper.get(msgs.getProtocolIDs()).add(msgs);
+            } catch (IOException ex) {
                 try {
                     iStream.close();
                 } catch (IOException ex1) {

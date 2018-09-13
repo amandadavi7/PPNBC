@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -37,8 +38,8 @@ public class BatchMultiplicationReal extends BatchMultiplication
      * @param x share of x
      * @param y share of y
      * @param tiShares
+     * @param pidMapper
      * @param senderQueue
-     * @param receiverQueue
      * @param protocolIdQueue
      * @param clientId
      * @param prime
@@ -49,12 +50,13 @@ public class BatchMultiplicationReal extends BatchMultiplication
      */
     public BatchMultiplicationReal(List<BigInteger> x, List<BigInteger> y,
             List<TripleReal> tiShares,
+            ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper,
             BlockingQueue<Message> senderQueue,
-            BlockingQueue<Message> receiverQueue, Queue<Integer> protocolIdQueue,
+            Queue<Integer> protocolIdQueue,
             int clientId, BigInteger prime, int protocolID, int asymmetricBit,
             int parentID, int partyCount) {
 
-        super(senderQueue, receiverQueue, protocolIdQueue, clientId, protocolID,
+        super(pidMapper, senderQueue, protocolIdQueue, clientId, protocolID,
                 asymmetricBit, parentID, partyCount);
         this.x = x;
         this.y = y;
@@ -62,6 +64,7 @@ public class BatchMultiplicationReal extends BatchMultiplication
         this.tiShares = tiShares;
     }
 
+    
     /**
      * Waits for the shares of (x-u) and (y-v), computes the product and returns
      * the value
@@ -84,7 +87,7 @@ public class BatchMultiplicationReal extends BatchMultiplication
         List<List<BigInteger>> diffList = null;
         for (int i = 0; i < partyCount - 1; i++) {
             try {
-                receivedMessage = receiverQueue.take();
+                receivedMessage = pidMapper.get(protocolIdQueue).take();
                 diffList = (List<List<BigInteger>>) receivedMessage.getValue();
                 for(int j=0;j<batchSize;j++) {
                     d.set(j, d.get(j).add(diffList.get(j).get(0)).mod(prime));

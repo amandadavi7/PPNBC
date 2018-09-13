@@ -21,7 +21,9 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Properties;
+import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -54,8 +56,8 @@ public class TreeEnsemble extends Model {
      * the trees
      *
      * @param asymmetricBit
+     * @param pidMapper
      * @param senderQueue
-     * @param receiverQueue
      * @param clientId
      * @param binaryTriples
      * @param decimalTriples
@@ -64,12 +66,13 @@ public class TreeEnsemble extends Model {
      * @param protocolIdQueue
      * @param protocolID
      */
-    public TreeEnsemble(int asymmetricBit, BlockingQueue<Message> senderQueue,
-            BlockingQueue<Message> receiverQueue, int clientId, List<TripleByte> binaryTriples, 
+    public TreeEnsemble(int asymmetricBit,
+            ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper,
+            BlockingQueue<Message> senderQueue, int clientId, List<TripleByte> binaryTriples, 
             List<TripleInteger> decimalTriples, int partyCount, String[] args,
-            LinkedList<Integer> protocolIdQueue, int protocolID) {
+            Queue<Integer> protocolIdQueue, int protocolID) {
 
-        super(senderQueue, receiverQueue, clientId, asymmetricBit, partyCount, protocolIdQueue, protocolID);
+        super(pidMapper, senderQueue, clientId, asymmetricBit, partyCount, protocolIdQueue, protocolID);
 
         initializeModelVariables(args);
         pid = 0;
@@ -139,8 +142,6 @@ public class TreeEnsemble extends Model {
 
     public void runTreeEnsembles() {
 
-        startModelHandlers();
-
         ExecutorService es = Executors.newFixedThreadPool(Constants.threadCount);
         //List<Future<Integer[]>> taskList = new ArrayList<>();
 
@@ -150,13 +151,13 @@ public class TreeEnsemble extends Model {
         if (partyHasTrees) {
             for (int i = 0; i < treeCount; i++) {
 
-                initQueueMap(recQueues, pid);
                 System.out.println("calling RF: " + pid);
+
                 String args[] = {"storedtree=" + propertyFiles[i], "prime=" + prime};
 
                 RandomForestDTScoring DTScoreModule = new RandomForestDTScoring(asymmetricBit,
-                        commonSender, recQueues.get(pid), clientId,
-                        binaryTiShares, decimalTiShares, partyCount, args, new LinkedList<>(protocolIdQueue), pid);
+                        pidMapper, commonSender, clientId, binaryTiShares, decimalTiShares,
+                        partyCount, args, new LinkedList<>(protocolIdQueue), pid);
 
                 //taskList.add(es.submit(DTScoreModule));
                 Future<Integer[]> output = es.submit(DTScoreModule);
@@ -173,13 +174,13 @@ public class TreeEnsemble extends Model {
         } else {
             for (int i = 0; i < treeCount; i++) {
 
-                initQueueMap(recQueues, pid);
                 System.out.println("calling RF: " + pid);
+
                 String args[] = {"testCsv=" + csvPath, "treeproperties=" + propertyFiles[i], "prime=" + prime};
 
                 RandomForestDTScoring DTScoreModule = new RandomForestDTScoring(asymmetricBit,
-                        commonSender, recQueues.get(pid), clientId,
-                        binaryTiShares, decimalTiShares, partyCount, args, new LinkedList<>(protocolIdQueue), pid);
+                        pidMapper, commonSender, clientId, binaryTiShares, decimalTiShares,
+                        partyCount, args, new LinkedList<>(protocolIdQueue), pid);
 
                 //taskList.add(es.submit(DTScoreModule));
                 Future<Integer[]> output = es.submit(DTScoreModule);
@@ -223,9 +224,8 @@ public class TreeEnsemble extends Model {
         
         List<Future<List<Integer>>> bitDtaskList = new ArrayList<>();
         for(int i=0;i<classLabelCount;i++) {
-            initQueueMap(recQueues, pid);
             BitDecomposition bitDModule = new BitDecomposition(weightedProbabilityVector[i], 
-                    binaryTiShares, asymmetricBit, 6, commonSender, recQueues.get(pid), 
+                    binaryTiShares, asymmetricBit, 6, pidMapper, commonSender, 
                     new LinkedList<>(protocolIdQueue), clientId, Constants.binaryPrime, pid, partyCount);
             bitDtaskList.add(es.submit(bitDModule));
             pid++;
@@ -242,9 +242,9 @@ public class TreeEnsemble extends Model {
         }
 
         System.out.println("bitD result" + bitSharesProbs);
-        initQueueMap(recQueues, pid);
-        ArgMax argmaxModule = new ArgMax(bitSharesProbs, binaryTiShares, asymmetricBit, commonSender, recQueues.get(pid),
-                new LinkedList<>(protocolIdQueue), clientId, Constants.binaryPrime, pid, partyCount);
+        ArgMax argmaxModule = new ArgMax(bitSharesProbs, binaryTiShares, asymmetricBit,
+                pidMapper, commonSender, new LinkedList<>(protocolIdQueue), clientId,
+                Constants.binaryPrime, pid, partyCount);
         pid++;
         
         Future<Integer[]> classIndexResult = es.submit(argmaxModule);
@@ -262,8 +262,6 @@ public class TreeEnsemble extends Model {
 
         
         System.out.println("Avg time duration:" + elapsedTime);
-        
-        teardownModelHandlers();
     }
 
 }

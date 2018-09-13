@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -46,8 +47,8 @@ public class OIS extends CompositeProtocol implements Callable<Integer[]> {
      * @param features
      * @param tiShares
      * @param asymmetricBit
+     * @param pidMapper
      * @param senderQueue
-     * @param receiverQueue
      * @param protocolIdQueue
      * @param clientId
      * @param prime
@@ -58,12 +59,14 @@ public class OIS extends CompositeProtocol implements Callable<Integer[]> {
      * @param partyCount
      */
     public OIS(List<List<Integer>> features, List<TripleByte> tiShares,
-            int asymmetricBit, BlockingQueue<Message> senderQueue,
-            BlockingQueue<Message> receiverQueue, Queue<Integer> protocolIdQueue,
+            int asymmetricBit, 
+            ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper,
+            BlockingQueue<Message> senderQueue,
+            Queue<Integer> protocolIdQueue,
             int clientId, int prime,
             int protocolID, int bitLength, int k, int numberCount, int partyCount) {
 
-        super(protocolID, senderQueue, receiverQueue, protocolIdQueue, clientId, asymmetricBit, partyCount);
+        super(protocolID, pidMapper, senderQueue, protocolIdQueue, clientId, asymmetricBit, partyCount);
         this.numberCount = numberCount;
         this.bitLength = bitLength;
         this.tiShares = tiShares;
@@ -110,19 +113,15 @@ public class OIS extends CompositeProtocol implements Callable<Integer[]> {
     public Integer[] call() throws Exception {
         Integer[] output = new Integer[bitLength];
         
-        startHandlers();
-
         ExecutorService es = Executors.newFixedThreadPool(Constants.threadCount);
         List<Future<Integer>> taskList = new ArrayList<>();
         int tiStartIndex = 0;
 
         for (int i = 0; i < bitLength; i++) {
 
-            initQueueMap(recQueues, i);
-
             DotProductByte dp = new DotProductByte(featureVectorTransposed.get(i), yShares,
-                    tiShares.subList(tiStartIndex, tiStartIndex + numberCount), senderQueue,
-                    recQueues.get(i), new LinkedList<>(protocolIdQueue),
+                    tiShares.subList(tiStartIndex, tiStartIndex + numberCount), pidMapper, 
+                    senderQueue, new LinkedList<>(protocolIdQueue),
                     clientID, prime, i, asymmetricBit, partyCount);
 
             Future<Integer> dpTask = es.submit(dp);
@@ -139,7 +138,6 @@ public class OIS extends CompositeProtocol implements Callable<Integer[]> {
             output[i] = dotprod.get();
         }
 
-        tearDownHandlers();
         System.out.println("OIS PID: " + protocolId + "-returning "); //+ Arrays.toString(output));
         return output;
     }

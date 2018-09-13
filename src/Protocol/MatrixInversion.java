@@ -10,7 +10,6 @@ import Protocol.Utility.MatrixMultiplication;
 import TrustedInitializer.TripleReal;
 import TrustedInitializer.TruncationPair;
 import Utility.Constants;
-import Utility.FileIO;
 import Utility.LocalMath;
 import java.math.BigInteger;
 import java.util.LinkedList;
@@ -18,6 +17,7 @@ import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -48,12 +48,13 @@ public class MatrixInversion extends CompositeProtocol implements
 
     public MatrixInversion(BigInteger[][] Ashares, List<TripleReal> tishares,
             List<TruncationPair> tiTruncationPair,
-            int protocolId,
+            int protocolId, 
+            ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper,
             BlockingQueue<Message> senderQueue,
-            BlockingQueue<Message> receiverQueue, Queue<Integer> protocolIdQueue,
+            Queue<Integer> protocolIdQueue,
             int clientId, int asymmetricBit, int partyCount, BigInteger prime) {
 
-        super(protocolId, senderQueue, receiverQueue, protocolIdQueue, clientId,
+        super(protocolId, pidMapper, senderQueue, protocolIdQueue, clientId,
                 asymmetricBit, partyCount);
         this.Ashares = Ashares;
         this.tishares = tishares;
@@ -70,14 +71,11 @@ public class MatrixInversion extends CompositeProtocol implements
 
     @Override
     public BigInteger[][] call() throws Exception {
-        startHandlers();
-        
         BigInteger c = calculateTrace(Ashares);
         BigInteger cInv = computeCInv(c);
         BigInteger[][] X = createIdentity(cInv);
 
         X = newtonRaphsonAlgorithm(Ashares, X, nrRounds);
-        tearDownHandlers();
         return X;
 
     }
@@ -187,14 +185,12 @@ public class MatrixInversion extends CompositeProtocol implements
 
         for (int i = 0; i < rounds; i++) {
             // AX = DM(A.X)
-            initQueueMap(recQueues, globalPid);
-
             System.out.println("Party: "+clientID+" NR round: "+i);
             MatrixMultiplication matrixMultiplication = new MatrixMultiplication(
                     A, X, tishares.subList(tiRealIndex, (int) (tiRealIndex + Math.pow(n, 3))),
                     tiTruncationPair.subList(tiTruncationIndex, tiTruncationIndex + n * n),
-                    clientID, prime, globalPid, asymmetricBit, senderQueue,
-                    recQueues.get(globalPid), new LinkedList<>(protocolIdQueue),
+                    clientID, prime, globalPid, asymmetricBit, pidMapper, senderQueue,
+                    new LinkedList<>(protocolIdQueue),
                     partyCount);
 
             // TODO uncomment to not reuse the shares
@@ -212,14 +208,13 @@ public class MatrixInversion extends CompositeProtocol implements
             BigInteger[][] subtractedAX = subtractFromTwo(AX);
 
             // X = DM(X.temp2)
-            initQueueMap(recQueues, globalPid);
             BigInteger[][] Xs1 = null;
             MatrixMultiplication matrixMultiplicationNext = new MatrixMultiplication(
                     X, subtractedAX, tishares.subList(tiRealIndex,
                             tiRealIndex + (int) (tiRealIndex + Math.pow(n, 3))),
                     tiTruncationPair.subList(tiTruncationIndex, tiTruncationIndex + n * n),
-                    clientID, prime, globalPid, asymmetricBit, senderQueue,
-                    recQueues.get(globalPid), new LinkedList<>(protocolIdQueue),
+                    clientID, prime, globalPid, asymmetricBit, pidMapper, senderQueue,
+                    new LinkedList<>(protocolIdQueue),
                     partyCount);
 
             // TODO uncomment to not reuse the shares
@@ -254,10 +249,9 @@ public class MatrixInversion extends CompositeProtocol implements
         for (int i = 0; i < nrRounds; i++) {
 
             // AX = DM(A.X)
-            initQueueMap(recQueues, globalPid);
             MultiplicationReal multiplicationModule = new MultiplicationReal(A,
-                    X, tishares.get(tiRealIndex), senderQueue,
-                    recQueues.get(globalPid), new LinkedList<>(protocolIdQueue),
+                    X, tishares.get(tiRealIndex), pidMapper, senderQueue,
+                    new LinkedList<>(protocolIdQueue),
                     clientID, prime, globalPid, asymmetricBit, partyCount);
 
             // TODO uncomment to not reuse the shares
@@ -272,10 +266,9 @@ public class MatrixInversion extends CompositeProtocol implements
                 Logger.getLogger(MatrixInversion.class.getName()).log(Level.SEVERE, null, ex);
             }
 
-            initQueueMap(recQueues, globalPid);
             Truncation truncationModule = new Truncation(AX,
-                    tiTruncationPair.get(tiTruncationIndex), senderQueue,
-                    recQueues.get(globalPid), new LinkedList<>(protocolIdQueue),
+                    tiTruncationPair.get(tiTruncationIndex), pidMapper, senderQueue,
+                    new LinkedList<>(protocolIdQueue),
                     clientID, prime, globalPid, asymmetricBit, partyCount);
 
             // TODO uncomment to not reuse the shares
@@ -297,10 +290,9 @@ public class MatrixInversion extends CompositeProtocol implements
                     .subtract(truncatedAX).mod(prime);
 
             // X = DM(X.subtractedAX)
-            initQueueMap(recQueues, globalPid);
             MultiplicationReal multiplicationModuleNext = new MultiplicationReal(
                     X, subtractedAX, tishares.get(tiRealIndex),
-                    senderQueue, recQueues.get(globalPid),
+                    pidMapper, senderQueue,
                     new LinkedList<>(protocolIdQueue),
                     clientID, prime, globalPid, asymmetricBit, partyCount);
 
@@ -317,11 +309,9 @@ public class MatrixInversion extends CompositeProtocol implements
                 Logger.getLogger(MatrixInversion.class.getName()).log(Level.SEVERE, null, ex);
             }
 
-            initQueueMap(recQueues, globalPid);
-
             Truncation truncationModuleNext = new Truncation(XsNext,
                     tiTruncationPair.get(tiTruncationIndex),
-                    senderQueue, recQueues.get(globalPid),
+                    pidMapper, senderQueue, 
                     new LinkedList<>(protocolIdQueue),
                     clientID, prime, globalPid, asymmetricBit, partyCount);
             Future<BigInteger> truncationTaskNext = es.submit(truncationModuleNext);

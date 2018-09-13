@@ -30,6 +30,7 @@ import java.util.Properties;
 import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -68,12 +69,12 @@ class PolynomialComputingRF extends CompositeProtocol implements Callable<Intege
      * @param partyCount
      */
     public PolynomialComputingRF(Integer[] y_j, Integer[] jBinary, int alpha, int depth,
-            int[] zOutputs, List<TripleByte> tiShares,
-            Queue<Integer> protocolIdQueue,
-            BlockingQueue<Message> senderQueue, BlockingQueue<Message> receiverQueue,
-            int protocolID, int clientId, int asymmetricBit, int partyCount) {
+            int[] zOutputs, List<TripleByte> tiShares, Queue<Integer> protocolIdQueue,
+            ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper,
+            BlockingQueue<Message> senderQueue, int protocolID, int clientId,
+            int asymmetricBit, int partyCount) {
 
-        super(protocolID, senderQueue, receiverQueue, protocolIdQueue, clientId, 
+        super(protocolID, pidMapper, senderQueue, protocolIdQueue, clientId, 
                 asymmetricBit, partyCount);
 
         this.s = depth;
@@ -92,7 +93,6 @@ class PolynomialComputingRF extends CompositeProtocol implements Callable<Intege
     @Override
     public Integer[] call() throws Exception {
 
-        startHandlers();
         int pid = 0;
 
         while (s > 0) {
@@ -106,11 +106,9 @@ class PolynomialComputingRF extends CompositeProtocol implements Callable<Intege
             int i = 0;
             do {
                 int toIndex = Math.min(i + Constants.batchSize, alpha);
-                initQueueMap(recQueues, pid);
-
                 BatchMultiplicationByte mults = new BatchMultiplicationByte(
                         yj.subList(i, toIndex), z_u, tiShares.subList(i, toIndex),
-                        senderQueue, recQueues.get(pid),
+                        pidMapper, senderQueue,
                         new LinkedList<>(protocolIdQueue), clientID,
                         Constants.binaryPrime, pid, asymmetricBit, protocolId,
                         partyCount);
@@ -141,7 +139,6 @@ class PolynomialComputingRF extends CompositeProtocol implements Callable<Intege
             s--;
         }
 
-        tearDownHandlers();
         //System.out.println("pid:" + protocolId + " returning" + Arrays.toString(y_j));
         return y_j;
 
@@ -187,8 +184,8 @@ public class RandomForestDTScoring extends Model implements Callable<Integer[]>{
      * pass the tree as a properties file (storedtree)
      *
      * @param asymmetricBit
+     * @param pidMapper
      * @param senderQueue
-     * @param receiverQueue
      * @param clientId
      * @param binaryTriples
      * @param decimalTriples
@@ -197,12 +194,14 @@ public class RandomForestDTScoring extends Model implements Callable<Integer[]>{
      * @param protocolIdQueue
      * @param protocolID
      */
-    public RandomForestDTScoring(int asymmetricBit, BlockingQueue<Message> senderQueue,
-            BlockingQueue<Message> receiverQueue, int clientId, List<TripleByte> binaryTriples,
-            List<TripleInteger> decimalTriples, int partyCount, String[] args, 
-            LinkedList<Integer> protocolIdQueue, int protocolID) {
+    public RandomForestDTScoring(int asymmetricBit,
+            ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper,
+            BlockingQueue<Message> senderQueue, int clientId,
+            List<TripleByte> binaryTriples, List<TripleInteger> decimalTriples,
+            int partyCount, String[] args, Queue<Integer> protocolIdQueue,
+            int protocolID) {
 
-        super(senderQueue, receiverQueue, clientId, asymmetricBit, partyCount, protocolIdQueue, protocolID);
+        super(pidMapper, senderQueue, clientId, asymmetricBit, partyCount, protocolIdQueue, protocolID);
 
         initializeModelVariables(args);
         pid = 0;
@@ -331,8 +330,6 @@ public class RandomForestDTScoring extends Model implements Callable<Integer[]>{
      */
     @Override
     public Integer[] call() {
-        startModelHandlers();
-
         init();
 
         //long startTime = System.currentTimeMillis();
@@ -360,8 +357,6 @@ public class RandomForestDTScoring extends Model implements Callable<Integer[]>{
         System.out.println("the output in bits: " + Arrays.toString(finalOutputs));
         //System.out.println("Avg time duration:" + elapsedTime);
 
-        teardownModelHandlers();
-        
         return finalOutputs;
     }
 
@@ -378,10 +373,9 @@ public class RandomForestDTScoring extends Model implements Callable<Integer[]>{
             for (int i = 0; i < leafNodes - 1; i++) {
 
                 //System.out.println("OIS PID:" + pid + " k=" + nodeToAttributeIndexMapping[i]);
-                initQueueMap(recQueues, pid);
                 OIS ois = new OIS(null, binaryTiShares.subList(tiBinaryStartIndex,
                         tiBinaryStartIndex + (attributeBitLength * attributeCount)),
-                        asymmetricBit, commonSender, recQueues.get(pid), new LinkedList<>(protocolIdQueue),
+                        asymmetricBit, pidMapper, commonSender, new LinkedList<>(protocolIdQueue),
                         clientId, Constants.binaryPrime, pid, attributeBitLength,
                         nodeToAttributeIndexMapping[i], attributeCount, partyCount);
                 //tiBinaryStartIndex += attributeBitLength * attributeCount;
@@ -394,10 +388,9 @@ public class RandomForestDTScoring extends Model implements Callable<Integer[]>{
             for (int i = 0; i < leafNodes - 1; i++) {
 
                 //System.out.println("OIS PID:" + pid);// + " k=" + testVector);
-                initQueueMap(recQueues, pid);
                 OIS ois = new OIS(testVector, binaryTiShares.subList(tiBinaryStartIndex,
                         tiBinaryStartIndex + (attributeBitLength * attributeCount)),
-                        asymmetricBit, commonSender, recQueues.get(pid), new LinkedList<>(protocolIdQueue),
+                        asymmetricBit, pidMapper, commonSender, new LinkedList<>(protocolIdQueue),
                         clientId, Constants.binaryPrime, pid,
                         attributeBitLength, -1, attributeCount, partyCount);
                 //tiBinaryStartIndex += attributeBitLength * attributeCount;
@@ -452,10 +445,9 @@ public class RandomForestDTScoring extends Model implements Callable<Integer[]>{
 
         int comparisonTiCount = (2 * attributeBitLength) + ((attributeBitLength * (attributeBitLength - 1)) / 2);
         for (int i = 0; i < leafNodes - 1; i++) {
-            initQueueMap(recQueues, pid);
             Comparison comp = new Comparison(Arrays.asList(featureVectors[i]), attributeThresholdsBitShares.get(i),
                     binaryTiShares.subList(tiBinaryStartIndex, tiBinaryStartIndex + comparisonTiCount),
-                    asymmetricBit, commonSender, recQueues.get(pid), new LinkedList<>(protocolIdQueue),
+                    asymmetricBit, pidMapper, commonSender, new LinkedList<>(protocolIdQueue),
                     clientId, Constants.binaryPrime, pid, partyCount);
 
             Future<Integer> task = es.submit(comp);
@@ -534,12 +526,10 @@ public class RandomForestDTScoring extends Model implements Callable<Integer[]>{
         for (int j = 0; j < leafNodes; j++) {
             Integer[] jBinary = convertToBits(j, depth);
 
-            initQueueMap(recQueues, pid);
-
             PolynomialComputingRF pc = new PolynomialComputingRF(yShares[j], jBinary, leafNodes,
                     depth, comparisonOutputs, binaryTiShares.subList(tiBinaryStartIndex, 
                             tiBinaryStartIndex + polynomialComputationTiCount),
-                    new LinkedList<>(protocolIdQueue), commonSender, recQueues.get(pid),
+                    new LinkedList<>(protocolIdQueue), pidMapper, commonSender,
                     pid, clientId, asymmetricBit, partyCount);
 
             pid++;
@@ -570,15 +560,14 @@ public class RandomForestDTScoring extends Model implements Callable<Integer[]>{
         List<Integer> dummy = new ArrayList<>(Collections.nCopies(leafNodes, 0));
         Integer[] one_hot_encoding_leaf_predicted = null;
         OR_XOR xorModule;
-        initQueueMap(recQueues, pid);
         //asymmetric xor to switch primes
         if(asymmetricBit == 1) {
             xorModule = new OR_XOR(Arrays.asList(result), dummy, decimaTiShares.subList(0, leafNodes), 
-                    asymmetricBit, 2,commonSender, recQueues.get(pid), new LinkedList<>(protocolIdQueue), 
+                    asymmetricBit, 2, pidMapper, commonSender, new LinkedList<>(protocolIdQueue), 
                     clientId, prime, pid, partyCount);
         } else {
             xorModule = new OR_XOR(dummy, Arrays.asList(result), decimaTiShares.subList(0, leafNodes), 
-                    asymmetricBit, 2, commonSender, recQueues.get(pid), new LinkedList<>(protocolIdQueue), 
+                    asymmetricBit, 2, pidMapper, commonSender, new LinkedList<>(protocolIdQueue), 
                     clientId, prime, pid, partyCount);
         }
         Future<Integer[]> xorTask = es.submit(xorModule);
@@ -592,19 +581,18 @@ public class RandomForestDTScoring extends Model implements Callable<Integer[]>{
         List<Future<Integer>> dpTaskList = new ArrayList<>();
         if(leafToClassIndexMappingTransposed == null) {
             for(int i=0;i<classLabelCount;i++) {
-                initQueueMap(recQueues, pid);
                 DotProductInteger dpModule = new DotProductInteger(Arrays.asList(one_hot_encoding_leaf_predicted), 
-                        dummy, decimaTiShares, commonSender, recQueues.get(pid), 
+                        dummy, decimaTiShares, pidMapper, commonSender, 
                         new LinkedList<>(protocolIdQueue), clientId, prime, pid, asymmetricBit, partyCount);
                 dpTaskList.add(es.submit(dpModule));
                 pid++;
             }
         } else {
             for(int i=0;i<classLabelCount;i++) {
-                initQueueMap(recQueues, pid);
                 DotProductInteger dpModule = new DotProductInteger(Arrays.asList(one_hot_encoding_leaf_predicted), 
-                        Arrays.asList(leafToClassIndexMappingTransposed[i]), decimaTiShares, commonSender, recQueues.get(pid), 
-                        new LinkedList<>(protocolIdQueue), clientId, prime, pid, asymmetricBit, partyCount);
+                        Arrays.asList(leafToClassIndexMappingTransposed[i]), decimaTiShares,
+                        pidMapper, commonSender, new LinkedList<>(protocolIdQueue),
+                        clientId, prime, pid, asymmetricBit, partyCount);
                 dpTaskList.add(es.submit(dpModule));
                 pid++;
             }

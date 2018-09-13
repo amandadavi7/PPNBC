@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -45,8 +46,8 @@ public class ArgMax extends CompositeProtocol implements Callable<Integer[]> {
      * @param vShares
      * @param tiShares
      * @param asymmetricBit
+     * @param pidMapper
      * @param senderQueue
-     * @param receiverQueue
      * @param protocolIdQueue
      * @param clientId
      * @param prime
@@ -54,12 +55,14 @@ public class ArgMax extends CompositeProtocol implements Callable<Integer[]> {
      * @param partyCount
      */
     public ArgMax(List<List<Integer>> vShares, List<TripleByte> tiShares,
-            int asymmetricBit, BlockingQueue<Message> senderQueue,
-            BlockingQueue<Message> receiverQueue, Queue<Integer> protocolIdQueue,
+            int asymmetricBit, 
+            ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper,
+            BlockingQueue<Message> senderQueue,
+            Queue<Integer> protocolIdQueue,
             int clientId, int prime,
             int protocolID, int partyCount) {
 
-        super(protocolID, senderQueue, receiverQueue, protocolIdQueue, clientId, asymmetricBit, partyCount);
+        super(protocolID, pidMapper, senderQueue, protocolIdQueue, clientId, asymmetricBit, partyCount);
 
         this.vShares = vShares;
         this.tiShares = tiShares;
@@ -94,12 +97,9 @@ public class ArgMax extends CompositeProtocol implements Callable<Integer[]> {
             return wOutput;
         }
 
-        startHandlers();
-
         int tiIndex = computeComparisons();
         computeW(tiIndex);
 
-        tearDownHandlers();
         return wOutput;
     }
 
@@ -122,13 +122,11 @@ public class ArgMax extends CompositeProtocol implements Callable<Integer[]> {
                 if (i != j) {
                     int key = (i * numberCount) + j;
 
-                    initQueueMap(recQueues, key);
-
                     //Extract the required number of tiShares and pass it to comparison protocol
                     //each comparison needs tiCount shares
                     Comparison comparisonModule = new Comparison(vShares.get(i), vShares.get(j),
                             tiShares.subList(tiIndex, tiIndex + tiCount), asymmetricBit,
-                            senderQueue, recQueues.get(key), new LinkedList<>(protocolIdQueue),
+                            pidMapper, senderQueue, new LinkedList<>(protocolIdQueue),
                             clientID, prime, key, partyCount);
                     tiIndex += tiCount;
                     Future<Integer> comparisonTask = es.submit(comparisonModule);
@@ -168,11 +166,9 @@ public class ArgMax extends CompositeProtocol implements Callable<Integer[]> {
 
         for (int i = 0; i < numberCount; i++) {
 
-            initQueueMap(recQueues, i);
-
             ParallelMultiplication rowMultiplication = new ParallelMultiplication(
                     wIntermediate.get(i), tiShares.subList(tiIndex, tiIndex + tiCount), clientID, prime, i,
-                    asymmetricBit, senderQueue, recQueues.get(i),
+                    asymmetricBit, pidMapper, senderQueue, 
                     new LinkedList<>(protocolIdQueue), partyCount);
             tiIndex += tiCount;
 
