@@ -165,7 +165,6 @@ public class RandomForestDTScoring extends Model implements Callable<Integer[]>{
                         }
                         i++;
                     }
-                    //leafToClassIndexMapping = Arrays.stream(str.split(",")).mapToInt(Integer::parseInt).toArray();
                     str = prop.getProperty("nodetoattributeindexmapping");
                     nodeToAttributeIndexMapping = Arrays.stream(str.split(",")).mapToInt(Integer::parseInt).toArray();
                     str = prop.getProperty("attributethresholds");
@@ -211,11 +210,9 @@ public class RandomForestDTScoring extends Model implements Callable<Integer[]>{
     void init() {
 
         leafNodes = (int) Math.pow(2, depth);
-        System.out.println("leafnodes:" + leafNodes);
         featureVectors = new Integer[leafNodes - 1][attributeBitLength];
         attributeThresholdsBitShares = new ArrayList<>();
         comparisonOutputs = new int[leafNodes - 1];
-        //alpha = (int) Math.ceil(Math.log(classLabelCount) / Math.log(2.0));
         finalOutputs = new Integer[classLabelCount];
     }
 
@@ -226,31 +223,20 @@ public class RandomForestDTScoring extends Model implements Callable<Integer[]>{
     public Integer[] call() {
         init();
 
-        //long startTime = System.currentTimeMillis();
-
         convertThresholdsToBits();
-        //System.out.println("converting decimal thresholds to bitshares: from " + Arrays.toString(attributeThresholds) + " to " + attributeThresholdsBitShares);
-        //System.out.println("leaftoclassindexmapping:" + Arrays.deepToString(leafToClassIndexMappingTransposed));
-
+        
         if (!partyHasTree) {
             convertTestVectorToBits(testVectorsDecimal.get(0));
-            //System.out.println("converting to bits feature vector: from " + testVectorsDecimal.get(0) + " to " + testVector);
         }
 
         getFeatureVectors();
 
-        //System.out.println("got the feature vectors:" + Arrays.deepToString(featureVectors));
-        System.out.println("OIS complete");
+        System.out.println("OIS complete - got feature vectors");
         doThresholdComparisons();
         System.out.println("Comparisons complete");
         computePolynomialEquation();
 
-        //long stopTime = System.currentTimeMillis();
-        //long elapsedTime = stopTime - startTime;
-
         System.out.println("the output in bits: " + Arrays.toString(finalOutputs));
-        //System.out.println("Avg time duration:" + elapsedTime);
-
         return finalOutputs;
     }
 
@@ -266,12 +252,12 @@ public class RandomForestDTScoring extends Model implements Callable<Integer[]>{
         if (partyHasTree) {
             for (int i = 0; i < leafNodes - 1; i++) {
 
-                //System.out.println("OIS PID:" + pid + " k=" + nodeToAttributeIndexMapping[i]);
                 OIS ois = new OIS(null, binaryTiShares.subList(tiBinaryStartIndex,
                         tiBinaryStartIndex + (attributeBitLength * attributeCount)),
                         asymmetricBit, pidMapper, commonSender, new LinkedList<>(protocolIdQueue),
                         clientId, Constants.binaryPrime, pid, attributeBitLength,
                         nodeToAttributeIndexMapping[i], attributeCount, partyCount);
+                // TODO - disabled ti increment for testing
                 //tiBinaryStartIndex += attributeBitLength * attributeCount;
                 pid++;
                 Future<Integer[]> task = es.submit(ois);
@@ -281,12 +267,12 @@ public class RandomForestDTScoring extends Model implements Callable<Integer[]>{
         } else {
             for (int i = 0; i < leafNodes - 1; i++) {
 
-                //System.out.println("OIS PID:" + pid);// + " k=" + testVector);
                 OIS ois = new OIS(testVector, binaryTiShares.subList(tiBinaryStartIndex,
                         tiBinaryStartIndex + (attributeBitLength * attributeCount)),
                         asymmetricBit, pidMapper, commonSender, new LinkedList<>(protocolIdQueue),
                         clientId, Constants.binaryPrime, pid,
                         attributeBitLength, -1, attributeCount, partyCount);
+                // TODO - disabled ti increment for testing
                 //tiBinaryStartIndex += attributeBitLength * attributeCount;
                 pid++;
                 Future<Integer[]> task = es.submit(ois);
@@ -346,6 +332,7 @@ public class RandomForestDTScoring extends Model implements Callable<Integer[]>{
 
             Future<Integer> task = es.submit(comp);
             pid++;
+            // TODO - disabled ti increment for testing
             //tiBinaryStartIndex += comparisonTiCount;
             taskList.add(task);
         }
@@ -361,7 +348,6 @@ public class RandomForestDTScoring extends Model implements Callable<Integer[]>{
             }
         }
 
-        //System.out.println("threshold comparison results:" + Arrays.toString(comparisonOutputs));
     }
 
     
