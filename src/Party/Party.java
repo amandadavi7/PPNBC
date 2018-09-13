@@ -49,6 +49,8 @@ public class Party {
     private static int asymmetricBit;
     private static int modelId;
     
+    private static String protocolName;
+    
     private static ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper;
 
     /**
@@ -69,6 +71,7 @@ public class Party {
         tiPort = -1;
         baIP = null;
         baPort = -1;
+        protocolName = "";
         
         pidMapper = new ConcurrentHashMap<>();
 
@@ -104,6 +107,8 @@ public class Party {
                     break;
                 case "partyCount":
                     partyCount = Integer.parseInt(value);
+                case "protocolName":
+                    protocolName = value;
             }
 
         }
@@ -242,7 +247,7 @@ public class Party {
                         asymmetricBit, pidMapper, senderQueue, partyId,
                         partyCount, args);
 
-                testModel.compute();
+                testModel.compute(protocolName);
                 break;
         }
     }

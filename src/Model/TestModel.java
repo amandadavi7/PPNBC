@@ -70,8 +70,8 @@ public class TestModel extends Model {
      */
     public TestModel(List<TripleByte> binaryTriples, List<TripleInteger> decimalTriples,
             List<TripleReal> realTiShares, List<TruncationPair> tiTruncationPair,
-            int asymmetricBit, 
-            ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper, 
+            int asymmetricBit,
+            ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper,
             BlockingQueue<Message> senderQueue,
             int clientId, int partyCount, String[] args) {
 
@@ -94,7 +94,7 @@ public class TestModel extends Model {
     public void callBitDecomposition() {
 
         ExecutorService es = Executors.newFixedThreadPool(1);
-        
+
         BitDecomposition bitTest = new BitDecomposition(2, binaryTiShares,
                 asymmetricBit, Constants.bitLength, pidMapper, commonSender,
                 new LinkedList<>(protocolIdQueue), clientId,
@@ -168,7 +168,7 @@ public class TestModel extends Model {
 
         for (int i = 0; i < totalCases; i++) {
 
-            OR_XOR or_xor = new OR_XOR(x.get(i), y.get(i), decimalTiShares, 
+            OR_XOR or_xor = new OR_XOR(x.get(i), y.get(i), decimalTiShares,
                     asymmetricBit, 1, pidMapper, commonSender,
                     new LinkedList<>(protocolIdQueue), clientId, Constants.prime, i, partyCount);
 
@@ -236,59 +236,25 @@ public class TestModel extends Model {
     }
 
     /**
-     * Call multiplication/dot product/comparison protocol for n test cases in
+     * Call comparison protocol for n test cases in
      * parallel
      *
-     * @param protocolType
      */
-    public void callProtocol(int protocolType) {
+    public void callComparison() {
         ExecutorService es = Executors.newFixedThreadPool(100);
         List<Future<Integer>> taskList = new ArrayList<>();
 
         long startTime = System.currentTimeMillis();
         int totalCases = x.size();
         // totalcases number of protocols are submitted to the executorservice
-        switch (protocolType) {
-            case 1:
-                for (int i = 0; i < totalCases; i++) {
+        for (int i = 0; i < totalCases; i++) {
 
-                    MultiplicationInteger multiplicationModule = new MultiplicationInteger(
-                            x.get(i).get(0), y.get(i).get(0),
-                            decimalTiShares.get(i), pidMapper, commonSender, 
-                            new LinkedList<>(protocolIdQueue), clientId, Constants.prime, i, asymmetricBit, 0, partyCount);
+            Comparison comparisonModule = new Comparison(x.get(i), y.get(i),
+                    binaryTiShares, asymmetricBit, pidMapper, commonSender,
+                    new LinkedList<>(protocolIdQueue), clientId, Constants.binaryPrime, i, partyCount);
 
-                    System.out.println("Submitted " + i + " multiplication");
-
-                    Future<Integer> multiplicationTask = es.submit(multiplicationModule);
-                    taskList.add(multiplicationTask);
-                }
-                break;
-            case 2:
-                for (int i = 0; i < totalCases; i++) {
-
-                    DotProductInteger DPModule = new DotProductInteger(x.get(i),
-                            y.get(i), decimalTiShares, pidMapper, commonSender, 
-                            new LinkedList<>(protocolIdQueue), clientId, Constants.prime, i, asymmetricBit, partyCount);
-
-                    System.out.println("Submitted " + i + " dotproduct");
-
-                    Future<Integer> DPTask = es.submit(DPModule);
-                    taskList.add(DPTask);
-                }
-                break;
-            case 3:
-                for (int i = 0; i < totalCases; i++) {
-
-                    Comparison comparisonModule = new Comparison(x.get(i), y.get(i),
-                            binaryTiShares, asymmetricBit, pidMapper, commonSender,
-                            new LinkedList<>(protocolIdQueue), clientId, Constants.binaryPrime, i, partyCount);
-
-                    System.out.println("submitted " + i + " comparison");
-
-                    Future<Integer> comparisonTask = es.submit(comparisonModule);
-                    taskList.add(comparisonTask);
-                }
-                break;
+            Future<Integer> comparisonTask = es.submit(comparisonModule);
+            taskList.add(comparisonTask);
         }
 
         es.shutdown();
@@ -297,7 +263,7 @@ public class TestModel extends Model {
             Future<Integer> dWorkerResponse = taskList.get(i);
             try {
                 Integer result = dWorkerResponse.get();
-                System.out.println("result:" + result + ", #:" + i);
+                //System.out.println("result:" + result + ", #:" + i);
             } catch (InterruptedException | ExecutionException ex) {
                 Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
             }
@@ -310,21 +276,51 @@ public class TestModel extends Model {
 
     /**
      * Main compute model function for the protocols
+     *
+     * @param protocolName
      */
-    public void compute() {
+    public void compute(String protocolName) {
 
-        callArgMax();
-        //callOIS();
-        //callOR_XOR();
-        //callBitDecomposition();
-        // pass 1 - multiplication, 2 - dot product and 3 - comparison
-        //callProtocol(1);
-        
+        switch (protocolName) {
+            case "Truncation":
+                callTruncation();
+                break;
+            case "MatrixInversion":
+                callMatrixInversion();
+                break;
+            case "MatrixMultiplication":
+                callMatrixMultiplication();
+                break;
+            case "ArgMax":
+                callArgMax();
+                break;
+            case "OIS":
+                callOIS();
+                break;
+            case "OR_XOR":
+                callOR_XOR();
+                break;
+            case "BitDecomposition":
+                callBitDecomposition();
+                break;
+            case "Multiplication":
+                callMultiplication();
+                break;
+            case "DotProduct":
+                callDotProduct();
+                break;
+            case "Comparison":
+                callComparison();
+                break;
+            default:
+                break;
+        }
     }
 
     /**
      * Input variable initializations
-     * @param args 
+     *
+     * @param args
      */
     private void initalizeModelVariables(String[] args) {
 
@@ -391,7 +387,7 @@ public class TestModel extends Model {
 
     private void callMatrixInversion() {
         ExecutorService es = Executors.newFixedThreadPool(1);
-        
+
         long startTime = System.currentTimeMillis();
         MatrixInversion matrixInversion = new MatrixInversion(xBigInt, realTiShares,
                 tiTruncationPair,
@@ -399,6 +395,8 @@ public class TestModel extends Model {
                 clientId, asymmetricBit, partyCount, prime);
 
         Future<BigInteger[][]> matrixInversionTask = es.submit(matrixInversion);
+
+        es.shutdown();
 
         BigInteger[][] result = null;
         try {
@@ -417,7 +415,7 @@ public class TestModel extends Model {
 
     private void callMatrixMultiplication() {
         ExecutorService es = Executors.newFixedThreadPool(1);
-        
+
         int n = xBigInt.length;
         int l = xBigInt[0].length;
 
@@ -428,7 +426,7 @@ public class TestModel extends Model {
 
         //TODO fix ti share count
         MatrixMultiplication matrixMultiplication = new MatrixMultiplication(
-                xBigInt, xT, realTiShares,
+                xT, xBigInt, realTiShares,
                 tiTruncationPair,
                 clientId, prime, 1, asymmetricBit, pidMapper, commonSender,
                 new LinkedList<>(protocolIdQueue),
@@ -436,6 +434,7 @@ public class TestModel extends Model {
 
         Future<BigInteger[][]> matrixMultiplicationTask = es.submit(matrixMultiplication);
 
+        es.shutdown();
         BigInteger[][] result = null;
         try {
             result = matrixMultiplicationTask.get();
@@ -505,6 +504,82 @@ public class TestModel extends Model {
 
         FileIO.writeToCSV(truncationOutput, outputPath, "truncation", clientId);
 
+    }
+
+    /**
+     * Call multiplication for n test cases in parallel
+     *
+     */
+    public void callMultiplication() {
+        ExecutorService es = Executors.newFixedThreadPool(100);
+        List<Future<Integer>> taskList = new ArrayList<>();
+
+        long startTime = System.currentTimeMillis();
+        int totalCases = x.size();
+        // totalcases number of protocols are submitted to the executorservice
+        for (int i = 0; i < totalCases; i++) {
+            MultiplicationInteger multiplicationModule = new MultiplicationInteger(
+                    x.get(i).get(0), y.get(i).get(0),
+                    decimalTiShares.get(i), pidMapper, commonSender,
+                    new LinkedList<>(protocolIdQueue), clientId, Constants.prime, i, asymmetricBit, 0, partyCount);
+
+            Future<Integer> multiplicationTask = es.submit(multiplicationModule);
+            taskList.add(multiplicationTask);
+        }
+
+        es.shutdown();
+
+        for (int i = 0; i < totalCases; i++) {
+            Future<Integer> dWorkerResponse = taskList.get(i);
+            try {
+                Integer result = dWorkerResponse.get();
+                //System.out.println("result:" + result + ", #:" + i);
+            } catch (InterruptedException | ExecutionException ex) {
+                Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+
+        long stopTime = System.currentTimeMillis();
+        long elapsedTime = stopTime - startTime;
+        System.out.println("Avg time duration:" + elapsedTime);
+    }
+
+    /**
+     * Call dot product protocol for n test cases in
+     * parallel
+     *
+     */
+    public void callDotProduct() {
+        ExecutorService es = Executors.newFixedThreadPool(100);
+        List<Future<Integer>> taskList = new ArrayList<>();
+
+        long startTime = System.currentTimeMillis();
+        int totalCases = x.size();
+        // totalcases number of protocols are submitted to the executorservice
+        for (int i = 0; i < totalCases; i++) {
+            DotProductInteger DPModule = new DotProductInteger(x.get(i),
+                    y.get(i), decimalTiShares, pidMapper, commonSender,
+                    new LinkedList<>(protocolIdQueue), clientId, Constants.prime, i, asymmetricBit, partyCount);
+
+            Future<Integer> DPTask = es.submit(DPModule);
+            taskList.add(DPTask);
+        }
+
+        es.shutdown();
+
+        for (int i = 0; i < totalCases; i++) {
+            Future<Integer> dWorkerResponse = taskList.get(i);
+            try {
+                Integer result = dWorkerResponse.get();
+                //System.out.println("result:" + result + ", #:" + i);
+            } catch (InterruptedException | ExecutionException ex) {
+                Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+
+        long stopTime = System.currentTimeMillis();
+        long elapsedTime = stopTime - startTime;
+        System.out.println("Avg time duration:" + elapsedTime);
     }
 
 }
