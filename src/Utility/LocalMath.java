@@ -97,7 +97,7 @@ public class LocalMath {
      */
     public static BigInteger localScale(BigInteger value, BigInteger prime) {
         
-        BigInteger scaleFactor = BigInteger.valueOf(2).pow(Constants.decimal_precision);
+        BigInteger scaleFactor = BigInteger.valueOf(2).pow(Constants.DECIMAL_PRECISION);
         value = value.divide(scaleFactor).mod(prime);
         return value;
     }

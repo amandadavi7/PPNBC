@@ -76,14 +76,14 @@ public class DotProductInteger extends DotProduct implements Callable<Integer> {
         int dotProduct = 0;
         int vectorLength = xShares.size();
         
-        ExecutorService mults = Executors.newFixedThreadPool(Constants.threadCount);
+        ExecutorService mults = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
         ExecutorCompletionService<Integer[]> multCompletionService = new ExecutorCompletionService<>(mults);
 
         int i = 0;
         int startpid = 0;
 
         do {
-            int toIndex = Math.min(i + Constants.batchSize, vectorLength);
+            int toIndex = Math.min(i + Constants.BATCH_SIZE, vectorLength);
 
             System.out.println("Protocol " + protocolId + " batch " + startpid);
             multCompletionService.submit(new BatchMultiplicationInteger(xShares.subList(i, toIndex),
