@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -40,8 +41,8 @@ public class JaccardDistance extends CompositeProtocol implements Callable<List<
      * @param testShare
      * @param asymmetricBit
      * @param tiShares
+     * @param pidMapper
      * @param senderQueue
-     * @param receiverQueue
      * @param clientId
      * @param prime
      * @param protocolID
@@ -50,11 +51,11 @@ public class JaccardDistance extends CompositeProtocol implements Callable<List<
      */
     public JaccardDistance(List<List<Integer>> trainingShares,
             List<Integer> testShare, int asymmetricBit, List<TripleInteger> tiShares,
-            BlockingQueue<Message> senderQueue,
-            BlockingQueue<Message> receiverQueue, int clientId, int prime,
+            ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper, BlockingQueue<Message> senderQueue,
+            int clientId, int prime,
             int protocolID, Queue<Integer> protocolIdQueue, int partyCount) {
 
-        super(protocolID, senderQueue, receiverQueue, protocolIdQueue, clientId, asymmetricBit, partyCount);
+        super(protocolID, pidMapper, senderQueue, protocolIdQueue, clientId, asymmetricBit, partyCount);
 
         this.trainingShares = trainingShares;
         this.testShare = testShare;
@@ -66,7 +67,6 @@ public class JaccardDistance extends CompositeProtocol implements Callable<List<
     @Override
     public List<List<Integer>> call() throws Exception {
 
-        startHandlers();
         List<List<Integer>> result = new ArrayList<>();
         int startpid = 0;
         int attrLength = testShare.size(), tiStartIndex = 0;
@@ -76,10 +76,9 @@ public class JaccardDistance extends CompositeProtocol implements Callable<List<
         List<Future<Integer[]>> taskList = new ArrayList<>();
 
         for (int i = 0; i < trainingShares.size(); i++) {
-            initQueueMap(recQueues, startpid);
             OR_XOR orModule = new OR_XOR(trainingShares.get(i), testShare,
                     decimalTiShares.subList(tiStartIndex, tiStartIndex + attrLength),
-                    asymmetricBit, 1, senderQueue, recQueues.get(startpid),
+                    asymmetricBit, 1, pidMapper, senderQueue,
                     new LinkedList<>(protocolIdQueue), clientID, prime, startpid, partyCount);
 
             Future<Integer[]> orTask = es.submit(orModule);
@@ -87,10 +86,9 @@ public class JaccardDistance extends CompositeProtocol implements Callable<List<
             startpid++;
             tiStartIndex += attrLength;
 
-            initQueueMap(recQueues, startpid);
             OR_XOR xorModule = new OR_XOR(trainingShares.get(i), testShare,
                     decimalTiShares.subList(tiStartIndex, tiStartIndex + attrLength),
-                    asymmetricBit, 2, senderQueue, recQueues.get(startpid),
+                    asymmetricBit, 2, pidMapper, senderQueue,
                     new LinkedList<>(protocolIdQueue), clientID, prime, startpid, partyCount);
 
             Future<Integer[]> xorTask = es.submit(xorModule);
@@ -121,7 +119,6 @@ public class JaccardDistance extends CompositeProtocol implements Callable<List<
         } catch (InterruptedException | ExecutionException ex) {
             Logger.getLogger(JaccardDistance.class.getName()).log(Level.SEVERE, null, ex);
         }
-        tearDownHandlers();
         return result;
     }
 

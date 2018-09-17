@@ -48,8 +48,8 @@ public class BitDecomposition extends CompositeProtocol implements
      * @param tiShares
      * @param asymmetricBit
      * @param bitLength
+     * @param pidMapper
      * @param senderQueue
-     * @param receiverQueue
      * @param protocolIdQueue
      * @param clientId
      * @param prime
@@ -57,11 +57,13 @@ public class BitDecomposition extends CompositeProtocol implements
      * @param partyCount
      */
     public BitDecomposition(Integer input, List<TripleByte> tiShares,
-            int asymmetricBit, int bitLength, BlockingQueue<Message> senderQueue,
-            BlockingQueue<Message> receiverQueue, Queue<Integer> protocolIdQueue,
+            int asymmetricBit, int bitLength, 
+            ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper,
+            BlockingQueue<Message> senderQueue,
+            Queue<Integer> protocolIdQueue,
             int clientId, int prime, int protocolID, int partyCount) {
 
-        super(protocolID, senderQueue, receiverQueue, protocolIdQueue, clientId,
+        super(protocolID, pidMapper, senderQueue, protocolIdQueue, clientId,
                 asymmetricBit, partyCount);
 
         this.input = input;
@@ -109,8 +111,6 @@ public class BitDecomposition extends CompositeProtocol implements
     @Override
     public List<Integer> call() throws Exception {
 
-        startHandlers();
-
         // Function to initialze y[i] and put x1 <- y1
         initY();
 
@@ -124,7 +124,6 @@ public class BitDecomposition extends CompositeProtocol implements
             computeVariables(i);
         }
 
-        tearDownHandlers();
         return xShares;
     }
 
@@ -158,12 +157,9 @@ public class BitDecomposition extends CompositeProtocol implements
         ExecutorService es = Executors.newSingleThreadExecutor();
 
         //compute local shares of d and e and add to the message queue
-        initQueueMap(recQueues, globalPid);
-
         MultiplicationByte multiplicationModule
                 = new MultiplicationByte(first_bit, second_bit,
-                        tiShares.get(tiIndex), senderQueue,
-                        recQueues.get(globalPid),
+                        tiShares.get(tiIndex), pidMapper, senderQueue,
                         new LinkedList<>(protocolIdQueue), clientID,
                         prime, globalPid, asymmetricBit, 1, partyCount);
 
@@ -199,8 +195,6 @@ public class BitDecomposition extends CompositeProtocol implements
 
         // The protocols for computation of d are assigned id 1-bitLength-1
         do {
-            initQueueMap(recQueues, globalPid);
-
             int toIndex = Math.min(i + Constants.batchSize, bitLength);
             int tiCount = toIndex - i;
 
@@ -209,7 +203,7 @@ public class BitDecomposition extends CompositeProtocol implements
                             inputShares.get(0).subList(i, toIndex),
                             inputShares.get(1).subList(i, toIndex),
                             tiShares.subList(tiIndex, tiIndex + tiCount),
-                            senderQueue, recQueues.get(globalPid),
+                            pidMapper, senderQueue, 
                             new LinkedList<>(protocolIdQueue),
                             clientID, prime, globalPid, asymmetricBit,
                             protocolId, partyCount);

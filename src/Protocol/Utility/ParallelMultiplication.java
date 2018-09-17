@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -41,18 +42,19 @@ public class ParallelMultiplication extends CompositeProtocol implements Callabl
      * @param prime
      * @param protocolID
      * @param asymmetricBit
+     * @param pidMapper
      * @param senderQueue
-     * @param receiverQueue
      * @param protocolIdQueue
      * @param partyCount
      */
     public ParallelMultiplication(List<Integer> row, List<TripleByte> tishares,
             int clientID, int prime, int protocolID,
-            int asymmetricBit, BlockingQueue<Message> senderQueue,
-            BlockingQueue<Message> receiverQueue,
+            int asymmetricBit, 
+            ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper,
+            BlockingQueue<Message> senderQueue,
             Queue<Integer> protocolIdQueue, int partyCount) {
 
-        super(protocolID, senderQueue, receiverQueue, protocolIdQueue, clientID, asymmetricBit, partyCount);
+        super(protocolID, pidMapper, senderQueue, protocolIdQueue, clientID, asymmetricBit, partyCount);
         this.wRow = row;
         this.tishares = tishares;
         this.prime = prime;
@@ -66,8 +68,7 @@ public class ParallelMultiplication extends CompositeProtocol implements Callabl
     public Integer call() throws Exception {
         List<Integer> products = new ArrayList<>(wRow);
         int tiStartIndex = 0;
-        startHandlers();
-
+        
         //iteratively multiply the first half of the list with the second half
         while (products.size() > 1) {
             int size = products.size();
@@ -94,11 +95,9 @@ public class ParallelMultiplication extends CompositeProtocol implements Callabl
                 int tempIndex2 = Math.min(i2 + Constants.batchSize, toIndex2);
 
                 //System.out.println("calling batchmult with pid:"+startpid+",indices:"+tempIndex1+","+tempIndex2);
-                initQueueMap(recQueues, startpid);
-
                 multCompletionService.submit(new BatchMultiplicationByte(products.subList(i1, tempIndex1),
                         products.subList(i2, tempIndex2), tishares.subList(tiStartIndex, tiStartIndex + tempIndex1),
-                        senderQueue, recQueues.get(startpid), new LinkedList<>(protocolIdQueue),
+                        pidMapper, senderQueue, new LinkedList<>(protocolIdQueue),
                         clientID, prime, startpid, asymmetricBit, protocolId, partyCount));
 
                 tiStartIndex += tempIndex1;
@@ -127,7 +126,6 @@ public class ParallelMultiplication extends CompositeProtocol implements Callabl
 
         }
         System.out.println("returning " + products.get(0));
-        tearDownHandlers();
         return products.get(0);
 
     }

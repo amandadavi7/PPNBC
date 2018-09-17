@@ -36,8 +36,7 @@ public class Party {
     private static TIShare tiShares;
 
     private static BlockingQueue<Message> senderQueue;
-    private static BlockingQueue<Message> receiverQueue;
-
+    
     private static int partyId;
     private static int port;
     private static int partyCount;
@@ -50,6 +49,8 @@ public class Party {
 
     private static int asymmetricBit;
     private static int modelId;
+    
+    private static ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper;
 
     /**
      * Initialize class variables
@@ -58,7 +59,6 @@ public class Party {
      */
     public static void initalizeVariables(String[] args) {
         senderQueue = new LinkedBlockingQueue<>();
-        receiverQueue = new LinkedBlockingQueue<>();
         partySocketEs = Executors.newFixedThreadPool(2);
         socketFutureList = new ArrayList<>();
         tiShares = new TIShare();
@@ -70,6 +70,8 @@ public class Party {
         tiPort = -1;
         baIP = null;
         baPort = -1;
+        
+        pidMapper = new ConcurrentHashMap<>();
 
         for (String arg : args) {
             String[] currInput = arg.split("=");
@@ -183,7 +185,7 @@ public class Party {
         }
 
         System.out.println("Client thread starting");
-        PartyClient partyClient = new PartyClient(receiverQueue, clientSocket, iStream);
+        PartyClient partyClient = new PartyClient(pidMapper, clientSocket, iStream);
         socketFutureList.add(partySocketEs.submit(partyClient));
 
         System.out.println("Server thread starting");
@@ -207,8 +209,8 @@ public class Party {
             case 1:
                 // DT Scoring
                 DecisionTreeScoring DTree = new DecisionTreeScoring(asymmetricBit,
-                        senderQueue, receiverQueue, partyId, tiShares.binaryShares,
-                        partyCount, args);
+                        pidMapper, senderQueue, partyId, 
+                        tiShares.binaryShares, partyCount, args);
                 DTree.ScoreDecisionTree();
                 break;
 
@@ -217,8 +219,8 @@ public class Party {
                 LinearRegressionEvaluation regressionEvaluationModel
                         = new LinearRegressionEvaluation(tiShares.bigIntShares,
                                 tiShares.truncationPair,
-                                asymmetricBit, senderQueue,
-                                receiverQueue, partyId, partyCount, args);
+                                asymmetricBit, pidMapper, senderQueue,
+                                partyId, partyCount, args);
 
                 regressionEvaluationModel.predictValues();
                 break;
@@ -228,7 +230,7 @@ public class Party {
                 LinearRegressionTraining regressionTrainingModel
                         = new LinearRegressionTraining(tiShares.bigIntShares,
                                 tiShares.truncationPair,
-                                senderQueue, receiverQueue, partyId,
+                                pidMapper, senderQueue, partyId,
                                 asymmetricBit, partyCount, args);
 
                 regressionTrainingModel.trainModel();
@@ -237,7 +239,7 @@ public class Party {
             case 4:
                 // KNN
                 
-                KNN knnModel = new KNN(asymmetricBit, senderQueue, receiverQueue, partyId, 
+                KNN knnModel = new KNN(asymmetricBit, pidMapper, senderQueue, partyId, 
                         tiShares.binaryShares, tiShares.decimalShares, partyCount, args);
         
                 knnModel.KNN_Model();
@@ -248,7 +250,7 @@ public class Party {
                 TestModel testModel = new TestModel(tiShares.binaryShares,
                         tiShares.decimalShares, tiShares.bigIntShares,
                         tiShares.truncationPair,
-                        asymmetricBit, senderQueue, receiverQueue, partyId,
+                        asymmetricBit, pidMapper, senderQueue, partyId,
                         partyCount, args);
 
                 testModel.compute();

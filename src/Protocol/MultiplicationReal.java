@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -28,15 +29,15 @@ public class MultiplicationReal extends Protocol implements Callable<BigInteger>
     BigInteger y;
     TripleReal tiRealShares;
     BigInteger prime;
-
-    /**
+    
+     /**
      * Constructor
      *
      * @param x share of x
      * @param y share of y
      * @param tiShares
+     * @param pidMapper
      * @param senderQueue
-     * @param receiverQueue
      * @param protocolIdQueue
      * @param clientId
      * @param prime
@@ -46,12 +47,14 @@ public class MultiplicationReal extends Protocol implements Callable<BigInteger>
      *
      */
     public MultiplicationReal(BigInteger x, BigInteger y, TripleReal tiShares,
+            ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper, 
             BlockingQueue<Message> senderQueue,
-            BlockingQueue<Message> receiverQueue, Queue<Integer> protocolIdQueue,
+            Queue<Integer> protocolIdQueue,
             int clientId, BigInteger prime,
             int protocolID, int asymmetricBit, int partyCount) {
 
-        super(protocolID, senderQueue, receiverQueue, protocolIdQueue,
+        
+        super(protocolID, pidMapper, senderQueue, protocolIdQueue,
                 clientId, asymmetricBit, partyCount);
         this.x = x;
         this.y = y;
@@ -72,7 +75,7 @@ public class MultiplicationReal extends Protocol implements Callable<BigInteger>
         BigInteger e = BigInteger.ZERO;
         for (int i = 0; i < partyCount - 1; i++) {
             try {
-                Message receivedMessage = receiverQueue.take();
+                Message receivedMessage = pidMapper.get(protocolIdQueue).take();
                 List<BigInteger> diffList = (List<BigInteger>) receivedMessage.getValue();
                 d = d.add(diffList.get(0));
                 e = e.add(diffList.get(1));

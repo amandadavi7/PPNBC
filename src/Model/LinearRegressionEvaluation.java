@@ -17,6 +17,7 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
 import java.util.concurrent.*;
 import java.util.logging.*;
 
@@ -43,8 +44,8 @@ public class LinearRegressionEvaluation extends Model {
      * @param realTriples
      * @param truncationShares
      * @param asymmetricBit
+     * @param pidMapper
      * @param senderQueue
-     * @param receiverQueue
      * @param clientId
      * @param partyCount
      * @param args
@@ -52,11 +53,13 @@ public class LinearRegressionEvaluation extends Model {
      */
     public LinearRegressionEvaluation(List<TripleReal> realTriples,
             List<TruncationPair> truncationShares,
-            int asymmetricBit, BlockingQueue<Message> senderQueue,
-            BlockingQueue<Message> receiverQueue, int clientId,
+            int asymmetricBit, 
+            ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper, 
+            BlockingQueue<Message> senderQueue,
+            int clientId,
             int partyCount, String[] args) {
 
-        super(senderQueue, receiverQueue, clientId, asymmetricBit, partyCount);
+        super(pidMapper, senderQueue, clientId, asymmetricBit, partyCount);
         this.realTiShares = realTriples;
         this.truncationTiShares = truncationShares;
 
@@ -72,7 +75,6 @@ public class LinearRegressionEvaluation extends Model {
      */
     public void predictValues() {
 
-        startModelHandlers();
         long startTime = System.currentTimeMillis();
         computeDotProduct();
         long stopTime = System.currentTimeMillis();
@@ -80,7 +82,6 @@ public class LinearRegressionEvaluation extends Model {
         //TODO: push time to a csv file
         System.out.println("Avg time duration:" + elapsedTime + " for partyId:"
                 + clientId + ", for size:" + y.length);
-        teardownModelHandlers();
         FileIO.writeToCSV(y, outputPath, "y", clientId);
 
     }
@@ -96,12 +97,10 @@ public class LinearRegressionEvaluation extends Model {
         int tiStartIndex = 0;
         for (int i = 0; i < testCases; i++) {
 
-            initQueueMap(recQueues, i);
-
             DotProductReal DPModule = new DotProductReal(x.get(i),
                     beta, realTiShares.subList(
                             tiStartIndex, tiStartIndex + x.get(i).size()),
-                    commonSender, recQueues.get(i),
+                    pidMapper, commonSender, 
                     new LinkedList<>(protocolIdQueue),
                     clientId, prime, i, asymmetricBit, partyCount);
 
@@ -126,10 +125,9 @@ public class LinearRegressionEvaluation extends Model {
             }
         }
 
-        initQueueMap(recQueues, testCases);
         BatchTruncation truncationModule = new BatchTruncation(dotProductResult,
-                truncationTiShares,
-                commonSender, recQueues.get(testCases),
+                truncationTiShares, pidMapper, 
+                commonSender,
                 new LinkedList<>(protocolIdQueue),
                 clientId, prime, testCases, asymmetricBit, partyCount);
         Future<BigInteger[]> truncationTask = es.submit(truncationModule);
