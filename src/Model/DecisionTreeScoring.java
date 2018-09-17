@@ -93,16 +93,16 @@ class PolynomialComputing extends CompositeProtocol implements Callable<Integer[
         int pid = 0;
 
         while (s > 0) {
-            ExecutorService es = Executors.newFixedThreadPool(Constants.threadCount);
+            ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
             List<Future<Integer[]>> taskList = new ArrayList<>();
 
             List<Integer> yj = Arrays.asList(y_j);
-            List<Integer> z_u = new ArrayList<>(Collections.<Integer>nCopies(Constants.batchSize,
+            List<Integer> z_u = new ArrayList<>(Collections.<Integer>nCopies(Constants.BATCH_SIZE,
                     (comparisonOutputs[u - 1] + asymmetricBit * jBinary[s - 1]) % Constants.binaryPrime));
 
             int i = 0;
             do {
-                int toIndex = Math.min(i + Constants.batchSize, alpha);
+                int toIndex = Math.min(i + Constants.BATCH_SIZE, alpha);
                 
                 BatchMultiplicationByte mults = new BatchMultiplicationByte(
                         yj.subList(i, toIndex), z_u, tiShares.subList(i, toIndex),
@@ -342,7 +342,7 @@ public class DecisionTreeScoring extends Model {
      */
     void getFeatureVectors() {
 
-        ExecutorService es = Executors.newFixedThreadPool(Constants.threadCount);
+        ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
         List<Future<Integer[]>> taskList = new ArrayList<>();
 
         if (partyHasTree) {
@@ -416,7 +416,7 @@ public class DecisionTreeScoring extends Model {
      */
     void doThresholdComparisons() {
 
-        ExecutorService es = Executors.newFixedThreadPool(Constants.threadCount);
+        ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
         List<Future<Integer>> taskList = new ArrayList<>();
 
         int comparisonTiCount = (2 * attributeBitLength) + ((attributeBitLength * (attributeBitLength - 1)) / 2);
@@ -488,7 +488,7 @@ public class DecisionTreeScoring extends Model {
         }
 
         //Polynomial computation
-        ExecutorService es = Executors.newFixedThreadPool(Constants.threadCount);
+        ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
         List<Future<Integer[]>> taskList = new ArrayList<>();
 
         int polynomialComputationTiCount = depth * alpha;

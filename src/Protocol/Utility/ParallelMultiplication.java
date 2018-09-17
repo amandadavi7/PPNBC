@@ -82,7 +82,7 @@ public class ParallelMultiplication extends CompositeProtocol implements Callabl
 
             //System.out.println("products size:"+size+",toIndex1 "+toIndex1+",toIndex2 "+toIndex2);
             // TODO: Keerthana, I think we can move it outside the outer while loop
-            ExecutorService batchmults = Executors.newFixedThreadPool(Constants.threadCount);
+            ExecutorService batchmults = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
             ExecutorCompletionService<Integer[]> multCompletionService = new ExecutorCompletionService<>(batchmults);
 
             int i1 = 0;
@@ -91,8 +91,8 @@ public class ParallelMultiplication extends CompositeProtocol implements Callabl
 
             do {
 
-                int tempIndex1 = Math.min(i1 + Constants.batchSize, toIndex1);
-                int tempIndex2 = Math.min(i2 + Constants.batchSize, toIndex2);
+                int tempIndex1 = Math.min(i1 + Constants.BATCH_SIZE, toIndex1);
+                int tempIndex2 = Math.min(i2 + Constants.BATCH_SIZE, toIndex2);
 
                 //System.out.println("calling batchmult with pid:"+startpid+",indices:"+tempIndex1+","+tempIndex2);
                 multCompletionService.submit(new BatchMultiplicationByte(products.subList(i1, tempIndex1),

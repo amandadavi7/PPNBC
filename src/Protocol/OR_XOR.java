@@ -79,7 +79,7 @@ public class OR_XOR extends CompositeProtocol implements Callable<Integer[]> {
     public Integer[] call() {
         Integer[] output = new Integer[bitLength];
         System.out.println("x=" + xShares + " y=" + yShares);
-        ExecutorService es = Executors.newFixedThreadPool(Constants.threadCount);
+        ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
         List<Future<Integer[]>> taskList = new ArrayList<>();
 
         int i = 0;
@@ -87,7 +87,7 @@ public class OR_XOR extends CompositeProtocol implements Callable<Integer[]> {
 
         do {
             System.out.println("Protocol " + protocolId + " batch " + startpid);
-            int toIndex = Math.min(i + Constants.batchSize, bitLength);
+            int toIndex = Math.min(i + Constants.BATCH_SIZE, bitLength);
 
             BatchMultiplicationInteger batchMultiplication = new BatchMultiplicationInteger(
                     xShares.subList(i, toIndex),
@@ -101,7 +101,7 @@ public class OR_XOR extends CompositeProtocol implements Callable<Integer[]> {
             taskList.add(multiplicationTask);
 
             startpid++;
-            i += Constants.batchSize;
+            i += Constants.BATCH_SIZE;
         } while (i < bitLength);
 
         es.shutdown();

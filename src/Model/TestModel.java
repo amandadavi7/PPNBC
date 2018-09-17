@@ -78,8 +78,8 @@ public class TestModel extends Model {
         super(pidMapper, senderQueue, clientId, asymmetricBit, partyCount);
 
         this.tiTruncationPair = tiTruncationPair;
-        prime = BigInteger.valueOf(2).pow(Constants.integer_precision
-                + 2 * Constants.decimal_precision + 1).nextProbablePrime();
+        prime = BigInteger.valueOf(2).pow(Constants.INTEGER_PRECISION
+                + 2 * Constants.DECIMAL_PRECISION + 1).nextProbablePrime();
         v = new ArrayList<>();
         this.binaryTiShares = binaryTriples;
         this.decimalTiShares = decimalTriples;
@@ -160,7 +160,7 @@ public class TestModel extends Model {
 
         System.out.println("calling or_xor with x=" + x + " y=" + y);
 
-        ExecutorService es = Executors.newFixedThreadPool(Constants.threadCount);
+        ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
         List<Future<Integer[]>> taskList = new ArrayList<>();
 
         long startTime = System.currentTimeMillis();
@@ -458,7 +458,7 @@ public class TestModel extends Model {
         //Prepare matrix for truncation. Multiply the elements with 2^f
         int rows = xBigInt.length;
         int cols = xBigInt[0].length;
-        BigInteger fac = BigInteger.valueOf(2).pow(Constants.decimal_precision);
+        BigInteger fac = BigInteger.valueOf(2).pow(Constants.DECIMAL_PRECISION);
         for (int i = 0; i < rows; i++) {
             for (int j = 0; j < cols; j++) {
                 xBigInt[i][j] = xBigInt[i][j].multiply(fac).mod(prime);
@@ -467,7 +467,7 @@ public class TestModel extends Model {
         }
         BigInteger[][] truncationOutput = new BigInteger[rows][cols];
 
-        ExecutorService es = Executors.newFixedThreadPool(Constants.threadCount);
+        ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
         List<Future<BigInteger[]>> taskList = new ArrayList<>();
 
         long startTime = System.currentTimeMillis();

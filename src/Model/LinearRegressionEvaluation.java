@@ -63,8 +63,8 @@ public class LinearRegressionEvaluation extends Model {
         this.realTiShares = realTriples;
         this.truncationTiShares = truncationShares;
 
-        prime = BigInteger.valueOf(2).pow(Constants.integer_precision
-                + 2 * Constants.decimal_precision + 1).nextProbablePrime();  //Zq must be a prime field
+        prime = BigInteger.valueOf(2).pow(Constants.INTEGER_PRECISION
+                + 2 * Constants.DECIMAL_PRECISION + 1).nextProbablePrime();  //Zq must be a prime field
 
         initalizeModelVariables(args);
         
@@ -91,7 +91,7 @@ public class LinearRegressionEvaluation extends Model {
      * y[i] = x[i].beta
      */
     public void computeDotProduct() {
-        ExecutorService es = Executors.newFixedThreadPool(Constants.threadCount);
+        ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
         List<Future<BigInteger>> taskList = new ArrayList<>();
 
         int tiStartIndex = 0;
