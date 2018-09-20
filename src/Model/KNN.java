@@ -108,8 +108,8 @@ public class KNN extends Model {
 
         }
 
-        System.out.println("Test Print: training=" + trainingShares + " test=" +
-                testShare + " classL=" + classLabels + " K=" + K);
+        //System.out.println("Test Print: training=" + trainingShares + " test=" +
+        //        testShare + " classL=" + classLabels + " K=" + K);
     }
 
     void swapCircuitSorting(int leftIndex, int rightIndex, int comparisonOutput) {
@@ -138,7 +138,7 @@ public class KNN extends Model {
 
         Future<Integer[]> xorTask = es.submit(xor);
         pid++;
-        decimalTiIndex++;
+        //decimalTiIndex++;
 
         Integer[] c = null;
         try {
@@ -157,7 +157,7 @@ public class KNN extends Model {
                 pidMapper, commonSender, new LinkedList<>(protocolIdQueue), 
                 clientId, prime, pid, asymmetricBit, 0, partyCount);
         pid++;
-        decimalTiIndex += 3;
+        //decimalTiIndex += 3;
 
         Future<Integer[]> leftTask1 = es.submit(batchMult);
 
@@ -166,7 +166,7 @@ public class KNN extends Model {
                 pidMapper, commonSender, new LinkedList<>(protocolIdQueue), 
                 clientId, prime, pid, asymmetricBit, 0, partyCount);
         pid++;
-        decimalTiIndex += 3;
+        //decimalTiIndex += 3;
 
         Future<Integer[]> leftTask2 = es.submit(batchMult2);
 
@@ -177,7 +177,7 @@ public class KNN extends Model {
                 pidMapper, commonSender, new LinkedList<>(protocolIdQueue), 
                 clientId, prime, pid, asymmetricBit, 0, partyCount);
         pid++;
-        decimalTiIndex += 3;
+        //decimalTiIndex += 3;
 
         Future<Integer[]> rightTask1 = es.submit(batchMult3);
 
@@ -186,13 +186,13 @@ public class KNN extends Model {
                 pidMapper, commonSender, new LinkedList<>(protocolIdQueue), 
                 clientId, prime, pid, asymmetricBit, 0, partyCount);
         pid++;
-        decimalTiIndex += 3;
+        //decimalTiIndex += 3;
 
         Future<Integer[]> rightTask2 = es.submit(batchMult4);
 
         es.shutdown();
-        System.out.println("before swapping indices:" + leftIndex + "and" + rightIndex);
-        System.out.println(KjaccardDistances.get(leftIndex) + " " + KjaccardDistances.get(rightIndex));
+        //System.out.println("before swapping indices:" + leftIndex + "and" + rightIndex);
+        //System.out.println(KjaccardDistances.get(leftIndex) + " " + KjaccardDistances.get(rightIndex));
 
         //get the results
         Integer[] left1 = null, left2 = null, right1 = null, right2 = null;
@@ -211,16 +211,16 @@ public class KNN extends Model {
             KjaccardDistances.get(rightIndex).set(i, Math.floorMod(right1[i] + right2[i], prime));
         }
 
-        System.out.println("after swapping indices:" + leftIndex + "and" + rightIndex);
-        System.out.println(KjaccardDistances.get(leftIndex) + " " + KjaccardDistances.get(rightIndex));
+        //System.out.println("after swapping indices:" + leftIndex + "and" + rightIndex);
+        //System.out.println(KjaccardDistances.get(leftIndex) + " " + KjaccardDistances.get(rightIndex));
 
     }
 
     void Sort(int[] indices, int next) {
         //base case
         int startIndex = 0, endIndex = indices.length - 1;
-        System.out.println("in sort: startIndex=" + indices[0] + ", endIndex=" + 
-                indices[endIndex] + ",next:" + next);
+        //System.out.println("in sort: startIndex=" + indices[0] + ", endIndex=" + 
+        //        indices[endIndex] + ",next:" + next);
         if (indices[startIndex] == indices[endIndex]) {
             return;
         }
@@ -230,7 +230,7 @@ public class KNN extends Model {
 
             ExecutorService es = Executors.newSingleThreadExecutor();
 
-            System.out.println("calling crossmultiply and compare");
+            //System.out.println("calling crossmultiply and compare");
 
             CrossMultiplyCompare ccModule = new CrossMultiplyCompare(KjaccardDistances.get(indices[startIndex]).get(1),
                     KjaccardDistances.get(indices[startIndex]).get(0), 
@@ -244,8 +244,8 @@ public class KNN extends Model {
 
             Future<Integer> resultTask = es.submit(ccModule);
             pid++;
-            decimalTiIndex += 2;
-            binaryTiIndex += ccTICount;
+            //decimalTiIndex += 2;
+            //binaryTiIndex += ccTICount;
 
             int comparisonresult = 0;
 
@@ -255,7 +255,7 @@ public class KNN extends Model {
                 Logger.getLogger(KNN.class.getName()).log(Level.SEVERE, null, ex);
             }
 
-            System.out.println("comparing indices " + indices[startIndex] + " " + indices[endIndex] + ", result=" + comparisonresult);
+            //System.out.println("comparing indices " + indices[startIndex] + " " + indices[endIndex] + ", result=" + comparisonresult);
 
             //circuit to swap
             swapCircuitSorting(indices[startIndex], indices[endIndex], comparisonresult);
@@ -276,7 +276,7 @@ public class KNN extends Model {
 
         int startIndex = 0;
         int endIndex = indices.length - 1;
-        System.out.println("In merge: startIndex=" + indices[startIndex] + " endIndex=" + indices[endIndex]);
+        //System.out.println("In merge: startIndex=" + indices[startIndex] + " endIndex=" + indices[endIndex]);
 
         //Sort even indexed
         int[] evenIndices = new int[indices.length / 2 + indices.length % 2];
@@ -298,8 +298,8 @@ public class KNN extends Model {
         //Compare adjacent numbers
         for (int i = startIndex + 1; i < endIndex - 1; i += 2) {
             //compare and swap jd(i) and jd(i+1)
-            System.out.println("calling comparison between adjacent elements: indices - "
-                    + indices[i] + " and " + indices[i + 1]);
+            //System.out.println("calling comparison between adjacent elements: indices - "
+            //        + indices[i] + " and " + indices[i + 1]);
             
             CrossMultiplyCompare ccModule = new CrossMultiplyCompare(KjaccardDistances.get(indices[i]).get(1),
                     KjaccardDistances.get(indices[i]).get(0), 
@@ -313,8 +313,8 @@ public class KNN extends Model {
 
             Future<Integer> resultTask = es.submit(ccModule);
             pid++;
-            decimalTiIndex += 2;
-            binaryTiIndex += ccTICount;
+            //decimalTiIndex += 2;
+            //binaryTiIndex += ccTICount;
             taskList.add(resultTask);
         }
 
@@ -354,8 +354,8 @@ public class KNN extends Model {
                     partyCount, bitLength);
 
             pid++;
-            decimalTiIndex += 2;
-            binaryTiIndex += ccTICount;
+            //decimalTiIndex += 2;
+            //binaryTiIndex += ccTICount;
 
             Future<Integer> ccTask = es.submit(ccModule);
             taskList.add(ccTask);
@@ -411,7 +411,7 @@ public class KNN extends Model {
 
         //get all the K comparison results
         Integer[] comparisonResults = getKComparisonResults(index);
-        System.out.println("comparison results:" + Arrays.toString(comparisonResults));
+        //System.out.println("comparison results:" + Arrays.toString(comparisonResults));
         //get all PI(Cj) from j = 0 to j = K-2 index
         Integer[] comparisonMultiplications = comparisonMultiplicationResultsSequential(comparisonResults);
 
@@ -441,7 +441,7 @@ public class KNN extends Model {
             }
         }
 
-        System.out.println("comparison multiplications:" + Arrays.toString(comparisonMultiplications));
+        //System.out.println("comparison multiplications:" + Arrays.toString(comparisonMultiplications));
 
         //Do xor between comparison results....
         List<Integer> dummy = new ArrayList<>(Collections.nCopies(K, 0));
@@ -455,7 +455,7 @@ public class KNN extends Model {
                     new LinkedList<>(protocolIdQueue), clientId, prime, 
                     pid, partyCount);
             pid++;
-            decimalTiIndex += K;
+            //decimalTiIndex += K;
             xorCompMults = new OR_XOR(Arrays.asList(comparisonMultiplications), 
                     dummy, decimalTiShares.subList(decimalTiIndex, decimalTiIndex + K),
                     asymmetricBit, 2, pidMapper, commonSender,
@@ -468,7 +468,7 @@ public class KNN extends Model {
                     new LinkedList<>(protocolIdQueue), clientId, prime, 
                     pid, partyCount);
             pid++;
-            decimalTiIndex += K;
+            //decimalTiIndex += K;
             xorCompMults = new OR_XOR(dummy, Arrays.asList(comparisonMultiplications), 
                     decimalTiShares.subList(decimalTiIndex, decimalTiIndex + K), asymmetricBit, 
                     2, pidMapper, commonSender, new LinkedList<>(protocolIdQueue),
@@ -478,7 +478,7 @@ public class KNN extends Model {
         Future<Integer[]> xorTask1 = es.submit(xorComp);
         Future<Integer[]> xorTask2 = es.submit(xorCompMults);
         pid++;
-        decimalTiIndex += K;
+        //decimalTiIndex += K;
 
         try {
             comparisonResults = xorTask1.get();
@@ -487,8 +487,8 @@ public class KNN extends Model {
             Logger.getLogger(KNN.class.getName()).log(Level.SEVERE, null, ex);
         }
 
-        System.out.println("comparison results:" + Arrays.toString(comparisonResults));
-        System.out.println("comparison mults:" + Arrays.toString(comparisonMultiplications));
+        //System.out.println("comparison results:" + Arrays.toString(comparisonResults));
+        //System.out.println("comparison mults:" + Arrays.toString(comparisonMultiplications));
 
         List<Future<Integer[]>> swapTaskList = new ArrayList<>();
 
@@ -510,7 +510,7 @@ public class KNN extends Model {
 
             swapTaskList.add(es.submit(swapModule));
             pid++;
-            decimalTiIndex += 9;
+            //decimalTiIndex += 9;
         }
 
         es.shutdown();
@@ -528,7 +528,7 @@ public class KNN extends Model {
             }
         }
 
-        System.out.println("KJD:" + KjaccardDistances);
+        //System.out.println("KJD:" + KjaccardDistances);
     }
 
     int computeMajorityClassLabel() {
@@ -553,7 +553,7 @@ public class KNN extends Model {
                 new LinkedList<>(protocolIdQueue), clientId, Constants.binaryPrime, 
                 pid, partyCount);
         pid++;
-        binaryTiIndex += bitDTICount;
+        //binaryTiIndex += bitDTICount;
         Future<List<Integer>> bitTaskOne = es.submit(bitDModuleOne);
 
         BitDecomposition bitDModuleZero = new BitDecomposition(zeroCount,
@@ -562,7 +562,7 @@ public class KNN extends Model {
                 new LinkedList<>(protocolIdQueue), clientId, Constants.binaryPrime, 
                 pid, partyCount);
         pid++;
-        binaryTiIndex += bitDTICount;
+        //binaryTiIndex += bitDTICount;
         Future<List<Integer>> bitTaskZero = es.submit(bitDModuleZero);
 
         List<Integer> numOfOnePredictions = null, numOfZeroPredictions = null;
@@ -583,7 +583,7 @@ public class KNN extends Model {
 
         Future<Integer> resultTask = es.submit(compClassLabels);
         pid++;
-        binaryTiIndex += comparisonTiCount;
+        //binaryTiIndex += comparisonTiCount;
         es.shutdown();
         try {
             predictedClassLabel = resultTask.get();
@@ -601,13 +601,13 @@ public class KNN extends Model {
         
         int decTICount = attrLength * 2 * trainingSharesCount;
         JaccardDistance jdModule = new JaccardDistance(trainingShares, testShare,
-                asymmetricBit, decimalTiShares.subList(0, decTICount), pidMapper, commonSender,
+                asymmetricBit, decimalTiShares, pidMapper, commonSender,
                 clientId, prime, pid, 
                 new LinkedList<>(protocolIdQueue), partyCount);
 
         Future<List<List<Integer>>> jdTask = es.submit(jdModule);
         pid++;
-        decimalTiIndex += decTICount;
+        //decimalTiIndex += decTICount;
         es.shutdown();
         try {
             jaccardDistances = jdTask.get();
@@ -619,7 +619,7 @@ public class KNN extends Model {
             jaccardDistances.get(i).add(classLabels.get(i));
         }
 
-        System.out.println("jaccarddistances:" + jaccardDistances);
+        //System.out.println("jaccarddistances:" + jaccardDistances);
 
         int[] indices = new int[K];
         for (int i = 0; i < K; i++) {
@@ -630,8 +630,8 @@ public class KNN extends Model {
         //Sorting the first K numbers
         Sort(indices, 1);
 
-        System.out.println("Jaccard Distances:" + jaccardDistances);
-        System.out.println("KjaccardDistances:" + KjaccardDistances);
+        //System.out.println("Jaccard Distances:" + jaccardDistances);
+        //System.out.println("KjaccardDistances:" + KjaccardDistances);
 
         //Iterator circuit for rest of the training examples
         for (int i = K; i < trainingSharesCount; i++) {
@@ -639,8 +639,8 @@ public class KNN extends Model {
             swapTrainingShares(i);
         }
 
-        System.out.println("KjaccardDistances after iterating all the training examples:"
-                + KjaccardDistances);
+        //System.out.println("KjaccardDistances after iterating all the training examples:"
+        //        + KjaccardDistances);
 
         int predictedLabel = computeMajorityClassLabel();
 
@@ -729,7 +729,7 @@ class SwapCircuitTrainingShares extends CompositeProtocol implements Callable<In
                 pid, asymmetricBit, 0, partyCount);
         Future<Integer[]> multTask3 = es.submit(mult3);
         pid++;
-        decimalTiIndex += 3;
+        //decimalTiIndex += 3;
 
         Integer[] results = new Integer[3];
         Arrays.fill(results, 0);
@@ -745,7 +745,7 @@ class SwapCircuitTrainingShares extends CompositeProtocol implements Callable<In
                     pid, asymmetricBit, 0, partyCount);
             Future<Integer[]> multTask2 = es.submit(mult2);
             pid++;
-            decimalTiIndex += 3;
+            //decimalTiIndex += 3;
 
             try {
                 Integer[] Mults = multTask2.get();
@@ -770,7 +770,7 @@ class SwapCircuitTrainingShares extends CompositeProtocol implements Callable<In
             Logger.getLogger(KNN.class.getName()).log(Level.SEVERE, null, ex);
         }
 
-        System.out.println("results retuning: " + Arrays.toString(results));
+        //System.out.println("results retuning: " + Arrays.toString(results));
         return results;
     }
 }

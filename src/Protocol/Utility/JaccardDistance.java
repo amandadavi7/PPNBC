@@ -84,7 +84,7 @@ public class JaccardDistance extends CompositeProtocol implements Callable<List<
             Future<Integer[]> orTask = es.submit(orModule);
             taskList.add(orTask);
             startpid++;
-            tiStartIndex += attrLength;
+            //tiStartIndex += attrLength;
 
             OR_XOR xorModule = new OR_XOR(trainingShares.get(i), testShare,
                     decimalTiShares.subList(tiStartIndex, tiStartIndex + attrLength),
@@ -94,7 +94,7 @@ public class JaccardDistance extends CompositeProtocol implements Callable<List<
             Future<Integer[]> xorTask = es.submit(xorModule);
             taskList.add(xorTask);
             startpid++;
-            tiStartIndex += attrLength;
+            //tiStartIndex += attrLength;
         }
 
         es.shutdown();
