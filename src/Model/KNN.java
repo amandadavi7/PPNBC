@@ -114,7 +114,7 @@ public class KNN extends Model {
 
     void swapCircuitSorting(int leftIndex, int rightIndex, int comparisonOutput) {
 
-        ExecutorService es = Executors.newFixedThreadPool(Constants.threadCount);
+        ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
 
         //Do xor between comparison results....
         List<Integer> cShares = new ArrayList<>();
@@ -292,7 +292,7 @@ public class KNN extends Model {
         Sort(evenIndices, 2 * next);
         Sort(oddIndices, 2 * next);
 
-        ExecutorService es = Executors.newFixedThreadPool(Constants.threadCount);
+        ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
         List<Future<Integer>> taskList = new ArrayList<>();
 
         //Compare adjacent numbers
@@ -339,7 +339,7 @@ public class KNN extends Model {
     }
 
     Integer[] getKComparisonResults(int index) {
-        ExecutorService es = Executors.newFixedThreadPool(Constants.threadCount);
+        ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
         List<Future<Integer>> taskList = new ArrayList<>();
         //Do all the k comparisons with the training share
         Integer[] comparisonResults = new Integer[K];
@@ -417,7 +417,7 @@ public class KNN extends Model {
 
         comparisonMultiplications[0] = Math.floorMod(asymmetricBit - comparisonResults[0], 
                 Constants.binaryPrime);
-        ExecutorService es = Executors.newFixedThreadPool(Constants.threadCount);
+        ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
         List<Future<Integer>> taskList = new ArrayList<>();
         for (int i = 1; i < K; i++) {
             MultiplicationByte mult = new MultiplicationByte(comparisonMultiplications[i],
@@ -596,7 +596,7 @@ public class KNN extends Model {
 
     public int KNN_Model() {
         //Jaccard Computation
-        ExecutorService es = Executors.newFixedThreadPool(Constants.threadCount);
+        ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
         long startTime = System.currentTimeMillis();
         
         int decTICount = attrLength * 2 * trainingSharesCount;
@@ -707,7 +707,7 @@ class SwapCircuitTrainingShares extends CompositeProtocol implements Callable<In
     @Override
     public Integer[] call() {
         int pid = 0, decimalTiIndex = 0;
-        ExecutorService es = Executors.newFixedThreadPool(Constants.threadCount);
+        ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
         
         //first mult
         List<Integer> piC = new ArrayList<>(Collections.nCopies(3, comparisonMultiplications[position]));

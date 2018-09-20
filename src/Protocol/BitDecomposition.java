@@ -188,14 +188,14 @@ public class BitDecomposition extends CompositeProtocol implements
      */
     private void computeDShares() throws InterruptedException, ExecutionException {
 
-        ExecutorService es = Executors.newFixedThreadPool(Constants.threadCount);
+        ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
         List<Future<Integer[]>> taskList = new ArrayList<>();
 
         int i = 1;
 
         // The protocols for computation of d are assigned id 1-bitLength-1
         do {
-            int toIndex = Math.min(i + Constants.batchSize, bitLength);
+            int toIndex = Math.min(i + Constants.BATCH_SIZE, bitLength);
             int tiCount = toIndex - i;
 
             BatchMultiplicationByte batchMultiplication

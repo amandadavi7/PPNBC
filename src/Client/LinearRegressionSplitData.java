@@ -66,14 +66,14 @@ public class LinearRegressionSplitData {
         sourceFile = null;
         destDir = null;
         x = new ArrayList<>();
-        Zq = BigInteger.valueOf(2).pow(Constants.integer_precision
-                + 2 * Constants.decimal_precision + 1)
+        Zq = BigInteger.valueOf(2).pow(Constants.INTEGER_PRECISION
+                + 2 * Constants.DECIMAL_PRECISION + 1)
                 .nextProbablePrime();  //Zq must be a prime field
 
         for (String arg : args) {
             String[] currInput = arg.split("=");
             if (currInput.length < 2) {
-                Logging.baUsage();
+                Logging.clientUsage();
                 System.exit(0);
             }
             String command = currInput[0];
@@ -110,8 +110,8 @@ public class LinearRegressionSplitData {
                 //generate n-1 random variables in the range
                 BigInteger totalSum = BigInteger.ZERO;
                 for (int k = 0; k < noOfParties - 1; k++) {
-                    BigInteger xK = new BigInteger(Constants.integer_precision
-                            + 2 * Constants.decimal_precision, srng).mod(Zq);
+                    BigInteger xK = new BigInteger(Constants.INTEGER_PRECISION
+                            + 2 * Constants.DECIMAL_PRECISION, srng).mod(Zq);
                     partyInput[k][i][j] = xK;
                     totalSum = totalSum.add(xK).mod(Zq);
                 }

@@ -13,8 +13,12 @@ import Model.LinearRegressionTraining;
 import Utility.Connection;
 import Model.TestModel;
 import TrustedInitializer.TIShare;
+import Utility.Constants;
 import Utility.Logging;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
@@ -51,7 +55,7 @@ public class Party {
     private static int modelId;
     
     private static ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper;
-
+    
     /**
      * Initialize class variables
      *
@@ -115,7 +119,7 @@ public class Party {
             Logging.partyUsage();
             System.exit(0);
         }
-
+        
     }
 
     /**

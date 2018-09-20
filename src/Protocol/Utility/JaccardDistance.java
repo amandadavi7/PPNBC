@@ -70,7 +70,7 @@ public class JaccardDistance extends CompositeProtocol implements Callable<List<
         List<List<Integer>> result = new ArrayList<>();
         int startpid = 0;
         int attrLength = testShare.size(), tiStartIndex = 0;
-        ExecutorService es = Executors.newFixedThreadPool(Constants.threadCount);
+        ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
 
         // TODO: Make OR_XOR module return both OR and XOR together
         List<Future<Integer[]>> taskList = new ArrayList<>();

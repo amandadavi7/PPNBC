@@ -113,7 +113,7 @@ public class OIS extends CompositeProtocol implements Callable<Integer[]> {
     public Integer[] call() throws Exception {
         Integer[] output = new Integer[bitLength];
         
-        ExecutorService es = Executors.newFixedThreadPool(Constants.threadCount);
+        ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
         List<Future<Integer>> taskList = new ArrayList<>();
         int tiStartIndex = 0;
 

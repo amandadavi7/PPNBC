@@ -82,14 +82,14 @@ public class DotProductReal extends DotProduct implements Callable<BigInteger> {
         BigInteger dotProduct = BigInteger.ZERO;
         int vectorLength = xShares.size();
         
-        ExecutorService mults = Executors.newFixedThreadPool(Constants.threadCount);
+        ExecutorService mults = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
         ExecutorCompletionService<BigInteger[]> multCompletionService = new ExecutorCompletionService<>(mults);
 
         int i = 0;
         int startpid = 0;
 
         do {
-            int toIndex = Math.min(i + Constants.batchSize, vectorLength);
+            int toIndex = Math.min(i + Constants.BATCH_SIZE, vectorLength);
 
             multCompletionService.submit(new BatchMultiplicationReal(xShares.subList(i, toIndex),
                     yShares.subList(i, toIndex), tiShares.subList(i, toIndex), pidMapper, senderQueue,
