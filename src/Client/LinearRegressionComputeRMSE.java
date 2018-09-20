@@ -52,8 +52,8 @@ public class LinearRegressionComputeRMSE {
         String predictedYFiles = args[1];
         String actualY = args[2];
 
-        Zq = BigInteger.valueOf(2).pow(Constants.integer_precision
-                + 2 * Constants.decimal_precision + 1).nextProbablePrime();  //Zq must be a prime field
+        Zq = BigInteger.valueOf(2).pow(Constants.INTEGER_PRECISION
+                + 2 * Constants.DECIMAL_PRECISION + 1).nextProbablePrime();  //Zq must be a prime field
 
         actualYList = loadListFromFile(actualY);
 
@@ -74,7 +74,7 @@ public class LinearRegressionComputeRMSE {
         predictedYList = new ArrayList<>(actualYList.size());
         for (int i = 0; i < datasetSize; i++) {
             predictedYList.add(LocalMath.ZqToReal(predictedYListBigInt.get(i), 
-                    Constants.decimal_precision, Zq).doubleValue());
+                    Constants.DECIMAL_PRECISION, Zq).doubleValue());
             
         }
 

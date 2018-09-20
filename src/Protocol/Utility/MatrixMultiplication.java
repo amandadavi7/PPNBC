@@ -108,7 +108,7 @@ public class MatrixMultiplication extends CompositeProtocol implements
 
         int tiRealStartIndex = 0;
 
-        ExecutorService es = Executors.newFixedThreadPool(Constants.threadCount);
+        ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
         List<Future<BigInteger>> taskList = new ArrayList<>(n * l);
 
         for (int i = 0; i < n; i++) {

@@ -85,7 +85,7 @@ public class CrossMultiplyCompare extends CompositeProtocol implements Callable<
     public Integer call() throws Exception {
         
         int decimalTiIndex = 0, binaryTiIndex = 0;
-        ExecutorService es = Executors.newFixedThreadPool(Constants.threadCount);
+        ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
         
         //Crossmultiplications
         //System.out.println("calling mult1");

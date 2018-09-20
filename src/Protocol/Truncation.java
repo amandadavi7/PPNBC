@@ -84,11 +84,11 @@ public class Truncation extends Protocol implements Callable<BigInteger> {
         }
 
         // Constants
-        BigInteger roundOffBit = BigInteger.valueOf(2).pow(Constants.integer_precision
-                + 2 * Constants.decimal_precision - 1);
+        BigInteger roundOffBit = BigInteger.valueOf(2).pow(Constants.INTEGER_PRECISION
+                + 2 * Constants.DECIMAL_PRECISION - 1);
         BigInteger fInv = prime.add(BigInteger.ONE).divide(BigInteger.valueOf(2)).
-                pow(Constants.decimal_precision).mod(prime);
-        BigInteger fpow2 = BigInteger.valueOf(2).pow(Constants.decimal_precision);
+                pow(Constants.DECIMAL_PRECISION).mod(prime);
+        BigInteger fpow2 = BigInteger.valueOf(2).pow(Constants.DECIMAL_PRECISION);
 
         
         BigInteger c = zShares.add(roundOffBit);

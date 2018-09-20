@@ -104,7 +104,7 @@ public class Comparison extends CompositeProtocol implements Callable<Integer> {
         computeEShares();
 
         ExecutorService threadService = Executors.newFixedThreadPool(
-                Constants.threadCount);
+                Constants.THREAD_COUNT);
         Runnable dThread = () -> {
             try {
                 computeDSHares();
@@ -159,7 +159,7 @@ public class Comparison extends CompositeProtocol implements Callable<Integer> {
      */
     private void computeDSHares() throws InterruptedException, ExecutionException {
 
-        ExecutorService es = Executors.newFixedThreadPool(Constants.threadCount);
+        ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
         List<Future<Integer[]>> taskList = new ArrayList<>();
 
         int i = 0;
@@ -168,7 +168,7 @@ public class Comparison extends CompositeProtocol implements Callable<Integer> {
         // The protocols for computation of d are assigned id 0-bitLength-1
         do {
             //System.out.println("Protocol " + protocolId + " batch " + startpid);
-            int toIndex = Math.min(i + Constants.batchSize, bitLength);
+            int toIndex = Math.min(i + Constants.BATCH_SIZE, bitLength);
 
             BatchMultiplicationByte batchMultiplication
                     = new BatchMultiplicationByte(x.subList(i, toIndex),
@@ -226,14 +226,14 @@ public class Comparison extends CompositeProtocol implements Callable<Integer> {
         // Runs log n times
         while (tempMultE.size() > 1) {
 
-            ExecutorService es = Executors.newFixedThreadPool(Constants.threadCount);
+            ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
             List<Future<Integer[]>> taskList = new ArrayList<>();
 
             int i = 0;
 
             // batch multiply each pair of tempMultE[i], tempMult[i+1]
             do {
-                int toIndex = Math.min(i + Constants.batchSize, tempMultE.size());
+                int toIndex = Math.min(i + Constants.BATCH_SIZE, tempMultE.size());
                 int tiCount = toIndex - i;
 
                 BatchMultiplicationByte batchMultiplication
@@ -295,14 +295,14 @@ public class Comparison extends CompositeProtocol implements Callable<Integer> {
         List<Integer> dShareList = Arrays.stream(dShares).boxed()
                 .collect(Collectors.toList());
 
-        ExecutorService es = Executors.newFixedThreadPool(Constants.threadCount);
+        ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
         List<Future<Integer[]>> taskList = new ArrayList<>();
 
         int startpid = cProcessId;
         int i = 0;
 
         do {
-            int toIndex = Math.min(i + Constants.batchSize, bitLength - 1);
+            int toIndex = Math.min(i + Constants.BATCH_SIZE, bitLength - 1);
             int tiCount = toIndex - i;
 
             BatchMultiplicationByte batchMultiplication

@@ -112,7 +112,7 @@ public class ArgMax extends CompositeProtocol implements Callable<Integer[]> {
      */
     private int computeComparisons() throws InterruptedException, ExecutionException {
 
-        ExecutorService es = Executors.newFixedThreadPool(Constants.threadCount);
+        ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
         List<Future<Integer>> taskList = new ArrayList<>();
         int tiIndex = 0;
 
@@ -158,7 +158,7 @@ public class ArgMax extends CompositeProtocol implements Callable<Integer[]> {
      * @throws ExecutionException
      */
     private void computeW(int tiIndex) throws InterruptedException, ExecutionException {
-        ExecutorService es = Executors.newFixedThreadPool(Constants.threadCount);
+        ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
         List<Future<Integer>> taskList = new ArrayList<>();
 
         //Each row has n-2 multiplications to do for n-1 numbers

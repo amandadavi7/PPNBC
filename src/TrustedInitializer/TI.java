@@ -76,7 +76,7 @@ public class TI {
         System.out.println("Sending shares to parties");
         ServerSocket tiserver = Connection.createServerSocket(tiPort);
 
-        ExecutorService send = Executors.newFixedThreadPool(Constants.threadCount);
+        ExecutorService send = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
         for (int i = 0; i < clientCount; i++) {
 
             Runnable sendtask = new TItoPeerCommunication(tiserver, tiShare[i]);
