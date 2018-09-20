@@ -25,6 +25,8 @@ import java.util.logging.Logger;
  */
 public class MultiplicationReal extends Protocol implements Callable<BigInteger> {
 
+    private static final Logger LOGGER = Logger.getLogger(MultiplicationReal.class.getName());
+    
     BigInteger x;
     BigInteger y;
     TripleReal tiRealShares;
@@ -109,8 +111,7 @@ public class MultiplicationReal extends Protocol implements Callable<BigInteger>
         try {
             senderQueue.put(senderMessage);
         } catch (InterruptedException ex) {
-            ex.printStackTrace();
-            Logger.getLogger(MultiplicationReal.class.getName()).log(Level.SEVERE, null, ex);
+            LOGGER.log(Level.SEVERE, null, ex);
         }
 
     }

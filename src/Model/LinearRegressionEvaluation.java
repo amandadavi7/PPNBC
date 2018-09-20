@@ -82,8 +82,10 @@ public class LinearRegressionEvaluation extends Model {
         //TODO: push time to a csv file
         System.out.println("Avg time duration:" + elapsedTime + " for partyId:"
                 + clientId + ", for size:" + y.length);
+        
+        // TODO make it async
         FileIO.writeToCSV(y, outputPath, "y", clientId);
-
+        
     }
 
     /**

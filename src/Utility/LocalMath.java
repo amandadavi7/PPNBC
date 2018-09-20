@@ -89,6 +89,27 @@ public class LocalMath {
     }
     
     /**
+     * Element-wise local matrix Multiplication
+     *
+     * @param a input vector a
+     * @param b input vector b
+     * @param prime
+     * @return 
+     */
+    public static BigInteger[] hadamardMultiplication(BigInteger[] a,
+            BigInteger[] b, BigInteger prime) {
+
+        int crows = a.length;
+        BigInteger[] c = new BigInteger[crows];
+        
+        for (int i = 0; i < crows; i++) {
+            // dot product of ith row of a and jth row of b
+            c[i] = localScale(a[i].multiply(b[i]).mod(prime), prime);
+        }
+        return c;
+    }
+    
+    /**
      * Scale down the value from 2*f to f over Zq
      * TODO convert this to matrix scaling
      * @param value

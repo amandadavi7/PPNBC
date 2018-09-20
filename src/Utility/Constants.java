@@ -58,7 +58,6 @@ public class Constants {
         NEWTON_RAPHSON_ROUNDS = Integer.parseInt(prop.getProperty("newton.raphson.rounds"));
 
         LOGGER.info("Properties file parsed:" + DEFAULT_PROPERTIES);
-        LOGGER.info("New ThreadCount:" + THREAD_COUNT);
     }
 
 }
