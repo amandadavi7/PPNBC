@@ -12,6 +12,7 @@ import Protocol.CompositeProtocol;
 import Protocol.MultiplicationByte;
 import Protocol.OR_XOR;
 import Protocol.Utility.BatchMultiplicationInteger;
+import Protocol.Utility.BatcherSortKNN;
 import Protocol.Utility.CrossMultiplyCompare;
 import Protocol.Utility.JaccardDistance;
 import TrustedInitializer.TripleByte;
@@ -110,232 +111,6 @@ public class KNN extends Model {
 
         //System.out.println("Test Print: training=" + trainingShares + " test=" +
         //        testShare + " classL=" + classLabels + " K=" + K);
-    }
-
-    void swapCircuitSorting(int leftIndex, int rightIndex, int comparisonOutput) {
-
-        ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
-
-        //Do xor between comparison results....
-        List<Integer> cShares = new ArrayList<>();
-        cShares.add(comparisonOutput);
-
-        List<Integer> dummy = new ArrayList<>();
-        dummy.add(0);
-        OR_XOR xor = null;
-
-        if (clientId == 1) {
-            xor = new OR_XOR(cShares, dummy, decimalTiShares.subList(decimalTiIndex, decimalTiIndex + 1),
-                    asymmetricBit, 2, pidMapper, commonSender, 
-                    new LinkedList<>(protocolIdQueue), clientId, prime, 
-                    pid, partyCount);
-        } else if (clientId == 2) {
-            xor = new OR_XOR(dummy, cShares, decimalTiShares.subList(decimalTiIndex, decimalTiIndex + 1),
-                    asymmetricBit, 2, pidMapper, commonSender, 
-                    new LinkedList<>(protocolIdQueue), clientId, prime, 
-                    pid, partyCount);
-        }
-
-        Future<Integer[]> xorTask = es.submit(xor);
-        pid++;
-        //decimalTiIndex++;
-
-        Integer[] c = null;
-        try {
-            c = xorTask.get();
-        } catch (InterruptedException | ExecutionException ex) {
-            Logger.getLogger(KNN.class.getName()).log(Level.SEVERE, null, ex);
-        }
-
-        List<Integer> C = new ArrayList<>(Collections.nCopies(3, c[0]));
-        List<Integer> notC = new ArrayList<>(Collections.nCopies(3, Math.floorMod(asymmetricBit - c[0], prime)));
-
-        //left index position
-        
-        BatchMultiplicationInteger batchMult = new BatchMultiplicationInteger(C, 
-                KjaccardDistances.get(rightIndex), decimalTiShares.subList(decimalTiIndex, decimalTiIndex + 3), 
-                pidMapper, commonSender, new LinkedList<>(protocolIdQueue), 
-                clientId, prime, pid, asymmetricBit, 0, partyCount);
-        pid++;
-        //decimalTiIndex += 3;
-
-        Future<Integer[]> leftTask1 = es.submit(batchMult);
-
-        BatchMultiplicationInteger batchMult2 = new BatchMultiplicationInteger(notC, 
-                KjaccardDistances.get(leftIndex), decimalTiShares.subList(decimalTiIndex, decimalTiIndex + 3), 
-                pidMapper, commonSender, new LinkedList<>(protocolIdQueue), 
-                clientId, prime, pid, asymmetricBit, 0, partyCount);
-        pid++;
-        //decimalTiIndex += 3;
-
-        Future<Integer[]> leftTask2 = es.submit(batchMult2);
-
-        //right index position
-        
-        BatchMultiplicationInteger batchMult3 = new BatchMultiplicationInteger(C, 
-                KjaccardDistances.get(leftIndex), decimalTiShares.subList(decimalTiIndex, decimalTiIndex + 3), 
-                pidMapper, commonSender, new LinkedList<>(protocolIdQueue), 
-                clientId, prime, pid, asymmetricBit, 0, partyCount);
-        pid++;
-        //decimalTiIndex += 3;
-
-        Future<Integer[]> rightTask1 = es.submit(batchMult3);
-
-        BatchMultiplicationInteger batchMult4 = new BatchMultiplicationInteger(notC, 
-                KjaccardDistances.get(rightIndex), decimalTiShares.subList(decimalTiIndex, decimalTiIndex + 3), 
-                pidMapper, commonSender, new LinkedList<>(protocolIdQueue), 
-                clientId, prime, pid, asymmetricBit, 0, partyCount);
-        pid++;
-        //decimalTiIndex += 3;
-
-        Future<Integer[]> rightTask2 = es.submit(batchMult4);
-
-        es.shutdown();
-        //System.out.println("before swapping indices:" + leftIndex + "and" + rightIndex);
-        //System.out.println(KjaccardDistances.get(leftIndex) + " " + KjaccardDistances.get(rightIndex));
-
-        //get the results
-        Integer[] left1 = null, left2 = null, right1 = null, right2 = null;
-
-        try {
-            left1 = leftTask1.get();
-            left2 = leftTask2.get();
-            right1 = rightTask1.get();
-            right2 = rightTask2.get();
-        } catch (InterruptedException | ExecutionException ex) {
-            Logger.getLogger(KNN.class.getName()).log(Level.SEVERE, null, ex);
-        }
-
-        for (int i = 0; i < 3; i++) {
-            KjaccardDistances.get(leftIndex).set(i, Math.floorMod(left1[i] + left2[i], prime));
-            KjaccardDistances.get(rightIndex).set(i, Math.floorMod(right1[i] + right2[i], prime));
-        }
-
-        //System.out.println("after swapping indices:" + leftIndex + "and" + rightIndex);
-        //System.out.println(KjaccardDistances.get(leftIndex) + " " + KjaccardDistances.get(rightIndex));
-
-    }
-
-    void Sort(int[] indices, int next) {
-        //base case
-        int startIndex = 0, endIndex = indices.length - 1;
-        //System.out.println("in sort: startIndex=" + indices[0] + ", endIndex=" + 
-        //        indices[endIndex] + ",next:" + next);
-        if (indices[startIndex] == indices[endIndex]) {
-            return;
-        }
-
-        if (indices[startIndex] + next == indices[endIndex]) {
-            //comparison
-
-            ExecutorService es = Executors.newSingleThreadExecutor();
-
-            //System.out.println("calling crossmultiply and compare");
-
-            CrossMultiplyCompare ccModule = new CrossMultiplyCompare(KjaccardDistances.get(indices[startIndex]).get(1),
-                    KjaccardDistances.get(indices[startIndex]).get(0), 
-                    KjaccardDistances.get(indices[endIndex]).get(1),
-                    KjaccardDistances.get(indices[endIndex]).get(0), asymmetricBit,
-                    decimalTiShares.subList(decimalTiIndex, decimalTiIndex + 2),
-                    binaryTiShares.subList(binaryTiIndex, binaryTiIndex + ccTICount), 
-                    pidMapper, commonSender, clientId, prime, 
-                    Constants.binaryPrime, pid, new LinkedList<>(protocolIdQueue), 
-                    partyCount, bitLength);
-
-            Future<Integer> resultTask = es.submit(ccModule);
-            pid++;
-            //decimalTiIndex += 2;
-            //binaryTiIndex += ccTICount;
-
-            int comparisonresult = 0;
-
-            try {
-                comparisonresult = resultTask.get();
-            } catch (InterruptedException | ExecutionException ex) {
-                Logger.getLogger(KNN.class.getName()).log(Level.SEVERE, null, ex);
-            }
-
-            //System.out.println("comparing indices " + indices[startIndex] + " " + indices[endIndex] + ", result=" + comparisonresult);
-
-            //circuit to swap
-            swapCircuitSorting(indices[startIndex], indices[endIndex], comparisonresult);
-
-            return;
-        }
-
-        int mid = (endIndex - startIndex) / 2;
-        int[] firstArray = Arrays.copyOfRange(indices, startIndex, mid + 1);
-        int[] secondArray = Arrays.copyOfRange(indices, mid + 1, endIndex + 1);
-        Sort(firstArray, next);
-        Sort(secondArray, next);
-
-        Merge(indices, next);
-    }
-
-    void Merge(int[] indices, int next) {
-
-        int startIndex = 0;
-        int endIndex = indices.length - 1;
-        //System.out.println("In merge: startIndex=" + indices[startIndex] + " endIndex=" + indices[endIndex]);
-
-        //Sort even indexed
-        int[] evenIndices = new int[indices.length / 2 + indices.length % 2];
-        int[] oddIndices = new int[indices.length / 2];
-
-        int j = 0;
-        for (int i = startIndex; i < indices.length; i += 2) {
-            evenIndices[j] = indices[i];
-            oddIndices[j] = indices[i + 1];
-            j++;
-        }
-
-        Sort(evenIndices, 2 * next);
-        Sort(oddIndices, 2 * next);
-
-        ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
-        List<Future<Integer>> taskList = new ArrayList<>();
-
-        //Compare adjacent numbers
-        for (int i = startIndex + 1; i < endIndex - 1; i += 2) {
-            //compare and swap jd(i) and jd(i+1)
-            //System.out.println("calling comparison between adjacent elements: indices - "
-            //        + indices[i] + " and " + indices[i + 1]);
-            
-            CrossMultiplyCompare ccModule = new CrossMultiplyCompare(KjaccardDistances.get(indices[i]).get(1),
-                    KjaccardDistances.get(indices[i]).get(0), 
-                    KjaccardDistances.get(indices[i + 1]).get(1),
-                    KjaccardDistances.get(indices[i + 1]).get(0), asymmetricBit,
-                    decimalTiShares.subList(decimalTiIndex, decimalTiIndex + 2),
-                    binaryTiShares.subList(binaryTiIndex, binaryTiIndex + ccTICount), 
-                    pidMapper, commonSender, clientId, prime, 
-                    Constants.binaryPrime, pid, new LinkedList<>(protocolIdQueue), 
-                    partyCount, bitLength);
-
-            Future<Integer> resultTask = es.submit(ccModule);
-            pid++;
-            //decimalTiIndex += 2;
-            //binaryTiIndex += ccTICount;
-            taskList.add(resultTask);
-        }
-
-        es.shutdown();
-
-        int n = taskList.size();
-        int[] comparisonResults = new int[n];
-        for (int i = 0; i < n; i++) {
-            Future<Integer> resultTask = taskList.get(i);
-            try {
-                comparisonResults[i] = resultTask.get();
-            } catch (InterruptedException | ExecutionException ex) {
-                Logger.getLogger(KNN.class.getName()).log(Level.SEVERE, null, ex);
-            }
-        }
-
-        j = 0;
-        for (int i = startIndex + 1; i < endIndex - 1; i += 2, j++) {
-            swapCircuitSorting(indices[i], indices[i + 1], comparisonResults[j]);
-        }
-
     }
 
     Integer[] getKComparisonResults(int index) {
@@ -595,7 +370,7 @@ public class KNN extends Model {
     }
 
     public int KNN_Model() {
-        //Jaccard Computation
+        //Jaccard Computation for all the training shares
         ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
         long startTime = System.currentTimeMillis();
         
@@ -615,6 +390,7 @@ public class KNN extends Model {
             Logger.getLogger(KNN.class.getName()).log(Level.SEVERE, null, ex);
         }
 
+        //add class labels to JD data structure (contains OR, XOR and Class Labels)
         for (int i = 0; i < trainingShares.size(); i++) {
             jaccardDistances.get(i).add(classLabels.get(i));
         }
@@ -628,10 +404,23 @@ public class KNN extends Model {
         }
 
         //Sorting the first K numbers
-        Sort(indices, 1);
+        //Sort(indices, 1);
+        System.out.println("KjaccardDistances before:" + KjaccardDistances);
+        es = Executors.newSingleThreadExecutor();
+        BatcherSortKNN sortModule = new BatcherSortKNN(KjaccardDistances,
+                asymmetricBit, decimalTiShares, binaryTiShares,
+                pidMapper, commonSender, clientId, prime, pid,
+                new LinkedList<>(protocolIdQueue), partyCount, K, bitLength);
+        Future<List<List<Integer>>> sortTask = es.submit(sortModule);
+        
+        try {
+            KjaccardDistances = sortTask.get();
+        } catch (InterruptedException | ExecutionException ex) {
+            Logger.getLogger(KNN.class.getName()).log(Level.SEVERE, null, ex);
+        }
 
         //System.out.println("Jaccard Distances:" + jaccardDistances);
-        //System.out.println("KjaccardDistances:" + KjaccardDistances);
+        System.out.println("KjaccardDistances:" + KjaccardDistances);
 
         //Iterator circuit for rest of the training examples
         for (int i = K; i < trainingSharesCount; i++) {
