@@ -15,6 +15,7 @@ import Protocol.Utility.BatchMultiplicationInteger;
 import Protocol.Utility.BatcherSortKNN;
 import Protocol.Utility.CrossMultiplyCompare;
 import Protocol.Utility.JaccardDistance;
+import Protocol.Utility.SwapCircuitKNN;
 import TrustedInitializer.TripleByte;
 import TrustedInitializer.TripleInteger;
 import Utility.Constants;
@@ -162,7 +163,7 @@ public class KNN extends Model {
                     comparisonResults[i], binaryTiShares.get(binaryTiIndex), 
                     pidMapper, commonSender, new LinkedList<>(protocolIdQueue), 
                     clientId, Constants.binaryPrime, pid, asymmetricBit, 0, partyCount);
-            binaryTiIndex++;
+            //binaryTiIndex++;
             pid++;
             Future<Integer> multTask = es.submit(mult);
             try {
@@ -201,7 +202,7 @@ public class KNN extends Model {
                     new LinkedList<>(protocolIdQueue), clientId,
                     Constants.binaryPrime, pid, asymmetricBit, 0, partyCount);
 
-            binaryTiIndex++;
+            //binaryTiIndex++;
             pid++;
             Future<Integer> multTask = es.submit(mult);
             taskList.add(multTask);
@@ -276,7 +277,7 @@ public class KNN extends Model {
                 prev = KjaccardDistances.get(i - 1);
             }
 
-            SwapCircuitTrainingShares swapModule = new SwapCircuitTrainingShares(index,
+            SwapCircuitKNN swapModule = new SwapCircuitKNN(index,
                     i, comparisonResults, comparisonMultiplications, pid,
                     new LinkedList<>(protocolIdQueue), prime, asymmetricBit, 
                     pidMapper, commonSender, clientId, 
@@ -397,14 +398,11 @@ public class KNN extends Model {
 
         //System.out.println("jaccarddistances:" + jaccardDistances);
 
-        int[] indices = new int[K];
         for (int i = 0; i < K; i++) {
-            indices[i] = i;
             KjaccardDistances.add(new ArrayList<>(jaccardDistances.get(i)));
         }
 
         //Sorting the first K numbers
-        //Sort(indices, 1);
         System.out.println("KjaccardDistances before:" + KjaccardDistances);
         es = Executors.newSingleThreadExecutor();
         BatcherSortKNN sortModule = new BatcherSortKNN(KjaccardDistances,
@@ -441,125 +439,4 @@ public class KNN extends Model {
         return predictedLabel;
     }
 
-}
-
-/**
- *
- * @author keerthanaa
- */
-class SwapCircuitTrainingShares extends CompositeProtocol implements Callable<Integer[]> {
-
-    int trainingIndex;
-    int position;
-    Integer[] comparisonResults;
-    Integer[] comparisonMultiplications;
-    List<TripleInteger> decimalTiShares;
-    int prime;
-    List<Integer> jaccardDistanceTraining, jaccardDistanceSorted, jaccardDistanceSortedPrevious;
-
-    /**
-     *
-     * @param trainingIndex
-     * @param position
-     * @param comparisonResults
-     * @param comparisonMultiplications
-     * @param protocolID
-     * @param protocolIdQueue
-     * @param prime
-     * @param oneShare
-     * @param senderQueue
-     * @param receiverQueue
-     * @param clientId
-     * @param tiShares
-     * @param jaccardDistanceTraining
-     * @param jaccardDistanceSorted
-     */
-    public SwapCircuitTrainingShares(int trainingIndex, int position,
-            Integer[] comparisonResults, Integer[] comparisonMultiplications,
-            int protocolID, Queue<Integer> protocolIdQueue, int prime, int oneShare,
-            ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper, BlockingQueue<Message> senderQueue,
-            int clientId, List<TripleInteger> tiShares, List<Integer> jaccardDistanceTraining,
-            List<Integer> jaccardDistanceSorted, List<Integer> jaccardDistanceSortedprev, int partyCount) {
-
-        super(protocolID, pidMapper, senderQueue, protocolIdQueue, clientId, oneShare, partyCount);
-        this.trainingIndex = trainingIndex;
-        this.position = position;
-        this.comparisonResults = comparisonResults;
-        this.comparisonMultiplications = comparisonMultiplications;
-        this.decimalTiShares = tiShares;
-        this.jaccardDistanceSorted = jaccardDistanceSorted;
-        this.jaccardDistanceTraining = jaccardDistanceTraining;
-        this.jaccardDistanceSortedPrevious = jaccardDistanceSortedprev;
-        this.prime = prime;
-    }
-
-    @Override
-    public Integer[] call() {
-        int pid = 0, decimalTiIndex = 0;
-        ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
-        
-        //first mult
-        List<Integer> piC = new ArrayList<>(Collections.nCopies(3, comparisonMultiplications[position]));
-        BatchMultiplicationInteger mult1 = new BatchMultiplicationInteger(jaccardDistanceTraining,
-                piC, decimalTiShares.subList(decimalTiIndex, decimalTiIndex + 3), 
-                pidMapper, senderQueue,
-                new LinkedList<>(protocolIdQueue), clientID, prime,
-                pid, asymmetricBit, 0, partyCount);
-        Future<Integer[]> multTask1 = es.submit(mult1);
-        pid++;
-        decimalTiIndex += 3;
-
-        //third mult
-        List<Integer> C = new ArrayList<>(Collections.nCopies(3, comparisonResults[position]));
-        BatchMultiplicationInteger mult3 = new BatchMultiplicationInteger(jaccardDistanceSorted,
-                C, decimalTiShares.subList(decimalTiIndex, decimalTiIndex + 3), 
-                pidMapper, senderQueue,
-                new LinkedList<>(protocolIdQueue), clientID, prime,
-                pid, asymmetricBit, 0, partyCount);
-        Future<Integer[]> multTask3 = es.submit(mult3);
-        pid++;
-        //decimalTiIndex += 3;
-
-        Integer[] results = new Integer[3];
-        Arrays.fill(results, 0);
-
-        if (position != 0) {
-            //second mult
-            List<Integer> notC = new ArrayList<>(Collections.nCopies(3, 
-                    Math.floorMod(asymmetricBit - comparisonResults[position - 1], prime)));
-            BatchMultiplicationInteger mult2 = new BatchMultiplicationInteger(jaccardDistanceSortedPrevious,
-                    notC, decimalTiShares.subList(decimalTiIndex, decimalTiIndex + 3), 
-                    pidMapper, senderQueue,
-                    new LinkedList<>(protocolIdQueue), clientID, prime,
-                    pid, asymmetricBit, 0, partyCount);
-            Future<Integer[]> multTask2 = es.submit(mult2);
-            pid++;
-            //decimalTiIndex += 3;
-
-            try {
-                Integer[] Mults = multTask2.get();
-                for (int i = 0; i < 3; i++) {
-                    results[i] += Mults[i];
-                }
-            } catch (InterruptedException | ExecutionException ex) {
-                Logger.getLogger(KNN.class.getName()).log(Level.SEVERE, null, ex);
-            }
-        }
-
-        try {
-            Integer[] Mults = multTask1.get();
-            for (int i = 0; i < 3; i++) {
-                results[i] += Mults[i];
-            }
-            Mults = multTask3.get();
-            for (int i = 0; i < 3; i++) {
-                results[i] = Math.floorMod(results[i] + Mults[i], prime);
-            }
-        } catch (InterruptedException | ExecutionException ex) {
-            Logger.getLogger(KNN.class.getName()).log(Level.SEVERE, null, ex);
-        }
-
-        //System.out.println("results retuning: " + Arrays.toString(results));
-        return results;
-    }
 }

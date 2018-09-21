@@ -41,6 +41,22 @@ public class BatcherSortKNN extends CompositeProtocol implements Callable<List<L
     List<TripleByte> binaryTiShares;
     List<TripleInteger> decimalTiShares;
     
+    /**
+     * 
+     * @param KJaccardDistances
+     * @param asymmetricBit
+     * @param decimalTiShares
+     * @param binaryTiShares
+     * @param pidMapper
+     * @param senderQueue
+     * @param clientId
+     * @param prime
+     * @param protocolID
+     * @param protocolIdQueue
+     * @param partyCount
+     * @param K
+     * @param bitLength 
+     */
     public BatcherSortKNN(List<List<Integer>> KJaccardDistances, int asymmetricBit,
             List<TripleInteger> decimalTiShares, List<TripleByte> binaryTiShares,
             ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper,
