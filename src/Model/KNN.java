@@ -8,10 +8,8 @@ package Model;
 import Communication.Message;
 import Protocol.BitDecomposition;
 import Protocol.Comparison;
-import Protocol.CompositeProtocol;
 import Protocol.MultiplicationByte;
 import Protocol.OR_XOR;
-import Protocol.Utility.BatchMultiplicationInteger;
 import Protocol.Utility.BatcherSortKNN;
 import Protocol.Utility.CrossMultiplyCompare;
 import Protocol.Utility.JaccardDistance;
@@ -28,7 +26,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -172,7 +169,7 @@ public class KNN extends Model {
                 Logger.getLogger(KNN.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
-
+        es.shutdown();
         return comparisonMultiplications;
     }
 
@@ -410,6 +407,7 @@ public class KNN extends Model {
                 pidMapper, commonSender, clientId, prime, pid,
                 new LinkedList<>(protocolIdQueue), partyCount, K, bitLength);
         Future<List<List<Integer>>> sortTask = es.submit(sortModule);
+        es.shutdown();
         
         try {
             KjaccardDistances = sortTask.get();
