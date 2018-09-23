@@ -153,7 +153,7 @@ public class KNN extends Model {
         comparisonMultiplications[0] = 0;
         comparisonMultiplications[1] = comparisonResults[0];
 
-        ExecutorService es = Executors.newSingleThreadExecutor();
+        //ExecutorService es = Executors.newSingleThreadExecutor();
 
         for (int i = 1; i < K - 1; i++) {
             MultiplicationByte mult = new MultiplicationByte(comparisonMultiplications[i], 
@@ -162,14 +162,15 @@ public class KNN extends Model {
                     clientId, Constants.binaryPrime, pid, asymmetricBit, 0, partyCount);
             //binaryTiIndex++;
             pid++;
-            Future<Integer> multTask = es.submit(mult);
-            try {
+            //Future<Integer> multTask = es.submit(mult);
+            comparisonMultiplications[i + 1] = mult.call();
+            /*try {
                 comparisonMultiplications[i + 1] = multTask.get();
             } catch (InterruptedException | ExecutionException ex) {
                 Logger.getLogger(KNN.class.getName()).log(Level.SEVERE, null, ex);
-            }
+            }*/
         }
-        es.shutdown();
+        //es.shutdown();
         return comparisonMultiplications;
     }
 

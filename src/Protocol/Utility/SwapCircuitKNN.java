@@ -130,7 +130,7 @@ public class SwapCircuitKNN extends CompositeProtocol implements Callable<Intege
                 Logger.getLogger(KNN.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
-
+        es.shutdown();
         try {
             Integer[] Mults = multTask1.get();
             for (int i = 0; i < 3; i++) {

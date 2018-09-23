@@ -114,7 +114,7 @@ public class BatcherSortKNN extends CompositeProtocol implements Callable<List<L
             pid++;
             //decimalTiIndex += 2;
             //binaryTiIndex += ccTICount;
-
+            es.shutdown();
             int comparisonresult = 0;
 
             try {
