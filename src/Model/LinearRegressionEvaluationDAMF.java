@@ -101,7 +101,7 @@ public class LinearRegressionEvaluationDAMF extends LinearRegressionEvaluation {
                 LOGGER.log(Level.SEVERE, ErrorMessages.INTERRUPTED_EXCEPTION_TAKE, ex);
             }
         }
-
+        
         long stopTime = System.currentTimeMillis();
         long elapsedTime = stopTime - startTime;
         //TODO: push time to a csv file

@@ -9,7 +9,9 @@
             <file>file:/home/anisha/lynx/lynx/src/Model/LinearRegressionTraining.java</file>
             <file>file:/home/anisha/lynx/lynx/src/Utility/Logging.java</file>
             <file>file:/home/anisha/lynx/lynx/src/Party/Party.java</file>
+            <file>file:/home/anisha/lynx/lynx/src/Model/LinearRegressionEvaluationDAMF.java</file>
             <file>file:/home/anisha/lynx/lynx/src/Protocol/MatrixInversion.java</file>
+            <file>file:/home/anisha/lynx/lynx/src/Model/LinearRegressionEvaluation.java</file>
             <file>file:/home/anisha/lynx/lynx/src/Utility/FileIO.java</file>
             <file>file:/home/anisha/lynx/lynx/src/Client/LinearRegressionComputeRMSE.java</file>
         </group>

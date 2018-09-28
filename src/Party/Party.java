@@ -8,6 +8,7 @@ package Party;
 import Communication.Message;
 import Model.DecisionTreeScoring;
 import Model.LinearRegressionEvaluation;
+import Model.LinearRegressionEvaluationDAMF;
 import Model.LinearRegressionTraining;
 import Utility.Connection;
 import Model.TestModel;
@@ -239,6 +240,18 @@ public class Party {
                 regressionTrainingModel.trainModel();
                 break;
 
+            case 4:
+                // LR Evaluation
+                LinearRegressionEvaluationDAMF regressionEvaluationModelDAMF
+                        = new LinearRegressionEvaluationDAMF(tiShares.bigIntShares,
+                                tiShares.truncationPair,
+                                asymmetricBit, pidMapper, senderQueue,
+                                partyId, partyCount, args);
+
+                regressionEvaluationModelDAMF.predictValues();
+                break;
+
+            
             default:
                 // test model
                 TestModel testModel = new TestModel(tiShares.binaryShares,
