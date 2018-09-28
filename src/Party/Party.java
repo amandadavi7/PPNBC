@@ -196,7 +196,8 @@ public class Party {
         socketFutureList.add(partySocketEs.submit(partyClient));
 
         System.out.println("Server thread starting");
-        PartyServer partyServer = new PartyServer(clientSocket, senderQueue, oStream);
+        PartyServer partyServer = new PartyServer(clientSocket, senderQueue, oStream, 
+                partyId);
         socketFutureList.add(partySocketEs.submit(partyServer));
     }
 

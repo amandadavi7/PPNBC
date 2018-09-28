@@ -17,9 +17,9 @@ import java.util.concurrent.LinkedBlockingQueue;
  */
 public class BaQueueHandler implements Runnable {
 
-    BlockingQueue<BaMessagePacket> receiverQueue;
+    BlockingQueue<Message> receiverQueue;
     ConcurrentHashMap<Integer, BlockingQueue<Message>> senderQueues;
-    
+
     int partyCount;
 
     /**
@@ -29,7 +29,7 @@ public class BaQueueHandler implements Runnable {
      * @param receiverQueue
      * @param senderQueues
      */
-    BaQueueHandler(int n, BlockingQueue<BaMessagePacket> receiverQueue,
+    BaQueueHandler(int n, BlockingQueue<Message> receiverQueue,
             ConcurrentHashMap<Integer, BlockingQueue<Message>> senderQueues) {
         this.partyCount = n;
         this.receiverQueue = receiverQueue;
@@ -42,17 +42,27 @@ public class BaQueueHandler implements Runnable {
      */
     @Override
     public void run() {
-        BaMessagePacket msg;
+        Message msg;
         while (!(Thread.currentThread().isInterrupted())) {
             try {
                 msg = receiverQueue.take();
-                int msgIndex = msg.clientId;
-                for (int i = 0; i < partyCount; i++) {
-                    if (i != msgIndex) {
-                        senderQueues.putIfAbsent(i, new LinkedBlockingQueue<>());
-                        senderQueues.get(i).put(msg.message);
+                int msgIndex = msg.getClientId();
+                // check for unicast here
+
+                if (msg.isUnicast()) {
+                    // send the message to the party holding asymmetric bit
+                    
+                } else {
+                    // broadcast the message to all parties
+                    // TODO change this to party indexes
+                    for (int i = 0; i < partyCount; i++) {
+                        if (i != msgIndex) {
+                            senderQueues.putIfAbsent(i, new LinkedBlockingQueue<>());
+                            senderQueues.get(i).put(msg);
+                        }
                     }
                 }
+
             } catch (InterruptedException ex) {
                 break;
             }

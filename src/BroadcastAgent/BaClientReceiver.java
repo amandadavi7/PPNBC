@@ -25,7 +25,7 @@ public class BaClientReceiver implements Callable<Boolean> {
 
     Socket clientSocket;
     
-    BlockingQueue<BaMessagePacket> receiverQueue;
+    BlockingQueue<Message> receiverQueue;
     ObjectInputStream iStream = null;
     
     int clientId, totalClients;
@@ -38,7 +38,7 @@ public class BaClientReceiver implements Callable<Boolean> {
      * @param queue
      */
     BaClientReceiver(Socket socket, ObjectInputStream iStream,
-            BlockingQueue<BaMessagePacket> receiverQueue, int clientId,
+            BlockingQueue<Message> receiverQueue, int clientId,
             int totalCount) {
         this.clientSocket = socket;
         this.receiverQueue = receiverQueue;
@@ -57,7 +57,7 @@ public class BaClientReceiver implements Callable<Boolean> {
         while (!(Thread.currentThread().isInterrupted())) {
             try {
                 Message msg = (Message) iStream.readObject();
-                receiverQueue.add(new BaMessagePacket(msg, clientId));
+                receiverQueue.add(msg);
             } catch (IOException ex) {
                 if (counter.incrementAndGet() >= totalClients) {
                     break;

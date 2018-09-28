@@ -10,6 +10,8 @@ import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.concurrent.BlockingQueue;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -20,6 +22,7 @@ public class PartyServer implements Runnable {
     Socket socket;
     BlockingQueue<Message> senderQueue;
     ObjectOutputStream oStream;
+    int clientId;
 
     /**
      * Constructor
@@ -30,10 +33,11 @@ public class PartyServer implements Runnable {
      * @param oStream
      */
     public PartyServer(Socket socket, BlockingQueue<Message> queue,
-            ObjectOutputStream oStream) {
+            ObjectOutputStream oStream, int clientId) {
         this.socket = socket;
         this.senderQueue = queue;
         this.oStream = oStream;
+        this.clientId = clientId;
     }
 
     /**
@@ -43,6 +47,13 @@ public class PartyServer implements Runnable {
     @Override
     public void run() {
 
+        try {
+            // first send the id for the BA to store
+            oStream.writeInt(clientId);
+        } catch (IOException ex) {
+            Logger.getLogger(PartyServer.class.getName()).log(Level.SEVERE, null, ex);
+            return;
+        }
         while (!(Thread.currentThread().isInterrupted())) {
             try {
                 Message msg = senderQueue.take();
