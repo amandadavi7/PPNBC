@@ -246,7 +246,7 @@ public class Party {
                 regressionTrainingModel.trainModel();
                 break;
                 
-            case 4:
+            case "KNN":
                 // KNN
                 
                 KNN knnModel = new KNN(asymmetricBit, pidMapper, senderQueue, partyId, 
