@@ -14,6 +14,7 @@ import Utility.Constants;
 import Utility.FileIO;
 import Utility.Logging;
 import Utility.LocalMath;
+import Utility.ThreadPoolManager;
 import java.math.BigInteger;
 import java.util.LinkedList;
 import java.util.List;
@@ -109,6 +110,8 @@ public class LinearRegressionTraining extends Model {
             Logger.getLogger(LinearRegressionTraining.class.getName())
                     .log(Level.SEVERE, null, ex);
         }
+        
+        ThreadPoolManager.shutDownThreadService();
         
         long stopTime = System.currentTimeMillis();
         long elapsedTime = stopTime - startTime;
