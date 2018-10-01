@@ -13,7 +13,9 @@ import TrustedInitializer.TruncationPair;
 import Utility.Constants;
 import Utility.FileIO;
 import Utility.Logging;
-import Utility.ThreadPoolManager;
+import ThreadManagement.ThreadExecutionCallBack;
+import ThreadManagement.ThreadPoolManager;
+import ThreadManagement.ThreadPoolManager1;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -93,11 +95,10 @@ public class LinearRegressionEvaluation extends Model {
      * y[i] = x[i].beta
      */
     public void computeDotProduct() {
-        ExecutorService es = ThreadPoolManager.getInstance();
-        //ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
-        List<Future<BigInteger>> taskList = new ArrayList<>();
-
+        ThreadPoolManager threadPoolManager = ThreadPoolManager.getInstance();
+        
         int tiStartIndex = 0;
+        final BigInteger[] dotProductResult = new BigInteger[testCases];
         for (int i = 0; i < testCases; i++) {
 
             DotProductReal DPModule = new DotProductReal(x.get(i),
@@ -107,25 +108,22 @@ public class LinearRegressionEvaluation extends Model {
                     new LinkedList<>(protocolIdQueue),
                     clientId, prime, i, asymmetricBit, partyCount);
 
-            Future<BigInteger> DPTask = es.submit(DPModule);
-            taskList.add(DPTask);
-            tiStartIndex += x.get(i).size();
-        }
-
-        
-
-        BigInteger[] dotProductResult = new BigInteger[testCases];
-        for (int i = 0; i < testCases; i++) {
-            Future<BigInteger> dWorkerResponse = taskList.get(i);
+            //final int j = i;
+            
             try {
-                BigInteger result = dWorkerResponse.get();
-                dotProductResult[i] = result;
-                //System.out.println(" #:" + i+ ", result:"+ result);
-            } catch (InterruptedException ex) {
+                //            threadPoolManager.submitThread(DPModule, (Future future) -> {
+//                try {
+//                    dotProductResult[j] = (BigInteger) future.get();
+//                } catch (InterruptedException | ExecutionException ex) {
+//                    Logger.getLogger(LinearRegressionEvaluation.class.getName()).log(Level.SEVERE, null, ex);
+//                }
+//            });
+
+                dotProductResult[i] = (BigInteger) threadPoolManager.submit(DPModule, 1).get();
+            } catch (InterruptedException | ExecutionException ex) {
                 Logger.getLogger(LinearRegressionEvaluation.class.getName()).log(Level.SEVERE, null, ex);
-            } catch (ExecutionException ex) {
-                Logger.getLogger(LinearRegressionEvaluation.class.getName()).log(Level.SEVERE, null, ex);
-            }
+            } 
+            tiStartIndex += x.get(i).size();
         }
 
         BatchTruncation truncationModule = new BatchTruncation(dotProductResult,
@@ -133,16 +131,12 @@ public class LinearRegressionEvaluation extends Model {
                 commonSender,
                 new LinkedList<>(protocolIdQueue),
                 clientId, prime, testCases, asymmetricBit, partyCount);
-        Future<BigInteger[]> truncationTask = es.submit(truncationModule);
-
-        try {
-            y = truncationTask.get();
-        } catch (InterruptedException | ExecutionException ex) {
-            Logger.getLogger(LinearRegressionTraining.class.getName())
-                    .log(Level.SEVERE, null, ex);
-        }
         
-        //es.shutdown();
+        try {
+            y = truncationModule.call();
+        } catch (Exception ex) {
+            Logger.getLogger(LinearRegressionEvaluation.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 
     private void initalizeModelVariables(String[] args) {
