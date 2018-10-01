@@ -14,7 +14,7 @@ import java.util.concurrent.Executors;
  */
 public class ThreadPoolManager {
     private static ExecutorService priorityJobPoolExecutor = 
-            Executors.newFixedThreadPool(Constants.THREAD_COUNT);
+            Executors.newFixedThreadPool(30);
     
     private ThreadPoolManager() {}
     

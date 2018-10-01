@@ -19,6 +19,7 @@ import TrustedInitializer.TripleInteger;
 import Utility.Constants;
 import Utility.FileIO;
 import Utility.Logging;
+import Utility.ThreadPoolManager;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -48,6 +49,7 @@ public class KNN extends Model {
     int ccTICount, prime, bitLength, comparisonTICount, bitDTICount;
     List<TripleInteger> decimalTiShares;
     List<TripleByte> binaryTiShares;
+    ExecutorService es;
 
     public KNN(int asymmetricBit, ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper, 
             BlockingQueue<Message> senderQueue, int clientId, List<TripleByte> binaryTriples,
@@ -72,6 +74,7 @@ public class KNN extends Model {
         this.decimalTiIndex = 0;
         this.binaryTiIndex = 0;
 
+        es = ThreadPoolManager.getInstance();
         KjaccardDistances = new ArrayList<>();
     }
 
@@ -112,7 +115,8 @@ public class KNN extends Model {
     }
 
     Integer[] getKComparisonResults(int index) {
-        ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
+        //ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
+        
         List<Future<Integer>> taskList = new ArrayList<>();
         //Do all the k comparisons with the training share
         Integer[] comparisonResults = new Integer[K];
@@ -134,7 +138,7 @@ public class KNN extends Model {
             taskList.add(ccTask);
         }
 
-        es.shutdown();
+        //es.shutdown();
 
         for (int i = 0; i < K; i++) {
             Future<Integer> ccTask = taskList.get(i);
@@ -182,7 +186,8 @@ public class KNN extends Model {
         comparisonMultiplications[0] = Math.floorMod(asymmetricBit - comparisonResults[0], 
                 Constants.binaryPrime);
         
-        ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
+        //ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
+        
         List<Future<Integer>> taskList = new ArrayList<>();
         
         for (int i = 1; i < K; i++) {
@@ -279,7 +284,7 @@ public class KNN extends Model {
             //decimalTiIndex += 9;
         }
 
-        es.shutdown();
+        //es.shutdown();
 
         // update positions from (kth to 1st) position, as kth position is independent of the rest
         for (int i = K - 1; i >= 0; i--) {
@@ -310,7 +315,7 @@ public class KNN extends Model {
         // The number of zeroCounts is just K - oneCount
         int zeroCount = Math.floorMod(asymmetricBit * K - classLabelSum, prime);
 
-        ExecutorService es = Executors.newFixedThreadPool(2);
+        //ExecutorService es = Executors.newFixedThreadPool(2);
 
         //Do a comparison between oneCount and zeroCount
         BitDecomposition bitDModuleOne = new BitDecomposition(oneCount,
@@ -347,22 +352,27 @@ public class KNN extends Model {
                 new LinkedList<>(protocolIdQueue), clientId, Constants.binaryPrime, 
                 pid, partyCount);
 
-        Future<Integer> resultTask = es.submit(compClassLabels);
+        try {
+            predictedClassLabel = compClassLabels.call();
+        } catch (Exception ex) {
+            Logger.getLogger(KNN.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        //Future<Integer> resultTask = es.submit(compClassLabels);
         pid++;
         //binaryTiIndex += comparisonTiCount;
-        es.shutdown();
-        try {
+        //es.shutdown();
+        /*try {
             predictedClassLabel = resultTask.get();
         } catch (InterruptedException | ExecutionException ex) {
             Logger.getLogger(KNN.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        }*/
 
         return predictedClassLabel;
     }
 
     public int KNN_Model() {
         //Jaccard Computation for all the training shares
-        ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
+        //ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
         long startTime = System.currentTimeMillis();
         
         int decTICount = attrLength * 2 * trainingSharesCount;
@@ -374,7 +384,7 @@ public class KNN extends Model {
         Future<List<List<Integer>>> jdTask = es.submit(jdModule);
         pid++;
         //decimalTiIndex += decTICount;
-        es.shutdown();
+        //es.shutdown();
         try {
             jaccardDistances = jdTask.get();
         } catch (InterruptedException | ExecutionException ex) {
@@ -394,13 +404,13 @@ public class KNN extends Model {
 
         //Sorting the first K numbers
         System.out.println("KjaccardDistances before:" + KjaccardDistances);
-        es = Executors.newSingleThreadExecutor();
+        //es = Executors.newSingleThreadExecutor();
         BatcherSortKNN sortModule = new BatcherSortKNN(KjaccardDistances,
                 asymmetricBit, decimalTiShares, binaryTiShares,
                 pidMapper, commonSender, clientId, prime, pid,
                 new LinkedList<>(protocolIdQueue), partyCount, K, bitLength);
         Future<List<List<Integer>>> sortTask = es.submit(sortModule);
-        es.shutdown();
+        //es.shutdown();
         
         try {
             KjaccardDistances = sortTask.get();
@@ -424,7 +434,7 @@ public class KNN extends Model {
 
         long stopTime = System.currentTimeMillis();
         long elapsedTime = stopTime - startTime;
-
+        ThreadPoolManager.shutDownThreadService();
         System.out.println("Label:" + predictedLabel);
         System.out.println("Time taken:" + elapsedTime + "ms");
         return predictedLabel;
