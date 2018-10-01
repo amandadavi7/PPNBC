@@ -90,6 +90,49 @@ public class Comparison extends CompositeProtocol implements Callable<Integer> {
         multiplicationE = new int[bitLength];
 
     }
+    
+    /**
+     * Constructor
+     *
+     * A comparison of two numbers with bit length L requires 2(L) + (L)(L-1)/2
+     * tiShares
+     *
+     * @param x List of bits of shares of x
+     * @param y List of bits of shares of y
+     * @param tiShares
+     * @param asymmetricBit [[1]] with the Party
+     * @param pidMapper
+     * @param senderQueue
+     * @param protocolIdQueue
+     * @param clientId
+     * @param prime
+     * @param protocolID
+     * @param partyCount
+     * @param lessThanFlag
+     */
+    public Comparison(List<Integer> x, List<Integer> y,
+            List<TripleByte> tiShares, int asymmetricBit, 
+            ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper,
+            BlockingQueue<Message> senderQueue, Queue<Integer> protocolIdQueue,
+            int clientId, int prime, int protocolID, int partyCount, boolean lessThanFlag) {
+
+        super(protocolID, pidMapper, senderQueue, protocolIdQueue, clientId,
+                asymmetricBit, partyCount);
+        if(lessThanFlag) {
+            this.x = x;
+            this.y = y;
+        }
+        this.tiShares = tiShares;
+        this.prime = prime;
+
+        tiStartIndex = bitLength;
+        bitLength = Math.max(x.size(), y.size());
+        eShares = new int[bitLength];
+        dShares = new int[bitLength];
+        cShares = new int[bitLength];
+        multiplicationE = new int[bitLength];
+
+    }
 
     /**
      * Waits for the shares of (x-u) and (y-v), computes the product and returns

@@ -6,14 +6,12 @@
 package Model;
 
 import Communication.Message;
-import Protocol.Utility.BatcherSortKNN;
 import Protocol.Utility.JaccardDistance;
 import TrustedInitializer.TripleByte;
 import TrustedInitializer.TripleInteger;
 import Utility.FileIO;
 import Utility.Logging;
 import Utility.ThreadPoolManager;
-import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
@@ -131,7 +129,8 @@ public class KNNBinarySearch extends Model {
         }
 
         //System.out.println("jaccarddistances:" + jaccardDistances);
-
+        
+        
         
         long stopTime = System.currentTimeMillis();
         long elapsedTime = stopTime - startTime;
