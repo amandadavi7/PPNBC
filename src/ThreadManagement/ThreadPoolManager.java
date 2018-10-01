@@ -24,7 +24,8 @@ public class ThreadPoolManager extends ThreadPoolExecutor {
             new PriorityBlockingQueue<Runnable>(Constants.THREAD_COUNT);
     
     private static final ThreadPoolManager THREAD_POOL_MANAGER = new 
-        ThreadPoolManager(1024, 2048, 1000L, TimeUnit.MILLISECONDS, THREAD_POOL_QUEUE);
+        ThreadPoolManager(Constants.THREAD_COUNT, Constants.THREAD_COUNT, 1000L, 
+                TimeUnit.MILLISECONDS, THREAD_POOL_QUEUE);
     
     private ThreadPoolManager(int corePoolSize, int maximumPoolSize,
             long keepAliveTime, TimeUnit unit, BlockingQueue<Runnable> workQueue) {

@@ -30,6 +30,8 @@ public class BatchMultiplicationByte extends BatchMultiplication
     List<TripleByte> tiShares;
 
     int prime;
+    
+    public final static int PRIORITY = 0;
 
     /**
      * Constructor
