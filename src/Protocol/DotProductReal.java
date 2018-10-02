@@ -7,9 +7,11 @@ package Protocol;
 
 import Communication.Message;
 import Protocol.Utility.BatchMultiplicationReal;
+import ThreadManagement.ThreadPoolManager;
 import TrustedInitializer.TripleReal;
 import Utility.Constants;
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
@@ -36,6 +38,8 @@ public class DotProductReal extends DotProduct implements Callable<BigInteger> {
     List<BigInteger> xShares, yShares;
     BigInteger prime;
     List<TripleReal> tiShares;
+    
+    public final static int PRIORITY = 1;
     
     /**
      * Constructor for DotProduct on Real Numbers
@@ -82,8 +86,10 @@ public class DotProductReal extends DotProduct implements Callable<BigInteger> {
         BigInteger dotProduct = BigInteger.ZERO;
         int vectorLength = xShares.size();
         
-        ExecutorService mults = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
-        ExecutorCompletionService<BigInteger[]> multCompletionService = new ExecutorCompletionService<>(mults);
+        ThreadPoolManager threadPoolManager = ThreadPoolManager.getInstance();
+        //ExecutorService mults = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
+        //ExecutorCompletionService<BigInteger[]> multCompletionService = new ExecutorCompletionService<>(threadPoolManager);
+        List<Future<BigInteger[]>> taskList = new LinkedList<>();
 
         int i = 0;
         int startpid = 0;
@@ -91,21 +97,27 @@ public class DotProductReal extends DotProduct implements Callable<BigInteger> {
         do {
             int toIndex = Math.min(i + Constants.BATCH_SIZE, vectorLength);
 
-            multCompletionService.submit(new BatchMultiplicationReal(xShares.subList(i, toIndex),
+            BatchMultiplicationReal batchMultiplicationReal = new BatchMultiplicationReal(xShares.subList(i, toIndex),
                     yShares.subList(i, toIndex), tiShares.subList(i, toIndex), pidMapper, senderQueue,
                     new LinkedList<>(protocolIdQueue),
-                    clientID, prime, startpid, asymmetricBit, protocolId, partyCount));
+                    clientID, prime, startpid, asymmetricBit, protocolId, partyCount);
+                    
+//            multCompletionService.submit(new BatchMultiplicationReal(xShares.subList(i, toIndex),
+//                    yShares.subList(i, toIndex), tiShares.subList(i, toIndex), pidMapper, senderQueue,
+//                    new LinkedList<>(protocolIdQueue),
+//                    clientID, prime, startpid, asymmetricBit, protocolId, partyCount));
+            taskList.add(threadPoolManager.submit(batchMultiplicationReal, batchMultiplicationReal.PRIORITY));
 
             startpid++;
             i = toIndex;
 
         } while (i < vectorLength);
 
-        mults.shutdown();
+        //mults.shutdown();
 
         for (i = 0; i < startpid; i++) {
             try {
-                Future<BigInteger[]> prod = multCompletionService.take();
+                Future<BigInteger[]> prod = taskList.get(i);
                 BigInteger[] products = prod.get();
                 for (BigInteger j : products) {
                     dotProduct = dotProduct.add(j);

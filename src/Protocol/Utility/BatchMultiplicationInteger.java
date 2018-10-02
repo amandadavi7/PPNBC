@@ -30,6 +30,8 @@ public class BatchMultiplicationInteger extends BatchMultiplication
     List<TripleInteger> tiShares;
 
     int prime;
+    
+    public final static int PRIORITY = 0;
 
     /**
      * Constructor

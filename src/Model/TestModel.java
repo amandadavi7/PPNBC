@@ -16,6 +16,7 @@ import Protocol.OIS;
 import Protocol.OR_XOR;
 import Protocol.Utility.BatchTruncation;
 import Protocol.Utility.MatrixMultiplication;
+import ThreadManagement.ThreadPoolManager;
 import TrustedInitializer.TripleByte;
 import TrustedInitializer.TripleInteger;
 import TrustedInitializer.TripleReal;
@@ -248,7 +249,7 @@ public class TestModel extends Model {
         int totalCases = x.size();
         // totalcases number of protocols are submitted to the executorservice
         for (int i = 0; i < totalCases; i++) {
-
+            
             Comparison comparisonModule = new Comparison(x.get(i), y.get(i),
                     binaryTiShares, asymmetricBit, pidMapper, commonSender,
                     new LinkedList<>(protocolIdQueue), clientId, Constants.binaryPrime, i, partyCount);
@@ -550,7 +551,8 @@ public class TestModel extends Model {
      *
      */
     public void callDotProduct() {
-        ExecutorService es = Executors.newFixedThreadPool(100);
+        ThreadPoolManager threadPoolManager = ThreadPoolManager.getInstance();
+        //ExecutorService es = Executors.newFixedThreadPool(100);
         List<Future<Integer>> taskList = new ArrayList<>();
 
         long startTime = System.currentTimeMillis();
@@ -561,11 +563,11 @@ public class TestModel extends Model {
                     y.get(i), decimalTiShares, pidMapper, commonSender,
                     new LinkedList<>(protocolIdQueue), clientId, Constants.prime, i, asymmetricBit, partyCount);
 
-            Future<Integer> DPTask = es.submit(DPModule);
-            taskList.add(DPTask);
+            //Future<Integer> DPTask = es.submit(DPModule);
+            taskList.add(threadPoolManager.submit(DPModule, 1));
         }
 
-        es.shutdown();
+        //es.shutdown();
 
         for (int i = 0; i < totalCases; i++) {
             Future<Integer> dWorkerResponse = taskList.get(i);
@@ -576,6 +578,8 @@ public class TestModel extends Model {
                 Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
+        
+        threadPoolManager.shutDownThreadService();
 
         long stopTime = System.currentTimeMillis();
         long elapsedTime = stopTime - startTime;

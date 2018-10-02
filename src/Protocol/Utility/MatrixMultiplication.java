@@ -8,6 +8,7 @@ package Protocol.Utility;
 import Communication.Message;
 import Protocol.CompositeProtocol;
 import Protocol.DotProductReal;
+import ThreadManagement.ThreadPoolManager;
 import TrustedInitializer.TripleReal;
 import TrustedInitializer.TruncationPair;
 import Utility.Constants;
@@ -44,6 +45,8 @@ public class MatrixMultiplication extends CompositeProtocol implements
     BigInteger prime;
     int globalProtocolId;
     int n, m, l;
+    
+    
 
     /**
      * Constructor
@@ -108,13 +111,15 @@ public class MatrixMultiplication extends CompositeProtocol implements
 
         int tiRealStartIndex = 0;
 
-        //ExecutorService es = ThreadPoolManager1.getInstance();
-        ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
+        ThreadPoolManager threadPoolManager = ThreadPoolManager.getInstance();
+        //ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
         List<Future<BigInteger>> taskList = new ArrayList<>(n * l);
 
         for (int i = 0; i < n; i++) {
             List<BigInteger> row = Arrays.asList(a[i]);
             for (int j = 0; j < l; j++) {
+                Logger.getLogger(MatrixMultiplication.class.getName())
+                            .log(Level.INFO, "Submitted dot product");
                 DotProductReal DPModule = new DotProductReal(row,
                         bT.get(j), tiRealShares.subList(
                         tiRealStartIndex, tiRealStartIndex + m),
@@ -122,8 +127,8 @@ public class MatrixMultiplication extends CompositeProtocol implements
                         new LinkedList<>(protocolIdQueue),
                         clientID, prime, globalProtocolId++, asymmetricBit, partyCount);
 
-                Future<BigInteger> DPTask = es.submit(DPModule);
-                taskList.add(DPTask);
+                //Future<BigInteger> DPTask = es.submit(DPModule);
+                taskList.add(threadPoolManager.submit(DPModule, DPModule.PRIORITY));
                 //TODO: uncomment this to avoid reusing the shares 
                 //tiRealStartIndex += m;
 
@@ -156,8 +161,8 @@ public class MatrixMultiplication extends CompositeProtocol implements
                     pidMapper, senderQueue, 
                     new LinkedList<>(protocolIdQueue),
                     clientID, prime, globalProtocolId++, asymmetricBit, partyCount);
-            Future<BigInteger[]> truncationTask = es.submit(truncationModule);
-            taskListTruncation.add(truncationTask);
+            //Future<BigInteger[]> truncationTask = es.submit(truncationModule);
+            taskListTruncation.add(threadPoolManager.submit(truncationModule, truncationModule.PRIORITY));
             //TODO: uncomment this to avoid reusing the shares 
             //tiTruncationStartIndex += c2f[i].length;
         }
@@ -173,7 +178,7 @@ public class MatrixMultiplication extends CompositeProtocol implements
 
         }
 
-        es.shutdown();
+        //es.shutdown();
         
         return c;
 

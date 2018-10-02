@@ -31,6 +31,8 @@ public class BatchMultiplicationReal extends BatchMultiplication
     List<TripleReal> tiShares;
 
     BigInteger prime;
+    
+    public final static int PRIORITY = 0;
 
     /**
      * Constructor

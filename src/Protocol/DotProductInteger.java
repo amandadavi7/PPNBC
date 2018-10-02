@@ -7,8 +7,10 @@ package Protocol;
 
 import Communication.Message;
 import Protocol.Utility.BatchMultiplicationInteger;
+import ThreadManagement.ThreadPoolManager;
 import TrustedInitializer.TripleInteger;
 import Utility.Constants;
+import java.math.BigInteger;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
@@ -76,8 +78,10 @@ public class DotProductInteger extends DotProduct implements Callable<Integer> {
         int dotProduct = 0;
         int vectorLength = xShares.size();
         
-        ExecutorService mults = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
-        ExecutorCompletionService<Integer[]> multCompletionService = new ExecutorCompletionService<>(mults);
+        ThreadPoolManager threadPoolManager = ThreadPoolManager.getInstance();
+        List<Future<Integer[]>> taskList = new LinkedList<>();
+//        ExecutorService mults = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
+//        ExecutorCompletionService<Integer[]> multCompletionService = new ExecutorCompletionService<>(mults);
 
         int i = 0;
         int startpid = 0;
@@ -85,22 +89,28 @@ public class DotProductInteger extends DotProduct implements Callable<Integer> {
         do {
             int toIndex = Math.min(i + Constants.BATCH_SIZE, vectorLength);
 
-            System.out.println("Protocol " + protocolId + " batch " + startpid);
-            multCompletionService.submit(new BatchMultiplicationInteger(xShares.subList(i, toIndex),
+            //System.out.println("Protocol " + protocolId + " batch " + startpid);
+            BatchMultiplicationInteger batchMultiplicationInteger = new BatchMultiplicationInteger(xShares.subList(i, toIndex),
                     yShares.subList(i, toIndex), tiShares.subList(i, toIndex), 
                     pidMapper, senderQueue, new LinkedList<>(protocolIdQueue),
-                    clientID, prime, startpid, asymmetricBit, protocolId, partyCount));
+                    clientID, prime, startpid, asymmetricBit, protocolId, partyCount); 
 
+//            multCompletionService.submit(new BatchMultiplicationInteger(xShares.subList(i, toIndex),
+//                    yShares.subList(i, toIndex), tiShares.subList(i, toIndex), 
+//                    pidMapper, senderQueue, new LinkedList<>(protocolIdQueue),
+//                    clientID, prime, startpid, asymmetricBit, protocolId, partyCount));
+
+            taskList.add(threadPoolManager.submit(batchMultiplicationInteger, batchMultiplicationInteger.PRIORITY));
             startpid++;
             i = toIndex;
 
         } while (i < vectorLength);
 
-        mults.shutdown();
+        //mults.shutdown();
 
         for (i = 0; i < startpid; i++) {
             try {
-                Future<Integer[]> prod = multCompletionService.take();
+                Future<Integer[]> prod = taskList.get(i);
                 Integer[] products = prod.get();
                 for (int j : products) {
                     dotProduct += j;
@@ -111,7 +121,7 @@ public class DotProductInteger extends DotProduct implements Callable<Integer> {
         }
 
         dotProduct = Math.floorMod(dotProduct, prime);
-        System.out.println("dot product:" + dotProduct + ", protocol id:" + protocolId);
+        //System.out.println("dot product:" + dotProduct + ", protocol id:" + protocolId);
         return dotProduct;
 
     }

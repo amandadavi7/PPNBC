@@ -120,7 +120,7 @@ public class Comparison extends CompositeProtocol implements Callable<Integer> {
 
         //threadService.submit(dThread);
 
-        threadPoolManager.submit(dThread, null, PRIORITY);
+        Future dFuture = threadPoolManager.submit(dThread, null, PRIORITY);
         Runnable eThread = () -> {
             try {
                 computeMultiplicationEParallel();
@@ -133,9 +133,9 @@ public class Comparison extends CompositeProtocol implements Callable<Integer> {
         //threadService.submit(eThread);
         //threadService.shutdown();
 
-        Future future = threadPoolManager.submit(eThread, null, PRIORITY);
+        Future eFuture = threadPoolManager.submit(eThread, null, PRIORITY);
         
-        while(!future.isDone()) {
+        while(!dFuture.isDone() || !eFuture.isDone()) {
         }
         // Compute c and w sequentially when both threads end
 //        boolean threadsCompleted = threadService.awaitTermination(
@@ -218,6 +218,8 @@ public class Comparison extends CompositeProtocol implements Callable<Integer> {
             }
 
         }
+        
+        System.out.println("Comparison dShares done. partyid:"+ clientID);
     }
 
     /**
@@ -291,6 +293,8 @@ public class Comparison extends CompositeProtocol implements Callable<Integer> {
             // store the main value in the end
             multiplicationE[mainIndex--] = tempMultE.get(tempMultE.size() - 1);
         }
+        
+        System.out.println("Comparison eShares done. partyid:"+ clientID);
 
         cProcessId = startpid;
         multiplicationE[0] = 0;
@@ -355,6 +359,7 @@ public class Comparison extends CompositeProtocol implements Callable<Integer> {
 
         }
 
+        System.out.println("Comparison cShares done. partyid:"+ clientID);
         cShares[bitLength - 1] = dShares[bitLength - 1];
 
     }

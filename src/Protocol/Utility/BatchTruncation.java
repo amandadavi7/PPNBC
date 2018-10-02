@@ -36,6 +36,8 @@ public class BatchTruncation extends CompositeProtocol implements Callable<BigIn
 
     BigInteger prime;
     int batchSize;
+    
+    public final static int PRIORITY = 0;
 
     /**
      * Constructor
