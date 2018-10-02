@@ -119,8 +119,8 @@ public class Comparison extends CompositeProtocol implements Callable<Integer> {
         super(protocolID, pidMapper, senderQueue, protocolIdQueue, clientId,
                 asymmetricBit, partyCount);
         if(lessThanFlag) {
-            this.x = x;
-            this.y = y;
+            this.y = x;
+            this.x = y;
         }
         this.tiShares = tiShares;
         this.prime = prime;
