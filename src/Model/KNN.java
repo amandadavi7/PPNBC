@@ -345,9 +345,8 @@ public class KNN extends Model {
             Logger.getLogger(KNN.class.getName()).log(Level.SEVERE, null, ex);
         }
 
-        int comparisonTiCount = bitLength * 2 + (bitLength * (bitLength - 1)) / 2;
         Comparison compClassLabels = new Comparison(numOfOnePredictions, numOfZeroPredictions, 
-                binaryTiShares.subList(binaryTiIndex, binaryTiIndex + comparisonTiCount),
+                binaryTiShares.subList(binaryTiIndex, binaryTiIndex + comparisonTICount),
                 asymmetricBit, pidMapper, commonSender,
                 new LinkedList<>(protocolIdQueue), clientId, Constants.binaryPrime, 
                 pid, partyCount);
