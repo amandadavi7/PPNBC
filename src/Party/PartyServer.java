@@ -22,7 +22,7 @@ public class PartyServer implements Runnable {
     Socket socket;
     BlockingQueue<Message> senderQueue;
     ObjectOutputStream oStream;
-    int clientId;
+    int clientId, asymmetricBit;
 
     /**
      * Constructor
@@ -33,11 +33,12 @@ public class PartyServer implements Runnable {
      * @param oStream
      */
     public PartyServer(Socket socket, BlockingQueue<Message> queue,
-            ObjectOutputStream oStream, int clientId) {
+            ObjectOutputStream oStream, int clientId, int asymmetricBit) {
         this.socket = socket;
         this.senderQueue = queue;
         this.oStream = oStream;
         this.clientId = clientId;
+        this.asymmetricBit = asymmetricBit;
     }
 
     /**
@@ -50,6 +51,7 @@ public class PartyServer implements Runnable {
         try {
             // first send the id for the BA to store
             oStream.writeInt(clientId);
+            oStream.writeInt(asymmetricBit);
         } catch (IOException ex) {
             Logger.getLogger(PartyServer.class.getName()).log(Level.SEVERE, null, ex);
             return;

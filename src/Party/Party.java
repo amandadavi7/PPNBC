@@ -197,7 +197,7 @@ public class Party {
 
         System.out.println("Server thread starting");
         PartyServer partyServer = new PartyServer(clientSocket, senderQueue, oStream, 
-                partyId);
+                partyId, asymmetricBit);
         socketFutureList.add(partySocketEs.submit(partyServer));
     }
 

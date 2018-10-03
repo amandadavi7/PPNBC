@@ -21,6 +21,8 @@ public class BaQueueHandler implements Runnable {
     ConcurrentHashMap<Integer, BlockingQueue<Message>> senderQueues;
 
     int partyCount;
+    
+    int unicastReceiver;
 
     /**
      * Constructor
@@ -30,10 +32,12 @@ public class BaQueueHandler implements Runnable {
      * @param senderQueues
      */
     BaQueueHandler(int n, BlockingQueue<Message> receiverQueue,
-            ConcurrentHashMap<Integer, BlockingQueue<Message>> senderQueues) {
+            ConcurrentHashMap<Integer, BlockingQueue<Message>> senderQueues, 
+            int unicastReceiver) {
         this.partyCount = n;
         this.receiverQueue = receiverQueue;
         this.senderQueues = senderQueues;
+        this.unicastReceiver = unicastReceiver;
     }
 
     /**
@@ -48,10 +52,12 @@ public class BaQueueHandler implements Runnable {
                 msg = receiverQueue.take();
                 int msgIndex = msg.getClientId();
                 // check for unicast here
-
                 if (msg.isUnicast()) {
                     // send the message to the party holding asymmetric bit
-                    
+                    if (msg.getClientId() != unicastReceiver) {
+                            senderQueues.putIfAbsent(unicastReceiver, new LinkedBlockingQueue<>());
+                            senderQueues.get(unicastReceiver).put(msg);
+                        }
                 } else {
                     // broadcast the message to all parties
                     // TODO change this to party indexes

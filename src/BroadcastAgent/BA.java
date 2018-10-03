@@ -44,7 +44,7 @@ public class BA {
     protected static ConcurrentHashMap<Integer, BlockingQueue<Message>> senderQueues;
 
     private static int baPort, partyCount;
-    private static int clientId;
+    private static int unicastReceiver;
 
     /**
      * 
@@ -69,7 +69,7 @@ public class BA {
      * @param args command line arguments
      */
     private static void initializeVariables(String[] args) {
-        clientId = 0;
+        unicastReceiver = -1;
         baPort = -1;
         partyCount = -1;
         receiverQueue = new LinkedBlockingQueue<>();
@@ -128,6 +128,12 @@ public class BA {
                         .getInputStream());
 
                 int partyId = iStream.readInt();
+                int asymmetricBit = iStream.readInt();
+                
+                if(asymmetricBit == 1) {
+                    // flag party as unicast receiver
+                    unicastReceiver = partyId;
+                }
                 // Start Receiver and Sender thread for this client
                 BaClientReceiver receiverHandler = new BaClientReceiver(socket,
                         iStream, receiverQueue, partyId, partyCount);
@@ -155,7 +161,7 @@ public class BA {
     private static void startQueueMappingThread() {
         es = Executors.newSingleThreadExecutor();
         BaQueueHandler queueHandler = new BaQueueHandler(partyCount,
-                receiverQueue, senderQueues);
+                receiverQueue, senderQueues, unicastReceiver);
         es.submit(queueHandler);
     }
 
