@@ -19,6 +19,8 @@ import java.util.logging.Logger;
  */
 public class PartyServer implements Runnable {
 
+    private static final Logger LOGGER = Logger.getLogger(PartyServer.class.getName());
+    
     Socket socket;
     BlockingQueue<Message> senderQueue;
     ObjectOutputStream oStream;
@@ -53,7 +55,7 @@ public class PartyServer implements Runnable {
             oStream.writeInt(clientId);
             oStream.writeInt(asymmetricBit);
         } catch (IOException ex) {
-            Logger.getLogger(PartyServer.class.getName()).log(Level.SEVERE, null, ex);
+            LOGGER.log(Level.SEVERE, "Error sending clientId", ex);
             return;
         }
         while (!(Thread.currentThread().isInterrupted())) {
@@ -63,6 +65,7 @@ public class PartyServer implements Runnable {
                 oStream.reset();
                 oStream.flush();
             } catch (InterruptedException | IOException ex) {
+                LOGGER.log(Level.SEVERE, "Exception from Blocking Queue", ex);
                 break;
             }
         }
@@ -70,10 +73,10 @@ public class PartyServer implements Runnable {
         try {
             oStream.close();
         } catch (IOException ex) {
-            
+            LOGGER.log(Level.SEVERE, "Error closing stream", ex);
         }
 
-        System.out.println("Server closed");
+        LOGGER.log(Level.INFO, "Party Server Closed for client:{0}", clientId);
 
     }
 }

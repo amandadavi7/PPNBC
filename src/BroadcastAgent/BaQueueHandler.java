@@ -9,6 +9,7 @@ import Communication.Message;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -18,24 +19,26 @@ import java.util.logging.Logger;
  */
 public class BaQueueHandler implements Runnable {
 
+    private static final Logger LOGGER = Logger.getLogger(BaQueueHandler.class.getName());
+    
     BlockingQueue<Message> receiverQueue;
     ConcurrentHashMap<Integer, BlockingQueue<Message>> senderQueues;
 
     int partyCount;
-    
     int unicastReceiver;
 
     /**
      * Constructor
      *
-     * @param n
+     * @param partyCount
      * @param receiverQueue
      * @param senderQueues
+     * @param unicastReceiver
      */
-    BaQueueHandler(int n, BlockingQueue<Message> receiverQueue,
+    BaQueueHandler(int partyCount, BlockingQueue<Message> receiverQueue,
             ConcurrentHashMap<Integer, BlockingQueue<Message>> senderQueues, 
             int unicastReceiver) {
-        this.partyCount = n;
+        this.partyCount = partyCount;
         this.receiverQueue = receiverQueue;
         this.senderQueues = senderQueues;
         this.unicastReceiver = unicastReceiver;
@@ -73,6 +76,7 @@ public class BaQueueHandler implements Runnable {
                 }
 
             } catch (InterruptedException ex) {
+                LOGGER.log(Level.SEVERE, "Thread Interrupted", ex);
                 break;
             }
         }

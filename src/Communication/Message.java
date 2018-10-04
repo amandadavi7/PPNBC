@@ -40,6 +40,7 @@ public class Message implements Serializable {
      * @param value
      * @param clientId
      * @param protocolIdQueue
+     * @param isUnicast
      */
     public Message(Object value, int clientId,
             Queue<Integer> protocolIdQueue, boolean isUnicast) {

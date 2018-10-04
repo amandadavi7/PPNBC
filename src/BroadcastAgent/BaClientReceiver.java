@@ -23,6 +23,7 @@ import java.util.logging.Logger;
  */
 public class BaClientReceiver implements Callable<Boolean> {
 
+    private static final Logger LOGGER = Logger.getLogger(BaClientReceiver.class.getName());
     Socket clientSocket;
     
     BlockingQueue<Message> receiverQueue;
@@ -58,25 +59,19 @@ public class BaClientReceiver implements Callable<Boolean> {
             try {
                 Message msg = (Message) iStream.readObject();
                 receiverQueue.add(msg);
-            } catch (IOException ex) {
+            } catch (IOException | ClassNotFoundException ex) {
                 if (counter.incrementAndGet() >= totalClients) {
                     break;
                 }
-            } catch (ClassNotFoundException ex) {
-                Logger.getLogger(BaClientReceiver.class.getName())
-                        .log(Level.SEVERE, null, ex);
             } 
-
         }
 
         try {
             iStream.close();
             clientSocket.close();
         } catch (IOException ex) {
-            Logger.getLogger(BaClientReceiver.class.getName())
-                    .log(Level.SEVERE, null, ex);
+            LOGGER.log(Level.SEVERE, "Error closing socket", ex);
         }
-
         return true;
     }
 }

@@ -141,7 +141,6 @@ public class BA {
                 senderQueues.putIfAbsent(partyId, new LinkedBlockingQueue<>());
                 BaClientSender senderHandler = new BaClientSender(socket,
                         oStream, senderQueues.get(partyId));
-
                 
                 receiverFutureList.add(clientHandlerThreads.submit(receiverHandler));
                 senderFutureList.add(clientHandlerThreads.submit(senderHandler));
@@ -150,9 +149,7 @@ public class BA {
                 LOGGER.log(Level.SEVERE, "Unable to connect to party:" , ex);
                 checkAndTeardownThreads();
             }
-
-        }
-        
+        }       
     }
 
     /**
