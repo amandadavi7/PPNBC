@@ -12,7 +12,9 @@ import Utility.Constants;
 import Utility.ErrorMessages;
 import Utility.FileIO;
 import Utility.LocalMath;
+import Utility.Logging;
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.*;
@@ -20,7 +22,7 @@ import java.util.logging.*;
 
 /**
  * Run LinearRegressionEvaluation for 2 parties, n times. Add a random vector
- * <ri> to each party and send it back to the client. Also send <R> to the
+ * [[r_i]] to each party and send it back to the client. Also send [[R]] to the
  * client to subtract.
  *
  * Each party receives the shares of x and the co-efficients(beta) and computes
@@ -28,19 +30,22 @@ import java.util.logging.*;
  *
  * @author anisha
  */
-public class LinearRegressionEvaluationDAMF extends LinearRegressionEvaluation {
+public class LinearRegressionEvaluationDAMF extends Model {
 
     private static final Logger LOGGER = Logger.getLogger(LinearRegressionEvaluationDAMF.class.getName());
 
+    List<BigInteger> y;
+    BigInteger prime;
+    String outputPath;
+    int testCases;
+    
     // The random ri 
-    BigInteger[] r;
-    BigInteger[] maskedY;
+    List<BigInteger> r;
+    List<BigInteger> maskedY;
     
     /**
      * Constructor
      *
-     * @param realTriples
-     * @param truncationShares
      * @param asymmetricBit
      * @param pidMapper
      * @param senderQueue
@@ -49,65 +54,90 @@ public class LinearRegressionEvaluationDAMF extends LinearRegressionEvaluation {
      * @param args
      *
      */
-    public LinearRegressionEvaluationDAMF(List<TripleReal> realTriples,
-            List<TruncationPair> truncationShares,
-            int asymmetricBit,
+    public LinearRegressionEvaluationDAMF(int asymmetricBit,
             ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper,
             BlockingQueue<Message> senderQueue,
             int clientId,
             int partyCount, String[] args) {
 
-        super(realTriples,
-                truncationShares, asymmetricBit, pidMapper, senderQueue,
-                clientId, partyCount, args);
+        super(pidMapper, senderQueue, clientId, asymmetricBit, partyCount);
+        
+        prime = BigInteger.valueOf(2).pow(Constants.INTEGER_PRECISION
+                + 2 * Constants.DECIMAL_PRECISION + 1).nextProbablePrime();  //Zq must be a prime field
+
+        initalizeModelVariables(args);
 
     }
 
     /**
      * Compute shares of the prediction for each entry of the dataset:x
      */
-    @Override
     public void predictValues() {
 
         long startTime = System.currentTimeMillis();
-        super.predictValues();
-
+        
         // generate ri vector
         java.util.Random rand = new java.util.Random();
-        r = new BigInteger[testCases];
+        r = new ArrayList<>(testCases);
         for (int i = 0; i < testCases; i++) {
-            r[i] = new BigInteger(Constants.INTEGER_PRECISION, rand);
+            r.add(new BigInteger(Constants.INTEGER_PRECISION, rand));
         }
 
         // local multiplication
         maskedY = LocalMath.hadamardMultiplication(y, r, prime);
         // Broadcast random ri
         Message senderMessage = new Message(r,
-                clientId, protocolIdQueue);
+                clientId, protocolIdQueue, true);
         try {
             commonSender.put(senderMessage);
         } catch (InterruptedException ex) {
             LOGGER.log(Level.SEVERE, ErrorMessages.INTERRUPTED_EXCEPTION_PUT, ex);
         }
 
-        for (int i = 0; i < partyCount - 1; i++) {
-            try {
-                Message receivedMessage = pidMapper.get(protocolIdQueue).take();
-                BigInteger[] otherPartyR = (BigInteger[]) receivedMessage.getValue();
-                for (int j = 0; j < testCases; j++) {
-                    r[j] = r[j].add(otherPartyR[j]).mod(prime);
+        if (asymmetricBit == 1) {
+            for (int i = 0; i < partyCount - 1; i++) {
+                try {
+                    Message receivedMessage = pidMapper.get(protocolIdQueue).take();
+                    BigInteger[] otherPartyR = (BigInteger[]) receivedMessage.getValue();
+                    for (int j = 0; j < testCases; j++) {
+                        r.set(j, r.get(j).add(otherPartyR[j]).mod(prime));
+                    }
+                } catch (InterruptedException ex) {
+                    LOGGER.log(Level.SEVERE, ErrorMessages.INTERRUPTED_EXCEPTION_TAKE, ex);
                 }
-            } catch (InterruptedException ex) {
-                LOGGER.log(Level.SEVERE, ErrorMessages.INTERRUPTED_EXCEPTION_TAKE, ex);
             }
         }
-        
+
         long stopTime = System.currentTimeMillis();
         long elapsedTime = stopTime - startTime;
         //TODO: push time to a csv file
         LOGGER.log(Level.INFO, "Avg time duration:{0} for partyId:{1}", new Object[]{elapsedTime, clientId});
         FileIO.writeToCSV(maskedY, outputPath, "maskedY", clientId);
-        FileIO.writeToCSV(r, outputPath, "r", clientId);
+        if(asymmetricBit == 1) {
+            FileIO.writeToCSV(r, outputPath, "R", clientId);
+        }
     }
+    
+    private void initalizeModelVariables(String[] args) {
+        for (String arg : args) {
+            String[] currInput = arg.split("=");
+            if (currInput.length < 2) {
+                Logging.partyUsage();
+                System.exit(0);
+            }
+            String command = currInput[0];
+            String value = currInput[1];
 
+            switch (command) {
+                case "yCsv":
+                    y = FileIO.loadListFromFile(value);
+                    break;
+                case "output":
+                    outputPath = value;
+                    break;
+
+            }
+        }
+        testCases = y.size();
+    }
 }

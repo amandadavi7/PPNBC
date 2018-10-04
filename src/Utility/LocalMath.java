@@ -8,6 +8,8 @@ package Utility;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.RoundingMode;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Local computations
@@ -96,15 +98,15 @@ public class LocalMath {
      * @param prime
      * @return 
      */
-    public static BigInteger[] hadamardMultiplication(BigInteger[] a,
-            BigInteger[] b, BigInteger prime) {
+    public static List<BigInteger> hadamardMultiplication(List<BigInteger> a,
+            List<BigInteger> b, BigInteger prime) {
 
-        int crows = a.length;
-        BigInteger[] c = new BigInteger[crows];
+        int crows = a.size();
+        List<BigInteger> c = new ArrayList<>(crows);
         
         for (int i = 0; i < crows; i++) {
             // dot product of ith row of a and jth row of b
-            c[i] = localScale(a[i].multiply(b[i]).mod(prime), prime);
+            c.add(localScale(a.get(i).multiply(b.get(i)).mod(prime), prime));
         }
         return c;
     }
