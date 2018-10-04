@@ -9,6 +9,7 @@ import Communication.Message;
 import Protocol.BitDecomposition;
 import Protocol.Comparison;
 import Protocol.MultiplicationByte;
+import Protocol.MultiplicationInteger;
 import Protocol.OR_XOR;
 import Protocol.Utility.BatchMultiplicationInteger;
 import Protocol.Utility.CrossMultiplyCompare;
@@ -119,12 +120,12 @@ public class KNNBinarySearch extends Model {
      * @param threshold
      * @return 
      */
-    public Integer[] getComparisonResults(int threshold) {
+    public Integer[] getComparisonResults(int[] thresholds) {
         Integer[] comparisonResults = new Integer[trainingSharesCount];
         List<Future<Integer>> ccTaskList = new ArrayList<>();
 
         for (int i = 0; i < trainingSharesCount; i++) {
-            CrossMultiplyCompare ccModule = new CrossMultiplyCompare(threshold, asymmetricBit,
+            CrossMultiplyCompare ccModule = new CrossMultiplyCompare(thresholds[0], thresholds[1],
                     jaccardDistances.get(i).get(1), jaccardDistances.get(i).get(0), asymmetricBit,
                     decimalTiShares, binaryTiShares, pidMapper, commonSender,
                     clientId, prime, Constants.binaryPrime, pid,
@@ -138,7 +139,7 @@ public class KNNBinarySearch extends Model {
             Future<Integer> task = ccTaskList.get(i);
             try {
                 comparisonResults[i] = task.get();
-                System.out.println(threshold+"/"+asymmetricBit+" >= " + jaccardDistances.get(i).get(1)+"/"+jaccardDistances.get(i).get(0)+" => "+comparisonResults[i]);
+                System.out.println(thresholds[0]+"/"+thresholds[1]+" >= " + jaccardDistances.get(i).get(1)+"/"+jaccardDistances.get(i).get(0)+" => "+comparisonResults[i]);
             } catch (InterruptedException | ExecutionException ex) {
                 Logger.getLogger(KNNBinarySearch.class.getName()).log(Level.SEVERE, null, ex);
             }
@@ -163,27 +164,82 @@ public class KNNBinarySearch extends Model {
         return comparisonResults;
     }
 
-    public int binarySearch(int lbound, int ubound) {
-        int threshold = asymmetricBit * (lbound + ubound) / 2;
+    public int[] getThreshold(int lbound_numerator, int lbound_denominator,
+            int ubound_numerator, int ubound_denominator) {
+        MultiplicationInteger mult1 = new MultiplicationInteger(lbound_numerator,
+                ubound_denominator, decimalTiShares.get(decimalTiIndex), pidMapper,
+                commonSender, new LinkedList<>(protocolIdQueue), clientId, prime,
+                pid, asymmetricBit, 0, partyCount);
+        pid++;
+        Future<Integer> task1 = es.submit(mult1);
+        MultiplicationInteger mult2 = new MultiplicationInteger(lbound_denominator,
+                ubound_numerator, decimalTiShares.get(decimalTiIndex), pidMapper,
+                commonSender, new LinkedList<>(protocolIdQueue), clientId, prime,
+                pid, asymmetricBit, 0, partyCount);
+        pid++;
+        Future<Integer> task2 = es.submit(mult2);
+        MultiplicationInteger mult3 = new MultiplicationInteger(lbound_denominator,
+                ubound_denominator, decimalTiShares.get(decimalTiIndex), pidMapper,
+                commonSender, new LinkedList<>(protocolIdQueue), clientId, prime,
+                pid, asymmetricBit, 0, partyCount);
+        pid++;
+        Future<Integer> task3 = es.submit(mult3);
+        
+        int[] thresholds = new int[2];
+        try {
+            thresholds[0] = Math.floorMod(task1.get() + task2.get(), prime);
+        } catch (InterruptedException | ExecutionException ex) {
+            Logger.getLogger(KNNBinarySearch.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        
+        int p = 0;
+        try {
+            p = task3.get();
+        } catch (InterruptedException | ExecutionException ex) {
+            Logger.getLogger(KNNBinarySearch.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        
+        mult3 = new MultiplicationInteger(p, 1,
+                decimalTiShares.get(decimalTiIndex), pidMapper,
+                commonSender, new LinkedList<>(protocolIdQueue), clientId, prime,
+                pid, asymmetricBit, 0, partyCount);
+        
+        thresholds[1] = (int) mult3.call();
+        return thresholds;
+    }
+    
+    public int[] binarySearch(int lbound, int ubound) {
+        int lbound_numerator = lbound;
+        int lbound_denominator = asymmetricBit;
+        int ubound_numerator = ubound;
+        int ubound_denominator = asymmetricBit;
+        int[] thresholds = null;
+        
         int stoppingBit = 0;
         //Integer[] comparisonResults = new Integer[trainingSharesCount];
         Integer[] comparisonResults;
         while (stoppingBit == 0) {
+            thresholds = getThreshold(lbound_numerator,
+                lbound_denominator, ubound_numerator, ubound_denominator);
             //compute no. of elements lesser than threshold
-            System.out.println("threshold: " + threshold + ", ubound: " + ubound + ", lbound: " + lbound);
-            comparisonResults = getComparisonResults(threshold);
+            System.out.println("threshold: " + thresholds[0] +"/"+thresholds[1]
+                    + ", ubound: " + ubound_numerator + "/" + ubound_denominator + ", lbound: "
+                    + lbound_numerator + "/" + lbound_denominator);
+            comparisonResults = getComparisonResults(thresholds);
             int elementsLesser = 0;
             System.out.println(Arrays.toString(comparisonResults));
             for (int i : comparisonResults) {
                 elementsLesser += i;
             }
+            elementsLesser %= prime;
+            System.out.println("elements lesser:" + elementsLesser);
             BitDecomposition bitD1 = new BitDecomposition(elementsLesser,
                     binaryTiShares, asymmetricBit, bitLength, pidMapper, commonSender,
-                    new LinkedList<>(protocolIdQueue), clientId, prime, pid, partyCount);
+                    new LinkedList<>(protocolIdQueue), clientId, Constants.binaryPrime, pid, partyCount);
             pid++;
-            BitDecomposition bitD2 = new BitDecomposition(K, binaryTiShares,
+            BitDecomposition bitD2 = new BitDecomposition(asymmetricBit*K, binaryTiShares,
                     asymmetricBit, bitLength, pidMapper, commonSender,
-                    new LinkedList<>(protocolIdQueue), clientId, prime, pid, partyCount);
+                    new LinkedList<>(protocolIdQueue), clientId, Constants.binaryPrime, pid, partyCount);
             pid++;
             Future<List<Integer>> x, y;
             x = es.submit(bitD1);
@@ -197,14 +253,15 @@ public class KNNBinarySearch extends Model {
                 Logger.getLogger(KNNBinarySearch.class.getName()).log(Level.SEVERE, null, ex);
             }
 
+            System.out.println("bit shares: " + lessThanBitShares + ", " + KBitShares);
             Comparison greaterThanModule = new Comparison(lessThanBitShares,
                     KBitShares, binaryTiShares, asymmetricBit, pidMapper, commonSender,
-                    new LinkedList<>(protocolIdQueue), clientId, prime, pid, partyCount);
+                    new LinkedList<>(protocolIdQueue), clientId, Constants.binaryPrime, pid, partyCount);
             pid++;
 
             Comparison lessThanModule = new Comparison(KBitShares, lessThanBitShares,
                     binaryTiShares, asymmetricBit, pidMapper, commonSender,
-                    new LinkedList<>(protocolIdQueue), clientId, prime, pid, partyCount);
+                    new LinkedList<>(protocolIdQueue), clientId, Constants.binaryPrime, pid, partyCount);
             pid++;
 
             Future<Integer> gtTask = es.submit(greaterThanModule);
@@ -217,6 +274,8 @@ public class KNNBinarySearch extends Model {
                 Logger.getLogger(KNNBinarySearch.class.getName()).log(Level.SEVERE, null, ex);
             }
 
+            System.out.println("lt: " + lt + " gt: " + gt);
+            
             MultiplicationByte multTask = new MultiplicationByte(gt, lt,
                     binaryTiShares.get(binaryTiIndex), pidMapper, commonSender,
                     new LinkedList<>(protocolIdQueue), clientId, prime, pid,
@@ -244,35 +303,47 @@ public class KNNBinarySearch extends Model {
             //Similarly, lbound = threshold if lt == 1 and lbound remains the same otherwise
             //lbound = threshold*lt + lbound*gt
             //convert primes of lt and gt from 2 to prime
-            OR_XOR xorModule = new OR_XOR(Arrays.asList(lt, gt), Arrays.asList(0, 0),
-                    decimalTiShares, asymmetricBit, 2, pidMapper, commonSender,
-                    new LinkedList<>(protocolIdQueue), clientId, prime, pid, partyCount);
+            OR_XOR xorModule;
+            if(asymmetricBit == 1) {
+                xorModule = new OR_XOR(Arrays.asList(lt, gt), Arrays.asList(0, 0),
+                        decimalTiShares, asymmetricBit, 2, pidMapper, commonSender,
+                        new LinkedList<>(protocolIdQueue), clientId, prime, pid, partyCount);
+            } else {
+                xorModule = new OR_XOR(Arrays.asList(0, 0), Arrays.asList(lt, gt),
+                        decimalTiShares, asymmetricBit, 2, pidMapper, commonSender,
+                        new LinkedList<>(protocolIdQueue), clientId, prime, pid, partyCount);
+            }
+            
             pid++;
             Integer[] xorOutputs = xorModule.call();
+            System.out.println("lt decimal: " + xorOutputs[0] + " gt decimal: " + xorOutputs[1]);
             
             BatchMultiplicationInteger bmInteger = new BatchMultiplicationInteger(
-                    Arrays.asList(xorOutputs[0], xorOutputs[1], xorOutputs[0], xorOutputs[1]),
-                    Arrays.asList(ubound, threshold, threshold, lbound), decimalTiShares,
+                    Arrays.asList(xorOutputs[0], xorOutputs[1], xorOutputs[0], xorOutputs[1], xorOutputs[0], xorOutputs[1], xorOutputs[0], xorOutputs[1]),
+                    Arrays.asList(ubound_numerator, thresholds[0], thresholds[0], lbound_numerator, ubound_denominator, thresholds[1], thresholds[1], lbound_denominator), decimalTiShares,
                     pidMapper, commonSender, new LinkedList<>(protocolIdQueue),
                     clientId, prime, pid, asymmetricBit, 0, partyCount);
             pid++;
             Integer[] bmOutputs = bmInteger.call();
 
-            lbound = Math.floorMod(bmOutputs[2] + bmOutputs[3], prime);
-            ubound = Math.floorMod(bmOutputs[0] + bmOutputs[1], prime);
-            threshold = (lbound + ubound)/2;
+            lbound_numerator = Math.floorMod(bmOutputs[2] + bmOutputs[3], prime);
+            ubound_numerator = Math.floorMod(bmOutputs[0] + bmOutputs[1], prime);
+            lbound_denominator = Math.floorMod(bmOutputs[6] + bmOutputs[7], prime);
+            ubound_denominator = Math.floorMod(bmOutputs[4] + bmOutputs[5], prime);
+            System.out.println(lbound_numerator + ", " + ubound_numerator); 
+            //threshold = (lbound + ubound)/2;
 
         }
 
-        return threshold;
+        return thresholds;
     }
 
-    public int computeMajorityClassLabel(int threshold) {
+    public int computeMajorityClassLabel(int[] thresholds) {
         // get class labels of JDs that are lesser than threshold
         int classLabelSum = 0;
         int predictedClassLabel = -1;
 
-        List<Integer> comparisonResults = Arrays.asList(getComparisonResults(threshold));
+        List<Integer> comparisonResults = Arrays.asList(getComparisonResults(thresholds));
         List<Future<Integer[]>> taskList = new ArrayList<>();
         int i=0;
         while(i<trainingSharesCount) {
@@ -369,9 +440,9 @@ public class KNNBinarySearch extends Model {
         }
 
         //System.out.println("jaccarddistances:" + jaccardDistances);
-        int threshold = binarySearch(0, prime);
+        int[] thresholds = binarySearch(0*asymmetricBit, asymmetricBit*prime/4);
 
-        int classLabel = computeMajorityClassLabel(threshold);
+        int classLabel = computeMajorityClassLabel(thresholds);
 
         long stopTime = System.currentTimeMillis();
         long elapsedTime = stopTime - startTime;
