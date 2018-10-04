@@ -33,17 +33,18 @@ import java.util.logging.Logger;
  */
 public class BA {
 
+    private static final Logger LOGGER = Logger.getLogger(BA.class.getName());
     private static ServerSocket socketServer;       // Server to broadcast messages
 
     private static ExecutorService clientHandlerThreads, es;
     private static List<Future<Boolean>> senderFutureList;
     private static List<Future<Boolean>> receiverFutureList;
 
-    private static BlockingQueue<BaMessagePacket> receiverQueue;
+    private static BlockingQueue<Message> receiverQueue;
     protected static ConcurrentHashMap<Integer, BlockingQueue<Message>> senderQueues;
 
     private static int baPort, partyCount;
-    private static int clientId;
+    private static int unicastReceiver;
 
     /**
      * 
@@ -56,8 +57,8 @@ public class BA {
         }
 
         initializeVariables(args);
-        startQueueMappingThread();
         initiateConnections();
+        startQueueMappingThread();
         checkAndTeardownThreads();
 
     }
@@ -68,7 +69,7 @@ public class BA {
      * @param args command line arguments
      */
     private static void initializeVariables(String[] args) {
-        clientId = 0;
+        unicastReceiver = -1;
         baPort = -1;
         partyCount = -1;
         receiverQueue = new LinkedBlockingQueue<>();
@@ -103,7 +104,7 @@ public class BA {
 
         socketServer = Connection.createServerSocket(baPort);
         if (socketServer == null) {
-            System.out.println("Socket creation error");
+            LOGGER.log(Level.SEVERE, "Socket creation error");
             System.exit(0);
         }
 
@@ -115,7 +116,7 @@ public class BA {
      */
     private static void initiateConnections() {
         //start n server threads to broadcast
-        System.out.println("no. of clients:" + partyCount);
+        LOGGER.log(Level.INFO, "no. of clients:{0}", partyCount);
         Socket socket = null;
 
         for (int i = 0; i < partyCount; i++) {
@@ -126,24 +127,29 @@ public class BA {
                 ObjectInputStream iStream = new ObjectInputStream(socket
                         .getInputStream());
 
+                int partyId = iStream.readInt();
+                int asymmetricBit = iStream.readInt();
+                
+                if(asymmetricBit == 1) {
+                    // flag party as unicast receiver
+                    unicastReceiver = partyId;
+                }
                 // Start Receiver and Sender thread for this client
                 BaClientReceiver receiverHandler = new BaClientReceiver(socket,
-                        iStream, receiverQueue, i, partyCount);
+                        iStream, receiverQueue, partyId, partyCount);
 
-                senderQueues.putIfAbsent(i, new LinkedBlockingQueue<>());
+                senderQueues.putIfAbsent(partyId, new LinkedBlockingQueue<>());
                 BaClientSender senderHandler = new BaClientSender(socket,
-                        oStream, senderQueues.get(i));
-
+                        oStream, senderQueues.get(partyId));
+                
                 receiverFutureList.add(clientHandlerThreads.submit(receiverHandler));
                 senderFutureList.add(clientHandlerThreads.submit(senderHandler));
                 
             } catch (IOException ex) {
-                Logger.getLogger(BA.class.getName()).log(Level.SEVERE, null, ex);
+                LOGGER.log(Level.SEVERE, "Unable to connect to party:" , ex);
                 checkAndTeardownThreads();
             }
-
-        }
-
+        }       
     }
 
     /**
@@ -152,7 +158,7 @@ public class BA {
     private static void startQueueMappingThread() {
         es = Executors.newSingleThreadExecutor();
         BaQueueHandler queueHandler = new BaQueueHandler(partyCount,
-                receiverQueue, senderQueues);
+                receiverQueue, senderQueues, unicastReceiver);
         es.submit(queueHandler);
     }
 
@@ -160,17 +166,16 @@ public class BA {
      * Teardown threads when all clients are done with the computation
      */
     private static void checkAndTeardownThreads() {
-        System.out.println("Cleaning up and shutting down");
         for (int i = 0; i < partyCount; i++) {
             Future<Boolean> recThread = receiverFutureList.get(i);
             try {
                 Boolean done = recThread.get();
                 senderFutureList.get(i).cancel(true);
             } catch (InterruptedException | ExecutionException ex) {
-                Logger.getLogger(BA.class.getName()).log(Level.SEVERE, null, ex);
+                LOGGER.log(Level.SEVERE, "Unable to close party conection:" , ex);
             }
         }
-
+        LOGGER.info("Cleaned up BA and shutting down server");
         es.shutdownNow();
         clientHandlerThreads.shutdownNow();
     }

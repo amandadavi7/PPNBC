@@ -48,7 +48,7 @@ public class Party {
     private static int baPort;
 
     private static int asymmetricBit;
-    private static int modelId;
+    private static String modelName;
     
     private static String protocolName;
     
@@ -73,6 +73,7 @@ public class Party {
         baIP = null;
         baPort = -1;
         protocolName = "";
+        modelName = "";
         
         pidMapper = new ConcurrentHashMap<>();
 
@@ -104,7 +105,7 @@ public class Party {
                     asymmetricBit = Integer.parseInt(value);
                     break;
                 case "model":
-                    modelId = Integer.parseInt(value);
+                    modelName = value;
                     break;
                 case "partyCount":
                     partyCount = Integer.parseInt(value);
@@ -193,7 +194,8 @@ public class Party {
         socketFutureList.add(partySocketEs.submit(partyClient));
 
         System.out.println("Server thread starting");
-        PartyServer partyServer = new PartyServer(clientSocket, senderQueue, oStream);
+        PartyServer partyServer = new PartyServer(clientSocket, senderQueue, oStream, 
+                partyId, asymmetricBit);
         socketFutureList.add(partySocketEs.submit(partyServer));
     }
 
@@ -209,8 +211,8 @@ public class Party {
      * @param args 
      */
     private static void callModel(String[] args) {
-        switch (modelId) {
-            case 1:
+        switch (modelName) {
+            case "DecisionTreeScoring":
                 // DT Scoring
                 DecisionTreeScoring DTree = new DecisionTreeScoring(asymmetricBit,
                         pidMapper, senderQueue, partyId, 
@@ -218,7 +220,7 @@ public class Party {
                 DTree.ScoreDecisionTree();
                 break;
 
-            case 2:
+            case "LinearRegressionEvaluation":
                 // LR Evaluation
                 LinearRegressionEvaluation regressionEvaluationModel
                         = new LinearRegressionEvaluation(tiShares.bigIntShares,
@@ -229,8 +231,8 @@ public class Party {
                 regressionEvaluationModel.predictValues();
                 break;
 
-            case 3:
-                // LR Evaluation
+            case "LinearRegressionTraining":
+                // LR Training
                 LinearRegressionTraining regressionTrainingModel
                         = new LinearRegressionTraining(tiShares.bigIntShares,
                                 tiShares.truncationPair,
