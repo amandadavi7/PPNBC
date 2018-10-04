@@ -57,8 +57,8 @@ public class BA {
         }
 
         initializeVariables(args);
-        startQueueMappingThread();
         initiateConnections();
+        startQueueMappingThread();
         checkAndTeardownThreads();
 
     }
@@ -152,7 +152,7 @@ public class BA {
             }
 
         }
-
+        
     }
 
     /**

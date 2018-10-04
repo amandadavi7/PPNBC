@@ -236,8 +236,7 @@ public class TestModel extends Model {
     }
 
     /**
-     * Call comparison protocol for n test cases in
-     * parallel
+     * Call comparison protocol for n test cases in parallel
      *
      */
     public void callComparison() {
@@ -311,6 +310,9 @@ public class TestModel extends Model {
                 break;
             case "Comparison":
                 callComparison();
+                break;
+            case "Unicast":
+                callUnicast();
                 break;
             default:
                 break;
@@ -545,8 +547,44 @@ public class TestModel extends Model {
     }
 
     /**
-     * Call dot product protocol for n test cases in
-     * parallel
+     * Test Unicast feature for n parties
+     *
+     */
+    public void callUnicast() {
+
+        Random random = new Random();
+
+        int value = random.nextInt();
+        Message senderMessage = new Message(value,
+                clientId, protocolIdQueue, true);
+        Logger.getLogger(TestModel.class.getName())
+                .log(Level.INFO, "value sent:" + value + ", client Id:" + clientId);
+
+        try {
+            commonSender.put(senderMessage);
+        } catch (InterruptedException ex) {
+            Logger.getLogger(MultiplicationInteger.class.getName())
+                    .log(Level.SEVERE, null, ex);
+        }
+
+        if (asymmetricBit == 1) {
+            for (int i = 0; i < partyCount - 1; i++) {
+                try {
+                    Message receivedMessage = pidMapper.get(protocolIdQueue).take();
+                    value = (Integer) receivedMessage.getValue();
+                    Logger.getLogger(TestModel.class.getName())
+                            .log(Level.INFO, "value recieved:" + value + ", client Id:" + clientId);
+                } catch (InterruptedException ex) {
+                    Logger.getLogger(TestModel.class.getName())
+                            .log(Level.SEVERE, null, ex);
+                }
+            }
+        }
+
+    }
+
+    /**
+     * Call dot product protocol for n test cases in parallel
      *
      */
     public void callDotProduct() {

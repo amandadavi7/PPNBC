@@ -9,6 +9,7 @@ import Communication.Message;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.logging.Logger;
 
 /**
  * Broadcast a message to all other client sender queue
@@ -54,13 +55,15 @@ public class BaQueueHandler implements Runnable {
                 // check for unicast here
                 if (msg.isUnicast()) {
                     // send the message to the party holding asymmetric bit
+                    // TODO putIfAbsent might no longer be required, since we first wait for all connections first
                     if (msg.getClientId() != unicastReceiver) {
                             senderQueues.putIfAbsent(unicastReceiver, new LinkedBlockingQueue<>());
                             senderQueues.get(unicastReceiver).put(msg);
                         }
                 } else {
                     // broadcast the message to all parties
-                    // TODO change this to party indexes
+                    // IMP: The party ids start from 0. 
+                    // TODO putIfAbsent might no longer be required, since we first wait for all connections first
                     for (int i = 0; i < partyCount; i++) {
                         if (i != msgIndex) {
                             senderQueues.putIfAbsent(i, new LinkedBlockingQueue<>());

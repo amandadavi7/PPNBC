@@ -19,7 +19,6 @@ public class Message implements Serializable {
     int clientId;
     Queue<Integer> protocolIds;
     boolean isUnicast;
-    boolean containsAsymmetricBit;
 
     /**
      * Constructor
@@ -43,12 +42,10 @@ public class Message implements Serializable {
      * @param protocolIdQueue
      */
     public Message(Object value, int clientId,
-            Queue<Integer> protocolIdQueue, boolean isUnicast, 
-            boolean containsAsymmetricBit) {
+            Queue<Integer> protocolIdQueue, boolean isUnicast) {
         this.value = value;
         this.clientId = clientId;
         this.isUnicast = isUnicast;
-        this.containsAsymmetricBit = containsAsymmetricBit;
         protocolIds = protocolIdQueue;
     }
 
