@@ -188,6 +188,23 @@ public class FileIO {
         } catch (IOException ex) {
             Logger.getLogger(FileIO.class.getName()).log(Level.SEVERE, null, ex);
         }
+    }
+    
+    public static void writeToCSV(List<BigInteger> y, String outputPath,
+            String filePrefix, int clientId) {
+        int len = y.size();
+        try {
+            try (FileWriter writer = new FileWriter(outputPath + filePrefix + 
+                    "_" + clientId + ".csv")) {
+                for (int i = 0; i < len; i++) {
+                    writer.write(y.get(i).toString());
+                    writer.write("\n");
+                }
+            }
+            System.out.println("Written all lines");
+        } catch (IOException ex) {
+            Logger.getLogger(FileIO.class.getName()).log(Level.SEVERE, null, ex);
+        }
 
     }
 
