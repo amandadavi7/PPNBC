@@ -52,8 +52,10 @@ public class PartyServer implements Runnable {
 
         try {
             // first send the id for the BA to store
+            LOGGER.log(Level.INFO, "clientID:{0},asymmetricBit:{1}", new Object[]{clientId, asymmetricBit});
             oStream.writeInt(clientId);
             oStream.writeInt(asymmetricBit);
+            oStream.flush();
         } catch (IOException ex) {
             LOGGER.log(Level.SEVERE, "Error sending clientId", ex);
             return;
@@ -65,7 +67,6 @@ public class PartyServer implements Runnable {
                 oStream.reset();
                 oStream.flush();
             } catch (InterruptedException | IOException ex) {
-                LOGGER.log(Level.SEVERE, "Exception from Blocking Queue", ex);
                 break;
             }
         }

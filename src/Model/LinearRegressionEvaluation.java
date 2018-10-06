@@ -29,6 +29,7 @@ import java.util.logging.*;
  */
 public class LinearRegressionEvaluation extends Model {
 
+    private static final Logger LOGGER = Logger.getLogger(LinearRegressionEvaluation.class.getName());
     List<List<BigInteger>> x;
     List<BigInteger> beta;
     BigInteger[] y;
@@ -80,8 +81,8 @@ public class LinearRegressionEvaluation extends Model {
         long stopTime = System.currentTimeMillis();
         long elapsedTime = stopTime - startTime;
         //TODO: push time to a csv file
-        System.out.println("Avg time duration:" + elapsedTime + " for partyId:"
-                + clientId + ", for size:" + y.length);
+        LOGGER.log(Level.INFO, "Avg time duration:{0} for partyId:{1}, "
+                + "for size:{2}", new Object[]{elapsedTime, clientId, y.length});
         
         // TODO make it async
         FileIO.writeToCSV(y, outputPath, "y", clientId);
@@ -111,19 +112,16 @@ public class LinearRegressionEvaluation extends Model {
             tiStartIndex += x.get(i).size();
         }
 
-        
-
         BigInteger[] dotProductResult = new BigInteger[testCases];
         for (int i = 0; i < testCases; i++) {
             Future<BigInteger> dWorkerResponse = taskList.get(i);
             try {
                 BigInteger result = dWorkerResponse.get();
                 dotProductResult[i] = result;
-                //System.out.println(" #:" + i+ ", result:"+ result);
             } catch (InterruptedException ex) {
-                Logger.getLogger(LinearRegressionEvaluation.class.getName()).log(Level.SEVERE, null, ex);
+                LOGGER.log(Level.SEVERE, null, ex);
             } catch (ExecutionException ex) {
-                Logger.getLogger(LinearRegressionEvaluation.class.getName()).log(Level.SEVERE, null, ex);
+                LOGGER.log(Level.SEVERE, null, ex);
             }
         }
 
@@ -137,8 +135,7 @@ public class LinearRegressionEvaluation extends Model {
         try {
             y = truncationTask.get();
         } catch (InterruptedException | ExecutionException ex) {
-            Logger.getLogger(LinearRegressionTraining.class.getName())
-                    .log(Level.SEVERE, null, ex);
+            LOGGER.log(Level.SEVERE, null, ex);
         }
         
         es.shutdown();
@@ -154,6 +151,7 @@ public class LinearRegressionEvaluation extends Model {
             String command = currInput[0];
             String value = currInput[1];
 
+            LOGGER.info(command+ ":"+value);
             switch (command) {
                 case "xCsv":
                     x = FileIO.loadMatrixFromFile(value);
@@ -167,6 +165,9 @@ public class LinearRegressionEvaluation extends Model {
 
             }
 
+        }
+        if(x == null || beta == null) {
+            System.exit(1);
         }
         testCases = x.size();
         y = new BigInteger[testCases];

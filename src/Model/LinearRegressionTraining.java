@@ -36,10 +36,10 @@ public class LinearRegressionTraining extends Model {
     static BigInteger[][] xT;
     BigInteger[][] y;
 
-    List<TruncationPair> tiTruncationPair;
-    List<TripleReal> realTriples;
+    static List<TruncationPair> tiTruncationPair;
+    static List<TripleReal> realTriples;
 
-    BigInteger prime;
+    static BigInteger prime;
     String outputPath;
     int globalProtocolId;
     

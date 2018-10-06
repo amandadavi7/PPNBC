@@ -44,6 +44,7 @@ public class Constants {
             if (propertyPath != null) {
                 final FileInputStream in = new FileInputStream(propertyPath);
                 prop.load(in);
+                LOGGER.info("Properties file parsed:" + propertyPath);
             } else {
                 input = ClassLoader.getSystemClassLoader().getResourceAsStream(DEFAULT_PROPERTIES);
                 prop.load(input);
@@ -56,8 +57,8 @@ public class Constants {
         DECIMAL_PRECISION = Integer.parseInt(prop.getProperty("decimal.precision"));
         INTEGER_PRECISION = Integer.parseInt(prop.getProperty("integer.precision"));
         NEWTON_RAPHSON_ROUNDS = Integer.parseInt(prop.getProperty("newton.raphson.rounds"));
-
-        LOGGER.info("Properties file parsed:" + DEFAULT_PROPERTIES);
+        
+        LOGGER.info("Thread Count:" + THREAD_COUNT);
     }
 
 }
