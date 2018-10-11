@@ -10,6 +10,7 @@ import Protocol.CompositeProtocol;
 import Protocol.OR_XOR;
 import TrustedInitializer.TripleInteger;
 import Utility.Constants;
+import Utility.ThreadPoolManager;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -70,7 +71,8 @@ public class JaccardDistance extends CompositeProtocol implements Callable<List<
         List<List<Integer>> result = new ArrayList<>();
         int startpid = 0;
         int attrLength = testShare.size(), tiStartIndex = 0;
-        ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
+        //ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
+        ExecutorService es = ThreadPoolManager.getInstance();
 
         // TODO: Make OR_XOR module return both OR and XOR together
         List<Future<Integer[]>> orTaskList = new ArrayList<>();
@@ -98,7 +100,7 @@ public class JaccardDistance extends CompositeProtocol implements Callable<List<
             //tiStartIndex += attrLength;
         }
 
-        es.shutdown();
+        //es.shutdown();
 
         try {
             // These scores are additive shares over prime (Constants.prime)

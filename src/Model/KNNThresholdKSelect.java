@@ -45,6 +45,7 @@ public class KNNThresholdKSelect extends Model {
     List<Integer> classLabels;
     List<Integer> KBitShares;
     List<List<Integer>> jaccardDistances;
+    Integer[] comparisonResults;
     int pid, attrLength, K, decimalTiIndex, binaryTiIndex, trainingSharesCount;
     int ccTICount, prime, bitLength, comparisonTICount, bitDTICount;
     List<TripleInteger> decimalTiShares;
@@ -85,7 +86,8 @@ public class KNNThresholdKSelect extends Model {
 
         this.decimalTiIndex = 0;
         this.binaryTiIndex = 0;
-
+        this.comparisonResults = null;
+        
         es = ThreadPoolManager.getInstance();
         
         //Bit Shares of K - used in multiple places
@@ -246,7 +248,6 @@ public class KNNThresholdKSelect extends Model {
         int ubound_denominator = asymmetricBit;
         int[] thresholds = null;
         int stoppingBit = 0;
-        Integer[] comparisonResults;
         int maxIterations = (int) Math.ceil(Math.log(trainingSharesCount)/Math.log(2.0));
         
         while (stoppingBit == 0 && maxIterations >= 0) {
@@ -370,12 +371,12 @@ public class KNNThresholdKSelect extends Model {
         int classLabelSum = 0;
         int predictedClassLabel = -1;
         System.out.println("computing class label");
-        List<Integer> comparisonResults = Arrays.asList(getComparisonResults(thresholds));
+        List<Integer> comparisonResultsList = Arrays.asList(comparisonResults);
         List<Future<Integer[]>> taskList = new ArrayList<>();
         int endIndex = K;
         int comparisonSum = 0;
         for(int i=0;i<endIndex;i++){
-            comparisonSum += comparisonResults.get(i);
+            comparisonSum += comparisonResults[i];
         }
         comparisonSum = Math.floorMod(comparisonSum, prime);
         boolean stoppingCriteria = false;
@@ -406,7 +407,7 @@ public class KNNThresholdKSelect extends Model {
                 stoppingCriteria = true;
                 break;
             } else {
-                comparisonSum += comparisonResults.get(endIndex);
+                comparisonSum += comparisonResults[endIndex];
                 comparisonSum = Math.floorMod(comparisonSum, prime);
                 endIndex++;
             }
@@ -415,7 +416,7 @@ public class KNNThresholdKSelect extends Model {
         int i=0;
         while(i<endIndex) {
             int toIndex = Math.min(endIndex, i+Constants.BATCH_SIZE);
-            BatchMultiplicationInteger bmModule = new BatchMultiplicationInteger(comparisonResults.subList(i, toIndex),
+            BatchMultiplicationInteger bmModule = new BatchMultiplicationInteger(comparisonResultsList.subList(i, toIndex),
                     classLabels.subList(i, toIndex), decimalTiShares, pidMapper, commonSender,
                     new LinkedList<>(protocolIdQueue), clientId, prime, pid, asymmetricBit, 0, partyCount);
             pid++;
