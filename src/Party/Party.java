@@ -8,7 +8,7 @@ package Party;
 import Communication.Message;
 import Model.DecisionTreeScoring;
 import Model.KNN;
-import Model.KNNBinarySearch;
+import Model.KNNThresholdKSelect;
 import Model.LinearRegressionEvaluation;
 import Model.LinearRegressionTraining;
 import Utility.Connection;
@@ -256,12 +256,12 @@ public class Party {
                 knnModel.KNN_Model();
                 break;
                 
-            case "KNNBinarySearch":
-                KNNBinarySearch knnBinarySearchModel = new KNNBinarySearch(
+            case "KNNThresholdKSelect":
+                KNNThresholdKSelect knnThresholdSelectModel = new KNNThresholdKSelect(
                         asymmetricBit, pidMapper, senderQueue, partyId,
                         tiShares.binaryShares, tiShares.decimalShares, partyCount,
                         args);
-                knnBinarySearchModel.KNN_Model();
+                knnThresholdSelectModel.KNN_Model();
                 break;
                 
             default:

@@ -73,7 +73,8 @@ public class JaccardDistance extends CompositeProtocol implements Callable<List<
         ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
 
         // TODO: Make OR_XOR module return both OR and XOR together
-        List<Future<Integer[]>> taskList = new ArrayList<>();
+        List<Future<Integer[]>> orTaskList = new ArrayList<>();
+        List<Future<Integer[]>> xorTaskList = new ArrayList<>();
 
         for (int i = 0; i < trainingShares.size(); i++) {
             OR_XOR orModule = new OR_XOR(trainingShares.get(i), testShare,
@@ -82,7 +83,7 @@ public class JaccardDistance extends CompositeProtocol implements Callable<List<
                     new LinkedList<>(protocolIdQueue), clientID, prime, startpid, partyCount);
 
             Future<Integer[]> orTask = es.submit(orModule);
-            taskList.add(orTask);
+            orTaskList.add(orTask);
             startpid++;
             //tiStartIndex += attrLength;
 
@@ -92,7 +93,7 @@ public class JaccardDistance extends CompositeProtocol implements Callable<List<
                     new LinkedList<>(protocolIdQueue), clientID, prime, startpid, partyCount);
 
             Future<Integer[]> xorTask = es.submit(xorModule);
-            taskList.add(xorTask);
+            xorTaskList.add(xorTask);
             startpid++;
             //tiStartIndex += attrLength;
         }
@@ -103,8 +104,8 @@ public class JaccardDistance extends CompositeProtocol implements Callable<List<
             // These scores are additive shares over prime (Constants.prime)
             // We eventually need sum of individual list over prime
             for (int i = 0; i < trainingShares.size(); i++) {
-                Future<Integer[]> orTask = taskList.get(2 * i);
-                Future<Integer[]> xorTask = taskList.get(2 * i + 1);
+                Future<Integer[]> orTask = orTaskList.get(i);
+                Future<Integer[]> xorTask = xorTaskList.get(i);
 
                 Integer[] orOutput = orTask.get();
                 Integer[] xorOutput = xorTask.get();
