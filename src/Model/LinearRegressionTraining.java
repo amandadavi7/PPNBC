@@ -32,6 +32,7 @@ import java.util.logging.Logger;
  */
 public class LinearRegressionTraining extends Model {
 
+    private static final Logger LOGGER = Logger.getLogger(LinearRegressionTraining.class.getName());
     static BigInteger[][] x;
     static BigInteger[][] xT;
     BigInteger[][] y;
@@ -61,8 +62,8 @@ public class LinearRegressionTraining extends Model {
             int clientId, int asymmetricBit, int partyCount, String[] args) {
 
         super(pidMapper, senderQueue, clientId, asymmetricBit, partyCount);
-        this.tiTruncationPair = tiTruncationPair;
-        this.realTriples = realTriples;
+        LinearRegressionTraining.tiTruncationPair = tiTruncationPair;
+        LinearRegressionTraining.realTriples = realTriples;
         globalProtocolId = 0;
         prime = BigInteger.valueOf(2).pow(Constants.INTEGER_PRECISION
                 + 2 * Constants.DECIMAL_PRECISION + 1).nextProbablePrime();  //Zq must be a prime field
@@ -93,9 +94,10 @@ public class LinearRegressionTraining extends Model {
         try {
             gamma1Inv = matrixInversion.call();
         } catch (Exception ex) {
-            Logger.getLogger(LinearRegressionTraining.class.getName())
-                    .log(Level.SEVERE, null, ex);
+            LOGGER.log(Level.SEVERE, null, ex);
         }
+        
+        System.out.println("Printed gammaInv:" + gamma1Inv[0][0] + ", partyId:" + clientId);
         
         MatrixMultiplication matrixMultiplication = new MatrixMultiplication(gamma1Inv,
                 gamma2, realTriples, tiTruncationPair, clientId, prime, globalProtocolId,
@@ -106,16 +108,16 @@ public class LinearRegressionTraining extends Model {
         try {
             beta = matrixMultiplication.call();
         } catch (Exception ex) {
-            Logger.getLogger(LinearRegressionTraining.class.getName())
-                    .log(Level.SEVERE, null, ex);
+            LOGGER.log(Level.SEVERE, null, ex);
         }
         
         long stopTime = System.currentTimeMillis();
         long elapsedTime = stopTime - startTime;
         //TODO: push time to a csv file
-        System.out.println("Avg time duration:" + elapsedTime + " for partyId:"
-                + clientId);
-
+        LOGGER.log(Level.INFO, "Avg time duration:{0} for partyId:{1}", 
+                new Object[]{elapsedTime, clientId});
+        System.out.println("Printed beta:" + beta[0][0] + ", partyId:" + clientId);
+        
         FileIO.writeToCSV(beta, outputPath, "beta", clientId);
         
     }

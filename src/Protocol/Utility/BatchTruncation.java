@@ -36,6 +36,10 @@ public class BatchTruncation extends CompositeProtocol implements Callable<BigIn
 
     BigInteger prime;
     int batchSize;
+    
+    static BigInteger roundOffBit;
+    static BigInteger fInv;
+    static BigInteger fpow2;
 
     /**
      * Constructor
@@ -68,6 +72,14 @@ public class BatchTruncation extends CompositeProtocol implements Callable<BigIn
         batchSize = wShares.length;
         zShares = new ArrayList<>(batchSize);
         T = new BigInteger[batchSize];
+        
+        roundOffBit = BigInteger.valueOf(2).pow(Constants.INTEGER_PRECISION
+                + 2 * Constants.DECIMAL_PRECISION - 1);
+        
+        fInv = prime.add(BigInteger.ONE).divide(BigInteger.valueOf(2)).
+                pow(Constants.DECIMAL_PRECISION).mod(prime);
+        
+        fpow2 = BigInteger.valueOf(2).pow(Constants.DECIMAL_PRECISION);
     }
 
     @Override
@@ -119,14 +131,6 @@ public class BatchTruncation extends CompositeProtocol implements Callable<BigIn
                 ex.printStackTrace();
             }
         }
-        
-        //Constants
-
-        BigInteger roundOffBit = BigInteger.valueOf(2).pow(Constants.INTEGER_PRECISION
-                + 2 * Constants.DECIMAL_PRECISION - 1);
-        BigInteger fInv = prime.add(BigInteger.ONE).divide(BigInteger.valueOf(2)).
-                pow(Constants.DECIMAL_PRECISION).mod(prime);
-        BigInteger fpow2 = BigInteger.valueOf(2).pow(Constants.DECIMAL_PRECISION);
 
         for (int i = 0; i < batchSize; i++) {
             BigInteger c = zShares.get(i).add(roundOffBit);
@@ -134,7 +138,6 @@ public class BatchTruncation extends CompositeProtocol implements Callable<BigIn
             BigInteger S = wShares[i].add(truncationShares.get(i).rp).mod(prime).
                     subtract(cp.multiply(BigInteger.valueOf(asymmetricBit)));
             T[i] = S.multiply(fInv).mod(prime);
-
         }
 
     }

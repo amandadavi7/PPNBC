@@ -7,9 +7,12 @@ package Protocol;
 
 import Communication.Message;
 import Protocol.Utility.BatchMultiplicationReal;
+import Protocol.Utility.BatchTruncation;
 import TrustedInitializer.TripleReal;
+import TrustedInitializer.TruncationPair;
 import Utility.Constants;
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
@@ -26,9 +29,9 @@ import java.util.logging.Logger;
 
 /**
  * Dot product of two matrices x and y, shared element wise
- * 
+ *
  * uses xShares.size() tiShares
- * 
+ *
  * @author anisha
  */
 public class DotProductReal extends DotProduct implements Callable<BigInteger> {
@@ -36,7 +39,9 @@ public class DotProductReal extends DotProduct implements Callable<BigInteger> {
     List<BigInteger> xShares, yShares;
     BigInteger prime;
     List<TripleReal> tiShares;
-    
+    int globalProtocolId;
+    List<TruncationPair> tiTruncationPair;
+
     /**
      * Constructor for DotProduct on Real Numbers
      *
@@ -53,8 +58,28 @@ public class DotProductReal extends DotProduct implements Callable<BigInteger> {
      * @param partyCount
      */
     public DotProductReal(List<BigInteger> xShares, List<BigInteger> yShares,
-            List<TripleReal> tiShares, 
-            ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper, 
+            List<TripleReal> tiShares,
+            ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper,
+            BlockingQueue<Message> senderqueue,
+            Queue<Integer> protocolIdQueue,
+            int clientID, BigInteger prime,
+            int protocolID, int asymmetricBit, int partyCount,
+            List<TruncationPair> tiTruncationPair) {
+
+        super(pidMapper, senderqueue, protocolIdQueue, clientID, protocolID,
+                asymmetricBit, partyCount);
+
+        this.xShares = xShares;
+        this.yShares = yShares;
+        this.prime = prime;
+        this.tiShares = tiShares;
+        this.tiTruncationPair = tiTruncationPair;
+
+    }
+
+    public DotProductReal(List<BigInteger> xShares, List<BigInteger> yShares,
+            List<TripleReal> tiShares,
+            ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper,
             BlockingQueue<Message> senderqueue,
             Queue<Integer> protocolIdQueue,
             int clientID, BigInteger prime,
@@ -81,41 +106,78 @@ public class DotProductReal extends DotProduct implements Callable<BigInteger> {
 
         BigInteger dotProduct = BigInteger.ZERO;
         int vectorLength = xShares.size();
-        
-        ExecutorService mults = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
-        ExecutorCompletionService<BigInteger[]> multCompletionService = new ExecutorCompletionService<>(mults);
+
+        ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
+        List<Future<BigInteger[]>> taskList = new ArrayList<>(vectorLength / Constants.BATCH_SIZE);
 
         int i = 0;
-        int startpid = 0;
 
         do {
             int toIndex = Math.min(i + Constants.BATCH_SIZE, vectorLength);
 
-            multCompletionService.submit(new BatchMultiplicationReal(xShares.subList(i, toIndex),
-                    yShares.subList(i, toIndex), tiShares.subList(i, toIndex), pidMapper, senderQueue,
-                    new LinkedList<>(protocolIdQueue),
-                    clientID, prime, startpid, asymmetricBit, protocolId, partyCount));
+            BatchMultiplicationReal batchMultiplicationReal = 
+                    new BatchMultiplicationReal(xShares.subList(i, toIndex),
+                    yShares.subList(i, toIndex), tiShares.subList(i, toIndex), 
+                            pidMapper, senderQueue, new LinkedList<>(protocolIdQueue),
+                    clientID, prime, globalProtocolId, asymmetricBit, protocolId, partyCount);
 
-            startpid++;
+            taskList.add(es.submit(batchMultiplicationReal));
+
+            globalProtocolId++;
             i = toIndex;
 
         } while (i < vectorLength);
+        
+        int testCases = globalProtocolId;
 
-        mults.shutdown();
+        //mults.shutdown();
+        List<Future<BigInteger[]>> taskListTruncation = new ArrayList<>(testCases);
+        int tiTruncationStartIndex = 0;
 
-        for (i = 0; i < startpid; i++) {
+        for (i = 0; i < testCases; i++) {
             try {
-                Future<BigInteger[]> prod = multCompletionService.take();
+                Future<BigInteger[]> prod = taskList.get(i);
                 BigInteger[] products = prod.get();
+                
+                // Call batch truncation on each product
+                BatchTruncation truncationModule = new BatchTruncation(products,
+                        tiTruncationPair, pidMapper, senderQueue,
+                        new LinkedList<>(protocolIdQueue),
+                        clientID, prime, globalProtocolId++, asymmetricBit, partyCount);
+                
+                
+                Future<BigInteger[]> truncationTask = es.submit(truncationModule);
+                taskListTruncation.add(truncationTask);
+
+            } catch (InterruptedException | ExecutionException ex) {
+                Logger.getLogger(DotProductReal.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+
+        for (i = 0; i < taskListTruncation.size(); i++) {
+            Future<BigInteger[]> dWorkerResponse = taskListTruncation.get(i);
+            BigInteger[] products;
+            try {
+                products = dWorkerResponse.get();
                 for (BigInteger j : products) {
-                    dotProduct = dotProduct.add(j);
+                    if(protocolId == 0) {
+                        System.out.print(" " + j);
+                    }
+                    dotProduct = dotProduct.add(j).mod(prime);
                 }
             } catch (InterruptedException | ExecutionException ex) {
                 Logger.getLogger(DotProductReal.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
 
-        dotProduct = dotProduct.mod(prime);
+        if(protocolId == 0) {
+            System.out.println("");
+            System.out.println("Dot product done for protocol id:" + protocolId);
+        }
+            
+        //System.out.println("dot product result:" + dotProduct);
+        es.shutdown();
+
         return dotProduct;
 
     }

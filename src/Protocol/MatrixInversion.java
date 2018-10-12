@@ -33,6 +33,7 @@ import java.util.logging.Logger;
 public class MatrixInversion extends CompositeProtocol implements
         Callable<BigInteger[][]> {
 
+    private static final Logger LOGGER = Logger.getLogger(MatrixInversion.class.getName()); 
     private static BigInteger[][] Ashares, I2;
     
     List<TripleReal> tishares;
@@ -75,9 +76,9 @@ public class MatrixInversion extends CompositeProtocol implements
         BigInteger cInv = computeCInv(c);
         BigInteger[][] X = createIdentity(cInv);
 
+        //System.out.println("Xs:" + X[0][0]);
         X = newtonRaphsonAlgorithm(Ashares, X, nrRounds);
         return X;
-
     }
 
     /**
@@ -151,7 +152,7 @@ public class MatrixInversion extends CompositeProtocol implements
         if (asymmetricBit == 1) {
             Xs = LocalMath.realToZq(0.00000001, Constants.DECIMAL_PRECISION, prime);
         }
-        return newtonRaphsonAlgorithmScalar(c, Xs);
+        return newtonRaphsonAlgorithm(c, Xs);
     }
 
     /**
@@ -192,7 +193,7 @@ public class MatrixInversion extends CompositeProtocol implements
                     clientID, prime, globalPid, asymmetricBit, pidMapper, senderQueue,
                     new LinkedList<>(protocolIdQueue),
                     partyCount);
-
+            
             // TODO uncomment to not reuse the shares
             //tiRealIndex += Math.pow(n, 3);
             //tiTruncationIndex += (n*n);
@@ -202,11 +203,13 @@ public class MatrixInversion extends CompositeProtocol implements
             try {
                 AX = multiplicationTask.get();
             } catch (InterruptedException | ExecutionException ex) {
-                Logger.getLogger(MatrixInversion.class.getName()).log(Level.SEVERE, null, ex);
+                LOGGER.log(Level.SEVERE, null, ex);
             }
+            
+            System.out.println("computed AX:" + AX[0][0]);
 
             BigInteger[][] subtractedAX = subtractFromTwo(AX);
-
+            
             // X = DM(X.temp2)
             BigInteger[][] Xs1 = null;
             MatrixMultiplication matrixMultiplicationNext = new MatrixMultiplication(
@@ -225,10 +228,11 @@ public class MatrixInversion extends CompositeProtocol implements
             try {
                 Xs1 = multiplicationTaskNext.get();
             } catch (InterruptedException | ExecutionException ex) {
-                Logger.getLogger(MatrixInversion.class.getName()).log(Level.SEVERE, null, ex);
+                LOGGER.log(Level.SEVERE, null, ex);
             }
 
             X = Xs1;
+            System.out.println("new X:" + X[0][0]);
 
         }
         es.shutdown();
@@ -242,11 +246,11 @@ public class MatrixInversion extends CompositeProtocol implements
      * @param X
      * @return
      */
-    private BigInteger newtonRaphsonAlgorithmScalar(BigInteger A,
+    private BigInteger newtonRaphsonAlgorithm(BigInteger A,
             BigInteger X) {
         ExecutorService es = Executors.newSingleThreadExecutor();
 
-        for (int i = 0; i < nrRounds; i++) {
+        for (int i = 0; i < 20; i++) {
 
             // AX = DM(A.X)
             MultiplicationReal multiplicationModule = new MultiplicationReal(A,
@@ -263,7 +267,7 @@ public class MatrixInversion extends CompositeProtocol implements
             try {
                 AX = multiplicationTask.get();
             } catch (InterruptedException | ExecutionException ex) {
-                Logger.getLogger(MatrixInversion.class.getName()).log(Level.SEVERE, null, ex);
+                LOGGER.log(Level.SEVERE, null, ex);
             }
 
             Truncation truncationModule = new Truncation(AX,
@@ -280,8 +284,7 @@ public class MatrixInversion extends CompositeProtocol implements
             try {
                 truncatedAX = truncationTask.get();
             } catch (InterruptedException | ExecutionException ex) {
-                Logger.getLogger(MatrixInversion.class.getName())
-                        .log(Level.SEVERE, null, ex);
+                LOGGER.log(Level.SEVERE, null, ex);
             }
 
             // subtracted AX = (2-AX). this computation is local
@@ -306,7 +309,7 @@ public class MatrixInversion extends CompositeProtocol implements
             try {
                 XsNext = multiplicationTask.get();
             } catch (InterruptedException | ExecutionException ex) {
-                Logger.getLogger(MatrixInversion.class.getName()).log(Level.SEVERE, null, ex);
+                LOGGER.log(Level.SEVERE, null, ex);
             }
 
             Truncation truncationModuleNext = new Truncation(XsNext,
@@ -320,8 +323,7 @@ public class MatrixInversion extends CompositeProtocol implements
             try {
                 truncatedX = truncationTaskNext.get();
             } catch (InterruptedException | ExecutionException ex) {
-                Logger.getLogger(MatrixInversion.class.getName())
-                        .log(Level.SEVERE, null, ex);
+                LOGGER.log(Level.SEVERE, null, ex);
             }
 
             // TODO uncomment to not reuse the shares

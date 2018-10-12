@@ -103,7 +103,7 @@ public class DotProductByte extends DotProduct implements Callable<Integer> {
                 Future<Integer[]> prod = multCompletionService.take();
                 Integer[] products = prod.get();
                 for (int j : products) {
-                    dotProduct += j;
+                    dotProduct = Math.floorMod(dotProduct + j, prime);
                 }
             } catch (InterruptedException | ExecutionException ex) {
                 Logger.getLogger(DotProductByte.class.getName()).log(Level.SEVERE, null, ex);

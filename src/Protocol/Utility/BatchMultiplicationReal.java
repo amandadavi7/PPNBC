@@ -108,14 +108,13 @@ public class BatchMultiplicationReal extends BatchMultiplication
                     .subtract(tiShares.get(i).v)
                     .add(e.get(i)).mod(prime);
 
-            BigInteger product = tiShares.get(i).w
+            products[i] = tiShares.get(i).w
                     .add(D.multiply(tiShares.get(i).v))
                     .add(E.multiply(tiShares.get(i).u))
                     .add(D.multiply(E).multiply(BigInteger
                             .valueOf(asymmetricBit)))
                     .mod(prime);
 
-            products[i] = product;
         }
 
         return products;

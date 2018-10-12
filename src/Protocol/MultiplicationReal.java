@@ -79,8 +79,8 @@ public class MultiplicationReal extends Protocol implements Callable<BigInteger>
             try {
                 Message receivedMessage = pidMapper.get(protocolIdQueue).take();
                 List<BigInteger> diffList = (List<BigInteger>) receivedMessage.getValue();
-                d = d.add(diffList.get(0));
-                e = e.add(diffList.get(1));
+                d = d.add(diffList.get(0).mod(prime));
+                e = e.add(diffList.get(1).mod(prime));
             } catch (InterruptedException ex) {
                 ex.printStackTrace();
             }
@@ -91,7 +91,7 @@ public class MultiplicationReal extends Protocol implements Callable<BigInteger>
         BigInteger product = tiRealShares.w
                 .add(d.multiply(tiRealShares.v))
                 .add(e.multiply(tiRealShares.u))
-                .add(d.multiply(e).multiply(BigInteger.valueOf(asymmetricBit)))
+                .add(d.multiply(e).multiply(BigInteger.valueOf(asymmetricBit)).mod(prime))
                 .mod(prime);
 
         return product;

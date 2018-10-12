@@ -151,7 +151,6 @@ public class LinearRegressionEvaluation extends Model {
             String command = currInput[0];
             String value = currInput[1];
 
-            LOGGER.info(command+ ":"+value);
             switch (command) {
                 case "xCsv":
                     x = FileIO.loadMatrixFromFile(value);
