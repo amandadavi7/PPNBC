@@ -115,17 +115,17 @@ public class MatrixMultiplication extends CompositeProtocol implements
         for (int i = 0; i < n; i++) {
             List<BigInteger> row = Arrays.asList(a[i]);
             for (int j = 0; j < l; j++) {
-                if(i == 0 && j == 0) {
-                    System.out.println("a:");
-                    for(BigInteger val:row) {
-                        System.out.print(" " + val);
-                    }
-                    System.out.println("b:");
-                    for(BigInteger val:bT.get(j)) {
-                        System.out.print(" " + val);
-                    }
-                    System.out.println("Dot product:");
-                }
+//                if(i == 0 && j == 0) {
+//                    System.out.println("a:");
+//                    for(BigInteger val:row) {
+//                        System.out.print(" " + val);
+//                    }
+//                    System.out.println("b:");
+//                    for(BigInteger val:bT.get(j)) {
+//                        System.out.print(" " + val);
+//                    }
+//                    System.out.println("Dot product:");
+//                }
                 DotProductReal DPModule = new DotProductReal(row,
                         bT.get(j), tiRealShares.subList(
                         tiRealStartIndex, tiRealStartIndex + m),

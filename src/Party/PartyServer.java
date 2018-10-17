@@ -52,7 +52,6 @@ public class PartyServer implements Runnable {
 
         try {
             // first send the id for the BA to store
-            LOGGER.log(Level.INFO, "clientID:{0},asymmetricBit:{1}", new Object[]{clientId, asymmetricBit});
             oStream.writeInt(clientId);
             oStream.writeInt(asymmetricBit);
             oStream.flush();

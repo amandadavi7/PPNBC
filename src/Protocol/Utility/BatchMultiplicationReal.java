@@ -103,16 +103,20 @@ public class BatchMultiplicationReal extends BatchMultiplication
             // TODO convert TI share to BigInteger
             BigInteger D = x.get(i)
                     .subtract(tiShares.get(i).u)
+                    .mod(prime)
                     .add(d.get(i)).mod(prime);
             BigInteger E = y.get(i)
                     .subtract(tiShares.get(i).v)
+                    .mod(prime)
                     .add(e.get(i)).mod(prime);
 
             products[i] = tiShares.get(i).w
-                    .add(D.multiply(tiShares.get(i).v))
-                    .add(E.multiply(tiShares.get(i).u))
+                    .add(D.multiply(tiShares.get(i).v).mod(prime))
+                    .mod(prime)
+                    .add(E.multiply(tiShares.get(i).u).mod(prime))
+                    .mod(prime)
                     .add(D.multiply(E).multiply(BigInteger
-                            .valueOf(asymmetricBit)))
+                            .valueOf(asymmetricBit)).mod(prime))
                     .mod(prime);
 
         }

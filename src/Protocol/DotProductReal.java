@@ -160,9 +160,9 @@ public class DotProductReal extends DotProduct implements Callable<BigInteger> {
             try {
                 products = dWorkerResponse.get();
                 for (BigInteger j : products) {
-                    if(protocolId == 0) {
-                        System.out.print(" " + j);
-                    }
+//                    if(protocolId == 0) {
+//                        System.out.print(" " + j);
+//                    }
                     dotProduct = dotProduct.add(j).mod(prime);
                 }
             } catch (InterruptedException | ExecutionException ex) {
@@ -170,11 +170,11 @@ public class DotProductReal extends DotProduct implements Callable<BigInteger> {
             }
         }
 
-        if(protocolId == 0) {
-            System.out.println("");
-            System.out.println("Dot product done for protocol id:" + protocolId);
-        }
-            
+//        if(protocolId == 0) {
+//            System.out.println("");
+//            System.out.println("Dot product done for protocol id:" + protocolId);
+//        }
+//            
         //System.out.println("dot product result:" + dotProduct);
         es.shutdown();
 

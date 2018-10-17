@@ -12,8 +12,10 @@ import Protocol.Comparison;
 import Protocol.DotProductInteger;
 import Protocol.MatrixInversion;
 import Protocol.MultiplicationInteger;
+import Protocol.MultiplicationReal;
 import Protocol.OIS;
 import Protocol.OR_XOR;
+import Protocol.Truncation;
 import Protocol.Utility.BatchTruncation;
 import Protocol.Utility.MatrixMultiplication;
 import TrustedInitializer.TripleByte;
@@ -45,7 +47,7 @@ public class TestModel extends Model {
     BigInteger[][] xBigInt;
     List<List<Integer>> y;
     List<List<List<Integer>>> v;
-    double a, b;
+    BigInteger a, b;
 
     List<TruncationPair> tiTruncationPair;
     BigInteger prime;
@@ -314,6 +316,9 @@ public class TestModel extends Model {
             case "Unicast":
                 callUnicast();
                 break;
+            case "SingleMultiplicationReal":
+                callSingleMultiplicationReal();
+                break;
             default:
                 break;
         }
@@ -376,10 +381,16 @@ public class TestModel extends Model {
                     outputPath = value;
                     break;
                 case "a":
-                    a = Double.parseDouble(value);
+                    a = new BigInteger(value);
                     break;
                 case "b":
-                    b = Double.parseDouble(value);
+                    b = new BigInteger(value);
+                    break; 
+                case "aReal":
+                    a = LocalMath.realToZq(Double.parseDouble(value), Constants.DECIMAL_PRECISION, prime);
+                    break;
+                case "bReal":
+                    b = LocalMath.realToZq(Double.parseDouble(value), Constants.DECIMAL_PRECISION, prime);
                     break;
 
             }
@@ -544,6 +555,37 @@ public class TestModel extends Model {
         long stopTime = System.currentTimeMillis();
         long elapsedTime = stopTime - startTime;
         System.out.println("Avg time duration:" + elapsedTime);
+    }
+
+    /**
+     * Call multiplication for 1 pair of real numbers
+     *
+     */
+    public void callSingleMultiplicationReal() {
+        try {
+            long startTime = System.currentTimeMillis();
+            // totalcases number of protocols are submitted to the executorservice
+            MultiplicationReal multiplicationModule = new MultiplicationReal(
+                    a, b, realTiShares.get(0), pidMapper, commonSender,
+                    new LinkedList<>(protocolIdQueue), clientId,
+                    prime, 0, asymmetricBit, partyCount);
+            
+            BigInteger result = multiplicationModule.call();
+            
+            System.out.println("multiplication result:" + result);
+            Truncation truncation = new Truncation(result, tiTruncationPair.get(0),
+                    pidMapper, commonSender, protocolIdQueue, clientId, prime, 0,
+                    asymmetricBit, partyCount);
+            
+            result = truncation.call();
+            
+            System.out.println("truncation result:" + result);
+            long stopTime = System.currentTimeMillis();
+            long elapsedTime = stopTime - startTime;
+            System.out.println("Avg time duration:" + elapsedTime);
+        } catch (Exception ex) {
+            Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 
     /**
