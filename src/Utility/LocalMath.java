@@ -87,6 +87,10 @@ public class LocalMath {
 
             }
         }
+        System.out.println("post local matrix multiplication:");
+        for(BigInteger i:c[0]) {
+            System.out.print(" " + i);
+        }
         return c;
     }
     
@@ -100,7 +104,11 @@ public class LocalMath {
     public static BigInteger localScale(BigInteger value, BigInteger prime) {
         
         BigInteger scaleFactor = BigInteger.valueOf(2).pow(Constants.DECIMAL_PRECISION);
-        value = value.divide(scaleFactor).mod(prime);
+        
+        BigDecimal realValue = ZqToReal(value, Constants.DECIMAL_PRECISION, prime);
+        
+        realValue = realValue.divide(BigDecimal.valueOf(2).pow(Constants.DECIMAL_PRECISION));
+        value = realToZq(realValue.doubleValue(), Constants.DECIMAL_PRECISION, prime);
         return value;
     }
     

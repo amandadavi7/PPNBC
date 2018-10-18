@@ -105,19 +105,17 @@ public class LinearRegressionEvaluation extends Model {
                             tiStartIndex, tiStartIndex + x.get(i).size()),
                     pidMapper, commonSender, 
                     new LinkedList<>(protocolIdQueue),
-                    clientId, prime, i, asymmetricBit, partyCount);
+                    clientId, prime, i, asymmetricBit, partyCount, truncationTiShares);
 
             Future<BigInteger> DPTask = es.submit(DPModule);
             taskList.add(DPTask);
             tiStartIndex += x.get(i).size();
         }
 
-        BigInteger[] dotProductResult = new BigInteger[testCases];
         for (int i = 0; i < testCases; i++) {
             Future<BigInteger> dWorkerResponse = taskList.get(i);
             try {
-                BigInteger result = dWorkerResponse.get();
-                dotProductResult[i] = result;
+                y[i] = dWorkerResponse.get();
             } catch (InterruptedException ex) {
                 LOGGER.log(Level.SEVERE, null, ex);
             } catch (ExecutionException ex) {
@@ -125,19 +123,7 @@ public class LinearRegressionEvaluation extends Model {
             }
         }
 
-        BatchTruncation truncationModule = new BatchTruncation(dotProductResult,
-                truncationTiShares, pidMapper, 
-                commonSender,
-                new LinkedList<>(protocolIdQueue),
-                clientId, prime, testCases, asymmetricBit, partyCount);
-        Future<BigInteger[]> truncationTask = es.submit(truncationModule);
-
-        try {
-            y = truncationTask.get();
-        } catch (InterruptedException | ExecutionException ex) {
-            LOGGER.log(Level.SEVERE, null, ex);
-        }
-        
+        System.out.println("prediction:" + y[0]);
         es.shutdown();
     }
 

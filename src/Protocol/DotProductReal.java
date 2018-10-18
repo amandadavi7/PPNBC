@@ -56,6 +56,7 @@ public class DotProductReal extends DotProduct implements Callable<BigInteger> {
      * @param protocolID
      * @param asymmetricBit
      * @param partyCount
+     * @param tiTruncationPair
      */
     public DotProductReal(List<BigInteger> xShares, List<BigInteger> yShares,
             List<TripleReal> tiShares,
@@ -74,24 +75,6 @@ public class DotProductReal extends DotProduct implements Callable<BigInteger> {
         this.prime = prime;
         this.tiShares = tiShares;
         this.tiTruncationPair = tiTruncationPair;
-
-    }
-
-    public DotProductReal(List<BigInteger> xShares, List<BigInteger> yShares,
-            List<TripleReal> tiShares,
-            ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper,
-            BlockingQueue<Message> senderqueue,
-            Queue<Integer> protocolIdQueue,
-            int clientID, BigInteger prime,
-            int protocolID, int asymmetricBit, int partyCount) {
-
-        super(pidMapper, senderqueue, protocolIdQueue, clientID, protocolID,
-                asymmetricBit, partyCount);
-
-        this.xShares = xShares;
-        this.yShares = yShares;
-        this.prime = prime;
-        this.tiShares = tiShares;
 
     }
 
