@@ -91,21 +91,21 @@ public class RandomGenerator {
     public static void generateBigIntTriples(int bigIntTriples, int clientCount,
             TIShare[] tiShare) {
         java.util.Random rand = new java.util.Random();
-        BigInteger Zq = BigInteger.valueOf(2).pow(Constants.integer_precision
-                + 2 * Constants.decimal_precision + 1).nextProbablePrime();
+        BigInteger Zq = BigInteger.valueOf(2).pow(Constants.INTEGER_PRECISION
+                + 2 * Constants.DECIMAL_PRECISION + 1).nextProbablePrime();
 
         for (int i = 0; i < bigIntTriples; i++) {
-            BigInteger U = new BigInteger(Constants.integer_precision, rand);
-            BigInteger V = new BigInteger(Constants.integer_precision, rand);
+            BigInteger U = new BigInteger(Constants.INTEGER_PRECISION, rand);
+            BigInteger V = new BigInteger(Constants.INTEGER_PRECISION, rand);
             BigInteger W = U.multiply(V);
             W = W.mod(Zq);
 
             BigInteger usum = BigInteger.ZERO, vsum = BigInteger.ZERO, wsum = BigInteger.ZERO;
             for (int j = 0; j < clientCount - 1; j++) {
                 TripleReal t = new TripleReal();
-                t.u = new BigInteger(Constants.integer_precision, rand);
-                t.v = new BigInteger(Constants.integer_precision, rand);
-                t.w = new BigInteger(Constants.integer_precision, rand);
+                t.u = new BigInteger(Constants.INTEGER_PRECISION, rand);
+                t.v = new BigInteger(Constants.INTEGER_PRECISION, rand);
+                t.w = new BigInteger(Constants.INTEGER_PRECISION, rand);
                 usum = usum.add(t.u);
                 vsum = vsum.add(t.v);
                 wsum = wsum.add(t.w);
@@ -131,11 +131,11 @@ public class RandomGenerator {
             int clientCount, TIShare[] tiShare) {
         System.out.println("Generating " + truncationPairs + " truncation shares");
         java.util.Random rand = new java.util.Random();
-        BigInteger Zq = BigInteger.valueOf(2).pow(Constants.integer_precision
-                + 2 * Constants.decimal_precision + 1).nextProbablePrime();
+        BigInteger Zq = BigInteger.valueOf(2).pow(Constants.INTEGER_PRECISION
+                + 2 * Constants.DECIMAL_PRECISION + 1).nextProbablePrime();
 
-        int f = Constants.decimal_precision;
-        int k = Constants.integer_precision + Constants.decimal_precision;
+        int f = Constants.DECIMAL_PRECISION;
+        int k = Constants.INTEGER_PRECISION + Constants.DECIMAL_PRECISION;
         //TODO take lambda as a parameter
         int lambda = 0;
 

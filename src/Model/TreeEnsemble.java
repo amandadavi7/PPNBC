@@ -142,7 +142,7 @@ public class TreeEnsemble extends Model {
 
     public void runTreeEnsembles() {
 
-        ExecutorService es = Executors.newFixedThreadPool(Constants.threadCount);
+        ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
         //List<Future<Integer[]>> taskList = new ArrayList<>();
 
         long startTime = System.currentTimeMillis();

@@ -58,7 +58,7 @@ public class FileIO {
                 List<BigInteger> bigIntegerlist = new ArrayList<>();
                 for (int i = 0; i < col; i++) {
                     bigIntegerlist.add(LocalMath.realToZq(doubleValues[i],
-                            Constants.decimal_precision, Zq));
+                            Constants.DECIMAL_PRECISION, Zq));
                 }
 
                 x.add(bigIntegerlist);
@@ -129,7 +129,7 @@ public class FileIO {
                 int col = doubleValues.length;
 
                 x.add(LocalMath.realToZq(doubleValues[0],
-                        Constants.decimal_precision, Zq));
+                        Constants.DECIMAL_PRECISION, Zq));
 
             }
 

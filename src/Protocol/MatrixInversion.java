@@ -60,7 +60,7 @@ public class MatrixInversion extends CompositeProtocol implements
         this.tishares = tishares;
         this.tiTruncationPair = tiTruncationPair;
         this.prime = prime;
-        this.nrRounds = 20;         // Number of rounds = k = f+e
+        this.nrRounds = Constants.NEWTON_RAPHSON_ROUNDS;    // Number of rounds = k = f+e
         
         matrixSize = Ashares.length;
         I2 = createIdentity(2);
@@ -87,7 +87,7 @@ public class MatrixInversion extends CompositeProtocol implements
      * @return
      */
     private BigInteger calculateTrace(BigInteger[][] matrix) {
-        BigInteger trace = LocalMath.realToZq(0, Constants.decimal_precision, prime);
+        BigInteger trace = LocalMath.realToZq(0, Constants.DECIMAL_PRECISION, prime);
         for (int i = 0; i < matrixSize; i++) {
             trace = trace.add(matrix[i][i]).mod(prime);
         }
@@ -124,7 +124,7 @@ public class MatrixInversion extends CompositeProtocol implements
     private BigInteger[][] createIdentity(int number) {
         BigInteger[][] I = new BigInteger[matrixSize][matrixSize];
         BigInteger diagonalElements = LocalMath.realToZq(number*asymmetricBit, 
-                Constants.decimal_precision, prime);
+                Constants.DECIMAL_PRECISION, prime);
         for (int i = 0; i < matrixSize; i++) {
             for (int j = 0; j < matrixSize; j++) {
                 if (i == j) {
@@ -149,7 +149,7 @@ public class MatrixInversion extends CompositeProtocol implements
     private BigInteger computeCInv(BigInteger c) {
         BigInteger Xs = BigInteger.ZERO;
         if (asymmetricBit == 1) {
-            Xs = LocalMath.realToZq(0.00000001, Constants.decimal_precision, prime);
+            Xs = LocalMath.realToZq(0.00000001, Constants.DECIMAL_PRECISION, prime);
         }
         return newtonRaphsonAlgorithmScalar(c, Xs);
     }
@@ -286,7 +286,7 @@ public class MatrixInversion extends CompositeProtocol implements
 
             // subtracted AX = (2-AX). this computation is local
             BigInteger subtractedAX = LocalMath.realToZq(2 * asymmetricBit,
-                    Constants.decimal_precision, prime)
+                    Constants.DECIMAL_PRECISION, prime)
                     .subtract(truncatedAX).mod(prime);
 
             // X = DM(X.subtractedAX)

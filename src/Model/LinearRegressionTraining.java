@@ -67,8 +67,8 @@ public class LinearRegressionTraining extends Model {
         this.tiTruncationPair = tiTruncationPair;
         this.realTriples = realTriples;
         globalProtocolId = 0;
-        prime = BigInteger.valueOf(2).pow(Constants.integer_precision
-                + 2 * Constants.decimal_precision + 1).nextProbablePrime();  //Zq must be a prime field
+        prime = BigInteger.valueOf(2).pow(Constants.INTEGER_PRECISION
+                + 2 * Constants.DECIMAL_PRECISION + 1).nextProbablePrime();  //Zq must be a prime field
         initalizeModelVariables(args);
     }
 

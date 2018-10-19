@@ -246,7 +246,7 @@ public class RandomForestDTScoring extends Model implements Callable<Integer[]>{
      */
     void getFeatureVectors() {
 
-        ExecutorService es = Executors.newFixedThreadPool(Constants.threadCount);
+        ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
         List<Future<Integer[]>> taskList = new ArrayList<>();
 
         if (partyHasTree) {
@@ -320,7 +320,7 @@ public class RandomForestDTScoring extends Model implements Callable<Integer[]>{
      */
     void doThresholdComparisons() {
 
-        ExecutorService es = Executors.newFixedThreadPool(Constants.threadCount);
+        ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
         List<Future<Integer>> taskList = new ArrayList<>();
 
         int comparisonTiCount = (2 * attributeBitLength) + ((attributeBitLength * (attributeBitLength - 1)) / 2);
@@ -398,7 +398,7 @@ public class RandomForestDTScoring extends Model implements Callable<Integer[]>{
             }
 
         //Polynomial computation
-        ExecutorService es = Executors.newFixedThreadPool(Constants.threadCount);
+        ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
         List<Future<Integer[]>> taskList = new ArrayList<>();
 
         int polynomialComputationTiCount = depth * leafNodes;

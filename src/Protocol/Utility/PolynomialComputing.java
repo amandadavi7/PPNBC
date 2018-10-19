@@ -85,16 +85,16 @@ public class PolynomialComputing extends CompositeProtocol implements Callable<I
         int pid = 0;
 
         while (s > 0) {
-            ExecutorService es = Executors.newFixedThreadPool(Constants.threadCount);
+            ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
             List<Future<Integer[]>> taskList = new ArrayList<>();
 
             List<Integer> yj = Arrays.asList(y_j);
-            List<Integer> z_u = new ArrayList<>(Collections.<Integer>nCopies(Constants.batchSize,
+            List<Integer> z_u = new ArrayList<>(Collections.<Integer>nCopies(Constants.BATCH_SIZE,
                     (comparisonOutputs[u - 1] + asymmetricBit * jBinary[s - 1]) % Constants.binaryPrime));
 
             int i = 0;
             do {
-                int toIndex = Math.min(i + Constants.batchSize, alpha);
+                int toIndex = Math.min(i + Constants.BATCH_SIZE, alpha);
                 
                 BatchMultiplicationByte mults = new BatchMultiplicationByte(
                         yj.subList(i, toIndex), z_u, tiShares.subList(i, toIndex),
