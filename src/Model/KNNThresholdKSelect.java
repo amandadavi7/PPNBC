@@ -373,44 +373,82 @@ public class KNNThresholdKSelect extends Model {
         System.out.println("computing class label");
         List<Integer> comparisonResultsList = Arrays.asList(comparisonResults);
         List<Future<Integer[]>> taskList = new ArrayList<>();
-        int endIndex = K;
-        int comparisonSum = 0;
-        for(int i=0;i<endIndex;i++){
-            comparisonSum += comparisonResults[i];
+        int endIndex = K, distanceIndexStart = K-1;
+        //int comparisonSum = 0;
+        int batchSize = 20, sum = 0;
+        int[] comparisonSum = new int[batchSize];
+        for(int i=0;i<K-1;i++){
+            sum += comparisonResults[i];
         }
-        comparisonSum = Math.floorMod(comparisonSum, prime);
+        sum = Math.floorMod(sum, prime);
+        
         boolean stoppingCriteria = false;
+        int[] compResults = new int[batchSize];
         while(!stoppingCriteria) {
-            BitDecomposition bitDmodule = new BitDecomposition(comparisonSum, 
+            comparisonSum[0] = Math.floorMod(sum + comparisonResults[distanceIndexStart], prime);
+            for(int i=1;i<batchSize;i++){
+                comparisonSum[i] = Math.floorMod(comparisonSum[i-1] + comparisonResults[distanceIndexStart+i], prime);
+            }
+            
+            List<Future<List<Integer>>> bitDTasks = new ArrayList<>();
+            for(int i=0;i<batchSize;i++){
+                BitDecomposition bitDmodule = new BitDecomposition(comparisonSum[i], 
                     binaryTiShares, asymmetricBit, bitLength, pidMapper, 
                     commonSender, new LinkedList<>(protocolIdQueue),
                     clientId, Constants.binaryPrime, pid, partyCount);
-            pid++;
-            List<Integer> comparisonSumShares = bitDmodule.call();
-            Comparison compModule = new Comparison(comparisonSumShares, KBitShares, binaryTiShares,
-                    asymmetricBit, pidMapper, commonSender, new LinkedList<>(protocolIdQueue),
-                    clientId, prime, pid, partyCount);
-            pid++;
-            int compResult = compModule.call();
+                pid++;
+                Future<List<Integer>> bitDtask = es.submit(bitDmodule);
+                bitDTasks.add(bitDtask);
+            }
+            List<List<Integer>> bitDResults = new ArrayList<>();
+            for(int i=0;i<batchSize;i++){
+                Future<List<Integer>> bitDtask = bitDTasks.get(i);
+                try {
+                    bitDResults.add(bitDtask.get());
+                } catch (InterruptedException | ExecutionException ex) {
+                    Logger.getLogger(KNNThresholdKSelect.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
             
-            Message senderMessage = new Message(compResult, clientId, protocolIdQueue);
+            List<Future<Integer>> compTasks = new ArrayList<>();
+            
+            for(int i=0;i<batchSize;i++) {
+                Comparison comModule = new Comparison(bitDResults.get(i), KBitShares, binaryTiShares,
+                    asymmetricBit, pidMapper, commonSender, new LinkedList<>(protocolIdQueue),
+                    clientId, Constants.binaryPrime, pid, partyCount);
+                pid++;
+                Future<Integer> compTask = es.submit(comModule);
+                compTasks.add(compTask);
+            }
+            for(int i=0;i<batchSize;i++){
+                Future<Integer> compTask = compTasks.get(i);
+                try {
+                    compResults[i] = compTask.get();
+                } catch (InterruptedException | ExecutionException ex) {
+                    Logger.getLogger(KNNThresholdKSelect.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+            
+            Message senderMessage = new Message(compResults, clientId, protocolIdQueue);
             Message receivedMessage = null;
-            int compResult_party = 0;
+            int[] compResults_party = null;
             try {
                 commonSender.put(senderMessage);
                 receivedMessage = pidMapper.get(protocolIdQueue).take();
-                compResult_party = (int) receivedMessage.getValue();
+                compResults_party = (int[]) receivedMessage.getValue();
             } catch (InterruptedException ex) {
                 Logger.getLogger(KNNThresholdKSelect.class.getName()).log(Level.SEVERE, null, ex);
             }
-            if((compResult+compResult_party)%2 == 1){
-                stoppingCriteria = true;
-                break;
-            } else {
-                comparisonSum += comparisonResults[endIndex];
-                comparisonSum = Math.floorMod(comparisonSum, prime);
-                endIndex++;
+            for(int i=0;i<batchSize;i++){
+                
+                if((compResults[i] + compResults_party[i])%2==1) {
+                    endIndex = distanceIndexStart + i + 1;
+                    stoppingCriteria = true;
+                    break;
+                }
             }
+            distanceIndexStart += batchSize;
+            sum = comparisonSum[batchSize-1];
         }
         
         int i=0;
