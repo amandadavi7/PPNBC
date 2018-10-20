@@ -7,11 +7,9 @@ package Model;
 
 import Communication.Message;
 import Protocol.Comparison;
-import Protocol.CompositeProtocol;
 import Protocol.DotProductInteger;
 import Protocol.OIS;
 import Protocol.OR_XOR;
-import Protocol.Utility.BatchMultiplicationByte;
 import Protocol.Utility.PolynomialComputing;
 import TrustedInitializer.TripleByte;
 import TrustedInitializer.TripleInteger;

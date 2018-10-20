@@ -83,6 +83,10 @@ public class TreeEnsemble extends Model {
 
     }
 
+    /**
+     * 
+     * @param args 
+     */
     private void initializeModelVariables(String[] args) {
 
         for (String arg : args) {
@@ -138,6 +142,9 @@ public class TreeEnsemble extends Model {
         }
     }
 
+    /**
+     * Main method
+     */
     public void runTreeEnsembles() {
 
         ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);

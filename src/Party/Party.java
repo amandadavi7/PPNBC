@@ -225,7 +225,7 @@ public class Party {
                 DecisionTreeScoring DTree = new DecisionTreeScoring(asymmetricBit,
                         pidMapper, senderQueue, partyId, tiShares.binaryShares, 
                         partyCount, args, new LinkedList<>(protocolIdQueue),1);
-                DTree.call();
+                DTree.scoreDecisionTree();
                 break;
 
             case "LinearRegressionEvaluation":

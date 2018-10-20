@@ -25,7 +25,6 @@ import java.util.List;
 import java.util.Properties;
 import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -40,7 +39,7 @@ import java.util.logging.Logger;
  *
  * @author keerthanaa
  */
-public class DecisionTreeScoring extends Model implements Callable<Integer[]>{
+public class DecisionTreeScoring extends Model {
 
     int depth, attributeBitLength, attributeCount;//depth d, bitlength for each attribute value, total no. of attributes
     boolean partyHasTree;                         //true if the party has the tree, false if it has the test case
@@ -202,7 +201,7 @@ public class DecisionTreeScoring extends Model implements Callable<Integer[]>{
     /**
      * Main method for the DT Scoring algorithm
      */
-    public Integer[] call() {
+    public void scoreDecisionTree() {
 
         init();
 
@@ -231,9 +230,6 @@ public class DecisionTreeScoring extends Model implements Callable<Integer[]>{
         System.out.println("the output in bits: " + Arrays.toString(finalOutputs));
         System.out.println("Avg time duration:" + elapsedTime);
 
-        List<Integer[]> result = new ArrayList<>();
-        result.add(finalOutputs);
-        return finalOutputs;
     }
 
     /**
