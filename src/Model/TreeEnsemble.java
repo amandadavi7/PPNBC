@@ -12,7 +12,6 @@ import TrustedInitializer.TripleByte;
 import TrustedInitializer.TripleInteger;
 import Utility.Constants;
 import Utility.Logging;
-import Utility.ThreadPoolManager;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -45,7 +44,6 @@ public class TreeEnsemble extends Model {
     List<TripleByte> binaryTiShares;
     List<Integer[]> treeOutputs;
     List<TripleInteger> decimalTiShares;
-    ExecutorService es;
 
     /**
      * Constructor:
@@ -81,7 +79,7 @@ public class TreeEnsemble extends Model {
         this.binaryTiShares = binaryTriples;
         this.decimalTiShares = decimalTriples;
         treeOutputs = new ArrayList<>();
-        es = ThreadPoolManager.getInstance();
+
     }
 
     private void initializeModelVariables(String[] args) {
@@ -144,6 +142,7 @@ public class TreeEnsemble extends Model {
 
     public void runTreeEnsembles() {
 
+        ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
         List<Future<Integer[]>> taskList = new ArrayList<>();
 
         long startTime = System.currentTimeMillis();
@@ -162,13 +161,6 @@ public class TreeEnsemble extends Model {
 
                 Future<Integer[]> output = es.submit(DTScoreModule);
                 taskList.add(output);
-                /*try {
-                    Integer[] result = output.get();
-                    treeOutputs.add(result);
-                    System.out.println("Output" + Arrays.toString(result));
-                } catch (InterruptedException | ExecutionException ex) {
-                    Logger.getLogger(TreeEnsemble.class.getName()).log(Level.SEVERE, null, ex);
-                }*/
                 pid++;
 
             }
@@ -185,13 +177,6 @@ public class TreeEnsemble extends Model {
 
                 Future<Integer[]> output = es.submit(DTScoreModule);
                 taskList.add(output);
-                /*try {
-                    Integer[] result = output.get();
-                    treeOutputs.add(result);
-                    System.out.println("Output" + Arrays.toString(result));
-                } catch (InterruptedException | ExecutionException ex) {
-                    Logger.getLogger(TreeEnsemble.class.getName()).log(Level.SEVERE, null, ex);
-                }*/
                 pid++;
             }
         }
@@ -207,12 +192,6 @@ public class TreeEnsemble extends Model {
             
         }
         
-        //for(Integer[] output: treeOutputs) {
-            //System.out.println("output of trees:" + Arrays.toString(output));
-        //}
-
-        
-        
         int classLabelCount = treeOutputs.get(0).length;
         int[] weightedProbabilityVector = new int[classLabelCount];
         
@@ -222,7 +201,7 @@ public class TreeEnsemble extends Model {
             }
         }
         
-        //System.out.println("weighted prob vector output" + Arrays.toString(weightedProbabilityVector));
+        System.out.println("weighted prob vector output" + Arrays.toString(weightedProbabilityVector));
         
         List<Future<List<Integer>>> bitDtaskList = new ArrayList<>();
         for(int i=0;i<classLabelCount;i++) {
@@ -243,7 +222,7 @@ public class TreeEnsemble extends Model {
             }
         }
 
-        //System.out.println("bitD result" + bitSharesProbs);
+        System.out.println("bitD result" + bitSharesProbs);
         ArgMax argmaxModule = new ArgMax(bitSharesProbs, binaryTiShares, asymmetricBit,
                 pidMapper, commonSender, new LinkedList<>(protocolIdQueue), clientId,
                 Constants.binaryPrime, pid, partyCount);
@@ -264,7 +243,6 @@ public class TreeEnsemble extends Model {
 
         
         System.out.println("Avg time duration:" + elapsedTime);
-        ThreadPoolManager.shutDownThreadService();
     }
 
 }
