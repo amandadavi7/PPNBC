@@ -129,7 +129,7 @@ public class PolynomialComputing extends CompositeProtocol implements Callable<I
             s--;
         }
 
-        System.out.println("pid:" + protocolId + " returning" + Arrays.toString(y_j));
+        //System.out.println("pid:" + protocolId + " returning" + Arrays.toString(y_j));
         return y_j;
 
     }

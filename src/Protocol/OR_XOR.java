@@ -78,7 +78,7 @@ public class OR_XOR extends CompositeProtocol implements Callable<Integer[]> {
     @Override
     public Integer[] call() {
         Integer[] output = new Integer[bitLength];
-        System.out.println("x=" + xShares + " y=" + yShares);
+        //System.out.println("x=" + xShares + " y=" + yShares);
         ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
         List<Future<Integer[]>> taskList = new ArrayList<>();
 

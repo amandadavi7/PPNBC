@@ -162,8 +162,7 @@ public class TreeEnsemble extends Model {
 
                 Future<Integer[]> output = es.submit(DTScoreModule);
                 taskList.add(output);
-                /*Future<Integer[]> output = es.submit(DTScoreModule);
-                try {
+                /*try {
                     Integer[] result = output.get();
                     treeOutputs.add(result);
                     System.out.println("Output" + Arrays.toString(result));
@@ -201,15 +200,16 @@ public class TreeEnsemble extends Model {
             Future<Integer[]> DTScoreTask = taskList.get(i);
             try {
                 treeOutputs.add(DTScoreTask.get());
+                System.out.println("received: " + i);
             } catch (InterruptedException | ExecutionException ex) {
                 Logger.getLogger(TreeEnsemble.class.getName()).log(Level.SEVERE, null, ex);
             }
             
         }
         
-        for(Integer[] output: treeOutputs) {
-            System.out.println("output of trees:" + Arrays.toString(output));
-        }
+        //for(Integer[] output: treeOutputs) {
+            //System.out.println("output of trees:" + Arrays.toString(output));
+        //}
 
         
         

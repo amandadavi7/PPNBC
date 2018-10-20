@@ -131,7 +131,7 @@ public class RandomForestDTScoring extends Model implements Callable<Integer[]>{
                 case "testCsv":
                     //party has feature vector
                     testVectorsDecimal = FileIO.loadIntListFromFile(value);
-                    System.out.println("testcsv:" + testVectorsDecimal);
+                    //System.out.println("testcsv:" + testVectorsDecimal);
                     break;
                 case "storedtree":
                     //party has the tree
@@ -229,12 +229,12 @@ public class RandomForestDTScoring extends Model implements Callable<Integer[]>{
 
         getFeatureVectors();
 
-        System.out.println("OIS complete - got feature vectors");
+        //System.out.println("OIS complete - got feature vectors");
         doThresholdComparisons();
-        System.out.println("Comparisons complete");
+        //System.out.println("Comparisons complete");
         computePolynomialEquation();
 
-        System.out.println("the output in bits: " + Arrays.toString(finalOutputs));
+        //System.out.println(modelProtocolId + "-the output in bits: " + Arrays.toString(finalOutputs));
         return finalOutputs;
     }
 

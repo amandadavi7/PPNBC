@@ -112,7 +112,7 @@ public class DotProductInteger extends DotProduct implements Callable<Integer> {
         }
 
         dotProduct = Math.floorMod(dotProduct, prime);
-        System.out.println("dot product:" + dotProduct + ", protocol id:" + protocolId);
+        //System.out.println("dot product:" + dotProduct + ", protocol id:" + protocolId);
         return dotProduct;
 
     }

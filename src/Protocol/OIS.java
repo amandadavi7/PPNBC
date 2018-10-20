@@ -138,7 +138,7 @@ public class OIS extends CompositeProtocol implements Callable<Integer[]> {
             output[i] = dotprod.get();
         }
 
-        System.out.println("OIS PID: " + protocolId + "-returning "); //+ Arrays.toString(output));
+        //System.out.println("OIS PID: " + protocolId + "-returning "); //+ Arrays.toString(output));
         return output;
     }
 
