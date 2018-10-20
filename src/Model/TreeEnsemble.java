@@ -79,6 +79,7 @@ public class TreeEnsemble extends Model {
         this.binaryTiShares = binaryTriples;
         this.decimalTiShares = decimalTriples;
         treeOutputs = new ArrayList<>();
+        this.prime = Constants.prime;
 
     }
 
@@ -95,9 +96,6 @@ public class TreeEnsemble extends Model {
             String value = currInput[1];
 
             switch (command) {
-                case "prime":
-                    prime = Integer.parseInt(value);
-                    break;
                 case "testCsv":
                     //party has feature vector
                     csvPath = value;

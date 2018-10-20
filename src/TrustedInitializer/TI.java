@@ -57,10 +57,6 @@ public class TI {
                 case "truncation":
                     truncationPairs = Integer.valueOf(value);
                     break;
-                case "prime":
-                    prime = Integer.parseInt(value);
-                    break;
-
             }
         }
 
@@ -109,7 +105,7 @@ public class TI {
     }
 
     private static void generateRandomShares() {
-        RandomGenerator.generateDecimalTriples(decTriples, clientCount, tiShare, prime);
+        RandomGenerator.generateDecimalTriples(decTriples, clientCount, tiShare);
         RandomGenerator.generateBinaryTriples(binTriples, clientCount, tiShare);
         RandomGenerator.generateBigIntTriples(bigIntTriples, clientCount, tiShare);
         RandomGenerator.generateTruncationPairs(truncationPairs, clientCount, tiShare);
