@@ -125,7 +125,7 @@ public class ParallelMultiplication extends CompositeProtocol implements Callabl
             }
 
         }
-        System.out.println("returning " + products.get(0));
+        //System.out.println("returning " + products.get(0));
         return products.get(0);
 
     }

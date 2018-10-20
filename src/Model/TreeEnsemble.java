@@ -201,7 +201,7 @@ public class TreeEnsemble extends Model {
             }
         }
         
-        System.out.println("weighted prob vector output" + Arrays.toString(weightedProbabilityVector));
+        //System.out.println("weighted prob vector output" + Arrays.toString(weightedProbabilityVector));
         
         List<Future<List<Integer>>> bitDtaskList = new ArrayList<>();
         for(int i=0;i<classLabelCount;i++) {
@@ -222,7 +222,7 @@ public class TreeEnsemble extends Model {
             }
         }
 
-        System.out.println("bitD result" + bitSharesProbs);
+        //System.out.println("bitD result" + bitSharesProbs);
         ArgMax argmaxModule = new ArgMax(bitSharesProbs, binaryTiShares, asymmetricBit,
                 pidMapper, commonSender, new LinkedList<>(protocolIdQueue), clientId,
                 Constants.binaryPrime, pid, partyCount);
@@ -236,12 +236,10 @@ public class TreeEnsemble extends Model {
             Logger.getLogger(TreeEnsemble.class.getName()).log(Level.SEVERE, null, ex);
         }
         
-        System.out.println("output final:" + Arrays.toString(finalClassIndex));
-        
         long stopTime = System.currentTimeMillis();
         long elapsedTime = stopTime - startTime;
 
-        
+        System.out.println("output final:" + Arrays.toString(finalClassIndex));
         System.out.println("Avg time duration:" + elapsedTime);
     }
 

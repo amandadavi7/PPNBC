@@ -119,7 +119,7 @@ public class DecisionTreeScoring extends Model implements Callable<Integer[]>{
                 case "testCsv":
                     //party has feature vector
                     testVectorsDecimal = FileIO.loadIntListFromFile(value);
-                    System.out.println("testcsv:" + testVectorsDecimal);
+                    //System.out.println("testcsv:" + testVectorsDecimal);
                     break;
                 case "storedtree":
                     //party has the tree
@@ -209,17 +209,17 @@ public class DecisionTreeScoring extends Model implements Callable<Integer[]>{
         long startTime = System.currentTimeMillis();
 
         convertThresholdsToBits();
-        System.out.println("converting decimal thresholds to bitshares: from " + Arrays.toString(attributeThresholds) + " to " + attributeThresholdsBitShares);
-        System.out.println("leaftoclassindexmapping:" + Arrays.toString(leafToClassIndexMapping));
+        //System.out.println("converting decimal thresholds to bitshares: from " + Arrays.toString(attributeThresholds) + " to " + attributeThresholdsBitShares);
+        //System.out.println("leaftoclassindexmapping:" + Arrays.toString(leafToClassIndexMapping));
 
         if (!partyHasTree) {
             convertTestVectorToBits(testVectorsDecimal.get(0));
-            System.out.println("converting to bits feature vector: from " + testVectorsDecimal.get(0) + " to " + testVector);
+            //System.out.println("converting to bits feature vector: from " + testVectorsDecimal.get(0) + " to " + testVector);
         }
 
         getFeatureVectors();
 
-        System.out.println("got the feature vectors:" + Arrays.deepToString(featureVectors));
+        //System.out.println("got the feature vectors:" + Arrays.deepToString(featureVectors));
 
         doThresholdComparisons();
 
@@ -248,7 +248,7 @@ public class DecisionTreeScoring extends Model implements Callable<Integer[]>{
         if (partyHasTree) {
             for (int i = 0; i < leafNodes - 1; i++) {
 
-                System.out.println("PID:" + pid + " k=" + nodeToAttributeIndexMapping[i]);
+                //System.out.println("PID:" + pid + " k=" + nodeToAttributeIndexMapping[i]);
                 OIS ois = new OIS(null, binaryTiShares.subList(tiBinaryStartIndex,
                         tiBinaryStartIndex + (attributeBitLength * attributeCount)),
                         asymmetricBit, pidMapper, commonSender, new LinkedList<>(protocolIdQueue),
@@ -263,7 +263,7 @@ public class DecisionTreeScoring extends Model implements Callable<Integer[]>{
         } else {
             for (int i = 0; i < leafNodes - 1; i++) {
 
-                System.out.println("PID:" + pid + " k=" + testVector);
+                //System.out.println("PID:" + pid + " k=" + testVector);
                 OIS ois = new OIS(testVector, binaryTiShares.subList(tiBinaryStartIndex,
                         tiBinaryStartIndex + (attributeBitLength * attributeCount)),
                         asymmetricBit, pidMapper, commonSender, new LinkedList<>(protocolIdQueue),
@@ -343,7 +343,7 @@ public class DecisionTreeScoring extends Model implements Callable<Integer[]>{
             }
         }
 
-        System.out.println("threshold comparison results:" + Arrays.toString(comparisonOutputs));
+        //System.out.println("threshold comparison results:" + Arrays.toString(comparisonOutputs));
     }
 
     Integer[] convertToBits(int decimal, int size) {
@@ -414,7 +414,7 @@ public class DecisionTreeScoring extends Model implements Callable<Integer[]>{
             Future<Integer[]> taskResponse = taskList.get(j);
             try {
                 yShares[j] = taskResponse.get();
-                System.out.println("j=" + j + ", y[j]=" + Arrays.toString(yShares[j]));
+                //System.out.println("j=" + j + ", y[j]=" + Arrays.toString(yShares[j]));
             } catch (InterruptedException | ExecutionException ex) {
                 Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
             }
