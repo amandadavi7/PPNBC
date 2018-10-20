@@ -13,7 +13,6 @@ import TrustedInitializer.TruncationPair;
 import Utility.Constants;
 import Utility.FileIO;
 import Utility.Logging;
-import Utility.ThreadPoolManager;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -80,7 +79,6 @@ public class LinearRegressionEvaluation extends Model {
         computeDotProduct();
         long stopTime = System.currentTimeMillis();
         long elapsedTime = stopTime - startTime;
-        ThreadPoolManager.shutDownThreadService();
         //TODO: push time to a csv file
         System.out.println("Avg time duration:" + elapsedTime + " for partyId:"
                 + clientId + ", for size:" + y.length);
@@ -93,8 +91,7 @@ public class LinearRegressionEvaluation extends Model {
      * y[i] = x[i].beta
      */
     public void computeDotProduct() {
-        ExecutorService es = ThreadPoolManager.getInstance();
-        //ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
+        ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
         List<Future<BigInteger>> taskList = new ArrayList<>();
 
         int tiStartIndex = 0;
@@ -142,7 +139,7 @@ public class LinearRegressionEvaluation extends Model {
                     .log(Level.SEVERE, null, ex);
         }
         
-        //es.shutdown();
+        es.shutdown();
     }
 
     private void initalizeModelVariables(String[] args) {
