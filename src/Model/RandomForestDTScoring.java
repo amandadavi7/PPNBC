@@ -100,6 +100,7 @@ public class RandomForestDTScoring extends Model implements Callable<Integer[]>{
         tiBinaryStartIndex = 0;
         this.binaryTiShares = binaryTriples;
         this.decimaTiShares = decimalTriples;
+        this.prime = Constants.prime;
     }
 
     /**
@@ -125,9 +126,6 @@ public class RandomForestDTScoring extends Model implements Callable<Integer[]>{
             String value = currInput[1];
 
             switch (command) {
-                case "prime":
-                    prime = Integer.parseInt(value);
-                    break;
                 case "testCsv":
                     //party has feature vector
                     testVectorsDecimal = FileIO.loadIntListFromFile(value);

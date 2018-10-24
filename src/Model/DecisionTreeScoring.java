@@ -417,7 +417,6 @@ public class DecisionTreeScoring extends Model {
 
         //System.out.println("final:" + Arrays.toString(finalOutputs));
         for (int i = 0; i < alpha; i++) {
-            finalOutputs[i] = 0;
             for (int j = 0; j < leafNodes; j++) {
                 finalOutputs[i] += yShares[j][i];
             }
