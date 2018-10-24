@@ -52,8 +52,7 @@ public class DecisionTreeScoring extends Model {
     int[] attributeThresholds;                    //each internal node's attribute threshold
     List<List<Integer>> attributeThresholdsBitShares; //attribute thresholds as bits
     int leafNodes, tiBinaryStartIndex, classLabelCount, alpha, pid; //leafNode - no. of leafnodes, classlabelcount - total number of class labels
-    int[] comparisonOutputs;
-    Integer[] finalOutputs;
+    int[] comparisonOutputs, finalOutputs;
     List<TripleByte> binaryTiShares;
 
     /**
@@ -195,7 +194,7 @@ public class DecisionTreeScoring extends Model {
         attributeThresholdsBitShares = new ArrayList<>();
         comparisonOutputs = new int[leafNodes - 1];
         alpha = (int) Math.ceil(Math.log(classLabelCount) / Math.log(2.0));
-        finalOutputs = new Integer[alpha];
+        finalOutputs = new int[alpha];
     }
 
     /**

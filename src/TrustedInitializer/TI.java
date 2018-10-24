@@ -20,7 +20,7 @@ import java.util.concurrent.Executors;
 public class TI {
 
     static int tiPort, clientCount, decTriples, binTriples, bigIntTriples, 
-            truncationPairs, prime;
+            truncationPairs;
     static TIShare[] tiShare;
 
     /**
@@ -57,6 +57,7 @@ public class TI {
                 case "truncation":
                     truncationPairs = Integer.valueOf(value);
                     break;
+                    
             }
         }
 
