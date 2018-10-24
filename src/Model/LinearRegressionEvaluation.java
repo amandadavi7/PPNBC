@@ -105,25 +105,43 @@ public class LinearRegressionEvaluation extends Model {
                             tiStartIndex, tiStartIndex + x.get(i).size()),
                     pidMapper, commonSender, 
                     new LinkedList<>(protocolIdQueue),
-                    clientId, prime, i, asymmetricBit, partyCount, truncationTiShares);
+                    clientId, prime, i, asymmetricBit, partyCount);
 
             Future<BigInteger> DPTask = es.submit(DPModule);
             taskList.add(DPTask);
             tiStartIndex += x.get(i).size();
         }
 
+        
+
+        BigInteger[] dotProductResult = new BigInteger[testCases];
         for (int i = 0; i < testCases; i++) {
             Future<BigInteger> dWorkerResponse = taskList.get(i);
             try {
-                y[i] = dWorkerResponse.get();
+                BigInteger result = dWorkerResponse.get();
+                dotProductResult[i] = result;
+                //System.out.println(" #:" + i+ ", result:"+ result);
             } catch (InterruptedException ex) {
-                LOGGER.log(Level.SEVERE, null, ex);
+                Logger.getLogger(LinearRegressionEvaluation.class.getName()).log(Level.SEVERE, null, ex);
             } catch (ExecutionException ex) {
-                LOGGER.log(Level.SEVERE, null, ex);
-            }
+                Logger.getLogger(LinearRegressionEvaluation.class.getName()).log(Level.SEVERE, null, ex);
+            } 
         }
 
-        System.out.println("prediction:" + y[0]);
+        BatchTruncation truncationModule = new BatchTruncation(dotProductResult,
+                truncationTiShares, pidMapper, 
+                commonSender,
+                new LinkedList<>(protocolIdQueue),
+                clientId, prime, testCases, asymmetricBit, partyCount);
+        Future<BigInteger[]> truncationTask = es.submit(truncationModule);
+
+        try {
+            y = truncationTask.get();
+        } catch (InterruptedException | ExecutionException ex) {
+            Logger.getLogger(LinearRegressionTraining.class.getName())
+                    .log(Level.SEVERE, null, ex);
+        }
+        
         es.shutdown();
     }
 

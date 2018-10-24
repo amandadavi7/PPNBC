@@ -8,8 +8,6 @@ package Utility;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.RoundingMode;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Local computations
@@ -86,10 +84,6 @@ public class LocalMath {
                 c[i][j] = localScale(sum, prime);
 
             }
-        }
-        System.out.println("post local matrix multiplication:");
-        for(BigInteger i:c[0]) {
-            System.out.print(" " + i);
         }
         return c;
     }

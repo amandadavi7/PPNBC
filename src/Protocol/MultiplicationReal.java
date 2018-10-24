@@ -62,12 +62,6 @@ public class MultiplicationReal extends Protocol implements Callable<BigInteger>
         this.y = y;
         this.tiRealShares = tiShares;
         this.prime = prime;
-        
-//        System.out.println("x:" + x);
-//        System.out.println("y:" + y);
-//        System.out.println("u:" + tiShares.u);
-//        System.out.println("v:" + tiShares.v);
-//        System.out.println("w:" + tiShares.w);
     }
 
     /**
@@ -85,7 +79,6 @@ public class MultiplicationReal extends Protocol implements Callable<BigInteger>
             try {
                 Message receivedMessage = pidMapper.get(protocolIdQueue).take();
                 List<BigInteger> diffList = (List<BigInteger>) receivedMessage.getValue();
-//                System.out.println("Received d and e: " + diffList.get(0) + " , " + diffList.get(1));
                 d = d.add(diffList.get(0)).mod(prime);
                 e = e.add(diffList.get(1)).mod(prime);
             } catch (InterruptedException ex) {
@@ -96,11 +89,6 @@ public class MultiplicationReal extends Protocol implements Callable<BigInteger>
         d = x.subtract(tiRealShares.u).mod(prime).add(d).mod(prime);
         e = y.subtract(tiRealShares.v).mod(prime).add(e).mod(prime);
         
-//        System.out.println("D:" + d);
-//        System.out.println("E:" + e);
-//        System.out.println("value of D*E:" + (d.multiply(e).mod(prime).multiply(BigInteger.valueOf(asymmetricBit)).mod(prime)));
-//        System.out.println("value of D*v:" + (d.multiply(tiRealShares.v).mod(prime)));
-//        System.out.println("value of E*u:" + (e.multiply(tiRealShares.u).mod(prime)));
         BigInteger product = tiRealShares.w
                 .add(d.multiply(tiRealShares.v).mod(prime))
                 .mod(prime)
@@ -109,7 +97,6 @@ public class MultiplicationReal extends Protocol implements Callable<BigInteger>
                 .add(d.multiply(e).mod(prime).multiply(BigInteger.valueOf(asymmetricBit)).mod(prime))
                 .mod(prime);
 
-//        System.out.println("value of product:" + product);
         return product;
 
     }
@@ -119,11 +106,9 @@ public class MultiplicationReal extends Protocol implements Callable<BigInteger>
      */
     private void initProtocol() {
         List<BigInteger> diffList = new ArrayList<>();
-//        System.out.println("prime:" + prime);
         diffList.add(x.subtract(tiRealShares.u).mod(prime));
         diffList.add(y.subtract(tiRealShares.v).mod(prime));
 
-//        System.out.println("Sending d and e: " + diffList.get(0) + " , " + diffList.get(1));
         Message senderMessage = new Message(diffList,
                 clientID, protocolIdQueue);
         try {

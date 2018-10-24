@@ -25,6 +25,7 @@ import java.util.logging.Logger;
  */
 public class Truncation extends Protocol implements Callable<BigInteger> {
 
+    private static final Logger LOGGER = Logger.getLogger(Truncation.class.getName());
     BigInteger wShares;
     BigInteger zShares;
     BigInteger T;
@@ -32,9 +33,9 @@ public class Truncation extends Protocol implements Callable<BigInteger> {
 
     BigInteger prime;
     
-    static BigInteger roundOffBit;
-    static BigInteger fInv;
-    static BigInteger fpow2;
+    BigInteger roundOffBit;
+    BigInteger fInv;
+    BigInteger fpow2;
 
     public Truncation(BigInteger wShares,
             TruncationPair tiShares, 
@@ -78,7 +79,7 @@ public class Truncation extends Protocol implements Callable<BigInteger> {
         try {
             senderQueue.put(senderMessage);
         } catch (InterruptedException ex) {
-            Logger.getLogger(Truncation.class.getName()).log(Level.SEVERE, null, ex);
+            LOGGER.log(Level.SEVERE, null, ex);
         }
     }
 

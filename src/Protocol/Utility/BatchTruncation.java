@@ -28,6 +28,7 @@ import java.util.logging.Logger;
  */
 public class BatchTruncation extends CompositeProtocol implements Callable<BigInteger[]> {
 
+    private static final Logger LOGGER = Logger.getLogger(BatchTruncation.class.getName());
     BigInteger[] wShares;
     BigInteger[] T;
     
@@ -37,9 +38,9 @@ public class BatchTruncation extends CompositeProtocol implements Callable<BigIn
     BigInteger prime;
     int batchSize;
     
-    static BigInteger roundOffBit;
-    static BigInteger fInv;
-    static BigInteger fpow2;
+    BigInteger roundOffBit;
+    BigInteger fInv;
+    BigInteger fpow2;
 
     /**
      * Constructor
@@ -108,8 +109,7 @@ public class BatchTruncation extends CompositeProtocol implements Callable<BigIn
         try {
             senderQueue.put(senderMessage);
         } catch (InterruptedException ex) {
-            ex.printStackTrace();
-            Logger.getLogger(BatchTruncation.class.getName()).log(Level.SEVERE, null, ex);
+            LOGGER.log(Level.SEVERE, null, ex);
         }
     }
 
@@ -128,7 +128,7 @@ public class BatchTruncation extends CompositeProtocol implements Callable<BigIn
                     zShares.set(j, zShares.get(j).add(diffList.get(j)).mod(prime));
                 }
             } catch (InterruptedException ex) {
-                ex.printStackTrace();
+                LOGGER.log(Level.SEVERE, null, ex);
             }
         }
 

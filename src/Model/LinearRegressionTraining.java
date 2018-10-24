@@ -97,8 +97,6 @@ public class LinearRegressionTraining extends Model {
             LOGGER.log(Level.SEVERE, null, ex);
         }
         
-        System.out.println("Printed gammaInv:" + gamma1Inv[0][0] + ", partyId:" + clientId);
-        
         MatrixMultiplication matrixMultiplication = new MatrixMultiplication(gamma1Inv,
                 gamma2, realTriples, tiTruncationPair, clientId, prime, globalProtocolId,
                 asymmetricBit, pidMapper, commonSender,
@@ -116,7 +114,6 @@ public class LinearRegressionTraining extends Model {
         //TODO: push time to a csv file
         LOGGER.log(Level.INFO, "Avg time duration:{0} for partyId:{1}", 
                 new Object[]{elapsedTime, clientId});
-        System.out.println("Printed beta:" + beta[0][0] + ", partyId:" + clientId);
         
         FileIO.writeToCSV(beta, outputPath, "beta", clientId);
         

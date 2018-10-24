@@ -45,7 +45,6 @@ public class MatrixMultiplication extends CompositeProtocol implements
     BigInteger prime;
     int globalProtocolId;
     int n, m, l;
-    boolean debugFlag;
 
     /**
      * Constructor
@@ -67,7 +66,7 @@ public class MatrixMultiplication extends CompositeProtocol implements
     public MatrixMultiplication(BigInteger[][] a, BigInteger[][] b,
             List<TripleReal> tiRealshares, List<TruncationPair> tiTruncationPair,
             int clientID, BigInteger prime, int protocolID,
-            int asymmetricBit, 
+            int asymmetricBit,
             ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper,
             BlockingQueue<Message> senderQueue,
             Queue<Integer> protocolIdQueue, int partyCount) {
@@ -78,7 +77,7 @@ public class MatrixMultiplication extends CompositeProtocol implements
         this.tiRealShares = tiRealshares;
         this.tiTruncationPair = tiTruncationPair;
         this.prime = prime;
-        
+
         globalProtocolId = 0;
         bT = new ArrayList<>();
         n = a.length;
@@ -91,10 +90,9 @@ public class MatrixMultiplication extends CompositeProtocol implements
             }
             bT.add(col);
         }
-        
+
     }
-    
-    
+
     /**
      * a: n*m, b = m*l Local matrix multiplication of a(n*t) and b(t*m) to give
      * result c(n*m)
@@ -105,6 +103,7 @@ public class MatrixMultiplication extends CompositeProtocol implements
     @Override
     public BigInteger[][] call() throws Exception {
 
+        BigInteger[][] c2f = new BigInteger[n][l];
         BigInteger[][] c = new BigInteger[n][l];
 
         int tiRealStartIndex = 0;
@@ -115,49 +114,61 @@ public class MatrixMultiplication extends CompositeProtocol implements
         for (int i = 0; i < n; i++) {
             List<BigInteger> row = Arrays.asList(a[i]);
             for (int j = 0; j < l; j++) {
-//                if(i == 0 && j == 0) {
-//                    System.out.println("a:");
-//                    for(BigInteger val:row) {
-//                        System.out.print(" " + val);
-//                    }
-//                    System.out.println("b:");
-//                    for(BigInteger val:bT.get(j)) {
-//                        System.out.print(" " + val);
-//                    }
-//                    System.out.println("Dot product:");
-//                }
                 DotProductReal DPModule = new DotProductReal(row,
                         bT.get(j), tiRealShares.subList(
                         tiRealStartIndex, tiRealStartIndex + m),
-                        pidMapper, senderQueue, 
+                        pidMapper, senderQueue,
                         new LinkedList<>(protocolIdQueue),
-                        clientID, prime, globalProtocolId++, asymmetricBit, partyCount, tiTruncationPair);
-                
+                        clientID, prime, globalProtocolId++, asymmetricBit, partyCount);
+
                 Future<BigInteger> DPTask = es.submit(DPModule);
                 taskList.add(DPTask);
                 //TODO: uncomment this to avoid reusing the shares 
                 //tiRealStartIndex += m;
-
             }
         }
 
         int testCases = 0;
-        
+        int tiTruncationStartIndex = 0;
+
+        List<Future<BigInteger[]>> taskListTruncation = new ArrayList<>(n);
+
         for (int i = 0; i < n; i++) {
             for (int j = 0; j < l; j++) {
                 Future<BigInteger> dWorkerResponse = taskList.get(testCases++);
                 try {
-                    c[i][j] = dWorkerResponse.get();
+                    c2f[i][j] = dWorkerResponse.get();
                 } catch (InterruptedException | ExecutionException ex) {
                     LOGGER.log(Level.SEVERE, null, ex);
                 }
+            }
+            
+            BatchTruncation truncationModule = new BatchTruncation(c2f[i],
+                    tiTruncationPair.subList(tiTruncationStartIndex,
+                            tiTruncationStartIndex + c2f[i].length),
+                    pidMapper, senderQueue, 
+                    new LinkedList<>(protocolIdQueue),
+                    clientID, prime, globalProtocolId++, asymmetricBit, partyCount);
+            
+            Future<BigInteger[]> truncationTask = es.submit(truncationModule);
+            taskListTruncation.add(truncationTask);
                 //TODO: uncomment this to avoid reusing the shares 
-                //tiRealStartIndex += m;
-
+            //tiTruncationStartIndex += c2f[i].length;
+        }
+        // release the memory once done
+        taskList.clear();
+        
+        for (int i = 0; i < n; i++) {
+            Future<BigInteger[]> dWorkerResponse = taskListTruncation.get(i);
+            try {
+                c[i] = dWorkerResponse.get();
+            } catch (InterruptedException | ExecutionException ex) {
+                Logger.getLogger(MatrixMultiplication.class.getName())
+                        .log(Level.SEVERE, null, ex);
             }
         }
-        
-        es.shutdown();        
+
+        es.shutdown();
         return c;
     }
 }

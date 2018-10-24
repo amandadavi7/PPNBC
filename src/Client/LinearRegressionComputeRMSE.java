@@ -120,8 +120,6 @@ public class LinearRegressionComputeRMSE {
         int totalPredictions = predictedYList.size();
         for (int i = 0; i < totalPredictions; i++) {
             double err = predictedYList.get(i) - actualYList.get(i);
-            System.out.println("predicted:" + predictedYList.get(i));
-            System.out.println("actual:" + actualYList.get(i));
             error_sum+= Math.pow(err, 2);
         }
 

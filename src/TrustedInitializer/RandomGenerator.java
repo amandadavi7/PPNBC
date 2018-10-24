@@ -98,7 +98,6 @@ public class RandomGenerator {
             BigInteger V = new BigInteger(Constants.INTEGER_PRECISION, rand).mod(Zq);
             BigInteger W = U.multiply(V).mod(Zq);
             
-            //System.out.println("clientCount:" + clientCount);
             BigInteger usum = BigInteger.ZERO, vsum = BigInteger.ZERO, wsum = BigInteger.ZERO;
             for (int j = 0; j < clientCount - 1; j++) {
                 TripleReal t = new TripleReal();
