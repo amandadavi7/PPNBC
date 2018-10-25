@@ -558,7 +558,7 @@ public class TestModel extends Model {
         Message senderMessage = new Message(value,
                 clientId, protocolIdQueue, true);
         Logger.getLogger(TestModel.class.getName())
-                .log(Level.INFO, "value sent:" + value + ", client Id:" + clientId);
+                .log(Level.INFO, "value sent:{0}, client Id:{1}", new Object[]{value, clientId});
 
         try {
             commonSender.put(senderMessage);
@@ -573,7 +573,7 @@ public class TestModel extends Model {
                     Message receivedMessage = pidMapper.get(protocolIdQueue).take();
                     value = (Integer) receivedMessage.getValue();
                     Logger.getLogger(TestModel.class.getName())
-                            .log(Level.INFO, "value recieved:" + value + ", client Id:" + clientId);
+                            .log(Level.INFO, "value recieved:{0}, client Id:{1}", new Object[]{value, clientId});
                 } catch (InterruptedException ex) {
                     Logger.getLogger(TestModel.class.getName())
                             .log(Level.SEVERE, null, ex);
