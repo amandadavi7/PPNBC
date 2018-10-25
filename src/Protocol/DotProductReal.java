@@ -7,12 +7,9 @@ package Protocol;
 
 import Communication.Message;
 import Protocol.Utility.BatchMultiplicationReal;
-import Protocol.Utility.BatchTruncation;
 import TrustedInitializer.TripleReal;
-import TrustedInitializer.TruncationPair;
 import Utility.Constants;
 import java.math.BigInteger;
-import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;

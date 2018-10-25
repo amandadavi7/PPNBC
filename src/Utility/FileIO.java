@@ -176,6 +176,35 @@ public class FileIO {
 
     }
 
+    /**
+     * Load list of actual values from file
+     * @param sourceFile
+     * @return 
+     */
+    public static List<Double> loadDoubleListFromFile(String sourceFile) {
+
+        File file = new File(sourceFile);
+        Scanner inputStream;
+        List<Double> x = new ArrayList<>();
+
+        try {
+            inputStream = new Scanner(file);
+            while (inputStream.hasNext()) {
+                String line = inputStream.next();
+                Double value = new Double(line.split(",")[0]);
+                x.add(value);
+
+            }
+
+            inputStream.close();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+
+        return x;
+
+    }
+    
     public static void writeToCSV(BigInteger[] y, String outputPath,
             String filePrefix, int clientId) {
         int len = y.length;

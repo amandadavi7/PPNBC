@@ -33,10 +33,8 @@ public class Truncation extends Protocol implements Callable<BigInteger> {
 
     BigInteger prime;
     
-    BigInteger roundOffBit;
-    BigInteger fInv;
-    BigInteger fpow2;
-
+    private static BigInteger fInv;
+    
     public Truncation(BigInteger wShares,
             TruncationPair tiShares, 
             ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper,
@@ -51,14 +49,9 @@ public class Truncation extends Protocol implements Callable<BigInteger> {
         this.prime = prime;
         this.truncationShares = tiShares;
         
-        roundOffBit = BigInteger.valueOf(2).pow(Constants.INTEGER_PRECISION
-                + 2 * Constants.DECIMAL_PRECISION - 1);
-        
         fInv = prime.add(BigInteger.ONE).divide(BigInteger.valueOf(2)).
                 pow(Constants.DECIMAL_PRECISION).mod(prime);
         
-        fpow2 = BigInteger.valueOf(2).pow(Constants.DECIMAL_PRECISION);
-
     }
 
     @Override
@@ -96,8 +89,8 @@ public class Truncation extends Protocol implements Callable<BigInteger> {
             }
         }
 
-        BigInteger c = zShares.add(roundOffBit);
-        BigInteger cp = c.mod(fpow2);
+        BigInteger c = zShares.add(Constants.ROUND_OFF_BIT);
+        BigInteger cp = c.mod(Constants.F_POW_2);
         BigInteger S = wShares.add(truncationShares.rp).mod(prime).
                 subtract(cp.multiply(BigInteger.valueOf(asymmetricBit)));
         T = S.multiply(fInv).mod(prime);

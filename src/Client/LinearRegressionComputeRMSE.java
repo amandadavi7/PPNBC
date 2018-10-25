@@ -15,6 +15,8 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * The client is responsible to split the dataset among n parties over Zq. The
@@ -30,6 +32,10 @@ public class LinearRegressionComputeRMSE {
     static List<Double> actualYList;
     static List<Double> predictedYList;
 
+    /**
+     *
+     * @param args
+     */
     public static void main(String[] args) {
         if (args.length < 2) {
             Logging.clientUsage();
@@ -103,7 +109,8 @@ public class LinearRegressionComputeRMSE {
 
             inputStream.close();
         } catch (FileNotFoundException e) {
-            e.printStackTrace();
+            Logger.getLogger(LinearRegressionComputeRMSE.class.getName())
+                    .log(Level.SEVERE, null, e);
         }
 
         return x;

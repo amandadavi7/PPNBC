@@ -111,20 +111,15 @@ public class LinearRegressionEvaluation extends Model {
             taskList.add(DPTask);
             tiStartIndex += x.get(i).size();
         }
-
         
-
         BigInteger[] dotProductResult = new BigInteger[testCases];
         for (int i = 0; i < testCases; i++) {
             Future<BigInteger> dWorkerResponse = taskList.get(i);
             try {
                 BigInteger result = dWorkerResponse.get();
                 dotProductResult[i] = result;
-                //System.out.println(" #:" + i+ ", result:"+ result);
-            } catch (InterruptedException ex) {
-                Logger.getLogger(LinearRegressionEvaluation.class.getName()).log(Level.SEVERE, null, ex);
-            } catch (ExecutionException ex) {
-                Logger.getLogger(LinearRegressionEvaluation.class.getName()).log(Level.SEVERE, null, ex);
+            } catch (InterruptedException | ExecutionException ex) {
+                LOGGER.log(Level.SEVERE, null, ex);
             } 
         }
 
@@ -138,13 +133,17 @@ public class LinearRegressionEvaluation extends Model {
         try {
             y = truncationTask.get();
         } catch (InterruptedException | ExecutionException ex) {
-            Logger.getLogger(LinearRegressionTraining.class.getName())
-                    .log(Level.SEVERE, null, ex);
+            LOGGER.log(Level.SEVERE, null, ex);
         }
         
         es.shutdown();
     }
 
+    /**
+     * initialize input variables from command line
+     *
+     * @param args command line arguments
+     */
     private void initalizeModelVariables(String[] args) {
         for (String arg : args) {
             String[] currInput = arg.split("=");
