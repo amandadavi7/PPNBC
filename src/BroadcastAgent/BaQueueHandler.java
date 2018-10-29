@@ -69,7 +69,6 @@ public class BaQueueHandler implements Runnable {
                     }
                 }
             } catch (InterruptedException ex) {
-                LOGGER.log(Level.SEVERE, "Thread Interrupted", ex);
                 break;
             }
         }

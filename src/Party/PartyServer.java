@@ -66,7 +66,6 @@ public class PartyServer implements Runnable {
                 oStream.reset();
                 oStream.flush();
             } catch (InterruptedException | IOException ex) {
-                LOGGER.log(Level.SEVERE, "Exception from Blocking Queue", ex);
                 break;
             }
         }
