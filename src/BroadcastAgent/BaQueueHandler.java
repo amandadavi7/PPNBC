@@ -8,7 +8,6 @@ package BroadcastAgent;
 import Communication.Message;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -20,7 +19,7 @@ import java.util.logging.Logger;
 public class BaQueueHandler implements Runnable {
 
     private static final Logger LOGGER = Logger.getLogger(BaQueueHandler.class.getName());
-    
+
     BlockingQueue<Message> receiverQueue;
     ConcurrentHashMap<Integer, BlockingQueue<Message>> senderQueues;
 
@@ -36,7 +35,7 @@ public class BaQueueHandler implements Runnable {
      * @param unicastReceiver
      */
     BaQueueHandler(int partyCount, BlockingQueue<Message> receiverQueue,
-            ConcurrentHashMap<Integer, BlockingQueue<Message>> senderQueues, 
+            ConcurrentHashMap<Integer, BlockingQueue<Message>> senderQueues,
             int unicastReceiver) {
         this.partyCount = partyCount;
         this.receiverQueue = receiverQueue;
@@ -58,23 +57,17 @@ public class BaQueueHandler implements Runnable {
                 // check for unicast here
                 if (msg.isUnicast()) {
                     // send the message to the party holding asymmetric bit
-                    // TODO putIfAbsent might no longer be required, since we first wait for all connections first
                     if (msg.getClientId() != unicastReceiver) {
-                            senderQueues.putIfAbsent(unicastReceiver, new LinkedBlockingQueue<>());
-                            senderQueues.get(unicastReceiver).put(msg);
-                        }
+                        senderQueues.get(unicastReceiver).put(msg);
+                    }
                 } else {
                     // broadcast the message to all parties
-                    // IMP: The party ids start from 0. 
-                    // TODO putIfAbsent might no longer be required, since we first wait for all connections first
-                    for (int i = 0; i < partyCount; i++) {
-                        if (i != msgIndex) {
-                            senderQueues.putIfAbsent(i, new LinkedBlockingQueue<>());
-                            senderQueues.get(i).put(msg);
+                    for (Integer senderId : senderQueues.keySet()) {
+                        if (senderId != msgIndex) {
+                            senderQueues.get(senderId).put(msg);
                         }
                     }
                 }
-
             } catch (InterruptedException ex) {
                 LOGGER.log(Level.SEVERE, "Thread Interrupted", ex);
                 break;
