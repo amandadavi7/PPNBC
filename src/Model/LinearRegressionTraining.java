@@ -53,14 +53,17 @@ public class LinearRegressionTraining extends Model {
      * @param asymmetricBit
      * @param partyCount
      * @param args 
+     * @param protocolIdQueue 
+     * @param protocolID 
      */
     public LinearRegressionTraining(List<TripleReal> realTriples,
             List<TruncationPair> tiTruncationPair,
             ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper, 
             BlockingQueue<Message> senderQueue,
-            int clientId, int asymmetricBit, int partyCount, String[] args) {
+            int clientId, int asymmetricBit, int partyCount, String[] args,
+            Queue<Integer> protocolIdQueue, int protocolID) {
 
-        super(pidMapper, senderQueue, clientId, asymmetricBit, partyCount);
+        super(pidMapper, senderQueue, clientId, asymmetricBit, partyCount, protocolIdQueue, protocolID);
         this.tiTruncationPair = tiTruncationPair;
         this.realTriples = realTriples;
         globalProtocolId = 0;

@@ -11,6 +11,7 @@ import Model.LinearRegressionEvaluation;
 import Model.LinearRegressionTraining;
 import Utility.Connection;
 import Model.TestModel;
+import Model.TreeEnsemble;
 import TrustedInitializer.TIShare;
 import Utility.Constants;
 import Utility.Logging;
@@ -56,7 +57,9 @@ public class Party {
     private static String protocolName;
     
     private static ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper;
-    
+
+    private static Queue<Integer> protocolIdQueue;
+
     /**
      * Initialize class variables
      *
@@ -79,6 +82,8 @@ public class Party {
         modelName = "";
         
         pidMapper = new ConcurrentHashMap<>();
+
+        protocolIdQueue = new LinkedList<>();
 
         for (String arg : args) {
             String[] currInput = arg.split("=");
@@ -213,22 +218,24 @@ public class Party {
      * @param args 
      */
     private static void callModel(String[] args) {
+        int modelId = 1;
+        
         switch (modelName) {
             case "DecisionTreeScoring":
                 // DT Scoring
                 DecisionTreeScoring DTree = new DecisionTreeScoring(asymmetricBit,
-                        pidMapper, senderQueue, partyId, 
-                        tiShares.binaryShares, partyCount, args);
-                DTree.ScoreDecisionTree();
+                        pidMapper, senderQueue, partyId, tiShares.binaryShares, 
+                        partyCount, args, protocolIdQueue, modelId);
+                DTree.scoreDecisionTree();
                 break;
 
             case "LinearRegressionEvaluation":
                 // LR Evaluation
                 LinearRegressionEvaluation regressionEvaluationModel
                         = new LinearRegressionEvaluation(tiShares.bigIntShares,
-                                tiShares.truncationPair,
-                                asymmetricBit, pidMapper, senderQueue,
-                                partyId, partyCount, args);
+                                tiShares.truncationPair, asymmetricBit,
+                                pidMapper, senderQueue, partyId, partyCount,
+                                args, protocolIdQueue, modelId);
 
                 regressionEvaluationModel.predictValues();
                 break;
@@ -237,11 +244,18 @@ public class Party {
                 // LR Training
                 LinearRegressionTraining regressionTrainingModel
                         = new LinearRegressionTraining(tiShares.bigIntShares,
-                                tiShares.truncationPair,
-                                pidMapper, senderQueue, partyId,
-                                asymmetricBit, partyCount, args);
+                                tiShares.truncationPair, pidMapper, senderQueue, partyId,
+                                asymmetricBit, partyCount, args, protocolIdQueue, modelId);
 
                 regressionTrainingModel.trainModel();
+                break;
+            
+            case "TreeEnsemble":
+                //Random Forest
+                TreeEnsemble TEModel = new TreeEnsemble(asymmetricBit, pidMapper,
+                        senderQueue,  partyId, tiShares.binaryShares,
+                        tiShares.decimalShares, partyCount, args, protocolIdQueue, modelId);
+                TEModel.runTreeEnsembles();
                 break;
 
             default:
@@ -250,8 +264,7 @@ public class Party {
                         tiShares.decimalShares, tiShares.bigIntShares,
                         tiShares.truncationPair,
                         asymmetricBit, pidMapper, senderQueue, partyId,
-                        partyCount, args);
-
+                        partyCount, args, protocolIdQueue, modelId);
                 testModel.compute(protocolName);
                 break;
         }

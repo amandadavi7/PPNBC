@@ -67,16 +67,16 @@ public class TestModel extends Model {
      * @param clientId
      * @param partyCount
      * @param args
+     * @param protocolIdQueue
+     * @param protocolID
      */
     public TestModel(List<TripleByte> binaryTriples, List<TripleInteger> decimalTriples,
-            List<TripleReal> realTiShares, List<TruncationPair> tiTruncationPair,
-            int asymmetricBit,
-            ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper,
-            BlockingQueue<Message> senderQueue,
-            int clientId, int partyCount, String[] args) {
+            List<TripleReal> realTiShares, List<TruncationPair> tiTruncationPair, 
+            int asymmetricBit, ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper, 
+            BlockingQueue<Message> senderQueue, int clientId, int partyCount, String[] args, 
+            Queue<Integer> protocolIdQueue, int protocolID) {
 
-        super(pidMapper, senderQueue, clientId, asymmetricBit, partyCount);
-
+        super(pidMapper, senderQueue, clientId, asymmetricBit, partyCount, protocolIdQueue, protocolID);
         this.tiTruncationPair = tiTruncationPair;
         prime = BigInteger.valueOf(2).pow(Constants.INTEGER_PRECISION
                 + 2 * Constants.DECIMAL_PRECISION + 1).nextProbablePrime();

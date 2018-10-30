@@ -9,7 +9,6 @@ import Communication.Message;
 import TrustedInitializer.TripleByte;
 import Utility.Constants;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -133,11 +132,12 @@ public class OIS extends CompositeProtocol implements Callable<Integer[]> {
         es.shutdown();
 
         for (int i = 0; i < bitLength; i++) {
+            //System.out.println("waiting for dp:" + i);
             Future<Integer> dotprod = taskList.get(i);
             output[i] = dotprod.get();
         }
 
-        System.out.println("OIS PID: " + protocolId + "-returning " + Arrays.toString(output));
+        //System.out.println("OIS PID: " + protocolId + "-returning "); //+ Arrays.toString(output));
         return output;
     }
 
