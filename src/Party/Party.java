@@ -84,7 +84,6 @@ public class Party {
         pidMapper = new ConcurrentHashMap<>();
 
         protocolIdQueue = new LinkedList<>();
-        //protocolIdQueue.add(1);
 
         for (String arg : args) {
             String[] currInput = arg.split("=");
@@ -219,12 +218,14 @@ public class Party {
      * @param args 
      */
     private static void callModel(String[] args) {
+        int modelId = 1;
+        
         switch (modelName) {
             case "DecisionTreeScoring":
                 // DT Scoring
                 DecisionTreeScoring DTree = new DecisionTreeScoring(asymmetricBit,
                         pidMapper, senderQueue, partyId, tiShares.binaryShares, 
-                        partyCount, args, new LinkedList<>(protocolIdQueue), 1);
+                        partyCount, args, protocolIdQueue, modelId);
                 DTree.scoreDecisionTree();
                 break;
 
@@ -234,7 +235,7 @@ public class Party {
                         = new LinearRegressionEvaluation(tiShares.bigIntShares,
                                 tiShares.truncationPair, asymmetricBit,
                                 pidMapper, senderQueue, partyId, partyCount,
-                                args, new LinkedList<>(protocolIdQueue), 1);
+                                args, protocolIdQueue, modelId);
 
                 regressionEvaluationModel.predictValues();
                 break;
@@ -244,7 +245,7 @@ public class Party {
                 LinearRegressionTraining regressionTrainingModel
                         = new LinearRegressionTraining(tiShares.bigIntShares,
                                 tiShares.truncationPair, pidMapper, senderQueue, partyId,
-                                asymmetricBit, partyCount, args, new LinkedList<>(protocolIdQueue), 1);
+                                asymmetricBit, partyCount, args, protocolIdQueue, modelId);
 
                 regressionTrainingModel.trainModel();
                 break;
@@ -253,8 +254,7 @@ public class Party {
                 //Random Forest
                 TreeEnsemble TEModel = new TreeEnsemble(asymmetricBit, pidMapper,
                         senderQueue,  partyId, tiShares.binaryShares,
-                        tiShares.decimalShares, partyCount, args, 
-                        new LinkedList<>(protocolIdQueue), 1);
+                        tiShares.decimalShares, partyCount, args, protocolIdQueue, modelId);
                 TEModel.runTreeEnsembles();
                 break;
 
@@ -264,7 +264,7 @@ public class Party {
                         tiShares.decimalShares, tiShares.bigIntShares,
                         tiShares.truncationPair,
                         asymmetricBit, pidMapper, senderQueue, partyId,
-                        partyCount, args, new LinkedList<>(protocolIdQueue), 1);
+                        partyCount, args, protocolIdQueue, modelId);
                 testModel.compute(protocolName);
                 break;
         }

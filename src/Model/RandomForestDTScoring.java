@@ -6,9 +6,7 @@
 package Model;
 
 import Communication.Message;
-import Protocol.Comparison;
 import Protocol.DotProductInteger;
-import Protocol.OIS;
 import Protocol.OR_XOR;
 import Protocol.Utility.PolynomialComputing;
 import TrustedInitializer.TripleByte;
@@ -47,6 +45,7 @@ public class RandomForestDTScoring extends DecisionTreeScoring implements Callab
 
     Integer[][] leafToClassIndexMappingTransposed;                //leaf node index to class index mapping (stored by the party that has the tree)
     List<TripleInteger> decimalTiShares;
+    Logger LOGGER;
     
     /**
      * Constructor 
@@ -85,6 +84,7 @@ public class RandomForestDTScoring extends DecisionTreeScoring implements Callab
         pid = 0;
         tiBinaryStartIndex = 0;
         this.decimalTiShares = decimalTriples;
+        LOGGER = Logger.getLogger(RandomForestDTScoring.class.getName());
     }
 
     /**
@@ -113,7 +113,6 @@ public class RandomForestDTScoring extends DecisionTreeScoring implements Callab
                 case "testCsv":
                     //party has feature vector
                     testVectorsDecimal = FileIO.loadIntListFromFile(value);
-                    //System.out.println("testcsv:" + testVectorsDecimal);
                     break;
                 case "storedtree":
                     //party has the tree
@@ -124,9 +123,9 @@ public class RandomForestDTScoring extends DecisionTreeScoring implements Callab
                         input = new FileInputStream(value);
                         prop.load(input);
                     } catch (FileNotFoundException ex) {
-                        Logger.getLogger(DecisionTreeScoring.class.getName()).log(Level.SEVERE, null, ex);
+                        LOGGER.log(Level.SEVERE, null, ex);
                     } catch (IOException ex) {
-                        Logger.getLogger(DecisionTreeScoring.class.getName()).log(Level.SEVERE, null, ex);
+                        LOGGER.log(Level.SEVERE, null, ex);
                     }
                     depth = Integer.parseInt(prop.getProperty("depth"));
                     attributeCount = Integer.parseInt(prop.getProperty("attributecount"));
@@ -159,9 +158,9 @@ public class RandomForestDTScoring extends DecisionTreeScoring implements Callab
                         input = new FileInputStream(value);
                         prop.load(input);
                     } catch (FileNotFoundException ex) {
-                        Logger.getLogger(DecisionTreeScoring.class.getName()).log(Level.SEVERE, null, ex);
+                        LOGGER.log(Level.SEVERE, null, ex);
                     } catch (IOException ex) {
-                        Logger.getLogger(DecisionTreeScoring.class.getName()).log(Level.SEVERE, null, ex);
+                        LOGGER.log(Level.SEVERE, null, ex);
                     }
                     depth = Integer.parseInt(prop.getProperty("depth"));
                     attributeCount = Integer.parseInt(prop.getProperty("attributecount"));
@@ -192,19 +191,20 @@ public class RandomForestDTScoring extends DecisionTreeScoring implements Callab
         init();
         
         convertThresholdsToBits();
+        LOGGER.fine("Converted Thresholds to Bits");
         
         if (!partyHasTree) {
             convertTestVectorToBits(testVectorsDecimal.get(0));
         }
 
         getFeatureVectors();
-
-        //System.out.println("OIS complete - got feature vectors");
+        LOGGER.fine("got the feature vectors:" + Arrays.deepToString(featureVectors));
+        
         doThresholdComparisons();
-        //System.out.println("Comparisons complete");
+        
         computePolynomialEquation();
 
-        //System.out.println(modelProtocolId + "-the output in bits: " + Arrays.toString(finalOutputs));
+        LOGGER.info(modelProtocolId + "-the output in bits: " + Arrays.toString(finalOutputs));
         return finalOutputs;
     }
     
@@ -268,9 +268,8 @@ public class RandomForestDTScoring extends DecisionTreeScoring implements Callab
             Future<Integer[]> taskResponse = taskList.get(j);
             try {
                 yShares[j] = taskResponse.get();
-                //System.out.println("j=" + j + ", y[j]=" + Arrays.toString(yShares[j]));
             } catch (InterruptedException | ExecutionException ex) {
-                Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
+                LOGGER.log(Level.SEVERE, null, ex);
             }
         }
 
@@ -301,7 +300,7 @@ public class RandomForestDTScoring extends DecisionTreeScoring implements Callab
         try {
             one_hot_encoding_leaf_predicted = xorTask.get();
         } catch (InterruptedException | ExecutionException ex) {
-            Logger.getLogger(RandomForestDTScoring.class.getName()).log(Level.SEVERE, null, ex);
+            LOGGER.log(Level.SEVERE, null, ex);
         }
         pid++;
            
@@ -330,7 +329,7 @@ public class RandomForestDTScoring extends DecisionTreeScoring implements Callab
             try {
                 finalOutputs[i] = dpResult.get();
             } catch (InterruptedException | ExecutionException ex) {
-                Logger.getLogger(RandomForestDTScoring.class.getName()).log(Level.SEVERE, null, ex);
+                LOGGER.log(Level.SEVERE, null, ex);
             }
         }
     }

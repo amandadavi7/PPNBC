@@ -33,7 +33,7 @@ import java.util.logging.Logger;
  */
 public class PolynomialComputing extends CompositeProtocol implements Callable<Integer[]> {
 
-    int s, u, alpha;
+    int level, nodeIndex, alpha;
     int[] comparisonOutputs;
     Integer[] y_j, jBinary;
     List<TripleByte> tiShares;
@@ -66,8 +66,8 @@ public class PolynomialComputing extends CompositeProtocol implements Callable<I
         super(protocolID, pidMapper, senderQueue, protocolIdQueue, clientId, 
                 asymmetricBit, partyCount);
 
-        this.s = depth;
-        u = 1;
+        this.level = depth;
+        nodeIndex = 1;
         this.alpha = alpha;
         this.y_j = y_j;
         this.comparisonOutputs = zOutputs;
@@ -84,20 +84,20 @@ public class PolynomialComputing extends CompositeProtocol implements Callable<I
 
         int pid = 0;
 
-        while (s > 0) {
+        while (level > 0) {
             ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
             List<Future<Integer[]>> taskList = new ArrayList<>();
 
             List<Integer> yj = Arrays.asList(y_j);
-            List<Integer> z_u = new ArrayList<>(Collections.<Integer>nCopies(Constants.BATCH_SIZE,
-                    (comparisonOutputs[u - 1] + asymmetricBit * jBinary[s - 1]) % Constants.binaryPrime));
+            List<Integer> compResultNode = new ArrayList<>(Collections.<Integer>nCopies(Constants.BATCH_SIZE,
+                    (comparisonOutputs[nodeIndex - 1] + asymmetricBit * jBinary[level - 1]) % Constants.binaryPrime));
 
             int i = 0;
             do {
                 int toIndex = Math.min(i + Constants.BATCH_SIZE, alpha);
                 
                 BatchMultiplicationByte mults = new BatchMultiplicationByte(
-                        yj.subList(i, toIndex), z_u, tiShares.subList(i, toIndex),
+                        yj.subList(i, toIndex), compResultNode, tiShares.subList(i, toIndex),
                         pidMapper, senderQueue, 
                         new LinkedList<>(protocolIdQueue), clientID,
                         Constants.binaryPrime, pid, asymmetricBit, protocolId,
@@ -121,15 +121,14 @@ public class PolynomialComputing extends CompositeProtocol implements Callable<I
                         globalIndex++;
                     }
                 } catch (InterruptedException | ExecutionException ex) {
-                    Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
+                    Logger.getLogger(PolynomialComputing.class.getName()).log(Level.SEVERE, null, ex);
                 }
             }
 
-            u = 2 * u + jBinary[s - 1];
-            s--;
+            nodeIndex = 2 * nodeIndex + jBinary[level - 1];
+            level--;
         }
 
-        //System.out.println("pid:" + protocolId + " returning" + Arrays.toString(y_j));
         return y_j;
 
     }

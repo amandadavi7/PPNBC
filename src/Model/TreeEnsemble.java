@@ -44,6 +44,7 @@ public class TreeEnsemble extends Model {
     List<TripleByte> binaryTiShares;
     List<Integer[]> treeOutputs;
     List<TripleInteger> decimalTiShares;
+    Logger LOGGER;
 
     /**
      * Constructor:
@@ -79,6 +80,7 @@ public class TreeEnsemble extends Model {
         this.binaryTiShares = binaryTriples;
         this.decimalTiShares = decimalTriples;
         treeOutputs = new ArrayList<>();
+        LOGGER = Logger.getLogger(TreeEnsemble.class.getName());
     }
 
     /**
@@ -111,9 +113,9 @@ public class TreeEnsemble extends Model {
                         input = new FileInputStream(value);
                         prop.load(input);
                     } catch (FileNotFoundException ex) {
-                        Logger.getLogger(DecisionTreeScoring.class.getName()).log(Level.SEVERE, null, ex);
+                        LOGGER.log(Level.SEVERE, null, ex);
                     } catch (IOException ex) {
-                        Logger.getLogger(DecisionTreeScoring.class.getName()).log(Level.SEVERE, null, ex);
+                        LOGGER.log(Level.SEVERE, null, ex);
                     }
                     treeCount = Integer.parseInt(prop.getProperty("treecount"));
                     String str = prop.getProperty("propertyfiles");
@@ -129,9 +131,9 @@ public class TreeEnsemble extends Model {
                         input = new FileInputStream(value);
                         prop.load(input);
                     } catch (FileNotFoundException ex) {
-                        Logger.getLogger(DecisionTreeScoring.class.getName()).log(Level.SEVERE, null, ex);
+                        LOGGER.log(Level.SEVERE, null, ex);
                     } catch (IOException ex) {
-                        Logger.getLogger(DecisionTreeScoring.class.getName()).log(Level.SEVERE, null, ex);
+                        LOGGER.log(Level.SEVERE, null, ex);
                     }
                     treeCount = Integer.parseInt(prop.getProperty("treecount"));
                     str = prop.getProperty("propertyfiles");
@@ -155,7 +157,7 @@ public class TreeEnsemble extends Model {
         // TODO - How to handle TiShares here????
         String args[];
         for(int i=0; i<treeCount; i++) {
-            System.out.println("calling RF: " + pid);
+            LOGGER.info("calling RF: " + pid);
             if(partyHasTrees) {
                 args = new String[1];
                 args[0] = "storedtree=" + propertyFiles[i];
@@ -178,9 +180,9 @@ public class TreeEnsemble extends Model {
             Future<Integer[]> DTScoreTask = taskList.get(i);
             try {
                 treeOutputs.add(DTScoreTask.get());
-                System.out.println("received: " + i);
+                LOGGER.info("received: " + i);
             } catch (InterruptedException | ExecutionException ex) {
-                Logger.getLogger(TreeEnsemble.class.getName()).log(Level.SEVERE, null, ex);
+                LOGGER.log(Level.SEVERE, null, ex);
             }
             
         }
@@ -194,7 +196,7 @@ public class TreeEnsemble extends Model {
             }
         }
         
-        System.out.println("weighted prob vector output" + Arrays.toString(weightedProbabilityVector));
+        LOGGER.fine("weighted prob vector output" + Arrays.toString(weightedProbabilityVector));
         
         List<Future<List<Integer>>> bitDtaskList = new ArrayList<>();
         for(int i=0;i<classLabelCount;i++) {
@@ -211,11 +213,10 @@ public class TreeEnsemble extends Model {
             try {
                 bitSharesProbs.add(bitDResult.get());
             } catch (InterruptedException | ExecutionException ex) {
-                Logger.getLogger(TreeEnsemble.class.getName()).log(Level.SEVERE, null, ex);
+                LOGGER.log(Level.SEVERE, null, ex);
             }
         }
 
-        //System.out.println("bitD result" + bitSharesProbs);
         ArgMax argmaxModule = new ArgMax(bitSharesProbs, binaryTiShares, asymmetricBit,
                 pidMapper, commonSender, new LinkedList<>(protocolIdQueue), clientId,
                 Constants.binaryPrime, pid, partyCount);
@@ -226,14 +227,14 @@ public class TreeEnsemble extends Model {
         try {
             finalClassIndex = classIndexResult.get();
         } catch (InterruptedException | ExecutionException ex) {
-            Logger.getLogger(TreeEnsemble.class.getName()).log(Level.SEVERE, null, ex);
+            LOGGER.log(Level.SEVERE, null, ex);
         }
         
         long stopTime = System.currentTimeMillis();
         long elapsedTime = stopTime - startTime;
 
-        System.out.println("output final:" + Arrays.toString(finalClassIndex));
-        System.out.println("Avg time duration:" + elapsedTime);
+        LOGGER.info("output final:" + Arrays.toString(finalClassIndex));
+        LOGGER.info("Avg time duration:" + elapsedTime);
     }
 
 }

@@ -56,6 +56,7 @@ public class DecisionTreeScoring extends Model {
     Integer[] finalOutputs;
     List<TripleByte> binaryTiShares;
     String[] args;
+    Logger LOGGER;
 
     /**
      * Constructor 
@@ -91,6 +92,7 @@ public class DecisionTreeScoring extends Model {
         pid = 0;
         tiBinaryStartIndex = 0;
         this.binaryTiShares = binaryTriples;
+        LOGGER = Logger.getLogger(DecisionTreeScoring.class.getName());
     }
 
     /**
@@ -119,7 +121,6 @@ public class DecisionTreeScoring extends Model {
                 case "testCsv":
                     //party has feature vector
                     testVectorsDecimal = FileIO.loadIntListFromFile(value);
-                    //System.out.println("testcsv:" + testVectorsDecimal);
                     break;
                 case "storedtree":
                     //party has the tree
@@ -130,9 +131,9 @@ public class DecisionTreeScoring extends Model {
                         input = new FileInputStream(value);
                         prop.load(input);
                     } catch (FileNotFoundException ex) {
-                        Logger.getLogger(DecisionTreeScoring.class.getName()).log(Level.SEVERE, null, ex);
+                        LOGGER.log(Level.SEVERE, null, ex);
                     } catch (IOException ex) {
-                        Logger.getLogger(DecisionTreeScoring.class.getName()).log(Level.SEVERE, null, ex);
+                        LOGGER.log(Level.SEVERE, null, ex);
                     }
                     depth = Integer.parseInt(prop.getProperty("depth"));
                     attributeCount = Integer.parseInt(prop.getProperty("attributecount"));
@@ -161,9 +162,9 @@ public class DecisionTreeScoring extends Model {
                         input = new FileInputStream(value);
                         prop.load(input);
                     } catch (FileNotFoundException ex) {
-                        Logger.getLogger(DecisionTreeScoring.class.getName()).log(Level.SEVERE, null, ex);
+                        LOGGER.log(Level.SEVERE, null, ex);
                     } catch (IOException ex) {
-                        Logger.getLogger(DecisionTreeScoring.class.getName()).log(Level.SEVERE, null, ex);
+                        LOGGER.log(Level.SEVERE, null, ex);
                     }
                     depth = Integer.parseInt(prop.getProperty("depth"));
                     attributeCount = Integer.parseInt(prop.getProperty("attributecount"));
@@ -209,17 +210,16 @@ public class DecisionTreeScoring extends Model {
         long startTime = System.currentTimeMillis();
 
         convertThresholdsToBits();
-        //System.out.println("converting decimal thresholds to bitshares: from " + Arrays.toString(attributeThresholds) + " to " + attributeThresholdsBitShares);
-        //System.out.println("leaftoclassindexmapping:" + Arrays.toString(leafToClassIndexMapping));
+        LOGGER.fine("Converted Thresholds to Bits");
 
         if (!partyHasTree) {
             convertTestVectorToBits(testVectorsDecimal.get(0));
-            //System.out.println("converting to bits feature vector: from " + testVectorsDecimal.get(0) + " to " + testVector);
+            LOGGER.fine("Converted feature vector to bits");
         }
 
         getFeatureVectors();
 
-        //System.out.println("got the feature vectors:" + Arrays.deepToString(featureVectors));
+        LOGGER.fine("got the feature vectors:" + Arrays.deepToString(featureVectors));
 
         doThresholdComparisons();
 
@@ -228,8 +228,8 @@ public class DecisionTreeScoring extends Model {
         long stopTime = System.currentTimeMillis();
         long elapsedTime = stopTime - startTime;
 
-        System.out.println("the output in bits: " + Arrays.toString(finalOutputs));
-        System.out.println("Avg time duration:" + elapsedTime);
+        LOGGER.info("the output in bits: " + Arrays.toString(finalOutputs));
+        LOGGER.info("Avg time duration:" + elapsedTime);
 
     }
 
@@ -245,7 +245,6 @@ public class DecisionTreeScoring extends Model {
         if (partyHasTree) {
             for (int i = 0; i < leafNodes - 1; i++) {
 
-                //System.out.println("PID:" + pid + " k=" + nodeToAttributeIndexMapping[i]);
                 OIS ois = new OIS(null, binaryTiShares.subList(tiBinaryStartIndex,
                         tiBinaryStartIndex + (attributeBitLength * attributeCount)),
                         asymmetricBit, pidMapper, commonSender, new LinkedList<>(protocolIdQueue),
@@ -260,7 +259,6 @@ public class DecisionTreeScoring extends Model {
         } else {
             for (int i = 0; i < leafNodes - 1; i++) {
 
-                //System.out.println("PID:" + pid + " k=" + testVector);
                 OIS ois = new OIS(testVector, binaryTiShares.subList(tiBinaryStartIndex,
                         tiBinaryStartIndex + (attributeBitLength * attributeCount)),
                         asymmetricBit, pidMapper, commonSender, new LinkedList<>(protocolIdQueue),
@@ -280,7 +278,7 @@ public class DecisionTreeScoring extends Model {
             try {
                 featureVectors[i] = taskResponse.get();
             } catch (InterruptedException | ExecutionException ex) {
-                Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
+                LOGGER.log(Level.SEVERE, null, ex);
             }
         }
 
@@ -303,7 +301,6 @@ public class DecisionTreeScoring extends Model {
             }
         }
 
-        //System.out.println("thresholds bits:"+attributeThresholdsBitShares);
     }
 
     /**
@@ -336,11 +333,11 @@ public class DecisionTreeScoring extends Model {
             try {
                 comparisonOutputs[i] = taskResponse.get();
             } catch (InterruptedException | ExecutionException ex) {
-                Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
+                LOGGER.log(Level.SEVERE, null, ex);
             }
         }
 
-        //System.out.println("threshold comparison results:" + Arrays.toString(comparisonOutputs));
+        LOGGER.fine("threshold comparison results:" + Arrays.toString(comparisonOutputs));
     }
 
     Integer[] convertToBits(int decimal, int size) {
@@ -411,13 +408,11 @@ public class DecisionTreeScoring extends Model {
             Future<Integer[]> taskResponse = taskList.get(j);
             try {
                 yShares[j] = taskResponse.get();
-                //System.out.println("j=" + j + ", y[j]=" + Arrays.toString(yShares[j]));
             } catch (InterruptedException | ExecutionException ex) {
-                Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
+                LOGGER.log(Level.SEVERE, null, ex);
             }
         }
 
-        //System.out.println("final:" + Arrays.toString(finalOutputs));
         for (int i = 0; i < alpha; i++) {
             finalOutputs[i] = 0;
             for (int j = 0; j < leafNodes; j++) {
