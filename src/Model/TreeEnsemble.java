@@ -192,7 +192,7 @@ public class TreeEnsemble extends Model {
         
         for(Integer[] output: treeOutputs) {
             for(int i=0; i<classLabelCount;i++) {
-                weightedProbabilityVector[i] = Math.floorMod(weightedProbabilityVector[i]+output[i], Constants.prime);
+                weightedProbabilityVector[i] = Math.floorMod(weightedProbabilityVector[i]+output[i], Constants.PRIME);
             }
         }
         

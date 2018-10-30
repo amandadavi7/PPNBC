@@ -170,7 +170,7 @@ public class TestModel extends Model {
 
             OR_XOR or_xor = new OR_XOR(x.get(i), y.get(i), decimalTiShares,
                     asymmetricBit, 1, pidMapper, commonSender,
-                    new LinkedList<>(protocolIdQueue), clientId, Constants.prime, i, partyCount);
+                    new LinkedList<>(protocolIdQueue), clientId, Constants.PRIME, i, partyCount);
 
             Future<Integer[]> task = es.submit(or_xor);
             taskList.add(task);
@@ -523,7 +523,7 @@ public class TestModel extends Model {
             MultiplicationInteger multiplicationModule = new MultiplicationInteger(
                     x.get(i).get(0), y.get(i).get(0),
                     decimalTiShares.get(i), pidMapper, commonSender,
-                    new LinkedList<>(protocolIdQueue), clientId, Constants.prime, i, asymmetricBit, 0, partyCount);
+                    new LinkedList<>(protocolIdQueue), clientId, Constants.PRIME, i, asymmetricBit, 0, partyCount);
 
             Future<Integer> multiplicationTask = es.submit(multiplicationModule);
             taskList.add(multiplicationTask);
@@ -597,7 +597,7 @@ public class TestModel extends Model {
         for (int i = 0; i < totalCases; i++) {
             DotProductInteger DPModule = new DotProductInteger(x.get(i),
                     y.get(i), decimalTiShares, pidMapper, commonSender,
-                    new LinkedList<>(protocolIdQueue), clientId, Constants.prime, i, asymmetricBit, partyCount);
+                    new LinkedList<>(protocolIdQueue), clientId, Constants.PRIME, i, asymmetricBit, partyCount);
 
             Future<Integer> DPTask = es.submit(DPModule);
             taskList.add(DPTask);
