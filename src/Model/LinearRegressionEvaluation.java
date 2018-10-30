@@ -50,17 +50,17 @@ public class LinearRegressionEvaluation extends Model {
      * @param clientId
      * @param partyCount
      * @param args
+     * @param protocolIdQueue
+     * @param protocolID
      *
      */
     public LinearRegressionEvaluation(List<TripleReal> realTriples,
-            List<TruncationPair> truncationShares,
-            int asymmetricBit, 
-            ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper, 
-            BlockingQueue<Message> senderQueue,
-            int clientId,
-            int partyCount, String[] args) {
+            List<TruncationPair> truncationShares, int asymmetricBit,
+            ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper,
+            BlockingQueue<Message> senderQueue, int clientId, int partyCount,
+            String[] args, Queue<Integer> protocolIdQueue, int protocolID) {
 
-        super(pidMapper, senderQueue, clientId, asymmetricBit, partyCount);
+        super(pidMapper, senderQueue, clientId, asymmetricBit, partyCount, protocolIdQueue, protocolID);
         this.realTiShares = realTriples;
         this.truncationTiShares = truncationShares;
 

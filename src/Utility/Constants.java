@@ -24,7 +24,7 @@ public class Constants {
     private static final String CONFIG_FILE = "config.properties";
     private static final String DEFAULT_PROPERTIES = "resources/" + CONFIG_FILE;
 
-    public static final int prime = 32;
+    public static final int prime;
     public static final int binaryPrime = 2;        // Prime for bit calculation
     public static final int bitLength = 5;
 
@@ -69,6 +69,9 @@ public class Constants {
         
         F_POW_2 = BigInteger.valueOf(2).pow(DECIMAL_PRECISION);
         
+        prime = Integer.parseInt(prop.getProperty("prime"));
+
+        LOGGER.info("Properties file parsed:" + DEFAULT_PROPERTIES);
         LOGGER.log(Level.INFO, "Thread Count:{0}", THREAD_COUNT);
     }
 

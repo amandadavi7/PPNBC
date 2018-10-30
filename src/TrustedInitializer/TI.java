@@ -57,7 +57,7 @@ public class TI {
                 case "truncation":
                     truncationPairs = Integer.valueOf(value);
                     break;
-
+                    
             }
         }
 

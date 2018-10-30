@@ -6,7 +6,6 @@
 package Model;
 
 import Communication.Message;
-import java.util.LinkedList;
 import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
@@ -27,6 +26,7 @@ public class Model {
     int clientId;
     int partyCount;
     int asymmetricBit;
+    int modelProtocolId;
     
     /**
      * 
@@ -34,21 +34,22 @@ public class Model {
      * @param pidMapper
      * @param clientId
      * @param asymmetricBit
-     * @param partyCount 
+     * @param partyCount
+     * @param protocolIdQueue
+     * @param protocolID
      */
     public Model(ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper, 
-            BlockingQueue<Message> senderQueue,
-            int clientId,
-            int asymmetricBit, int partyCount) {
+            BlockingQueue<Message> senderQueue, int clientId, int asymmetricBit,
+            int partyCount, Queue<Integer> protocolIdQueue, int protocolID) {
 
         this.asymmetricBit = asymmetricBit;
         this.partyCount = partyCount;
         this.commonSender = senderQueue;
         this.clientId = clientId;
         this.pidMapper = pidMapper;
-
-        this.protocolIdQueue = new LinkedList<>();
-        this.protocolIdQueue.add(1);
+        this.modelProtocolId = protocolID;
+        this.protocolIdQueue = protocolIdQueue;
+        protocolIdQueue.add(protocolID);
         pidMapper.putIfAbsent(protocolIdQueue, new LinkedBlockingQueue<>());
 
     }

@@ -28,11 +28,12 @@ public class PartyServer implements Runnable {
 
     /**
      * Constructor
-     * takes common sender queue, socket and output stream object
      * 
      * @param socket
      * @param queue
      * @param oStream
+     * @param clientId
+     * @param asymmetricBit
      */
     public PartyServer(Socket socket, BlockingQueue<Message> queue,
             ObjectOutputStream oStream, int clientId, int asymmetricBit) {

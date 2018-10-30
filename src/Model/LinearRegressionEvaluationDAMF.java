@@ -54,9 +54,10 @@ public class LinearRegressionEvaluationDAMF extends Model {
             ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper,
             BlockingQueue<Message> senderQueue,
             int clientId,
-            int partyCount, String[] args) {
+            int partyCount, String[] args,
+            Queue<Integer> protocolIdQueue, int protocolID) {
 
-        super(pidMapper, senderQueue, clientId, asymmetricBit, partyCount);
+        super(pidMapper, senderQueue, clientId, asymmetricBit, partyCount, protocolIdQueue, protocolID);
         
         prime = BigInteger.valueOf(2).pow(Constants.INTEGER_PRECISION
                 + 2 * Constants.DECIMAL_PRECISION + 1).nextProbablePrime();  //Zq must be a prime field
