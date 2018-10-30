@@ -136,10 +136,10 @@ public class DecisionTreeScoring extends Model {
                         LOGGER.log(Level.SEVERE, null, ex);
                     }
                     depth = Integer.parseInt(prop.getProperty("depth"));
-                    attributeCount = Integer.parseInt(prop.getProperty("attributecount"));
-                    attributeBitLength = Integer.parseInt(prop.getProperty("attributebitlength"));
-                    classLabelCount = Integer.parseInt(prop.getProperty("classlabelcount"));
-                    String str = prop.getProperty("leaftoclassindexmapping");
+                    attributeCount = Integer.parseInt(prop.getProperty("attribute.count"));
+                    attributeBitLength = Integer.parseInt(prop.getProperty("attribute.bitlength"));
+                    classLabelCount = Integer.parseInt(prop.getProperty("classlabel.count"));
+                    String str = prop.getProperty("leaf.to.class.index.mapping");
                     leafToClassIndexMapping = new int[(int) Math.pow(2, depth) + 1];
                     String[] nums = str.split(",");
                     int i = 1;
@@ -148,9 +148,9 @@ public class DecisionTreeScoring extends Model {
                         i++;
                     }
                     //leafToClassIndexMapping = Arrays.stream(str.split(",")).mapToInt(Integer::parseInt).toArray();
-                    str = prop.getProperty("nodetoattributeindexmapping");
+                    str = prop.getProperty("node.to.attribute.index.mapping");
                     nodeToAttributeIndexMapping = Arrays.stream(str.split(",")).mapToInt(Integer::parseInt).toArray();
-                    str = prop.getProperty("attributethresholds");
+                    str = prop.getProperty("attribute.thresholds");
                     attributeThresholds = Arrays.stream(str.split(",")).mapToInt(Integer::parseInt).toArray();
                     break;
                 case "treeproperties":
@@ -167,9 +167,9 @@ public class DecisionTreeScoring extends Model {
                         LOGGER.log(Level.SEVERE, null, ex);
                     }
                     depth = Integer.parseInt(prop.getProperty("depth"));
-                    attributeCount = Integer.parseInt(prop.getProperty("attributecount"));
-                    attributeBitLength = Integer.parseInt(prop.getProperty("attributebitlength"));
-                    classLabelCount = Integer.parseInt(prop.getProperty("classlabelcount"));
+                    attributeCount = Integer.parseInt(prop.getProperty("attribute.count"));
+                    attributeBitLength = Integer.parseInt(prop.getProperty("attribute.bitlength"));
+                    classLabelCount = Integer.parseInt(prop.getProperty("classlabel.count"));
                     break;
             }
         }

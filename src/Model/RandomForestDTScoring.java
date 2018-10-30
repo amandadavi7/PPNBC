@@ -128,10 +128,10 @@ public class RandomForestDTScoring extends DecisionTreeScoring implements Callab
                         LOGGER.log(Level.SEVERE, null, ex);
                     }
                     depth = Integer.parseInt(prop.getProperty("depth"));
-                    attributeCount = Integer.parseInt(prop.getProperty("attributecount"));
-                    attributeBitLength = Integer.parseInt(prop.getProperty("attributebitlength"));
-                    classLabelCount = Integer.parseInt(prop.getProperty("classlabelcount"));
-                    String str = prop.getProperty("leaftoclassindexmapping");
+                    attributeCount = Integer.parseInt(prop.getProperty("attribute.count"));
+                    attributeBitLength = Integer.parseInt(prop.getProperty("attribute.bitlength"));
+                    classLabelCount = Integer.parseInt(prop.getProperty("classlabel.count"));
+                    String str = prop.getProperty("leaf.to.class.index.mapping");
                     leafToClassIndexMappingTransposed = new Integer[classLabelCount][(int) Math.pow(2, depth)];
                     String[] vectors = str.split(",");
                     int i = 0;
@@ -144,9 +144,9 @@ public class RandomForestDTScoring extends DecisionTreeScoring implements Callab
                         }
                         i++;
                     }
-                    str = prop.getProperty("nodetoattributeindexmapping");
+                    str = prop.getProperty("node.to.attribute.index.mapping");
                     nodeToAttributeIndexMapping = Arrays.stream(str.split(",")).mapToInt(Integer::parseInt).toArray();
-                    str = prop.getProperty("attributethresholds");
+                    str = prop.getProperty("attribute.thresholds");
                     attributeThresholds = Arrays.stream(str.split(",")).mapToInt(Integer::parseInt).toArray();
                     break;
                 case "treeproperties":
@@ -163,9 +163,9 @@ public class RandomForestDTScoring extends DecisionTreeScoring implements Callab
                         LOGGER.log(Level.SEVERE, null, ex);
                     }
                     depth = Integer.parseInt(prop.getProperty("depth"));
-                    attributeCount = Integer.parseInt(prop.getProperty("attributecount"));
-                    attributeBitLength = Integer.parseInt(prop.getProperty("attributebitlength"));
-                    classLabelCount = Integer.parseInt(prop.getProperty("classlabelcount"));
+                    attributeCount = Integer.parseInt(prop.getProperty("attribute.count"));
+                    attributeBitLength = Integer.parseInt(prop.getProperty("attribute.bitlength"));
+                    classLabelCount = Integer.parseInt(prop.getProperty("classlabel.count"));
                     break;
             }
         }
