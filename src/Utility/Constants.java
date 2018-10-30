@@ -32,9 +32,8 @@ public class Constants {
     private static final String PROPERTY_PRIME = "prime";
     
     public static final int PRIME;
-    public static final int binaryPrime = 2;        // Prime for bit calculation
-    public static final int bitLength = 5;
-
+    public static final int BINARY_PRIME = 2;        // Prime for bit calculation
+    
     public static final int THREAD_COUNT;
     public static final int BATCH_SIZE;
 

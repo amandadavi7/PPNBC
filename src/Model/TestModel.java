@@ -96,9 +96,9 @@ public class TestModel extends Model {
         ExecutorService es = Executors.newFixedThreadPool(1);
 
         BitDecomposition bitTest = new BitDecomposition(2, binaryTiShares,
-                asymmetricBit, Constants.bitLength, pidMapper, commonSender,
+                asymmetricBit, 5, pidMapper, commonSender,
                 new LinkedList<>(protocolIdQueue), clientId,
-                Constants.binaryPrime, 1, partyCount);
+                Constants.BINARY_PRIME, 1, partyCount);
 
         Future<List<Integer>> bitdecompositionTask = es.submit(bitTest);
 
@@ -126,7 +126,7 @@ public class TestModel extends Model {
 
             ArgMax argmaxModule = new ArgMax(v.get(i), binaryTiShares, asymmetricBit,
                     pidMapper, commonSender, new LinkedList<>(protocolIdQueue),
-                    clientId, Constants.binaryPrime, i, partyCount);
+                    clientId, Constants.BINARY_PRIME, i, partyCount);
 
             System.out.println("submitted " + i + " argmax");
 
@@ -211,12 +211,12 @@ public class TestModel extends Model {
             System.out.println("v is null");
             ois = new OIS(null, binaryTiShares, asymmetricBit, pidMapper, commonSender,
                     new LinkedList<>(protocolIdQueue), clientId,
-                    Constants.binaryPrime, 0, 4, 1, 3, partyCount);
+                    Constants.BINARY_PRIME, 0, 4, 1, 3, partyCount);
         } else {
             System.out.println("v is not null");
             ois = new OIS(v.get(0), binaryTiShares, asymmetricBit, pidMapper, commonSender,
                     new LinkedList<>(protocolIdQueue), clientId,
-                    Constants.binaryPrime, 0, 4, -1, 3, partyCount);
+                    Constants.BINARY_PRIME, 0, 4, -1, 3, partyCount);
         }
 
         Future<Integer[]> task = es.submit(ois);
@@ -250,7 +250,7 @@ public class TestModel extends Model {
 
             Comparison comparisonModule = new Comparison(x.get(i), y.get(i),
                     binaryTiShares, asymmetricBit, pidMapper, commonSender,
-                    new LinkedList<>(protocolIdQueue), clientId, Constants.binaryPrime, i, partyCount);
+                    new LinkedList<>(protocolIdQueue), clientId, Constants.BINARY_PRIME, i, partyCount);
 
             Future<Integer> comparisonTask = es.submit(comparisonModule);
             taskList.add(comparisonTask);

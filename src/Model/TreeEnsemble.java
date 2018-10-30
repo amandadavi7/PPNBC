@@ -202,7 +202,7 @@ public class TreeEnsemble extends Model {
         for(int i=0;i<classLabelCount;i++) {
             BitDecomposition bitDModule = new BitDecomposition(weightedProbabilityVector[i], 
                     binaryTiShares, asymmetricBit, bitLength, pidMapper, commonSender, 
-                    new LinkedList<>(protocolIdQueue), clientId, Constants.binaryPrime, pid, partyCount);
+                    new LinkedList<>(protocolIdQueue), clientId, Constants.BINARY_PRIME, pid, partyCount);
             bitDtaskList.add(es.submit(bitDModule));
             pid++;
         }
@@ -219,7 +219,7 @@ public class TreeEnsemble extends Model {
 
         ArgMax argmaxModule = new ArgMax(bitSharesProbs, binaryTiShares, asymmetricBit,
                 pidMapper, commonSender, new LinkedList<>(protocolIdQueue), clientId,
-                Constants.binaryPrime, pid, partyCount);
+                Constants.BINARY_PRIME, pid, partyCount);
         pid++;
         
         Future<Integer[]> classIndexResult = es.submit(argmaxModule);

@@ -58,24 +58,24 @@ public class RandomGenerator {
             TIShare[] tiShare) {
         java.util.Random rand = new java.util.Random();
         for (int i = 0; i < binTriples; i++) {
-            int U = rand.nextInt(Constants.binaryPrime);
-            int V = rand.nextInt(Constants.binaryPrime);
+            int U = rand.nextInt(Constants.BINARY_PRIME);
+            int V = rand.nextInt(Constants.BINARY_PRIME);
             int W = U * V;
             int usum = 0, vsum = 0, wsum = 0;
             for (int j = 0; j < clientCount - 1; j++) {
                 TripleByte t = new TripleByte();
-                t.u = (byte) rand.nextInt(Constants.binaryPrime);
-                t.v = (byte) rand.nextInt(Constants.binaryPrime);
-                t.w = (byte) rand.nextInt(Constants.binaryPrime);
+                t.u = (byte) rand.nextInt(Constants.BINARY_PRIME);
+                t.v = (byte) rand.nextInt(Constants.BINARY_PRIME);
+                t.w = (byte) rand.nextInt(Constants.BINARY_PRIME);
                 usum += t.u;
                 vsum += t.v;
                 wsum += t.w;
                 tiShare[j].addBinary(t);
             }
             TripleByte t = new TripleByte();
-            t.u = (byte) Math.floorMod(U - usum, Constants.binaryPrime);
-            t.v = (byte) Math.floorMod(V - vsum, Constants.binaryPrime);
-            t.w = (byte) Math.floorMod(W - wsum, Constants.binaryPrime);
+            t.u = (byte) Math.floorMod(U - usum, Constants.BINARY_PRIME);
+            t.v = (byte) Math.floorMod(V - vsum, Constants.BINARY_PRIME);
+            t.w = (byte) Math.floorMod(W - wsum, Constants.BINARY_PRIME);
             tiShare[clientCount - 1].addBinary(t);
         }
     }

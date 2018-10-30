@@ -279,7 +279,7 @@ public class RandomForestDTScoring extends DecisionTreeScoring implements Callab
             for (int j = 0; j < leafNodes; j++) {
                 result[i] += yShares[j][i];
             }
-            result[i] %= Constants.binaryPrime;
+            result[i] %= Constants.BINARY_PRIME;
         }
             
         List<Integer> dummy = new ArrayList<>(Collections.nCopies(leafNodes, 0));

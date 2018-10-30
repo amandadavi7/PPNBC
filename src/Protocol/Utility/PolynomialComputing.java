@@ -90,7 +90,7 @@ public class PolynomialComputing extends CompositeProtocol implements Callable<I
 
             List<Integer> yj = Arrays.asList(y_j);
             List<Integer> compResultNode = new ArrayList<>(Collections.<Integer>nCopies(Constants.BATCH_SIZE,
-                    (comparisonOutputs[nodeIndex - 1] + asymmetricBit * jBinary[level - 1]) % Constants.binaryPrime));
+                    (comparisonOutputs[nodeIndex - 1] + asymmetricBit * jBinary[level - 1]) % Constants.BINARY_PRIME));
 
             int i = 0;
             do {
@@ -100,7 +100,7 @@ public class PolynomialComputing extends CompositeProtocol implements Callable<I
                         yj.subList(i, toIndex), compResultNode, tiShares.subList(i, toIndex),
                         pidMapper, senderQueue, 
                         new LinkedList<>(protocolIdQueue), clientID,
-                        Constants.binaryPrime, pid, asymmetricBit, protocolId,
+                        Constants.BINARY_PRIME, pid, asymmetricBit, protocolId,
                         partyCount);
 
                 Future<Integer[]> task = es.submit(mults);
