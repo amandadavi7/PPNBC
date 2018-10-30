@@ -19,7 +19,7 @@ import java.util.concurrent.Executors;
  */
 public class TI {
 
-    static int tiPort, clientCount, decTriples, binTriples, bigIntTriples, 
+    static int clientCount, decTriples, binTriples, bigIntTriples, 
             truncationPairs;
     static TIShare[] tiShare;
 
@@ -39,9 +39,6 @@ public class TI {
             String command = currInput[0];
             String value = currInput[1];
             switch (command) {
-                case "port":
-                    tiPort = Integer.parseInt(value);
-                    break;
                 case "partyCount":
                     clientCount = Integer.valueOf(value);
                     break;
@@ -65,26 +62,7 @@ public class TI {
         for (int i = 0; i < clientCount; i++) {
             tiShare[i] = new TIShare();
         }
-    }
-
-    
-
-    /**
-     * Send shares to parties
-     */
-    public static void sendShares() {
-        System.out.println("Sending shares to parties");
-        ServerSocket tiserver = Connection.createServerSocket(tiPort);
-
-        ExecutorService send = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
-        for (int i = 0; i < clientCount; i++) {
-
-            Runnable sendtask = new TItoPeerCommunication(tiserver, tiShare[i]);
-            send.execute(sendtask);
-
-        }
-        send.shutdown();
-    }
+    }    
 
     /**
      * Main method
@@ -102,7 +80,6 @@ public class TI {
         generateRandomShares();
         System.out.println("Generated shares");
 
-        sendShares();
     }
 
     private static void generateRandomShares() {

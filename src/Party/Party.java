@@ -45,9 +45,6 @@ public class Party {
     private static int port = -1;
     private static int partyCount = -1;
 
-    private static String tiIP = null;
-    private static int tiPort = -1;
-
     private static String baIP = null;
     private static int baPort = -1;
 
@@ -86,11 +83,8 @@ public class Party {
             String command = currInput[0];
             String value = currInput[1];
 
+            // TODO load ti shares csv files
             switch (command) {
-                case "ti":
-                    tiIP = value.split(":")[0];
-                    tiPort = Integer.parseInt(value.split(":")[1]);
-                    break;
                 case "party_port":
                     port = Integer.parseInt(value);
                     break;
@@ -115,7 +109,7 @@ public class Party {
 
         }
 
-        if (tiIP == null || baIP == null || tiPort == -1 || baPort == -1 
+        if (baIP == null || baPort == -1 
                 || port <= 0 || asymmetricBit == -1 || partyCount <= 0 
                 || partyId < 0) {
             Logging.partyUsage();
@@ -132,44 +126,11 @@ public class Party {
     public static void main(String[] args) {
         initalizeVariables(args);
 
-        getSharesFromTI();  // This is a blocking call
-
         startPartyConnections();
 
         callModel(args);
 
         tearDownSocket();
-    }
-
-    /**
-     * Gets shares from TI in a separate blocking thread and saves it.
-     */
-    private static void getSharesFromTI() {
-        // Initialize TI socket and receive shares
-        Socket socketTI = null;
-
-        System.out.println("Receiving shares from TI");
-
-        // client for TI
-        socketTI = Connection.initializeClientConnection(tiIP, tiPort);
-        ExecutorService tiEs = Executors.newSingleThreadScheduledExecutor();
-        PeerTICommunication ticommunicationObj = new PeerTICommunication(socketTI, tiShares);
-        Future<TIShare> sharesReceived = tiEs.submit(ticommunicationObj);
-
-        try {
-            tiShares = sharesReceived.get();
-        } catch (InterruptedException | ExecutionException ex) {
-            Logger.getLogger(Party.class.getName()).log(Level.SEVERE, null, ex);
-        }
-
-        tiEs.shutdown();
-
-        try {
-            socketTI.close();
-        } catch (IOException ex) {
-            Logger.getLogger(Party.class.getName()).log(Level.SEVERE, null, ex);
-        }
-
     }
 
     /**
