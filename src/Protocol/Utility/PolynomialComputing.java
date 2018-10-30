@@ -110,6 +110,7 @@ public class PolynomialComputing extends CompositeProtocol implements Callable<I
 
             } while (i < alpha);
 
+            es.shutdown();
             int batches = taskList.size();
             int globalIndex = 0;
             for (i = 0; i < batches; i++) {
