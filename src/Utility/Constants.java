@@ -23,7 +23,7 @@ public class Constants {
     private static final String CONFIG_FILE = "config.properties";
     private static final String DEFAULT_PROPERTIES = "resources/" + CONFIG_FILE;
 
-    public static final int prime = 32;
+    public static final int prime;
     public static final int binaryPrime = 2;        // Prime for bit calculation
     public static final int bitLength = 5;
 
@@ -56,6 +56,7 @@ public class Constants {
         DECIMAL_PRECISION = Integer.parseInt(prop.getProperty("decimal.precision"));
         INTEGER_PRECISION = Integer.parseInt(prop.getProperty("integer.precision"));
         NEWTON_RAPHSON_ROUNDS = Integer.parseInt(prop.getProperty("newton.raphson.rounds"));
+        prime = Integer.parseInt(prop.getProperty("prime"));
 
         LOGGER.info("Properties file parsed:" + DEFAULT_PROPERTIES);
         LOGGER.info("New ThreadCount:" + THREAD_COUNT);

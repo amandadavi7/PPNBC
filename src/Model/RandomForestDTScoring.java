@@ -43,24 +43,11 @@ import java.util.logging.Logger;
  *
  * @author keerthanaa
  */
-public class RandomForestDTScoring extends Model implements Callable<Integer[]>{
+public class RandomForestDTScoring extends DecisionTreeScoring implements Callable<Integer[]>{
 
-    int prime, depth, attributeBitLength, attributeCount;//depth d, bitlength for each attribute value, total no. of attributes
-    boolean partyHasTree;                         //true if the party has the tree, false if it has the test case
-    Integer[][] featureVectors;                   //Shares of features 2^d - 1 vectors for each internal node
-    // TODO - modify this as a list instead of list of lists
-    List<List<Integer>> testVectorsDecimal;       //Test case - feature vectors as decimal numbers
-    List<List<Integer>> testVector;               //Test case - a list of features represented as binary values
     Integer[][] leafToClassIndexMappingTransposed;                //leaf node index to class index mapping (stored by the party that has the tree)
-    int[] nodeToAttributeIndexMapping;            //internal node index to the attribute intex mapping (stored by the party that has the tree)
-    int[] attributeThresholds;                    //each internal node's attribute threshold
-    List<List<Integer>> attributeThresholdsBitShares; //attribute thresholds as bits
-    int leafNodes, tiBinaryStartIndex, classLabelCount, pid; //leafNode - no. of leafnodes, classlabelcount - total number of class labels
-    int[] comparisonOutputs;
-    Integer[] finalOutputs;
-    List<TripleByte> binaryTiShares;
-    List<TripleInteger> decimaTiShares;
-
+    List<TripleInteger> decimalTiShares;
+    
     /**
      * Constructor 
      * 2 party DT scoring: 
@@ -93,14 +80,11 @@ public class RandomForestDTScoring extends Model implements Callable<Integer[]>{
             int partyCount, String[] args, Queue<Integer> protocolIdQueue,
             int protocolID) {
 
-        super(pidMapper, senderQueue, clientId, asymmetricBit, partyCount, protocolIdQueue, protocolID);
-
-        initializeModelVariables(args);
+        super(asymmetricBit, pidMapper, senderQueue, clientId, binaryTriples, partyCount, args, protocolIdQueue, protocolID);
+        
         pid = 0;
         tiBinaryStartIndex = 0;
-        this.binaryTiShares = binaryTriples;
-        this.decimaTiShares = decimalTriples;
-        this.prime = Constants.prime;
+        this.decimalTiShares = decimalTriples;
     }
 
     /**
@@ -156,7 +140,7 @@ public class RandomForestDTScoring extends Model implements Callable<Integer[]>{
                         int j = 0;
                         String[] nums = vector.split(":");
                         for(String num : nums){
-                            leafToClassIndexMappingTransposed[j][i] = (int)(Float.parseFloat(num));
+                            leafToClassIndexMappingTransposed[j][i] = Integer.parseInt(num);
                             j++;
                         }
                         i++;
@@ -189,22 +173,10 @@ public class RandomForestDTScoring extends Model implements Callable<Integer[]>{
     }
 
     /**
-     * Convert the feature values from decimal to bits
-     *
-     * @param testCase
-     */
-    void convertTestVectorToBits(List<Integer> testCase) {
-        testVector = new ArrayList<>();
-        for (int i : testCase) {
-            testVector.add(Arrays.asList(convertToBits(i, attributeBitLength)));
-        }
-    }
-
-    /**
      * Doing common initializations for both parties here
      */
     void init() {
-
+        initializeModelVariables(args);
         leafNodes = (int) Math.pow(2, depth);
         featureVectors = new Integer[leafNodes - 1][attributeBitLength];
         attributeThresholdsBitShares = new ArrayList<>();
@@ -218,7 +190,7 @@ public class RandomForestDTScoring extends Model implements Callable<Integer[]>{
     @Override
     public Integer[] call() {
         init();
-
+        
         convertThresholdsToBits();
         
         if (!partyHasTree) {
@@ -235,136 +207,13 @@ public class RandomForestDTScoring extends Model implements Callable<Integer[]>{
         //System.out.println(modelProtocolId + "-the output in bits: " + Arrays.toString(finalOutputs));
         return finalOutputs;
     }
-
-    /**
-     * gets the feature vectors for each attribute of internal node using
-     * Oblivious Input selection Protocol
-     */
-    void getFeatureVectors() {
-
-        ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
-        List<Future<Integer[]>> taskList = new ArrayList<>();
-
-        if (partyHasTree) {
-            for (int i = 0; i < leafNodes - 1; i++) {
-
-                OIS ois = new OIS(null, binaryTiShares.subList(tiBinaryStartIndex,
-                        tiBinaryStartIndex + (attributeBitLength * attributeCount)),
-                        asymmetricBit, pidMapper, commonSender, new LinkedList<>(protocolIdQueue),
-                        clientId, Constants.binaryPrime, pid, attributeBitLength,
-                        nodeToAttributeIndexMapping[i], attributeCount, partyCount);
-                // TODO - disabled ti increment for testing
-                //tiBinaryStartIndex += attributeBitLength * attributeCount;
-                pid++;
-                Future<Integer[]> task = es.submit(ois);
-                taskList.add(task);
-
-            }
-        } else {
-            for (int i = 0; i < leafNodes - 1; i++) {
-
-                OIS ois = new OIS(testVector, binaryTiShares.subList(tiBinaryStartIndex,
-                        tiBinaryStartIndex + (attributeBitLength * attributeCount)),
-                        asymmetricBit, pidMapper, commonSender, new LinkedList<>(protocolIdQueue),
-                        clientId, Constants.binaryPrime, pid,
-                        attributeBitLength, -1, attributeCount, partyCount);
-                // TODO - disabled ti increment for testing
-                //tiBinaryStartIndex += attributeBitLength * attributeCount;
-                pid++;
-                Future<Integer[]> task = es.submit(ois);
-                taskList.add(task);
-            }
-        }
-
-        es.shutdown();
-
-        for (int i = 0; i < leafNodes - 1; i++) {
-            Future<Integer[]> taskResponse = taskList.get(i);
-            try {
-                featureVectors[i] = taskResponse.get();
-            } catch (InterruptedException | ExecutionException ex) {
-                Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
-            }
-        }
-
-    }
-
-    /**
-     * Converts all the attribute thresholds to bits protocol
-     *
-     * @param startpid
-     */
-    void convertThresholdsToBits() {
-
-        if (partyHasTree) {
-            for (int i = 0; i < leafNodes - 1; i++) {
-                attributeThresholdsBitShares.add(Arrays.asList(convertToBits(attributeThresholds[i], attributeBitLength)));
-            }
-        } else {
-            for (int i = 0; i < leafNodes - 1; i++) {
-                attributeThresholdsBitShares.add(new ArrayList<>(Collections.nCopies(attributeBitLength, 0)));
-            }
-        }
-
-        //System.out.println("thresholds bits:"+attributeThresholdsBitShares);
-    }
-
-    /**
-     * compares the attribute threshold with the test vector's attribute value
-     *
-     * @param startpid
-     */
-    void doThresholdComparisons() {
-
-        ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
-        List<Future<Integer>> taskList = new ArrayList<>();
-
-        int comparisonTiCount = (2 * attributeBitLength) + ((attributeBitLength * (attributeBitLength - 1)) / 2);
-        for (int i = 0; i < leafNodes - 1; i++) {
-            Comparison comp = new Comparison(Arrays.asList(featureVectors[i]), attributeThresholdsBitShares.get(i),
-                    binaryTiShares.subList(tiBinaryStartIndex, tiBinaryStartIndex + comparisonTiCount),
-                    asymmetricBit, pidMapper, commonSender, new LinkedList<>(protocolIdQueue),
-                    clientId, Constants.binaryPrime, pid, partyCount);
-
-            Future<Integer> task = es.submit(comp);
-            pid++;
-            // TODO - disabled ti increment for testing
-            //tiBinaryStartIndex += comparisonTiCount;
-            taskList.add(task);
-        }
-
-        es.shutdown();
-
-        for (int i = 0; i < leafNodes - 1; i++) {
-            Future<Integer> taskResponse = taskList.get(i);
-            try {
-                comparisonOutputs[i] = taskResponse.get();
-            } catch (InterruptedException | ExecutionException ex) {
-                Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
-            }
-        }
-
-    }
-
     
-    Integer[] convertToBits(int decimal, int size) {
-        Integer[] binaryNum = new Integer[size];
-        int i = 0;
-        while (decimal > 0) {
-            binaryNum[i] = decimal % 2;
-            decimal = decimal / 2;
-            i++;
-        }
-
-        while (i < size) {
-            binaryNum[i] = 0;
-            i++;
-        }
-
-        return binaryNum;
-    }
-    
-    
+    /**
+     * 
+     * @param index
+     * @param size
+     * @return 
+     */
     Integer[] oneHotEncoding(int index, int size) {
         Integer[] ohe = new Integer[size];
         for(int i=0;i<size;i++) {
@@ -381,6 +230,7 @@ public class RandomForestDTScoring extends Model implements Callable<Integer[]>{
      * calls the PolynomialComputing class and gets the final output
      * @param startpid
      */
+    @Override
     void computePolynomialEquation() {
 
         Integer[][] yShares = new Integer[leafNodes][leafNodes];
@@ -439,13 +289,13 @@ public class RandomForestDTScoring extends Model implements Callable<Integer[]>{
         
         //asymmetric xor to switch primes
         if(asymmetricBit == 1) {
-            xorModule = new OR_XOR(Arrays.asList(result), dummy, decimaTiShares.subList(0, leafNodes), 
+            xorModule = new OR_XOR(Arrays.asList(result), dummy, decimalTiShares.subList(0, leafNodes), 
                     asymmetricBit, 2, pidMapper, commonSender, new LinkedList<>(protocolIdQueue), 
-                    clientId, prime, pid, partyCount);
+                    clientId, Constants.prime, pid, partyCount);
         } else {
-            xorModule = new OR_XOR(dummy, Arrays.asList(result), decimaTiShares.subList(0, leafNodes), 
+            xorModule = new OR_XOR(dummy, Arrays.asList(result), decimalTiShares.subList(0, leafNodes), 
                     asymmetricBit, 2, pidMapper, commonSender, new LinkedList<>(protocolIdQueue), 
-                    clientId, prime, pid, partyCount);
+                    clientId, Constants.prime, pid, partyCount);
         }
         Future<Integer[]> xorTask = es.submit(xorModule);
         try {
@@ -459,17 +309,17 @@ public class RandomForestDTScoring extends Model implements Callable<Integer[]>{
         if(leafToClassIndexMappingTransposed == null) {
             for(int i=0;i<classLabelCount;i++) {
                 DotProductInteger dpModule = new DotProductInteger(Arrays.asList(one_hot_encoding_leaf_predicted), 
-                        dummy, decimaTiShares, pidMapper, commonSender, 
-                        new LinkedList<>(protocolIdQueue), clientId, prime, pid, asymmetricBit, partyCount);
+                        dummy, decimalTiShares, pidMapper, commonSender, 
+                        new LinkedList<>(protocolIdQueue), clientId, Constants.prime, pid, asymmetricBit, partyCount);
                 dpTaskList.add(es.submit(dpModule));
                 pid++;
             }
         } else {
             for(int i=0;i<classLabelCount;i++) {
                 DotProductInteger dpModule = new DotProductInteger(Arrays.asList(one_hot_encoding_leaf_predicted), 
-                        Arrays.asList(leafToClassIndexMappingTransposed[i]), decimaTiShares,
+                        Arrays.asList(leafToClassIndexMappingTransposed[i]), decimalTiShares,
                         pidMapper, commonSender, new LinkedList<>(protocolIdQueue),
-                        clientId, prime, pid, asymmetricBit, partyCount);
+                        clientId, Constants.prime, pid, asymmetricBit, partyCount);
                 dpTaskList.add(es.submit(dpModule));
                 pid++;
             }

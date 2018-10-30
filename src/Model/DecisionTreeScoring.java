@@ -52,8 +52,10 @@ public class DecisionTreeScoring extends Model {
     int[] attributeThresholds;                    //each internal node's attribute threshold
     List<List<Integer>> attributeThresholdsBitShares; //attribute thresholds as bits
     int leafNodes, tiBinaryStartIndex, classLabelCount, alpha, pid; //leafNode - no. of leafnodes, classlabelcount - total number of class labels
-    int[] comparisonOutputs, finalOutputs;
+    int[] comparisonOutputs;
+    Integer[] finalOutputs;
     List<TripleByte> binaryTiShares;
+    String[] args;
 
     /**
      * Constructor 
@@ -85,7 +87,7 @@ public class DecisionTreeScoring extends Model {
 
         super(pidMapper, senderQueue, clientId, asymmetricBit, partyCount, protocolIdQueue, protocolID);
 
-        initializeModelVariables(args);
+        this.args = args;
         pid = 0;
         tiBinaryStartIndex = 0;
         this.binaryTiShares = binaryTriples;
@@ -188,13 +190,13 @@ public class DecisionTreeScoring extends Model {
      * Doing common initializations for both parties here
      */
     void init() {
-
+        initializeModelVariables(args);
         leafNodes = (int) Math.pow(2, depth);
         featureVectors = new Integer[leafNodes - 1][attributeBitLength];
         attributeThresholdsBitShares = new ArrayList<>();
         comparisonOutputs = new int[leafNodes - 1];
         alpha = (int) Math.ceil(Math.log(classLabelCount) / Math.log(2.0));
-        finalOutputs = new int[alpha];
+        finalOutputs = new Integer[alpha];
     }
 
     /**
@@ -417,6 +419,7 @@ public class DecisionTreeScoring extends Model {
 
         //System.out.println("final:" + Arrays.toString(finalOutputs));
         for (int i = 0; i < alpha; i++) {
+            finalOutputs[i] = 0;
             for (int j = 0; j < leafNodes; j++) {
                 finalOutputs[i] += yShares[j][i];
             }

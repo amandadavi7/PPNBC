@@ -224,7 +224,7 @@ public class Party {
                 // DT Scoring
                 DecisionTreeScoring DTree = new DecisionTreeScoring(asymmetricBit,
                         pidMapper, senderQueue, partyId, tiShares.binaryShares, 
-                        partyCount, args, new LinkedList<>(protocolIdQueue),1);
+                        partyCount, args, new LinkedList<>(protocolIdQueue), 1);
                 DTree.scoreDecisionTree();
                 break;
 
@@ -264,7 +264,7 @@ public class Party {
                         tiShares.decimalShares, tiShares.bigIntShares,
                         tiShares.truncationPair,
                         asymmetricBit, pidMapper, senderQueue, partyId,
-                        partyCount, args, new LinkedList<>(protocolIdQueue),1);
+                        partyCount, args, new LinkedList<>(protocolIdQueue), 1);
                 testModel.compute(protocolName);
                 break;
         }

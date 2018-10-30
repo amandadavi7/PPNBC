@@ -40,7 +40,7 @@ public class TreeEnsemble extends Model {
     String csvPath;
     boolean partyHasTrees;
     String[] propertyFiles;
-    int treeCount, pid, prime;
+    int treeCount, pid, bitLength;
     List<TripleByte> binaryTiShares;
     List<Integer[]> treeOutputs;
     List<TripleInteger> decimalTiShares;
@@ -79,8 +79,6 @@ public class TreeEnsemble extends Model {
         this.binaryTiShares = binaryTriples;
         this.decimalTiShares = decimalTriples;
         treeOutputs = new ArrayList<>();
-        this.prime = Constants.prime;
-
     }
 
     /**
@@ -120,6 +118,7 @@ public class TreeEnsemble extends Model {
                     treeCount = Integer.parseInt(prop.getProperty("treecount"));
                     String str = prop.getProperty("propertyfiles");
                     propertyFiles = str.split(",");
+                    bitLength = Integer.parseInt(prop.getProperty("bitLength"));
                     break;
                 case "randomforestproperties":
                     //party has feature vector
@@ -137,6 +136,7 @@ public class TreeEnsemble extends Model {
                     treeCount = Integer.parseInt(prop.getProperty("treecount"));
                     str = prop.getProperty("propertyfiles");
                     propertyFiles = str.split(",");
+                    bitLength = Integer.parseInt(prop.getProperty("bitLength"));
                     break;
             }
         }
@@ -153,37 +153,25 @@ public class TreeEnsemble extends Model {
         long startTime = System.currentTimeMillis();
 
         // TODO - How to handle TiShares here????
-        if (partyHasTrees) {
-            for (int i = 0; i < treeCount; i++) {
-
-                System.out.println("calling RF: " + pid);
-
-                String args[] = {"storedtree=" + propertyFiles[i], "prime=" + prime};
-
-                RandomForestDTScoring DTScoreModule = new RandomForestDTScoring(asymmetricBit,
+        String args[];
+        for(int i=0; i<treeCount; i++) {
+            System.out.println("calling RF: " + pid);
+            if(partyHasTrees) {
+                args = new String[1];
+                args[0] = "storedtree=" + propertyFiles[i];
+            } else {
+                args = new String[2];
+                args[0] = "testCsv=" + csvPath;
+                args[1] = "treeproperties=" + propertyFiles[i];
+            }
+            
+            RandomForestDTScoring DTScoreModule = new RandomForestDTScoring(asymmetricBit,
                         pidMapper, commonSender, clientId, binaryTiShares, decimalTiShares,
                         partyCount, args, new LinkedList<>(protocolIdQueue), pid);
 
-                Future<Integer[]> output = es.submit(DTScoreModule);
-                taskList.add(output);
-                pid++;
-
-            }
-        } else {
-            for (int i = 0; i < treeCount; i++) {
-
-                System.out.println("calling RF: " + pid);
-
-                String args[] = {"testCsv=" + csvPath, "treeproperties=" + propertyFiles[i], "prime=" + prime};
-
-                RandomForestDTScoring DTScoreModule = new RandomForestDTScoring(asymmetricBit,
-                        pidMapper, commonSender, clientId, binaryTiShares, decimalTiShares,
-                        partyCount, args, new LinkedList<>(protocolIdQueue), pid);
-
-                Future<Integer[]> output = es.submit(DTScoreModule);
-                taskList.add(output);
-                pid++;
-            }
+            Future<Integer[]> output = es.submit(DTScoreModule);
+            taskList.add(output);
+            pid++;
         }
 
         for (int i = 0; i < treeCount; i++) {
@@ -202,16 +190,16 @@ public class TreeEnsemble extends Model {
         
         for(Integer[] output: treeOutputs) {
             for(int i=0; i<classLabelCount;i++) {
-                weightedProbabilityVector[i] += output[i];
+                weightedProbabilityVector[i] = Math.floorMod(weightedProbabilityVector[i]+output[i], Constants.prime);
             }
         }
         
-        //System.out.println("weighted prob vector output" + Arrays.toString(weightedProbabilityVector));
+        System.out.println("weighted prob vector output" + Arrays.toString(weightedProbabilityVector));
         
         List<Future<List<Integer>>> bitDtaskList = new ArrayList<>();
         for(int i=0;i<classLabelCount;i++) {
             BitDecomposition bitDModule = new BitDecomposition(weightedProbabilityVector[i], 
-                    binaryTiShares, asymmetricBit, 6, pidMapper, commonSender, 
+                    binaryTiShares, asymmetricBit, bitLength, pidMapper, commonSender, 
                     new LinkedList<>(protocolIdQueue), clientId, Constants.binaryPrime, pid, partyCount);
             bitDtaskList.add(es.submit(bitDModule));
             pid++;
