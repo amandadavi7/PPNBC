@@ -41,17 +41,17 @@ public class Party {
 
     private static BlockingQueue<Message> senderQueue;
     
-    private static int partyId;
-    private static int port;
-    private static int partyCount;
+    private static int partyId = -1;
+    private static int port = -1;
+    private static int partyCount = -1;
 
-    private static String tiIP;
-    private static int tiPort;
+    private static String tiIP = null;
+    private static int tiPort = -1;
 
-    private static String baIP;
-    private static int baPort;
+    private static String baIP = null;
+    private static int baPort = -1;
 
-    private static int asymmetricBit;
+    private static int asymmetricBit = -1;
     private static String modelName;
     
     private static String protocolName;
@@ -70,14 +70,6 @@ public class Party {
         partySocketEs = Executors.newFixedThreadPool(2);
         socketFutureList = new ArrayList<>();
         tiShares = new TIShare();
-        partyId = -1;
-        asymmetricBit = -1;
-        port = -1;
-        partyCount = -1;
-        tiIP = null;
-        tiPort = -1;
-        baIP = null;
-        baPort = -1;
         protocolName = "";
         modelName = "";
         
@@ -202,7 +194,8 @@ public class Party {
         socketFutureList.add(partySocketEs.submit(partyClient));
 
         System.out.println("Server thread starting");
-        PartyServer partyServer = new PartyServer(clientSocket, senderQueue, oStream);
+        PartyServer partyServer = new PartyServer(clientSocket, senderQueue, oStream, 
+                partyId, asymmetricBit);
         socketFutureList.add(partySocketEs.submit(partyServer));
     }
 
