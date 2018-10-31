@@ -19,7 +19,6 @@ import TrustedInitializer.TripleInteger;
 import Utility.Constants;
 import Utility.FileIO;
 import Utility.Logging;
-import Utility.ThreadPoolManager;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -87,7 +86,6 @@ public class KNNSortAndSwap extends Model {
         this.decimalTiIndex = 0;
         this.binaryTiIndex = 0;
 
-        es = ThreadPoolManager.getInstance();
         KjaccardDistances = new ArrayList<>();
     }
 
@@ -446,7 +444,6 @@ public class KNNSortAndSwap extends Model {
 
         long stopTime = System.currentTimeMillis();
         long elapsedTime = stopTime - startTime;
-        ThreadPoolManager.shutDownThreadService();
         System.out.println("Label:" + predictedLabel);
         System.out.println("Time taken:" + elapsedTime + "ms");
         return predictedLabel;

@@ -10,7 +10,6 @@ import Model.KNNSortAndSwap;
 import Protocol.CompositeProtocol;
 import TrustedInitializer.TripleInteger;
 import Utility.Constants;
-import Utility.ThreadPoolManager;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -82,8 +81,8 @@ public class SwapCircuitKNN extends CompositeProtocol implements Callable<Intege
     @Override
     public Integer[] call() {
         int pid = 0, decimalTiIndex = 0;
-        //ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
-        ExecutorService es = ThreadPoolManager.getInstance();
+        ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
+        
         //first mult
         List<Integer> piC = new ArrayList<>(Collections.nCopies(3, comparisonMultiplications[position]));
         BatchMultiplicationInteger mult1 = new BatchMultiplicationInteger(jaccardDistanceTraining,

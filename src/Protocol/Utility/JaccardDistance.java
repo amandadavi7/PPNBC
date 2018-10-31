@@ -10,7 +10,6 @@ import Protocol.CompositeProtocol;
 import Protocol.OR_XOR;
 import TrustedInitializer.TripleInteger;
 import Utility.Constants;
-import Utility.ThreadPoolManager;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -62,18 +61,16 @@ public class JaccardDistance extends CompositeProtocol implements Callable<List<
         this.testShare = testShare;
         this.decimalTiShares = tiShares;
         this.prime = prime;
-        //bitLength = firstTrainShare.size(); 
     }
 
     @Override
-    public List<List<Integer>> call() throws Exception {
+    public List<List<Integer>> call() {
 
         List<List<Integer>> result = new ArrayList<>();
         int startpid = 0;
         int attrLength = testShare.size(), tiStartIndex = 0;
-        //ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
-        ExecutorService es = ThreadPoolManager.getInstance();
-
+        ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
+        
         // TODO: Make OR_XOR module return both OR and XOR together
         List<Future<Integer[]>> orTaskList = new ArrayList<>();
         List<Future<Integer[]>> xorTaskList = new ArrayList<>();

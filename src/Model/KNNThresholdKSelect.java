@@ -19,7 +19,6 @@ import TrustedInitializer.TripleInteger;
 import Utility.Constants;
 import Utility.FileIO;
 import Utility.Logging;
-import Utility.ThreadPoolManager;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -30,6 +29,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -50,7 +50,6 @@ public class KNNThresholdKSelect extends Model {
     int ccTICount, prime, bitLength, comparisonTICount, bitDTICount;
     List<TripleInteger> decimalTiShares;
     List<TripleByte> binaryTiShares;
-    ExecutorService es;
 
     /**
      * 
@@ -90,8 +89,6 @@ public class KNNThresholdKSelect extends Model {
         this.decimalTiIndex = 0;
         this.binaryTiIndex = 0;
         this.comparisonResults = null;
-        
-        es = ThreadPoolManager.getInstance();
         
         //Bit Shares of K - used in multiple places
         BitDecomposition bitD = new BitDecomposition(asymmetricBit*K, binaryTiShares,
@@ -149,7 +146,7 @@ public class KNNThresholdKSelect extends Model {
     public Integer[] getComparisonResults(int[] thresholds) {
         Integer[] comparisonResults = new Integer[trainingSharesCount];
         List<Future<Integer>> ccTaskList = new ArrayList<>();
-
+        ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
         for (int i = 0; i < trainingSharesCount; i++) {
             CrossMultiplyCompare ccModule = new CrossMultiplyCompare(thresholds[0], thresholds[1],
                     jaccardDistances.get(i).get(1), jaccardDistances.get(i).get(0), asymmetricBit,
@@ -161,6 +158,7 @@ public class KNNThresholdKSelect extends Model {
             pid++;
         }
 
+        es.shutdown();
         for (int i = 0; i < trainingSharesCount; i++) {
             Future<Integer> task = ccTaskList.get(i);
             try {
@@ -200,6 +198,7 @@ public class KNNThresholdKSelect extends Model {
      */
     public int[] getThreshold(int lbound_numerator, int lbound_denominator,
             int ubound_numerator, int ubound_denominator) {
+        ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
         MultiplicationInteger mult1 = new MultiplicationInteger(lbound_numerator,
                 ubound_denominator, decimalTiShares.get(decimalTiIndex), pidMapper,
                 commonSender, new LinkedList<>(protocolIdQueue), clientId, prime,
@@ -218,7 +217,7 @@ public class KNNThresholdKSelect extends Model {
                 pid, asymmetricBit, 0, partyCount);
         pid++;
         Future<Integer> task3 = es.submit(mult3);
-        
+        es.shutdown();
         int[] thresholds = new int[2];
         try {
             thresholds[0] = Math.floorMod(task1.get() + task2.get(), prime);
@@ -252,7 +251,7 @@ public class KNNThresholdKSelect extends Model {
         int[] thresholds = null;
         int stoppingBit = 0;
         int maxIterations = (int) Math.ceil(Math.log(trainingSharesCount)/Math.log(2.0));
-        
+        ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
         while (stoppingBit == 0 && maxIterations >= 0) {
             System.out.println("iteration countdown:" + maxIterations);
             thresholds = getThreshold(lbound_numerator,
@@ -359,7 +358,7 @@ public class KNNThresholdKSelect extends Model {
             ubound_denominator = Math.floorMod(bmOutputs[4] + bmOutputs[5], prime);
             maxIterations--;
         }
-
+        es.shutdown();
         return thresholds;
     }
 
@@ -371,6 +370,7 @@ public class KNNThresholdKSelect extends Model {
      */
     public int computeMajorityClassLabel(int[] thresholds) {
         // get class labels of JDs that are lesser than threshold
+        ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
         int classLabelSum = 0;
         int predictedClassLabel = -1;
         System.out.println("computing class label");
@@ -423,6 +423,7 @@ public class KNNThresholdKSelect extends Model {
                 Future<Integer> compTask = es.submit(comModule);
                 compTasks.add(compTask);
             }
+            
             for(int i=0;i<batchSize;i++){
                 Future<Integer> compTask = compTasks.get(i);
                 try {
@@ -502,7 +503,7 @@ public class KNNThresholdKSelect extends Model {
         //binaryTiIndex += bitDTICount;
         Future<List<Integer>> bitTaskZero = es.submit(bitDModuleZero);
         List<Integer> numOfOnePredictions = null, numOfZeroPredictions = null;
-
+        es.shutdown();
         try {
             numOfOnePredictions = bitTaskOne.get();
             numOfZeroPredictions = bitTaskZero.get();
@@ -536,14 +537,9 @@ public class KNNThresholdKSelect extends Model {
                 clientId, prime, pid,
                 new LinkedList<>(protocolIdQueue), partyCount);
 
-        Future<List<List<Integer>>> jdTask = es.submit(jdModule);
+        jaccardDistances = jdModule.call();
         pid++;
         //decimalTiIndex += decTICount;
-        try {
-            jaccardDistances = jdTask.get();
-        } catch (InterruptedException | ExecutionException ex) {
-            Logger.getLogger(KNNSortAndSwap.class.getName()).log(Level.SEVERE, null, ex);
-        }
 
         int[] thresholds = binarySearch(0*asymmetricBit, asymmetricBit);
 
@@ -551,8 +547,6 @@ public class KNNThresholdKSelect extends Model {
 
         long stopTime = System.currentTimeMillis();
         long elapsedTime = stopTime - startTime;
-        
-        ThreadPoolManager.shutDownThreadService();
         
         System.out.println("Label:" + classLabel);
         System.out.println("Time taken:" + elapsedTime + "ms");
