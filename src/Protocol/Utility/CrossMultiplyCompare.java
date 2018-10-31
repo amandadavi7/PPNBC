@@ -28,7 +28,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- *
+ * Class to cross multiply and compare 2 fractions
  * @author keerthanaa
  */
 public class CrossMultiplyCompare extends CompositeProtocol implements Callable<Integer> {
@@ -81,6 +81,11 @@ public class CrossMultiplyCompare extends CompositeProtocol implements Callable<
         
     }
     
+    /**
+     * 
+     * @return
+     * @throws Exception 
+     */
     @Override
     public Integer call() throws Exception {
         

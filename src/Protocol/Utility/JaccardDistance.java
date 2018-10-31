@@ -25,7 +25,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- *
+ * Takes List of training rows and test row and computes Jaccard Distances between the two
  * @author bhagatsanchya
  */
 public class JaccardDistance extends CompositeProtocol implements Callable<List<List<Integer>>> {
@@ -61,9 +61,12 @@ public class JaccardDistance extends CompositeProtocol implements Callable<List<
         this.testShare = testShare;
         this.decimalTiShares = tiShares;
         this.prime = prime;
-        //bitLength = firstTrainShare.size(); 
     }
 
+    /**
+     * 
+     * @return 
+     */
     @Override
     public List<List<Integer>> call() {
 
@@ -72,7 +75,6 @@ public class JaccardDistance extends CompositeProtocol implements Callable<List<
         int attrLength = testShare.size(), tiStartIndex = 0;
         ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
 
-        // TODO: Make OR_XOR module return both OR and XOR together
         List<Future<Integer[]>> taskList = new ArrayList<>();
 
         for (int i = 0; i < trainingShares.size(); i++) {

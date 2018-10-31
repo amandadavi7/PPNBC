@@ -29,7 +29,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- *
+ * Do Batcher Sort on K Jaccard Distances
  * @author keerthanaa
  */
 public class BatcherSortKNN extends CompositeProtocol implements Callable<List<List<Integer>>> {
@@ -84,6 +84,11 @@ public class BatcherSortKNN extends CompositeProtocol implements Callable<List<L
         
     }
     
+    /**
+     * Recursive Sort function
+     * @param indices
+     * @param next 
+     */
     void Sort(int[] indices, int next) {
         //base case
         int startIndex = 0, endIndex = indices.length - 1;
@@ -135,6 +140,11 @@ public class BatcherSortKNN extends CompositeProtocol implements Callable<List<L
         Merge(indices, next);
     }
     
+    /**
+     * Merge
+     * @param indices
+     * @param next 
+     */
     void Merge(int[] indices, int next) {
 
         int startIndex = 0;
@@ -198,6 +208,12 @@ public class BatcherSortKNN extends CompositeProtocol implements Callable<List<L
 
     }
     
+    /**
+     * Swap circuit to interchange unsorted pairs
+     * @param leftIndex
+     * @param rightIndex
+     * @param comparisonOutput 
+     */
     void swapCircuitSorting(int leftIndex, int rightIndex, int comparisonOutput) {
 
         ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
@@ -297,6 +313,10 @@ public class BatcherSortKNN extends CompositeProtocol implements Callable<List<L
 
     }
     
+    /**
+     * 
+     * @return 
+     */
     @Override
     public List<List<Integer>> call() {
         Sort(indices, 1);

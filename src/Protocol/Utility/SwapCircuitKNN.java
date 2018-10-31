@@ -27,7 +27,10 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- *
+ * Implements the swap circuit for KNN Sort and Swap algorithm
+ * 
+ * return jdj = CM.notC.jdi + notCj-1.jdj-1 + C.jdj
+ * 
  * @author keerthanaa
  */
 public class SwapCircuitKNN extends CompositeProtocol implements Callable<Integer[]>{
@@ -78,30 +81,34 @@ public class SwapCircuitKNN extends CompositeProtocol implements Callable<Intege
         this.prime = prime;
     }
 
+    /**
+     * 
+     * @return 
+     */
     @Override
     public Integer[] call() {
         int pid = 0, decimalTiIndex = 0;
         ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
         
         //first mult
-        List<Integer> piC = new ArrayList<>(Collections.nCopies(3, comparisonMultiplications[position]));
-        BatchMultiplicationInteger mult1 = new BatchMultiplicationInteger(jaccardDistanceTraining,
-                piC, decimalTiShares.subList(decimalTiIndex, decimalTiIndex + 3), 
+        List<Integer> productComps = new ArrayList<>(Collections.nCopies(3, comparisonMultiplications[position]));
+        BatchMultiplicationInteger cmNotCJdi = new BatchMultiplicationInteger(jaccardDistanceTraining,
+                productComps, decimalTiShares.subList(decimalTiIndex, decimalTiIndex + 3), 
                 pidMapper, senderQueue,
                 new LinkedList<>(protocolIdQueue), clientID, prime,
                 pid, asymmetricBit, 0, partyCount);
-        Future<Integer[]> multTask1 = es.submit(mult1);
+        Future<Integer[]> multTask1 = es.submit(cmNotCJdi);
         pid++;
         decimalTiIndex += 3;
 
         //third mult
         List<Integer> C = new ArrayList<>(Collections.nCopies(3, comparisonResults[position]));
-        BatchMultiplicationInteger mult3 = new BatchMultiplicationInteger(jaccardDistanceSorted,
+        BatchMultiplicationInteger CJdj = new BatchMultiplicationInteger(jaccardDistanceSorted,
                 C, decimalTiShares.subList(decimalTiIndex, decimalTiIndex + 3), 
                 pidMapper, senderQueue,
                 new LinkedList<>(protocolIdQueue), clientID, prime,
                 pid, asymmetricBit, 0, partyCount);
-        Future<Integer[]> multTask3 = es.submit(mult3);
+        Future<Integer[]> multTask3 = es.submit(CJdj);
         pid++;
         //decimalTiIndex += 3;
 
@@ -112,12 +119,12 @@ public class SwapCircuitKNN extends CompositeProtocol implements Callable<Intege
             //second mult
             List<Integer> notC = new ArrayList<>(Collections.nCopies(3, 
                     Math.floorMod(asymmetricBit - comparisonResults[position - 1], prime)));
-            BatchMultiplicationInteger mult2 = new BatchMultiplicationInteger(jaccardDistanceSortedPrevious,
+            BatchMultiplicationInteger notCprevJdprev = new BatchMultiplicationInteger(jaccardDistanceSortedPrevious,
                     notC, decimalTiShares.subList(decimalTiIndex, decimalTiIndex + 3), 
                     pidMapper, senderQueue,
                     new LinkedList<>(protocolIdQueue), clientID, prime,
                     pid, asymmetricBit, 0, partyCount);
-            Future<Integer[]> multTask2 = es.submit(mult2);
+            Future<Integer[]> multTask2 = es.submit(notCprevJdprev);
             pid++;
             //decimalTiIndex += 3;
 
