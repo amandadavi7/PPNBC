@@ -8,17 +8,14 @@ package Party;
 import Communication.Message;
 import Model.DecisionTreeScoring;
 import Model.LinearRegressionEvaluation;
+import Model.LinearRegressionEvaluationDAMF;
 import Model.LinearRegressionTraining;
 import Utility.Connection;
 import Model.TestModel;
 import Model.TreeEnsemble;
 import TrustedInitializer.TIShare;
-import Utility.Constants;
 import Utility.Logging;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
@@ -251,6 +248,15 @@ public class Party {
                 TEModel.runTreeEnsembles();
                 break;
 
+            case "LinearRegressionDAMFPrediction":
+                // LR Evaluation
+                LinearRegressionEvaluationDAMF regressionEvaluationModelDAMF
+                        = new LinearRegressionEvaluationDAMF(asymmetricBit, pidMapper, senderQueue,
+                                partyId, partyCount, args, protocolIdQueue, modelId);
+
+                regressionEvaluationModelDAMF.predictValues();
+                break;
+            
             default:
                 // test model
                 TestModel testModel = new TestModel(tiShares.binaryShares,

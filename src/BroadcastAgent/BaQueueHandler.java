@@ -8,7 +8,6 @@ package BroadcastAgent;
 import Communication.Message;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**

@@ -32,6 +32,8 @@ import java.util.stream.Stream;
  */
 public class FileIO {
 
+    private static final Logger LOGGER = Logger.getLogger(FileIO.class.getName());
+
     /**
      * Reads a matrix from a csv and converts it to Zq.
      *
@@ -67,7 +69,7 @@ public class FileIO {
 
             inputStream.close();
         } catch (FileNotFoundException ex) {
-            Logger.getLogger(FileIO.class.getName()).log(Level.SEVERE, null, ex);
+            LOGGER.log(Level.SEVERE, "File not found: ", ex);
         }
 
         return x;
@@ -97,7 +99,7 @@ public class FileIO {
 
             inputStream.close();
         } catch (FileNotFoundException ex) {
-            Logger.getLogger(FileIO.class.getName()).log(Level.SEVERE, null, ex);
+            LOGGER.log(Level.SEVERE, "File not found: ", ex);
         }
 
         return x;
@@ -135,17 +137,18 @@ public class FileIO {
 
             inputStream.close();
         } catch (FileNotFoundException ex) {
-            Logger.getLogger(FileIO.class.getName()).log(Level.SEVERE, null, ex);
+            LOGGER.log(Level.SEVERE, "File not found: ", ex);
         }
 
         return x;
 
     }
-    
+
     /**
      * Load list of values from file as BigInteger
+     *
      * @param sourceFile
-     * @return 
+     * @return
      */
     public static List<BigInteger> loadListFromFile(String sourceFile) {
 
@@ -159,9 +162,38 @@ public class FileIO {
             while (inputStream.hasNext()) {
                 String line = inputStream.next();
                 int i = 0;
-                for(String value: line.split(",")) {
+                for (String value : line.split(",")) {
                     x.add(new BigInteger(value));
                 }
+            }
+
+            inputStream.close();
+        } catch (FileNotFoundException ex) {
+            LOGGER.log(Level.SEVERE, "File not found: ", ex);
+        }
+
+        return x;
+
+    }
+
+    /**
+     * Load list of actual values from file
+     * @param sourceFile
+     * @return 
+     */
+    public static List<Double> loadDoubleListFromFile(String sourceFile) {
+
+        File file = new File(sourceFile);
+        Scanner inputStream;
+        List<Double> x = new ArrayList<>();
+
+        try {
+            inputStream = new Scanner(file);
+            while (inputStream.hasNext()) {
+                String line = inputStream.next();
+                Double value = new Double(line.split(",")[0]);
+                x.add(value);
+
             }
 
             inputStream.close();
@@ -172,13 +204,13 @@ public class FileIO {
         return x;
 
     }
-
+    
     public static void writeToCSV(BigInteger[] y, String outputPath,
             String filePrefix, int clientId) {
         int len = y.length;
         try {
-            try (FileWriter writer = new FileWriter(outputPath + filePrefix + 
-                    "_" + clientId + ".csv")) {
+            try (FileWriter writer = new FileWriter(outputPath + filePrefix
+                    + "_" + clientId + ".csv")) {
                 for (int i = 0; i < len; i++) {
                     writer.write(y[i].toString());
                     writer.write("\n");
@@ -186,18 +218,35 @@ public class FileIO {
             }
             System.out.println("Written all lines");
         } catch (IOException ex) {
-            Logger.getLogger(FileIO.class.getName()).log(Level.SEVERE, null, ex);
+            LOGGER.log(Level.SEVERE, "File write exception: ", ex);
+        }
+    }
+
+    public static void writeToCSV(List<BigInteger> y, String outputPath,
+            String filePrefix, int clientId) {
+        int len = y.size();
+        try {
+            try (FileWriter writer = new FileWriter(outputPath + filePrefix
+                    + "_" + clientId + ".csv")) {
+                for (int i = 0; i < len; i++) {
+                    writer.write(y.get(i).toString());
+                    writer.write("\n");
+                }
+            }
+            System.out.println("Written all lines");
+        } catch (IOException ex) {
+            LOGGER.log(Level.SEVERE, "File write exception: ", ex);
         }
 
     }
 
-    public static void writeToCSV(BigInteger[][] y, String outputPath, 
+    public static void writeToCSV(BigInteger[][] y, String outputPath,
             String filePrefix, int clientId) {
         int rows = y.length;
         int cols = y[0].length;
         try {
-            try (FileWriter writer = new FileWriter(outputPath + filePrefix + 
-                    "_" + clientId + ".csv")) {
+            try (FileWriter writer = new FileWriter(outputPath + filePrefix
+                    + "_" + clientId + ".csv")) {
                 for (int i = 0; i < rows; i++) {
                     for (int j = 0; j < cols; j++) {
                         writer.write(y[i][j].toString() + ",");
@@ -207,7 +256,7 @@ public class FileIO {
             }
             System.out.println("Written all lines");
         } catch (IOException ex) {
-            Logger.getLogger(FileIO.class.getName()).log(Level.SEVERE, null, ex);
+            LOGGER.log(Level.SEVERE, "File write exception: ", ex);
         }
     }
 
@@ -216,30 +265,23 @@ public class FileIO {
         List<List<Integer>> value = new ArrayList<>();
         try {
             buf = new BufferedReader(new FileReader(csvFile));
-
-            try {
-                buf = new BufferedReader(new FileReader(csvFile));
-                String line = null;
-                while ((line = buf.readLine()) != null) {
-                    int lineInt[] = Arrays.stream(line.split(","))
-                            .mapToInt(Integer::parseInt).toArray();
-                    List<Integer> yline = Arrays.stream(lineInt)
-                            .boxed().collect(Collectors.toList());
-                    value.add(yline);
-                }
-            } catch (FileNotFoundException ex) {
-                Logger.getLogger(FileIO.class.getName()).log(Level.SEVERE, null, ex);
-            } catch (IOException ex) {
-                Logger.getLogger(FileIO.class.getName()).log(Level.SEVERE, null, ex);
+            String line = null;
+            while ((line = buf.readLine()) != null) {
+                int lineInt[] = Arrays.stream(line.split(","))
+                        .mapToInt(Integer::parseInt).toArray();
+                List<Integer> yline = Arrays.stream(lineInt)
+                        .boxed().collect(Collectors.toList());
+                value.add(yline);
             }
-
         } catch (FileNotFoundException ex) {
-            Logger.getLogger(FileIO.class.getName()).log(Level.SEVERE, null, ex);
+            LOGGER.log(Level.SEVERE, "File not found: ", ex);
+        } catch (IOException ex) {
+            LOGGER.log(Level.SEVERE, "Error reading line: ", ex);
         } finally {
             try {
                 buf.close();
             } catch (IOException ex) {
-                Logger.getLogger(FileIO.class.getName()).log(Level.SEVERE, null, ex);
+                LOGGER.log(Level.SEVERE, "File close error: ", ex);
             }
         }
         return value;
