@@ -48,6 +48,7 @@ public class KNNSortAndSwap extends Model {
     List<TripleInteger> decimalTiShares;
     List<TripleByte> binaryTiShares;
     ExecutorService es;
+    static Logger LOGGER;
 
     /**
      * 
@@ -87,6 +88,7 @@ public class KNNSortAndSwap extends Model {
         this.binaryTiIndex = 0;
 
         KjaccardDistances = new ArrayList<>();
+        LOGGER = Logger.getLogger(KNNSortAndSwap.class.getName());
     }
 
     private void initalizeModelVariables(String[] args) {
@@ -382,7 +384,6 @@ public class KNNSortAndSwap extends Model {
 
     public int KNN_Model() {
         //Jaccard Computation for all the training shares
-        //ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
         long startTime = System.currentTimeMillis();
         
         int decTICount = attrLength * 2 * trainingSharesCount;
@@ -391,15 +392,9 @@ public class KNNSortAndSwap extends Model {
                 clientId, prime, pid, 
                 new LinkedList<>(protocolIdQueue), partyCount);
 
-        Future<List<List<Integer>>> jdTask = es.submit(jdModule);
+        jaccardDistances = jdModule.call();
         pid++;
         //decimalTiIndex += decTICount;
-        //es.shutdown();
-        try {
-            jaccardDistances = jdTask.get();
-        } catch (InterruptedException | ExecutionException ex) {
-            Logger.getLogger(KNNSortAndSwap.class.getName()).log(Level.SEVERE, null, ex);
-        }
 
         //add class labels to JD data structure (contains OR, XOR and Class Labels)
         for (int i = 0; i < trainingShares.size(); i++) {
@@ -419,17 +414,10 @@ public class KNNSortAndSwap extends Model {
                 asymmetricBit, decimalTiShares, binaryTiShares,
                 pidMapper, commonSender, clientId, prime, pid,
                 new LinkedList<>(protocolIdQueue), partyCount, K, bitLength);
-        Future<List<List<Integer>>> sortTask = es.submit(sortModule);
-        //es.shutdown();
-        
-        try {
-            KjaccardDistances = sortTask.get();
-        } catch (InterruptedException | ExecutionException ex) {
-            Logger.getLogger(KNNSortAndSwap.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        KjaccardDistances = sortModule.call();
 
         //System.out.println("Jaccard Distances:" + jaccardDistances);
-        System.out.println("KjaccardDistances:" + KjaccardDistances);
+        LOGGER.fine("KjaccardDistances:" + KjaccardDistances);
 
         //Iterator circuit for rest of the training examples
         for (int i = K; i < trainingSharesCount; i++) {

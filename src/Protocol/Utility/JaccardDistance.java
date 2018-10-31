@@ -71,7 +71,6 @@ public class JaccardDistance extends CompositeProtocol implements Callable<List<
         int attrLength = testShare.size(), tiStartIndex = 0;
         ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
         
-        // TODO: Make OR_XOR module return both OR and XOR together
         List<Future<Integer[]>> orTaskList = new ArrayList<>();
         List<Future<Integer[]>> xorTaskList = new ArrayList<>();
 
@@ -97,7 +96,7 @@ public class JaccardDistance extends CompositeProtocol implements Callable<List<
             //tiStartIndex += attrLength;
         }
 
-        //es.shutdown();
+        es.shutdown();
 
         try {
             // These scores are additive shares over prime (Constants.prime)

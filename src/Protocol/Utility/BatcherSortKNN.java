@@ -312,7 +312,7 @@ public class BatcherSortKNN extends CompositeProtocol implements Callable<List<L
     }
     
     @Override
-    public List<List<Integer>> call() throws Exception {
+    public List<List<Integer>> call() {
         Sort(indices, 1);
         
         return KJaccardDistances;
