@@ -14,6 +14,7 @@ import Protocol.MatrixInversion;
 import Protocol.MultiplicationInteger;
 import Protocol.OIS;
 import Protocol.OR_XOR;
+import Protocol.Utility.JaccardDistance;
 import Protocol.Utility.BatchTruncation;
 import Protocol.Utility.MatrixMultiplication;
 import TrustedInitializer.TripleByte;
@@ -270,6 +271,25 @@ public class TestModel extends Model {
         long stopTime = System.currentTimeMillis();
         long elapsedTime = stopTime - startTime;
         System.out.println("Avg time duration:" + elapsedTime);
+    }
+    
+    public void callJaccard(){
+        ExecutorService es = Executors.newFixedThreadPool(1);
+        
+        JaccardDistance jdistance = new JaccardDistance(x, y.get(0), asymmetricBit, 
+                                    decimalTiShares, pidMapper, commonSender, 
+                                    clientId, Constants.prime, 0, 
+                                    new LinkedList<>(protocolIdQueue),partyCount);
+        
+        Future<List<List<Integer>>> jaccardTask = es.submit(jdistance);
+        es.shutdown();
+        
+        try {
+            List<List<Integer>> result = jaccardTask.get();
+            System.out.println("result of jaccard distance comparison: " + result);
+        } catch (InterruptedException | ExecutionException ex) {
+            Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 
     /**

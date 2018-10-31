@@ -1,3 +1,4 @@
+
 /*
  * To change this license header, choose License Headers in Project Properties.
  * To change this template file, choose Tools | Templates
@@ -41,6 +42,8 @@ public class BitDecomposition extends CompositeProtocol implements
     /**
      * Constructor
      *
+     * Takes 3(bitLength) - 2 binary ti shares
+     *
      * @param input
      * @param tiShares
      * @param asymmetricBit
@@ -75,6 +78,7 @@ public class BitDecomposition extends CompositeProtocol implements
         List<Integer> temp = decimalToBinary(this.input);
         List<Integer> temp0 = new ArrayList<>(Collections.nCopies(bitLength, 0));
         int diff = Math.abs(bitLength - temp.size());
+
         for (int i = 0; i < diff; i++) {
             temp.add(0);
         }
@@ -131,6 +135,7 @@ public class BitDecomposition extends CompositeProtocol implements
             int y = inputShares.get(0).get(i) + inputShares.get(1).get(i);
             yShares[i] = Math.floorMod(y, prime);
         }
+
         // set x[1] <- y[1]
         xShares.add(0, yShares[0]);
     }
@@ -265,10 +270,7 @@ public class BitDecomposition extends CompositeProtocol implements
                         cShares[index - 1]) + asymmetricBit;
                 e_result = Math.floorMod(e_result, prime);
                 eShares[index] = e_result;
-            } catch (InterruptedException ex) {
-                Logger.getLogger(BitDecomposition.class.getName())
-                        .log(Level.SEVERE, null, ex);
-            } catch (ExecutionException ex) {
+            } catch (InterruptedException | ExecutionException ex) {
                 Logger.getLogger(BitDecomposition.class.getName())
                         .log(Level.SEVERE, null, ex);
             }
@@ -285,7 +287,6 @@ public class BitDecomposition extends CompositeProtocol implements
         es.submit(xThread);
 
         es.shutdown();
-
         // Compute c and w sequentially when both threads end
         boolean threadsCompleted;
         try {

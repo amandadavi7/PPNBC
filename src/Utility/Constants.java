@@ -26,6 +26,7 @@ public class Constants {
 
     public static final int prime;
     public static final int binaryPrime = 2;        // Prime for bit calculation
+
     public static final int bitLength = 5;
 
     public static final int THREAD_COUNT;
