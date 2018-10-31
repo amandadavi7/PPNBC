@@ -133,11 +133,4 @@ public class JaccardDistance extends CompositeProtocol implements Callable<List<
         return Math.floorMod(sum, Constants.prime);
     }
 
-    public static void printScoreList(Integer[] scoreList) {
-
-        for (int element : scoreList) {
-
-            System.out.println("[" + element + "]");
-        }
-    }
 }

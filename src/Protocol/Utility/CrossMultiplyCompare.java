@@ -88,7 +88,6 @@ public class CrossMultiplyCompare extends CompositeProtocol implements Callable<
         ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
         
         //Crossmultiplications
-        //System.out.println("calling mult1");
         
         MultiplicationInteger multiplicationModule = new MultiplicationInteger(numerator1,
                     denominator2, decimalTiShares.get(decimalTiIndex), pidMapper,
@@ -99,7 +98,6 @@ public class CrossMultiplyCompare extends CompositeProtocol implements Callable<
         pid++;
         decimalTiIndex++;
         
-        //System.out.println("calling mult2");
         MultiplicationInteger multiplicationModule2 = new MultiplicationInteger(numerator2,
                     denominator1, decimalTiShares.get(decimalTiIndex),
                     pidMapper, senderQueue, new LinkedList<>(protocolIdQueue), clientID,
@@ -117,10 +115,7 @@ public class CrossMultiplyCompare extends CompositeProtocol implements Callable<
             Logger.getLogger(KNNSortAndSwap.class.getName()).log(Level.SEVERE, null, ex);
         }
         
-        //System.out.println("cross multiplication results: "+first+" and "+second);
-        
         // TODO - binaryTiShares sublist in bit decompositions
-        //System.out.println("calling bitD1");
         BitDecomposition firstTask = new BitDecomposition(first, binaryTiShares.subList(binaryTiIndex, 
                                         binaryTiIndex + bitDTICount),
                                         asymmetricBit, bitLength, pidMapper, senderQueue, 
@@ -130,7 +125,6 @@ public class CrossMultiplyCompare extends CompositeProtocol implements Callable<
         binaryTiIndex += bitDTICount;
         Future<List<Integer>> future1 = es.submit(firstTask);
         
-        //System.out.println("calling bitD2");
         BitDecomposition secondTask = new BitDecomposition(second, binaryTiShares.subList(binaryTiIndex, 
                                         binaryTiIndex + bitDTICount),
                                         asymmetricBit, bitLength, pidMapper, senderQueue, 
@@ -148,11 +142,8 @@ public class CrossMultiplyCompare extends CompositeProtocol implements Callable<
             Logger.getLogger(KNNSortAndSwap.class.getName()).log(Level.SEVERE, null, ex);
         }
         
-        //System.out.println("bitD results: " + firstNumber + " and " + secondNumber);
         
         // TODO - binaryti index management in Comparison
-        //System.out.println("calling comparison");
-        
         Comparison comparisonModule = new Comparison(firstNumber,
                                      secondNumber, binaryTiShares.subList(binaryTiIndex, binaryTiIndex + comparisonTICount), 
                                     asymmetricBit, pidMapper, senderQueue, new LinkedList<>(protocolIdQueue), 
