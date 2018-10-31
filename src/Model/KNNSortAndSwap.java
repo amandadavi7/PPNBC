@@ -48,7 +48,7 @@ public class KNNSortAndSwap extends Model {
     int ccTICount, prime, bitLength, comparisonTICount, bitDTICount;
     List<TripleInteger> decimalTiShares;
     List<TripleByte> binaryTiShares;
-    static Logger LOGGER;
+    private static final Logger LOGGER = Logger.getLogger(KNNSortAndSwap.class.getName());
 
     /**
      * 
@@ -88,7 +88,6 @@ public class KNNSortAndSwap extends Model {
         this.binaryTiIndex = 0;
 
         KjaccardDistances = new ArrayList<>();
-        LOGGER = Logger.getLogger(KNNSortAndSwap.class.getName());
     }
 
     /**
@@ -427,7 +426,7 @@ public class KNNSortAndSwap extends Model {
 
         //Iterator circuit for rest of the training examples
         for (int i = K; i < trainingSharesCount; i++) {
-            System.out.println("calling for training example:" + i);
+            LOGGER.info("calling for training example:" + i);
             swapTrainingShares(i);
         }
 

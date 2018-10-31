@@ -50,6 +50,7 @@ public class KNNThresholdKSelect extends Model {
     int ccTICount, prime, bitLength, comparisonTICount, bitDTICount;
     List<TripleInteger> decimalTiShares;
     List<TripleByte> binaryTiShares;
+    private static final Logger LOGGER = Logger.getLogger(KNNThresholdKSelect.class.getName());
 
     /**
      * 
@@ -198,7 +199,7 @@ public class KNNThresholdKSelect extends Model {
      */
     public int[] getThreshold(int lbound_numerator, int lbound_denominator,
             int ubound_numerator, int ubound_denominator) {
-        ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
+        ExecutorService es = Executors.newFixedThreadPool(3);
         MultiplicationInteger mult1 = new MultiplicationInteger(lbound_numerator,
                 ubound_denominator, decimalTiShares.get(decimalTiIndex), pidMapper,
                 commonSender, new LinkedList<>(protocolIdQueue), clientId, prime,
@@ -253,12 +254,9 @@ public class KNNThresholdKSelect extends Model {
         int maxIterations = (int) Math.ceil(Math.log(trainingSharesCount)/Math.log(2.0));
         ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
         while (stoppingBit == 0 && maxIterations >= 0) {
-            System.out.println("iteration countdown:" + maxIterations);
+            LOGGER.info("iteration countdown:" + maxIterations);
             thresholds = getThreshold(lbound_numerator,
                 lbound_denominator, ubound_numerator, ubound_denominator);
-            /*System.out.println("threshold: " + thresholds[0] +"/"+thresholds[1]
-                    + ", ubound: " + ubound_numerator + "/" + ubound_denominator + ", lbound: "
-                    + lbound_numerator + "/" + lbound_denominator);*/
             
             //compute no. of elements lesser than threshold
             comparisonResults = getComparisonResults(thresholds);
@@ -267,7 +265,6 @@ public class KNNThresholdKSelect extends Model {
                 elementsLesser += i;
             }
             elementsLesser %= prime;
-            //System.out.println("elements lesser:" + elementsLesser);
             
             BitDecomposition bitD = new BitDecomposition(elementsLesser,
                     binaryTiShares, asymmetricBit, bitLength, pidMapper, commonSender,
@@ -295,7 +292,7 @@ public class KNNThresholdKSelect extends Model {
                 Logger.getLogger(KNNThresholdKSelect.class.getName()).log(Level.SEVERE, null, ex);
             }
 
-            //System.out.println("lt: " + lt + " gt: " + gt);
+            LOGGER.fine("lt: " + lt + " gt: " + gt);
             
             MultiplicationByte multTask = new MultiplicationByte(gt, lt,
                     binaryTiShares.get(binaryTiIndex), pidMapper, commonSender,
@@ -373,11 +370,10 @@ public class KNNThresholdKSelect extends Model {
         ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
         int classLabelSum = 0;
         int predictedClassLabel = -1;
-        System.out.println("computing class label");
+        LOGGER.info("computing class label");
         List<Integer> comparisonResultsList = Arrays.asList(comparisonResults);
         List<Future<Integer[]>> taskList = new ArrayList<>();
         int endIndex = K, distanceIndexStart = K-1;
-        //int comparisonSum = 0;
         int batchSize = 20, sum = 0;
         int[] comparisonSum = new int[batchSize];
         for(int i=0;i<K-1;i++){
@@ -548,8 +544,8 @@ public class KNNThresholdKSelect extends Model {
         long stopTime = System.currentTimeMillis();
         long elapsedTime = stopTime - startTime;
         
-        System.out.println("Label:" + classLabel);
-        System.out.println("Time taken:" + elapsedTime + "ms");
+        LOGGER.info("Label:" + classLabel);
+        LOGGER.info("Time taken:" + elapsedTime + "ms");
         
         return 0;
     }
