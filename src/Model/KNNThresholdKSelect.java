@@ -62,13 +62,16 @@ public class KNNThresholdKSelect extends Model {
      * @param decimalTriples
      * @param partyCount
      * @param args 
+     * @param protocolIdQueue 
+     * @param protocolID 
      */
     public KNNThresholdKSelect(int asymmetricBit,
             ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper,
             BlockingQueue<Message> senderQueue, int clientId, List<TripleByte> binaryTriples,
-            List<TripleInteger> decimalTriples, int partyCount, String[] args) {
+            List<TripleInteger> decimalTriples, int partyCount, String[] args, 
+            Queue<Integer> protocolIdQueue, int protocolID) {
 
-        super(pidMapper, senderQueue, clientId, asymmetricBit, partyCount);
+        super(pidMapper, senderQueue, clientId, asymmetricBit, partyCount, protocolIdQueue, protocolID);
 
         pid = 0;
         initalizeModelVariables(args);
@@ -504,7 +507,7 @@ public class KNNThresholdKSelect extends Model {
             numOfOnePredictions = bitTaskOne.get();
             numOfZeroPredictions = bitTaskZero.get();
         } catch (InterruptedException | ExecutionException ex) {
-            Logger.getLogger(KNN.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(KNNSortAndSwap.class.getName()).log(Level.SEVERE, null, ex);
         }
 
         Comparison compClassLabels = new Comparison(numOfOnePredictions, numOfZeroPredictions,
@@ -539,7 +542,7 @@ public class KNNThresholdKSelect extends Model {
         try {
             jaccardDistances = jdTask.get();
         } catch (InterruptedException | ExecutionException ex) {
-            Logger.getLogger(KNN.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(KNNSortAndSwap.class.getName()).log(Level.SEVERE, null, ex);
         }
 
         int[] thresholds = binarySearch(0*asymmetricBit, asymmetricBit);

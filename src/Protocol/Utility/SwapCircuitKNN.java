@@ -6,7 +6,7 @@
 package Protocol.Utility;
 
 import Communication.Message;
-import Model.KNN;
+import Model.KNNSortAndSwap;
 import Protocol.CompositeProtocol;
 import TrustedInitializer.TripleInteger;
 import Utility.Constants;
@@ -128,7 +128,7 @@ public class SwapCircuitKNN extends CompositeProtocol implements Callable<Intege
                     results[i] += Mults[i];
                 }
             } catch (InterruptedException | ExecutionException ex) {
-                Logger.getLogger(KNN.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(KNNSortAndSwap.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
         //es.shutdown();
@@ -142,7 +142,7 @@ public class SwapCircuitKNN extends CompositeProtocol implements Callable<Intege
                 results[i] = Math.floorMod(results[i] + Mults[i], prime);
             }
         } catch (InterruptedException | ExecutionException ex) {
-            Logger.getLogger(KNN.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(KNNSortAndSwap.class.getName()).log(Level.SEVERE, null, ex);
         }
 
         //System.out.println("results retuning: " + Arrays.toString(results));

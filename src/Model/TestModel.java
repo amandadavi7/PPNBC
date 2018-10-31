@@ -46,7 +46,6 @@ public class TestModel extends Model {
     BigInteger[][] xBigInt;
     List<List<Integer>> y;
     List<List<List<Integer>>> v;
-    double a, b;
 
     List<TruncationPair> tiTruncationPair;
     BigInteger prime;
@@ -68,16 +67,16 @@ public class TestModel extends Model {
      * @param clientId
      * @param partyCount
      * @param args
+     * @param protocolIdQueue
+     * @param protocolID
      */
     public TestModel(List<TripleByte> binaryTriples, List<TripleInteger> decimalTriples,
-            List<TripleReal> realTiShares, List<TruncationPair> tiTruncationPair,
-            int asymmetricBit,
-            ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper,
-            BlockingQueue<Message> senderQueue,
-            int clientId, int partyCount, String[] args) {
+            List<TripleReal> realTiShares, List<TruncationPair> tiTruncationPair, 
+            int asymmetricBit, ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper, 
+            BlockingQueue<Message> senderQueue, int clientId, int partyCount, String[] args, 
+            Queue<Integer> protocolIdQueue, int protocolID) {
 
-        super(pidMapper, senderQueue, clientId, asymmetricBit, partyCount);
-
+        super(pidMapper, senderQueue, clientId, asymmetricBit, partyCount, protocolIdQueue, protocolID);
         this.tiTruncationPair = tiTruncationPair;
         prime = BigInteger.valueOf(2).pow(Constants.INTEGER_PRECISION
                 + 2 * Constants.DECIMAL_PRECISION + 1).nextProbablePrime();
@@ -237,8 +236,7 @@ public class TestModel extends Model {
     }
 
     /**
-     * Call comparison protocol for n test cases in
-     * parallel
+     * Call comparison protocol for n test cases in parallel
      *
      */
     public void callComparison() {
@@ -332,6 +330,9 @@ public class TestModel extends Model {
             case "Comparison":
                 callComparison();
                 break;
+            case "Unicast":
+                callUnicast();
+                break;
             default:
                 break;
         }
@@ -393,13 +394,7 @@ public class TestModel extends Model {
                 case "output":
                     outputPath = value;
                     break;
-                case "a":
-                    a = Double.parseDouble(value);
-                    break;
-                case "b":
-                    b = Double.parseDouble(value);
-                    break;
-
+                
             }
 
         }
@@ -565,8 +560,44 @@ public class TestModel extends Model {
     }
 
     /**
-     * Call dot product protocol for n test cases in
-     * parallel
+     * Test Unicast feature for n parties
+     *
+     */
+    public void callUnicast() {
+
+        Random random = new Random();
+
+        int value = random.nextInt();
+        Message senderMessage = new Message(value,
+                clientId, protocolIdQueue, true);
+        Logger.getLogger(TestModel.class.getName())
+                .log(Level.INFO, "value sent:{0}, client Id:{1}", new Object[]{value, clientId});
+
+        try {
+            commonSender.put(senderMessage);
+        } catch (InterruptedException ex) {
+            Logger.getLogger(MultiplicationInteger.class.getName())
+                    .log(Level.SEVERE, null, ex);
+        }
+
+        if (asymmetricBit == 1) {
+            for (int i = 0; i < partyCount - 1; i++) {
+                try {
+                    Message receivedMessage = pidMapper.get(protocolIdQueue).take();
+                    value = (Integer) receivedMessage.getValue();
+                    Logger.getLogger(TestModel.class.getName())
+                            .log(Level.INFO, "value recieved:{0}, client Id:{1}", new Object[]{value, clientId});
+                } catch (InterruptedException ex) {
+                    Logger.getLogger(TestModel.class.getName())
+                            .log(Level.SEVERE, null, ex);
+                }
+            }
+        }
+
+    }
+
+    /**
+     * Call dot product protocol for n test cases in parallel
      *
      */
     public void callDotProduct() {

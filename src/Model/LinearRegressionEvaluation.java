@@ -13,7 +13,6 @@ import TrustedInitializer.TruncationPair;
 import Utility.Constants;
 import Utility.FileIO;
 import Utility.Logging;
-import Utility.ThreadPoolManager;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -30,6 +29,7 @@ import java.util.logging.*;
  */
 public class LinearRegressionEvaluation extends Model {
 
+    private static final Logger LOGGER = Logger.getLogger(LinearRegressionEvaluation.class.getName());
     List<List<BigInteger>> x;
     List<BigInteger> beta;
     BigInteger[] y;
@@ -50,17 +50,17 @@ public class LinearRegressionEvaluation extends Model {
      * @param clientId
      * @param partyCount
      * @param args
+     * @param protocolIdQueue
+     * @param protocolID
      *
      */
     public LinearRegressionEvaluation(List<TripleReal> realTriples,
-            List<TruncationPair> truncationShares,
-            int asymmetricBit, 
-            ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper, 
-            BlockingQueue<Message> senderQueue,
-            int clientId,
-            int partyCount, String[] args) {
+            List<TruncationPair> truncationShares, int asymmetricBit,
+            ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper,
+            BlockingQueue<Message> senderQueue, int clientId, int partyCount,
+            String[] args, Queue<Integer> protocolIdQueue, int protocolID) {
 
-        super(pidMapper, senderQueue, clientId, asymmetricBit, partyCount);
+        super(pidMapper, senderQueue, clientId, asymmetricBit, partyCount, protocolIdQueue, protocolID);
         this.realTiShares = realTriples;
         this.truncationTiShares = truncationShares;
 
@@ -80,12 +80,13 @@ public class LinearRegressionEvaluation extends Model {
         computeDotProduct();
         long stopTime = System.currentTimeMillis();
         long elapsedTime = stopTime - startTime;
-        ThreadPoolManager.shutDownThreadService();
         //TODO: push time to a csv file
-        System.out.println("Avg time duration:" + elapsedTime + " for partyId:"
-                + clientId + ", for size:" + y.length);
+        LOGGER.log(Level.INFO, "Avg time duration:{0} for partyId:{1}, "
+                + "for size:{2}", new Object[]{elapsedTime, clientId, y.length});
+        
+        // TODO make it async
         FileIO.writeToCSV(y, outputPath, "y", clientId);
-
+        
     }
 
     /**
@@ -93,8 +94,7 @@ public class LinearRegressionEvaluation extends Model {
      * y[i] = x[i].beta
      */
     public void computeDotProduct() {
-        ExecutorService es = ThreadPoolManager.getInstance();
-        //ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
+        ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
         List<Future<BigInteger>> taskList = new ArrayList<>();
 
         int tiStartIndex = 0;
@@ -111,21 +111,16 @@ public class LinearRegressionEvaluation extends Model {
             taskList.add(DPTask);
             tiStartIndex += x.get(i).size();
         }
-
         
-
         BigInteger[] dotProductResult = new BigInteger[testCases];
         for (int i = 0; i < testCases; i++) {
             Future<BigInteger> dWorkerResponse = taskList.get(i);
             try {
                 BigInteger result = dWorkerResponse.get();
                 dotProductResult[i] = result;
-                //System.out.println(" #:" + i+ ", result:"+ result);
-            } catch (InterruptedException ex) {
-                Logger.getLogger(LinearRegressionEvaluation.class.getName()).log(Level.SEVERE, null, ex);
-            } catch (ExecutionException ex) {
-                Logger.getLogger(LinearRegressionEvaluation.class.getName()).log(Level.SEVERE, null, ex);
-            }
+            } catch (InterruptedException | ExecutionException ex) {
+                LOGGER.log(Level.SEVERE, null, ex);
+            } 
         }
 
         BatchTruncation truncationModule = new BatchTruncation(dotProductResult,
@@ -138,13 +133,17 @@ public class LinearRegressionEvaluation extends Model {
         try {
             y = truncationTask.get();
         } catch (InterruptedException | ExecutionException ex) {
-            Logger.getLogger(LinearRegressionTraining.class.getName())
-                    .log(Level.SEVERE, null, ex);
+            LOGGER.log(Level.SEVERE, null, ex);
         }
         
-        //es.shutdown();
+        es.shutdown();
     }
 
+    /**
+     * initialize input variables from command line
+     *
+     * @param args command line arguments
+     */
     private void initalizeModelVariables(String[] args) {
         for (String arg : args) {
             String[] currInput = arg.split("=");
@@ -168,6 +167,9 @@ public class LinearRegressionEvaluation extends Model {
 
             }
 
+        }
+        if(x == null || beta == null) {
+            System.exit(1);
         }
         testCases = x.size();
         y = new BigInteger[testCases];

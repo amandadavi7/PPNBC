@@ -9,12 +9,9 @@ import Utility.Constants;
 import Utility.FileIO;
 import Utility.LocalMath;
 import Utility.Logging;
-import java.io.File;
-import java.io.FileNotFoundException;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Scanner;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -24,10 +21,11 @@ import java.util.logging.Logger;
  *
  * @author anisha
  */
-public class LinearRegressionComputeRMSE {
-
+public class LinearRegressionComputeDamfRMSE {
+    
     private static final Logger LOGGER = Logger.getLogger(
-            LinearRegressionComputeRMSE.class.getName());
+            LinearRegressionComputeDamfRMSE.class.getName());
+
     static BigInteger Zq;
     static int noOfParties;
     
@@ -55,16 +53,47 @@ public class LinearRegressionComputeRMSE {
      * @param args command line arguments
      */
     private static void initalizeVariables(String[] args) {
-        noOfParties = Integer.parseInt(args[0]);
-        System.out.println("Num of parties:" + noOfParties);
+        String predictedYFiles = null;
+        String maskedR = null;
+        String actualY = null;
+        
+        for (String arg : args) {
+            String[] currInput = arg.split("=");
+            if (currInput.length < 2) {
+                Logging.clientUsage();
+                System.exit(0);
+            }
+            String command = currInput[0];
+            String value = currInput[1];
+            switch (command) {
+                case "predictedYFiles":
+                    predictedYFiles = value;
+                    break;
+                case "maskedR":
+                    maskedR = value;
+                    break;
+                case "actualY":
+                    actualY = value;
+                    break;
+                case "partyCount":
+                    noOfParties = Integer.valueOf(value);
+                    break;
 
-        String predictedYFiles = args[1];
-        String actualY = args[2];
+            }
+        }
+        
+        if(predictedYFiles == null || actualY == null || maskedR == null || 
+                noOfParties < 0) {
+            Logging.clientUsage();
+            System.exit(1);
+        }
 
+        LOGGER.log(Level.INFO, "Num of parties:{0}", noOfParties);
+        
         Zq = BigInteger.valueOf(2).pow(Constants.INTEGER_PRECISION
                 + 2 * Constants.DECIMAL_PRECISION + 1).nextProbablePrime();  //Zq must be a prime field
 
-        actualYList = loadListFromFile(actualY);
+        actualYList = FileIO.loadDoubleListFromFile(actualY);
 
         int datasetSize = actualYList.size();
 
@@ -79,44 +108,16 @@ public class LinearRegressionComputeRMSE {
                 predictedYListBigInt.set(i, predictedYListBigInt.get(i).add(partyPredictedList.get(i)).mod(Zq));
             }
         }
-
+        
+        List<BigInteger> maskedRList = FileIO.loadListFromFile(maskedR);
         predictedYList = new ArrayList<>(actualYList.size());
         for (int i = 0; i < datasetSize; i++) {
+            predictedYListBigInt.set(i, predictedYListBigInt.get(i).
+                    subtract(maskedRList.get(i)).mod(Zq));
             predictedYList.add(LocalMath.ZqToReal(predictedYListBigInt.get(i), 
-                    Constants.DECIMAL_PRECISION, Zq).doubleValue());
-            
+                    Constants.DECIMAL_PRECISION, Zq).doubleValue() / noOfParties); 
         }
 
     }
     
-    /**
-     * Load list of actual values from file
-     * TODO: move it to FileIO 
-     * @param sourceFile
-     * @return 
-     */
-    public static List<Double> loadListFromFile(String sourceFile) {
-
-        File file = new File(sourceFile);
-        Scanner inputStream;
-        List<Double> x = new ArrayList<>();
-
-        try {
-            inputStream = new Scanner(file);
-            while (inputStream.hasNext()) {
-                String line = inputStream.next();
-                Double value = new Double(line.split(",")[0]);
-                x.add(value);
-
-            }
-
-            inputStream.close();
-        } catch (FileNotFoundException e) {
-            LOGGER.log(Level.SEVERE, null, e);
-        }
-
-        return x;
-
-    }
-
 }

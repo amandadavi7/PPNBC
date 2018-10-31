@@ -38,7 +38,7 @@ import java.util.logging.Logger;
  *
  * @author keerthanaa
  */
-public class KNN extends Model {
+public class KNNSortAndSwap extends Model {
 
     List<List<Integer>> trainingShares;
     List<Integer> testShare;
@@ -50,11 +50,25 @@ public class KNN extends Model {
     List<TripleByte> binaryTiShares;
     ExecutorService es;
 
-    public KNN(int asymmetricBit, ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper, 
+    /**
+     * 
+     * @param asymmetricBit
+     * @param pidMapper
+     * @param senderQueue
+     * @param clientId
+     * @param binaryTriples
+     * @param decimalTriples
+     * @param partyCount
+     * @param args
+     * @param protocolIdQueue
+     * @param protocolID 
+     */
+    public KNNSortAndSwap(int asymmetricBit, ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper, 
             BlockingQueue<Message> senderQueue, int clientId, List<TripleByte> binaryTriples,
-            List<TripleInteger> decimalTriples, int partyCount, String[] args) {
+            List<TripleInteger> decimalTriples, int partyCount, String[] args, 
+            Queue<Integer> protocolIdQueue, int protocolID) {
 
-        super(pidMapper, senderQueue, clientId, asymmetricBit, partyCount);
+        super(pidMapper, senderQueue, clientId, asymmetricBit, partyCount, protocolIdQueue, protocolID);
         pid = 0;
 
         initalizeModelVariables(args);
@@ -144,7 +158,7 @@ public class KNN extends Model {
             try {
                 comparisonResults[i] = ccTask.get();
             } catch (InterruptedException | ExecutionException ex) {
-                Logger.getLogger(KNN.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(KNNSortAndSwap.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
 
@@ -207,7 +221,7 @@ public class KNN extends Model {
             try {
                 comparisonMultiplications[i] = multTask.get();
             } catch (InterruptedException | ExecutionException ex) {
-                Logger.getLogger(KNN.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(KNNSortAndSwap.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
 
@@ -254,7 +268,7 @@ public class KNN extends Model {
             comparisonResults = xorTask1.get();
             comparisonMultiplications = xorTask2.get();
         } catch (InterruptedException | ExecutionException ex) {
-            Logger.getLogger(KNN.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(KNNSortAndSwap.class.getName()).log(Level.SEVERE, null, ex);
         }
 
         //System.out.println("comparison results:" + Arrays.toString(comparisonResults));
@@ -294,7 +308,7 @@ public class KNN extends Model {
                     KjaccardDistances.get(i).set(j, results[j]);
                 }
             } catch (InterruptedException | ExecutionException ex) {
-                Logger.getLogger(KNN.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(KNNSortAndSwap.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
 
@@ -341,7 +355,7 @@ public class KNN extends Model {
             numOfOnePredictions = bitTaskOne.get();
             numOfZeroPredictions = bitTaskZero.get();
         } catch (InterruptedException | ExecutionException ex) {
-            Logger.getLogger(KNN.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(KNNSortAndSwap.class.getName()).log(Level.SEVERE, null, ex);
         }
 
         Comparison compClassLabels = new Comparison(numOfOnePredictions, numOfZeroPredictions, 
@@ -353,7 +367,7 @@ public class KNN extends Model {
         try {
             predictedClassLabel = compClassLabels.call();
         } catch (Exception ex) {
-            Logger.getLogger(KNN.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(KNNSortAndSwap.class.getName()).log(Level.SEVERE, null, ex);
         }
         //Future<Integer> resultTask = es.submit(compClassLabels);
         pid++;
@@ -386,7 +400,7 @@ public class KNN extends Model {
         try {
             jaccardDistances = jdTask.get();
         } catch (InterruptedException | ExecutionException ex) {
-            Logger.getLogger(KNN.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(KNNSortAndSwap.class.getName()).log(Level.SEVERE, null, ex);
         }
 
         //add class labels to JD data structure (contains OR, XOR and Class Labels)
@@ -413,7 +427,7 @@ public class KNN extends Model {
         try {
             KjaccardDistances = sortTask.get();
         } catch (InterruptedException | ExecutionException ex) {
-            Logger.getLogger(KNN.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(KNNSortAndSwap.class.getName()).log(Level.SEVERE, null, ex);
         }
 
         //System.out.println("Jaccard Distances:" + jaccardDistances);

@@ -23,9 +23,10 @@ import java.util.logging.Logger;
  */
 public class BaClientReceiver implements Callable<Boolean> {
 
+    private static final Logger LOGGER = Logger.getLogger(BaClientReceiver.class.getName());
     Socket clientSocket;
     
-    BlockingQueue<BaMessagePacket> receiverQueue;
+    BlockingQueue<Message> receiverQueue;
     ObjectInputStream iStream = null;
     
     int clientId, totalClients;
@@ -38,7 +39,7 @@ public class BaClientReceiver implements Callable<Boolean> {
      * @param queue
      */
     BaClientReceiver(Socket socket, ObjectInputStream iStream,
-            BlockingQueue<BaMessagePacket> receiverQueue, int clientId,
+            BlockingQueue<Message> receiverQueue, int clientId,
             int totalCount) {
         this.clientSocket = socket;
         this.receiverQueue = receiverQueue;
@@ -57,26 +58,20 @@ public class BaClientReceiver implements Callable<Boolean> {
         while (!(Thread.currentThread().isInterrupted())) {
             try {
                 Message msg = (Message) iStream.readObject();
-                receiverQueue.add(new BaMessagePacket(msg, clientId));
-            } catch (IOException ex) {
+                receiverQueue.add(msg);
+            } catch (IOException | ClassNotFoundException ex) {
                 if (counter.incrementAndGet() >= totalClients) {
                     break;
                 }
-            } catch (ClassNotFoundException ex) {
-                Logger.getLogger(BaClientReceiver.class.getName())
-                        .log(Level.SEVERE, null, ex);
             } 
-
         }
 
         try {
             iStream.close();
             clientSocket.close();
         } catch (IOException ex) {
-            Logger.getLogger(BaClientReceiver.class.getName())
-                    .log(Level.SEVERE, null, ex);
+            LOGGER.log(Level.SEVERE, "Error closing socket", ex);
         }
-
         return true;
     }
 }

@@ -8,6 +8,7 @@
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
             <file>file:/home/keerthanaa/bitbucket_repo/ppml-framework/src/Client/LinearRegressionClient.java</file>
 >>>>>>> master
@@ -82,12 +83,35 @@
             <file>file:/home/keerthanaa/bitbucket_repo/lynx/src/Party/PartyServer.java</file>
             <file>file:/home/keerthanaa/bitbucket_repo/lynx/src/Protocol/DotProduct.java</file>
             <file>file:/home/keerthanaa/bitbucket_repo/lynx/src/TrustedInitializer/TripleReal.java</file>
+=======
+            <file>file:/home/keerthanaa/bitbucket_repo/lynx/src/Protocol/BitDecomposition.java</file>
+            <file>file:/home/keerthanaa/bitbucket_repo/lynx/src/Model/LinearRegressionEvaluation.java</file>
+            <file>file:/home/keerthanaa/bitbucket_repo/lynx/src/Protocol/MultiplicationInteger.java</file>
+            <file>file:/home/keerthanaa/bitbucket_repo/lynx/src/TrustedInitializer/TI.java</file>
+            <file>file:/home/keerthanaa/bitbucket_repo/lynx/src/Communication/ReceiverQueueHandler.java</file>
+            <file>file:/home/keerthanaa/bitbucket_repo/lynx/src/Protocol/CompositeProtocol.java</file>
+            <file>file:/home/keerthanaa/bitbucket_repo/lynx/src/TrustedInitializer/TItoPeerCommunication.java</file>
+            <file>file:/home/keerthanaa/bitbucket_repo/lynx/src/Protocol/ArgMax.java</file>
+            <file>file:/home/keerthanaa/bitbucket_repo/lynx/src/BroadcastAgent/BaClientReceiver.java</file>
+            <file>file:/home/keerthanaa/bitbucket_repo/lynx/src/Protocol/DotProductByte.java</file>
+            <file>file:/home/keerthanaa/bitbucket_repo/lynx/src/Utility/Constants.java</file>
+            <file>file:/home/keerthanaa/bitbucket_repo/lynx/src/Model/DecisionTreeScoring.java</file>
+            <file>file:/home/keerthanaa/bitbucket_repo/lynx/src/Protocol/Protocol.java</file>
+            <file>file:/home/keerthanaa/bitbucket_repo/lynx/src/Party/Party.java</file>
+            <file>file:/home/keerthanaa/bitbucket_repo/lynx/src/Model/TestModel.java</file>
+            <file>file:/home/keerthanaa/bitbucket_repo/lynx/src/TrustedInitializer/TIShare.java</file>
+            <file>file:/home/keerthanaa/bitbucket_repo/lynx/src/Model/RandomForestDTScoring.java</file>
+            <file>file:/home/keerthanaa/bitbucket_repo/lynx/src/Utility/Logging.java</file>
+            <file>file:/home/keerthanaa/bitbucket_repo/lynx/src/Party/PartyServer.java</file>
+            <file>file:/home/keerthanaa/bitbucket_repo/lynx/src/Protocol/DotProduct.java</file>
+>>>>>>> master
             <file>file:/home/keerthanaa/bitbucket_repo/lynx/src/Protocol/Comparison.java</file>
             <file>file:/home/keerthanaa/bitbucket_repo/lynx/src/Model/Model.java</file>
             <file>file:/home/keerthanaa/bitbucket_repo/lynx/src/Party/package-info.java</file>
             <file>file:/home/keerthanaa/bitbucket_repo/lynx/src/Protocol/DotProductReal.java</file>
             <file>file:/home/keerthanaa/bitbucket_repo/lynx/src/Communication/Message.java</file>
             <file>file:/home/keerthanaa/bitbucket_repo/lynx/src/Protocol/OIS.java</file>
+<<<<<<< HEAD
             <file>file:/home/keerthanaa/bitbucket_repo/lynx/src/Protocol/OR_XOR.java</file>
             <file>file:/home/keerthanaa/bitbucket_repo/lynx/src/Party/PartyClient.java</file>
             <file>file:/home/keerthanaa/bitbucket_repo/lynx/src/TrustedInitializer/TripleInteger.java</file>
@@ -105,17 +129,34 @@
 =======
 >>>>>>> master
 =======
+            <file>file:/home/keerthanaa/bitbucket_repo/lynx/src/BroadcastAgent/BA.java</file>
+            <file>file:/home/keerthanaa/bitbucket_repo/lynx/src/Protocol/OR_XOR.java</file>
+            <file>file:/home/keerthanaa/bitbucket_repo/lynx/src/Protocol/Utility/BatchMultiplicationByte.java</file>
+            <file>file:/home/keerthanaa/bitbucket_repo/lynx/src/Protocol/Utility/BatchMultiplication.java</file>
+            <file>file:/home/keerthanaa/bitbucket_repo/lynx/src/Model/TreeEnsemble.java</file>
+            <file>file:/home/keerthanaa/bitbucket_repo/lynx/src/Party/PartyClient.java</file>
+            <file>file:/home/keerthanaa/bitbucket_repo/lynx/src/BroadcastAgent/BaClientSender.java</file>
+            <file>file:/home/keerthanaa/bitbucket_repo/lynx/src/Party/PeerTICommunication.java</file>
+            <file>file:/home/keerthanaa/bitbucket_repo/lynx/src/TrustedInitializer/Triple.java</file>
+            <file>file:/home/keerthanaa/bitbucket_repo/lynx/src/Protocol/Utility/ParallelMultiplication.java</file>
+            <file>file:/home/keerthanaa/bitbucket_repo/lynx/src/Protocol/DotProductInteger.java</file>
+        </group>
+    </open-files>
+=======
+>>>>>>> random_forest
+>>>>>>> master
+=======
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group>
-            <file>file:/home/anisha/lynx/lynx/src/Client/LinearRegressionSplitData.java</file>
             <file>file:/home/anisha/lynx/lynx/src/Protocol/Utility/BatchTruncation.java</file>
-            <file>file:/home/anisha/lynx/lynx/src/Model/TestModel.java</file>
             <file>file:/home/anisha/lynx/lynx/src/Model/LinearRegressionTraining.java</file>
-            <file>file:/home/anisha/lynx/lynx/src/Utility/Logging.java</file>
-            <file>file:/home/anisha/lynx/lynx/src/Party/Party.java</file>
+            <file>file:/home/anisha/lynx/lynx/src/Protocol/Utility/MatrixMultiplication.java</file>
+            <file>file:/home/anisha/lynx/lynx/src/Protocol/Utility/BatchMultiplicationReal.java</file>
+            <file>file:/home/anisha/lynx/lynx/src/Protocol/DotProductReal.java</file>
             <file>file:/home/anisha/lynx/lynx/src/Protocol/MatrixInversion.java</file>
-            <file>file:/home/anisha/lynx/lynx/src/Utility/FileIO.java</file>
+            <file>file:/home/anisha/lynx/lynx/src/Model/LinearRegressionEvaluation.java</file>
             <file>file:/home/anisha/lynx/lynx/src/Client/LinearRegressionComputeRMSE.java</file>
+            <file>file:/home/anisha/lynx/lynx/src/Utility/FileIO.java</file>
         </group>
     </open-files>
 >>>>>>> master

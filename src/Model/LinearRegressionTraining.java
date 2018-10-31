@@ -14,7 +14,6 @@ import Utility.Constants;
 import Utility.FileIO;
 import Utility.Logging;
 import Utility.LocalMath;
-import Utility.ThreadPoolManager;
 import java.math.BigInteger;
 import java.util.LinkedList;
 import java.util.List;
@@ -33,14 +32,15 @@ import java.util.logging.Logger;
  */
 public class LinearRegressionTraining extends Model {
 
+    private static final Logger LOGGER = Logger.getLogger(LinearRegressionTraining.class.getName());
     static BigInteger[][] x;
     static BigInteger[][] xT;
     BigInteger[][] y;
 
-    List<TruncationPair> tiTruncationPair;
-    List<TripleReal> realTriples;
+    static List<TruncationPair> tiTruncationPair;
+    static List<TripleReal> realTriples;
 
-    BigInteger prime;
+    static BigInteger prime;
     String outputPath;
     int globalProtocolId;
     
@@ -54,16 +54,19 @@ public class LinearRegressionTraining extends Model {
      * @param asymmetricBit
      * @param partyCount
      * @param args 
+     * @param protocolIdQueue 
+     * @param protocolID 
      */
     public LinearRegressionTraining(List<TripleReal> realTriples,
             List<TruncationPair> tiTruncationPair,
             ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper, 
             BlockingQueue<Message> senderQueue,
-            int clientId, int asymmetricBit, int partyCount, String[] args) {
+            int clientId, int asymmetricBit, int partyCount, String[] args,
+            Queue<Integer> protocolIdQueue, int protocolID) {
 
-        super(pidMapper, senderQueue, clientId, asymmetricBit, partyCount);
-        this.tiTruncationPair = tiTruncationPair;
-        this.realTriples = realTriples;
+        super(pidMapper, senderQueue, clientId, asymmetricBit, partyCount, protocolIdQueue, protocolID);
+        LinearRegressionTraining.tiTruncationPair = tiTruncationPair;
+        LinearRegressionTraining.realTriples = realTriples;
         globalProtocolId = 0;
         prime = BigInteger.valueOf(2).pow(Constants.INTEGER_PRECISION
                 + 2 * Constants.DECIMAL_PRECISION + 1).nextProbablePrime();  //Zq must be a prime field
@@ -94,8 +97,7 @@ public class LinearRegressionTraining extends Model {
         try {
             gamma1Inv = matrixInversion.call();
         } catch (Exception ex) {
-            Logger.getLogger(LinearRegressionTraining.class.getName())
-                    .log(Level.SEVERE, null, ex);
+            LOGGER.log(Level.SEVERE, null, ex);
         }
         
         MatrixMultiplication matrixMultiplication = new MatrixMultiplication(gamma1Inv,
@@ -107,18 +109,15 @@ public class LinearRegressionTraining extends Model {
         try {
             beta = matrixMultiplication.call();
         } catch (Exception ex) {
-            Logger.getLogger(LinearRegressionTraining.class.getName())
-                    .log(Level.SEVERE, null, ex);
+            LOGGER.log(Level.SEVERE, null, ex);
         }
-        
-        ThreadPoolManager.shutDownThreadService();
         
         long stopTime = System.currentTimeMillis();
         long elapsedTime = stopTime - startTime;
         //TODO: push time to a csv file
-        System.out.println("Avg time duration:" + elapsedTime + " for partyId:"
-                + clientId);
-
+        LOGGER.log(Level.INFO, "Avg time duration:{0} for partyId:{1}", 
+                new Object[]{elapsedTime, clientId});
+        
         FileIO.writeToCSV(beta, outputPath, "beta", clientId);
         
     }
