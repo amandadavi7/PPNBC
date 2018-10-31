@@ -32,6 +32,7 @@ public class DotProductInteger extends DotProduct implements Callable<Integer> {
     List<Integer> xShares, yShares;
     List<TripleInteger> tiShares;
     int prime;
+    Logger LOGGER = Logger.getLogger(DotProductInteger.class.getName());
 
     /**
      * Constructor for DotProduct on Integers
@@ -85,7 +86,6 @@ public class DotProductInteger extends DotProduct implements Callable<Integer> {
         do {
             int toIndex = Math.min(i + Constants.BATCH_SIZE, vectorLength);
 
-            //System.out.println("Protocol " + protocolId + " batch " + startpid);
             multCompletionService.submit(new BatchMultiplicationInteger(xShares.subList(i, toIndex),
                     yShares.subList(i, toIndex), tiShares.subList(i, toIndex), 
                     pidMapper, senderQueue, new LinkedList<>(protocolIdQueue),
@@ -106,12 +106,13 @@ public class DotProductInteger extends DotProduct implements Callable<Integer> {
                     dotProduct += j;
                 }
             } catch (InterruptedException | ExecutionException ex) {
-                Logger.getLogger(DotProductInteger.class.getName()).log(Level.SEVERE, null, ex);
+                LOGGER.log(Level.SEVERE, null, ex);
             }
         }
 
         dotProduct = Math.floorMod(dotProduct, prime);
-        //System.out.println("dot product:" + dotProduct + ", protocol id:" + protocolId);
+        LOGGER.fine("dot product:" + dotProduct + ", protocol id:" + protocolId);
+
         return dotProduct;
 
     }

@@ -86,7 +86,7 @@ public class OR_XOR extends CompositeProtocol implements Callable<Integer[]> {
         int startpid = 0;
 
         do {
-            //System.out.println("Protocol " + protocolId + " batch " + startpid);
+
             int toIndex = Math.min(i + Constants.BATCH_SIZE, bitLength);
 
             BatchMultiplicationInteger batchMultiplication = new BatchMultiplicationInteger(

@@ -144,7 +144,7 @@ public class ArgMax extends CompositeProtocol implements Callable<Integer[]> {
         }
 
         for (int i = 0; i < numberCount; i++) {
-            System.out.println("w[" + Integer.toString(i) + "]:" + wIntermediate.get(i));
+            //System.out.println("w[" + Integer.toString(i) + "]:" + wIntermediate.get(i));
         }
 
         return tiIndex;

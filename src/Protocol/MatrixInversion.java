@@ -18,6 +18,10 @@ import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -175,6 +179,8 @@ public class MatrixInversion extends CompositeProtocol implements
      */
     private BigInteger[][] newtonRaphsonAlgorithm(BigInteger[][] A,
             BigInteger[][] X, int rounds) {
+        ExecutorService es = Executors.newSingleThreadExecutor();
+
         int n = A.length;
 
         for (int i = 0; i < rounds; i++) {
@@ -190,12 +196,12 @@ public class MatrixInversion extends CompositeProtocol implements
             // TODO uncomment to not reuse the shares
             //tiRealIndex += Math.pow(n, 3);
             //tiTruncationIndex += (n*n);
-            
+            globalPid++;
+            Future<BigInteger[][]> multiplicationTask = es.submit(matrixMultiplication);
             BigInteger[][] AX = null;
             try {
-                AX = matrixMultiplication.call();
-                globalPid++;
-            } catch (Exception ex) {
+                AX = multiplicationTask.get();
+            } catch (InterruptedException | ExecutionException ex) {
                 Logger.getLogger(MatrixInversion.class.getName()).log(Level.SEVERE, null, ex);
             }
 
@@ -211,18 +217,21 @@ public class MatrixInversion extends CompositeProtocol implements
                     new LinkedList<>(protocolIdQueue),
                     partyCount);
 
+            // TODO uncomment to not reuse the shares
+            //tiRealIndex += Math.pow(n, 3);
+            //tiTruncationIndex += (n*n);
+            globalPid++;
+            Future<BigInteger[][]> multiplicationTaskNext = es.submit(matrixMultiplicationNext);
             try {
-                // TODO uncomment to not reuse the shares
-                //tiRealIndex += Math.pow(n, 3);
-                //tiTruncationIndex += (n*n);
-
-                X = matrixMultiplicationNext.call();
-            } catch (Exception ex) {
+                Xs1 = multiplicationTaskNext.get();
+            } catch (InterruptedException | ExecutionException ex) {
                 Logger.getLogger(MatrixInversion.class.getName()).log(Level.SEVERE, null, ex);
             }
-            globalPid++;
+
+            X = Xs1;
 
         }
+        es.shutdown();
         return X;
     }
 
@@ -235,6 +244,8 @@ public class MatrixInversion extends CompositeProtocol implements
      */
     private BigInteger newtonRaphsonAlgorithmScalar(BigInteger A,
             BigInteger X) {
+        ExecutorService es = Executors.newSingleThreadExecutor();
+
         for (int i = 0; i < nrRounds; i++) {
 
             // AX = DM(A.X)
@@ -246,8 +257,14 @@ public class MatrixInversion extends CompositeProtocol implements
             // TODO uncomment to not reuse the shares
             //tiRealIndex++;
             globalPid++;
-            
-            BigInteger AX = multiplicationModule.call();
+
+            Future<BigInteger> multiplicationTask = es.submit(multiplicationModule);
+            BigInteger AX = null;
+            try {
+                AX = multiplicationTask.get();
+            } catch (InterruptedException | ExecutionException ex) {
+                Logger.getLogger(MatrixInversion.class.getName()).log(Level.SEVERE, null, ex);
+            }
 
             Truncation truncationModule = new Truncation(AX,
                     tiTruncationPair.get(tiTruncationIndex), pidMapper, senderQueue,
@@ -257,12 +274,14 @@ public class MatrixInversion extends CompositeProtocol implements
             // TODO uncomment to not reuse the shares
             //tiTruncationIndex++;
             globalPid++;
-            
+            Future<BigInteger> truncationTask = es.submit(truncationModule);
+
             BigInteger truncatedAX = null;
             try {
-                truncatedAX = truncationModule.call();
-            } catch (Exception ex) {
-                Logger.getLogger(MatrixInversion.class.getName()).log(Level.SEVERE, null, ex);
+                truncatedAX = truncationTask.get();
+            } catch (InterruptedException | ExecutionException ex) {
+                Logger.getLogger(MatrixInversion.class.getName())
+                        .log(Level.SEVERE, null, ex);
             }
 
             // subtracted AX = (2-AX). this computation is local
@@ -281,27 +300,38 @@ public class MatrixInversion extends CompositeProtocol implements
             //tiRealIndex++;
             //tiTruncationIndex++;
             globalPid++;
-            
-            BigInteger XsNext = multiplicationModuleNext.call();
+            multiplicationTask = es.submit(multiplicationModuleNext);
+
+            BigInteger XsNext = null;
+            try {
+                XsNext = multiplicationTask.get();
+            } catch (InterruptedException | ExecutionException ex) {
+                Logger.getLogger(MatrixInversion.class.getName()).log(Level.SEVERE, null, ex);
+            }
 
             Truncation truncationModuleNext = new Truncation(XsNext,
                     tiTruncationPair.get(tiTruncationIndex),
                     pidMapper, senderQueue, 
                     new LinkedList<>(protocolIdQueue),
                     clientID, prime, globalPid, asymmetricBit, partyCount);
-            
+            Future<BigInteger> truncationTaskNext = es.submit(truncationModuleNext);
+
+            BigInteger truncatedX = null;
             try {
-                X = truncationModuleNext.call();
-            } catch (Exception ex) {
-                Logger.getLogger(MatrixInversion.class.getName()).log(Level.SEVERE, null, ex);
+                truncatedX = truncationTaskNext.get();
+            } catch (InterruptedException | ExecutionException ex) {
+                Logger.getLogger(MatrixInversion.class.getName())
+                        .log(Level.SEVERE, null, ex);
             }
 
             // TODO uncomment to not reuse the shares
             //tiTruncationIndex++;
             globalPid++;
-            
+            X = truncatedX;
+
         }
-        
+        es.shutdown();
+
         return X;
     }
 

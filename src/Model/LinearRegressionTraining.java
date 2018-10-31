@@ -14,7 +14,6 @@ import Utility.Constants;
 import Utility.FileIO;
 import Utility.Logging;
 import Utility.LocalMath;
-import Utility.ThreadPoolManager;
 import java.math.BigInteger;
 import java.util.LinkedList;
 import java.util.List;
@@ -54,14 +53,17 @@ public class LinearRegressionTraining extends Model {
      * @param asymmetricBit
      * @param partyCount
      * @param args 
+     * @param protocolIdQueue 
+     * @param protocolID 
      */
     public LinearRegressionTraining(List<TripleReal> realTriples,
             List<TruncationPair> tiTruncationPair,
             ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper, 
             BlockingQueue<Message> senderQueue,
-            int clientId, int asymmetricBit, int partyCount, String[] args) {
+            int clientId, int asymmetricBit, int partyCount, String[] args,
+            Queue<Integer> protocolIdQueue, int protocolID) {
 
-        super(pidMapper, senderQueue, clientId, asymmetricBit, partyCount);
+        super(pidMapper, senderQueue, clientId, asymmetricBit, partyCount, protocolIdQueue, protocolID);
         this.tiTruncationPair = tiTruncationPair;
         this.realTriples = realTriples;
         globalProtocolId = 0;
@@ -110,8 +112,6 @@ public class LinearRegressionTraining extends Model {
             Logger.getLogger(LinearRegressionTraining.class.getName())
                     .log(Level.SEVERE, null, ex);
         }
-        
-        ThreadPoolManager.shutDownThreadService();
         
         long stopTime = System.currentTimeMillis();
         long elapsedTime = stopTime - startTime;

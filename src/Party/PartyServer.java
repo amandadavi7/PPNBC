@@ -10,6 +10,8 @@ import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.concurrent.BlockingQueue;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -17,23 +19,29 @@ import java.util.concurrent.BlockingQueue;
  */
 public class PartyServer implements Runnable {
 
+    private static final Logger LOGGER = Logger.getLogger(PartyServer.class.getName());
+    
     Socket socket;
     BlockingQueue<Message> senderQueue;
     ObjectOutputStream oStream;
+    int clientId, asymmetricBit;
 
     /**
      * Constructor
-     * takes common sender queue, socket and output stream object
      * 
      * @param socket
      * @param queue
      * @param oStream
+     * @param clientId
+     * @param asymmetricBit
      */
     public PartyServer(Socket socket, BlockingQueue<Message> queue,
-            ObjectOutputStream oStream) {
+            ObjectOutputStream oStream, int clientId, int asymmetricBit) {
         this.socket = socket;
         this.senderQueue = queue;
         this.oStream = oStream;
+        this.clientId = clientId;
+        this.asymmetricBit = asymmetricBit;
     }
 
     /**
@@ -43,6 +51,14 @@ public class PartyServer implements Runnable {
     @Override
     public void run() {
 
+        try {
+            // first send the id for the BA to store
+            oStream.writeInt(clientId);
+            oStream.writeInt(asymmetricBit);
+        } catch (IOException ex) {
+            LOGGER.log(Level.SEVERE, "Error sending clientId", ex);
+            return;
+        }
         while (!(Thread.currentThread().isInterrupted())) {
             try {
                 Message msg = senderQueue.take();
@@ -57,10 +73,10 @@ public class PartyServer implements Runnable {
         try {
             oStream.close();
         } catch (IOException ex) {
-            
+            LOGGER.log(Level.SEVERE, "Error closing stream", ex);
         }
 
-        System.out.println("Server closed");
+        LOGGER.log(Level.INFO, "Party Server Closed for client:{0}", clientId);
 
     }
 }
