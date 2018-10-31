@@ -26,6 +26,8 @@ import java.util.logging.Logger;
  */
 public class LinearRegressionComputeRMSE {
 
+    private static final Logger LOGGER = Logger.getLogger(
+            LinearRegressionComputeRMSE.class.getName());
     static BigInteger Zq;
     static int noOfParties;
     
@@ -43,7 +45,8 @@ public class LinearRegressionComputeRMSE {
         }
         initalizeVariables(args);
 
-        computeRMSE();
+        double rmse = LocalMath.computeRMSE(predictedYList, actualYList);
+        LOGGER.log(Level.INFO, "rmse:{0}", rmse);
     }
 
     /**
@@ -109,29 +112,10 @@ public class LinearRegressionComputeRMSE {
 
             inputStream.close();
         } catch (FileNotFoundException e) {
-            Logger.getLogger(LinearRegressionComputeRMSE.class.getName())
-                    .log(Level.SEVERE, null, e);
+            LOGGER.log(Level.SEVERE, null, e);
         }
 
         return x;
-
-    }
-
-    /**
-     * Split input between n parties
-     */
-    private static void computeRMSE() {
-
-        double error_sum = 0.0;
-
-        int totalPredictions = predictedYList.size();
-        for (int i = 0; i < totalPredictions; i++) {
-            double err = predictedYList.get(i) - actualYList.get(i);
-            error_sum+= Math.pow(err, 2);
-        }
-
-        double rmse = error_sum/totalPredictions;
-        System.out.println("rmse:" + rmse);
 
     }
 

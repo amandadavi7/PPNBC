@@ -8,6 +8,8 @@ package Utility;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.RoundingMode;
+import java.util.List;
+import java.util.logging.Level;
 
 /**
  * Local computations
@@ -124,4 +126,23 @@ public class LocalMath {
         return xT;
     }
 
+    /**
+     * Compute RMSE for the predicted shares
+     * @param predictedYList
+     * @param actualYList
+     * @return 
+     */
+    public static double computeRMSE(List<Double> predictedYList,
+            List<Double> actualYList) {
+
+        double error_sum = 0.0;
+
+        int totalPredictions = predictedYList.size();
+        for (int i = 0; i < totalPredictions; i++) {
+            double err = predictedYList.get(i) - actualYList.get(i);
+            error_sum+= Math.pow(err, 2);
+        }
+
+        return error_sum/totalPredictions;
+    }
 }

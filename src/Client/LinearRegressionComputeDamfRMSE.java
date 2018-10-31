@@ -43,7 +43,8 @@ public class LinearRegressionComputeDamfRMSE {
         }
         initalizeVariables(args);
 
-        computeRMSE();
+        double rmse = LocalMath.computeRMSE(predictedYList, actualYList);
+        LOGGER.log(Level.INFO, "rmse:{0}", rmse);
     }
 
     /**
@@ -109,36 +110,14 @@ public class LinearRegressionComputeDamfRMSE {
         }
         
         List<BigInteger> maskedRList = FileIO.loadListFromFile(maskedR);
+        predictedYList = new ArrayList<>(actualYList.size());
         for (int i = 0; i < datasetSize; i++) {
             predictedYListBigInt.set(i, predictedYListBigInt.get(i).
                     subtract(maskedRList.get(i)).mod(Zq));
-        }
-
-        predictedYList = new ArrayList<>(actualYList.size());
-        for (int i = 0; i < datasetSize; i++) {
             predictedYList.add(LocalMath.ZqToReal(predictedYListBigInt.get(i), 
-                    Constants.DECIMAL_PRECISION, Zq).doubleValue() / noOfParties);           
-        }
-    }
-    
-    
-
-    /**
-     * Compute RMSE for the predicted shares
-     */
-    private static void computeRMSE() {
-
-        double error_sum = 0.0;
-
-        int totalPredictions = predictedYList.size();
-        for (int i = 0; i < totalPredictions; i++) {
-            double err = predictedYList.get(i) - actualYList.get(i);
-            error_sum+= Math.pow(err, 2);
+                    Constants.DECIMAL_PRECISION, Zq).doubleValue() / noOfParties); 
         }
 
-        double rmse = error_sum/totalPredictions;
-        LOGGER.log(Level.INFO, "rmse:{0}", rmse);
-        
     }
-
+    
 }
