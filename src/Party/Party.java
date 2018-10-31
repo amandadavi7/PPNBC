@@ -9,6 +9,7 @@ import Communication.Message;
 import Model.DecisionTreeScoring;
 import Model.KNNSortAndSwap;
 import Model.LinearRegressionEvaluation;
+import Model.LinearRegressionEvaluationDAMF;
 import Model.LinearRegressionTraining;
 import Utility.Connection;
 import Model.TestModel;
@@ -259,6 +260,15 @@ public class Party {
                 TEModel.runTreeEnsembles();
                 break;
 
+            case "LinearRegressionDAMFPrediction":
+                // LR Evaluation
+                LinearRegressionEvaluationDAMF regressionEvaluationModelDAMF
+                        = new LinearRegressionEvaluationDAMF(asymmetricBit, pidMapper, senderQueue,
+                                partyId, partyCount, args, protocolIdQueue, modelId);
+
+                regressionEvaluationModelDAMF.predictValues();
+                break;
+            
             default:
                 // test model
                 TestModel testModel = new TestModel(tiShares.binaryShares,

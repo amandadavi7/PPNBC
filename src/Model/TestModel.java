@@ -46,7 +46,6 @@ public class TestModel extends Model {
     BigInteger[][] xBigInt;
     List<List<Integer>> y;
     List<List<List<Integer>>> v;
-    double a, b;
 
     List<TruncationPair> tiTruncationPair;
     BigInteger prime;
@@ -395,13 +394,7 @@ public class TestModel extends Model {
                 case "output":
                     outputPath = value;
                     break;
-                case "a":
-                    a = Double.parseDouble(value);
-                    break;
-                case "b":
-                    b = Double.parseDouble(value);
-                    break;
-
+                
             }
 
         }

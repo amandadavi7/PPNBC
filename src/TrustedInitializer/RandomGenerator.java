@@ -94,11 +94,10 @@ public class RandomGenerator {
                 + 2 * Constants.DECIMAL_PRECISION + 1).nextProbablePrime();
 
         for (int i = 0; i < bigIntTriples; i++) {
-            BigInteger U = new BigInteger(Constants.INTEGER_PRECISION, rand);
-            BigInteger V = new BigInteger(Constants.INTEGER_PRECISION, rand);
-            BigInteger W = U.multiply(V);
-            W = W.mod(Zq);
-
+            BigInteger U = new BigInteger(Constants.INTEGER_PRECISION, rand).mod(Zq);
+            BigInteger V = new BigInteger(Constants.INTEGER_PRECISION, rand).mod(Zq);
+            BigInteger W = U.multiply(V).mod(Zq);
+            
             BigInteger usum = BigInteger.ZERO, vsum = BigInteger.ZERO, wsum = BigInteger.ZERO;
             for (int j = 0; j < clientCount - 1; j++) {
                 TripleReal t = new TripleReal();
