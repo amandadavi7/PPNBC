@@ -7,7 +7,7 @@ package Party;
 
 import Communication.Message;
 import Model.DecisionTreeScoring;
-import Model.KNN;
+import Model.KNNSortAndSwap;
 import Model.LinearRegressionEvaluation;
 import Model.LinearRegressionTraining;
 import Utility.Connection;
@@ -244,7 +244,7 @@ public class Party {
             case "KNNSortAndSwap":
                 // KNN
                 
-                KNN knnModel = new KNN(asymmetricBit, pidMapper, senderQueue, partyId, 
+                KNNSortAndSwap knnModel = new KNNSortAndSwap(asymmetricBit, pidMapper, senderQueue, partyId, 
                         tiShares.binaryShares, tiShares.decimalShares, partyCount,
                         args, protocolIdQueue, modelId);
         

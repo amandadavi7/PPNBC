@@ -38,7 +38,7 @@ import java.util.logging.Logger;
  *
  * @author keerthanaa
  */
-public class KNN extends Model {
+public class KNNSortAndSwap extends Model {
 
     List<List<Integer>> trainingShares;
     List<Integer> testShare;
@@ -48,8 +48,22 @@ public class KNN extends Model {
     int ccTICount, prime, bitLength, comparisonTICount, bitDTICount;
     List<TripleInteger> decimalTiShares;
     List<TripleByte> binaryTiShares;
+    Logger LOGGER;
 
-    public KNN(int asymmetricBit, ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper, 
+    /**
+     * 
+     * @param asymmetricBit
+     * @param pidMapper
+     * @param senderQueue
+     * @param clientId
+     * @param binaryTriples
+     * @param decimalTriples
+     * @param partyCount
+     * @param args
+     * @param protocolIdQueue
+     * @param protocolID 
+     */
+    public KNNSortAndSwap(int asymmetricBit, ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper, 
             BlockingQueue<Message> senderQueue, int clientId, List<TripleByte> binaryTriples,
             List<TripleInteger> decimalTriples, int partyCount, String[] args, Queue<Integer> protocolIdQueue, int protocolID) {
 
@@ -68,6 +82,8 @@ public class KNN extends Model {
         
         this.binaryTiShares = binaryTriples;
         this.decimalTiShares = decimalTriples;
+        
+        LOGGER = Logger.getLogger(KNNSortAndSwap.class.getName());
 
         this.decimalTiIndex = 0;
         this.binaryTiIndex = 0;
@@ -75,6 +91,10 @@ public class KNN extends Model {
         KjaccardDistances = new ArrayList<>();
     }
 
+    /**
+     * 
+     * @param args 
+     */
     private void initalizeModelVariables(String[] args) {
 
         for (String arg : args) {
@@ -107,10 +127,14 @@ public class KNN extends Model {
 
         }
 
-        //System.out.println("Test Print: training=" + trainingShares + " test=" +
-        //        testShare + " classL=" + classLabels + " K=" + K);
     }
 
+    /**
+     * Compare the JD(index) with the first K JDs
+     * 
+     * @param index
+     * @return 
+     */
     Integer[] getKComparisonResults(int index) {
         ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
         List<Future<Integer>> taskList = new ArrayList<>();
@@ -141,13 +165,19 @@ public class KNN extends Model {
             try {
                 comparisonResults[i] = ccTask.get();
             } catch (InterruptedException | ExecutionException ex) {
-                Logger.getLogger(KNN.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(KNNSortAndSwap.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
 
         return comparisonResults;
     }
 
+    /**
+     * Product of comparison outputs sequentially
+     * 
+     * @param comparisonResults
+     * @return 
+     */
     Integer[] comparisonMultiplicationResultsSequential(Integer[] comparisonResults) {
         Integer[] comparisonMultiplications = new Integer[K];
         comparisonMultiplications[0] = 0;
@@ -175,7 +205,7 @@ public class KNN extends Model {
 
         //get all the K comparison results
         Integer[] comparisonResults = getKComparisonResults(index);
-        //System.out.println("comparison results:" + Arrays.toString(comparisonResults));
+        
         //get all PI(Cj) from j = 0 to j = K-2 index
         Integer[] comparisonMultiplications = comparisonMultiplicationResultsSequential(comparisonResults);
 
@@ -203,18 +233,16 @@ public class KNN extends Model {
             try {
                 comparisonMultiplications[i] = multTask.get();
             } catch (InterruptedException | ExecutionException ex) {
-                Logger.getLogger(KNN.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(KNNSortAndSwap.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
 
-        //System.out.println("comparison multiplications:" + Arrays.toString(comparisonMultiplications));
-
-        //Do xor between comparison results....
+        //Do xor between comparison results to change the prime
         List<Integer> dummy = new ArrayList<>(Collections.nCopies(K, 0));
         OR_XOR xorComp = null, xorCompMults = null;
 
         // Convert comparisonResults and comparisonMultiplications from binary prime to decimal prime
-        if (clientId == 1) {
+        if (asymmetricBit == 1) {
             xorComp = new OR_XOR(Arrays.asList(comparisonResults), dummy, 
                     decimalTiShares.subList(decimalTiIndex, decimalTiIndex + K),
                     asymmetricBit, 2, pidMapper, commonSender, 
@@ -227,7 +255,7 @@ public class KNN extends Model {
                     asymmetricBit, 2, pidMapper, commonSender,
                     new LinkedList<>(protocolIdQueue), clientId, prime, 
                     pid, partyCount);
-        } else if (clientId == 2) {
+        } else {
             xorComp = new OR_XOR(dummy, Arrays.asList(comparisonResults), 
                     decimalTiShares.subList(decimalTiIndex, decimalTiIndex + K),
                     asymmetricBit, 2, pidMapper, commonSender, 
@@ -250,11 +278,8 @@ public class KNN extends Model {
             comparisonResults = xorTask1.get();
             comparisonMultiplications = xorTask2.get();
         } catch (InterruptedException | ExecutionException ex) {
-            Logger.getLogger(KNN.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(KNNSortAndSwap.class.getName()).log(Level.SEVERE, null, ex);
         }
-
-        //System.out.println("comparison results:" + Arrays.toString(comparisonResults));
-        //System.out.println("comparison mults:" + Arrays.toString(comparisonMultiplications));
 
         List<Future<Integer[]>> swapTaskList = new ArrayList<>();
 
@@ -290,13 +315,16 @@ public class KNN extends Model {
                     KjaccardDistances.get(i).set(j, results[j]);
                 }
             } catch (InterruptedException | ExecutionException ex) {
-                Logger.getLogger(KNN.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(KNNSortAndSwap.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
 
-        //System.out.println("KJD:" + KjaccardDistances);
     }
 
+    /**
+     * 
+     * @return 
+     */
     int computeMajorityClassLabel() {
         int classLabelSum = 0;
         int predictedClassLabel = -1;
@@ -332,37 +360,39 @@ public class KNN extends Model {
         Future<List<Integer>> bitTaskZero = es.submit(bitDModuleZero);
 
         List<Integer> numOfOnePredictions = null, numOfZeroPredictions = null;
-
+        es.shutdown();
         try {
             numOfOnePredictions = bitTaskOne.get();
             numOfZeroPredictions = bitTaskZero.get();
         } catch (InterruptedException | ExecutionException ex) {
-            Logger.getLogger(KNN.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(KNNSortAndSwap.class.getName()).log(Level.SEVERE, null, ex);
         }
-
-        int comparisonTiCount = bitLength * 2 + (bitLength * (bitLength - 1)) / 2;
+        
         Comparison compClassLabels = new Comparison(numOfOnePredictions, numOfZeroPredictions, 
-                binaryTiShares.subList(binaryTiIndex, binaryTiIndex + comparisonTiCount),
+                binaryTiShares.subList(binaryTiIndex, binaryTiIndex + comparisonTICount),
                 asymmetricBit, pidMapper, commonSender,
                 new LinkedList<>(protocolIdQueue), clientId, Constants.binaryPrime, 
                 pid, partyCount);
 
-        Future<Integer> resultTask = es.submit(compClassLabels);
-        pid++;
-        //binaryTiIndex += comparisonTiCount;
-        es.shutdown();
         try {
-            predictedClassLabel = resultTask.get();
-        } catch (InterruptedException | ExecutionException ex) {
-            Logger.getLogger(KNN.class.getName()).log(Level.SEVERE, null, ex);
+            predictedClassLabel = compClassLabels.call();
+        } catch (Exception ex) {
+            Logger.getLogger(KNNSortAndSwap.class.getName()).log(Level.SEVERE, null, ex);
         }
-
+        pid++;
+        //binaryTiIndex += comparisonTICount;
+        
         return predictedClassLabel;
     }
 
+    
+    /**
+     * 
+     * @return 
+     */
     public int KNN_Model() {
         //Jaccard Computation for all the training shares
-        ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
+        
         long startTime = System.currentTimeMillis();
         
         int decTICount = attrLength * 2 * trainingSharesCount;
@@ -371,62 +401,45 @@ public class KNN extends Model {
                 clientId, prime, pid, 
                 new LinkedList<>(protocolIdQueue), partyCount);
 
-        Future<List<List<Integer>>> jdTask = es.submit(jdModule);
+        jaccardDistances = jdModule.call();
         pid++;
         //decimalTiIndex += decTICount;
-        es.shutdown();
-        try {
-            jaccardDistances = jdTask.get();
-        } catch (InterruptedException | ExecutionException ex) {
-            Logger.getLogger(KNN.class.getName()).log(Level.SEVERE, null, ex);
-        }
 
         //add class labels to JD data structure (contains OR, XOR and Class Labels)
         for (int i = 0; i < trainingShares.size(); i++) {
             jaccardDistances.get(i).add(classLabels.get(i));
         }
 
-        //System.out.println("jaccarddistances:" + jaccardDistances);
-
         for (int i = 0; i < K; i++) {
             KjaccardDistances.add(new ArrayList<>(jaccardDistances.get(i)));
         }
 
         //Sorting the first K numbers
-        System.out.println("KjaccardDistances before:" + KjaccardDistances);
-        es = Executors.newSingleThreadExecutor();
+        LOGGER.fine("KjaccardDistances before:" + KjaccardDistances);
+        
         BatcherSortKNN sortModule = new BatcherSortKNN(KjaccardDistances,
                 asymmetricBit, decimalTiShares, binaryTiShares,
                 pidMapper, commonSender, clientId, prime, pid,
                 new LinkedList<>(protocolIdQueue), partyCount, K, bitLength);
-        Future<List<List<Integer>>> sortTask = es.submit(sortModule);
-        es.shutdown();
-        
-        try {
-            KjaccardDistances = sortTask.get();
-        } catch (InterruptedException | ExecutionException ex) {
-            Logger.getLogger(KNN.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        List<List<Integer>> sortTask = sortModule.call();
 
-        //System.out.println("Jaccard Distances:" + jaccardDistances);
-        System.out.println("KjaccardDistances:" + KjaccardDistances);
+        LOGGER.fine("KjaccardDistances:" + KjaccardDistances);
 
         //Iterator circuit for rest of the training examples
         for (int i = K; i < trainingSharesCount; i++) {
-            System.out.println("calling for training example:" + i);
+            LOGGER.info("calling for training example:" + i);
             swapTrainingShares(i);
         }
 
-        //System.out.println("KjaccardDistances after iterating all the training examples:"
-        //        + KjaccardDistances);
+        LOGGER.fine("KjaccardDistances after iterating all the training examples:" + KjaccardDistances);
 
         int predictedLabel = computeMajorityClassLabel();
 
         long stopTime = System.currentTimeMillis();
         long elapsedTime = stopTime - startTime;
 
-        System.out.println("Label:" + predictedLabel);
-        System.out.println("Time taken:" + elapsedTime + "ms");
+        LOGGER.info("Label:" + predictedLabel);
+        LOGGER.info("Time taken:" + elapsedTime + "ms");
         return predictedLabel;
     }
 

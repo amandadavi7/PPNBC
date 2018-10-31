@@ -6,7 +6,7 @@
 package Protocol.Utility;
 
 import Communication.Message;
-import Model.KNN;
+import Model.KNNSortAndSwap;
 import Protocol.BitDecomposition;
 import Protocol.Comparison;
 import Protocol.CompositeProtocol;
@@ -114,7 +114,7 @@ public class CrossMultiplyCompare extends CompositeProtocol implements Callable<
             first = firstCrossMultiplication.get();
             second = secondCrossMultiplication.get();
         } catch (InterruptedException | ExecutionException ex) {
-            Logger.getLogger(KNN.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(KNNSortAndSwap.class.getName()).log(Level.SEVERE, null, ex);
         }
         
         //System.out.println("cross multiplication results: "+first+" and "+second);
@@ -145,7 +145,7 @@ public class CrossMultiplyCompare extends CompositeProtocol implements Callable<
             firstNumber = future1.get();
             secondNumber = future2.get();            
         } catch (InterruptedException | ExecutionException ex) {
-            Logger.getLogger(KNN.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(KNNSortAndSwap.class.getName()).log(Level.SEVERE, null, ex);
         }
         
         //System.out.println("bitD results: " + firstNumber + " and " + secondNumber);
@@ -166,7 +166,7 @@ public class CrossMultiplyCompare extends CompositeProtocol implements Callable<
         try {
             result = comparisonTask.get();
         } catch (InterruptedException | ExecutionException ex) {
-            Logger.getLogger(KNN.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(KNNSortAndSwap.class.getName()).log(Level.SEVERE, null, ex);
         }
         
         return result;

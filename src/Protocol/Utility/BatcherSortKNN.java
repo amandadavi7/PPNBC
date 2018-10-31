@@ -6,7 +6,7 @@
 package Protocol.Utility;
 
 import Communication.Message;
-import Model.KNN;
+import Model.KNNSortAndSwap;
 import Protocol.CompositeProtocol;
 import Protocol.OR_XOR;
 import TrustedInitializer.TripleByte;
@@ -120,7 +120,7 @@ public class BatcherSortKNN extends CompositeProtocol implements Callable<List<L
             try {
                 comparisonresult = resultTask.get();
             } catch (InterruptedException | ExecutionException ex) {
-                Logger.getLogger(KNN.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(KNNSortAndSwap.class.getName()).log(Level.SEVERE, null, ex);
             }
 
             //System.out.println("comparing indices " + indices[startIndex] + " " + indices[endIndex] + ", result=" + comparisonresult);
@@ -196,7 +196,7 @@ public class BatcherSortKNN extends CompositeProtocol implements Callable<List<L
             try {
                 comparisonResults[i] = resultTask.get();
             } catch (InterruptedException | ExecutionException ex) {
-                Logger.getLogger(KNN.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(KNNSortAndSwap.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
 
@@ -239,7 +239,7 @@ public class BatcherSortKNN extends CompositeProtocol implements Callable<List<L
         try {
             c = xorTask.get();
         } catch (InterruptedException | ExecutionException ex) {
-            Logger.getLogger(KNN.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(KNNSortAndSwap.class.getName()).log(Level.SEVERE, null, ex);
         }
 
         List<Integer> C = new ArrayList<>(Collections.nCopies(3, c[0]));
@@ -298,7 +298,7 @@ public class BatcherSortKNN extends CompositeProtocol implements Callable<List<L
             right1 = rightTask1.get();
             right2 = rightTask2.get();
         } catch (InterruptedException | ExecutionException ex) {
-            Logger.getLogger(KNN.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(KNNSortAndSwap.class.getName()).log(Level.SEVERE, null, ex);
         }
 
         for (int i = 0; i < 3; i++) {
@@ -312,7 +312,7 @@ public class BatcherSortKNN extends CompositeProtocol implements Callable<List<L
     }
     
     @Override
-    public List<List<Integer>> call() throws Exception {
+    public List<List<Integer>> call() {
         Sort(indices, 1);
         
         return KJaccardDistances;

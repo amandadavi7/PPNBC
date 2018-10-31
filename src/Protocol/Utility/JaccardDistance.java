@@ -65,7 +65,7 @@ public class JaccardDistance extends CompositeProtocol implements Callable<List<
     }
 
     @Override
-    public List<List<Integer>> call() throws Exception {
+    public List<List<Integer>> call() {
 
         List<List<Integer>> result = new ArrayList<>();
         int startpid = 0;
