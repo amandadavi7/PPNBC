@@ -203,6 +203,7 @@ public class Party {
      * shut down the party sockets
      */
     private static void checkAndTearDownSocket() {
+        // wait for the party to send all messages before closing the socket.
         while(!senderQueue.isEmpty()){
         }
         partySocketEs.shutdownNow();
