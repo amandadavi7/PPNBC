@@ -32,14 +32,15 @@ import java.util.logging.Logger;
  */
 public class LinearRegressionTraining extends Model {
 
+    private static final Logger LOGGER = Logger.getLogger(LinearRegressionTraining.class.getName());
     static BigInteger[][] x;
     static BigInteger[][] xT;
     BigInteger[][] y;
 
-    List<TruncationPair> tiTruncationPair;
-    List<TripleReal> realTriples;
+    static List<TruncationPair> tiTruncationPair;
+    static List<TripleReal> realTriples;
 
-    BigInteger prime;
+    static BigInteger prime;
     String outputPath;
     int globalProtocolId;
     
@@ -64,8 +65,8 @@ public class LinearRegressionTraining extends Model {
             Queue<Integer> protocolIdQueue, int protocolID) {
 
         super(pidMapper, senderQueue, clientId, asymmetricBit, partyCount, protocolIdQueue, protocolID);
-        this.tiTruncationPair = tiTruncationPair;
-        this.realTriples = realTriples;
+        LinearRegressionTraining.tiTruncationPair = tiTruncationPair;
+        LinearRegressionTraining.realTriples = realTriples;
         globalProtocolId = 0;
         prime = BigInteger.valueOf(2).pow(Constants.INTEGER_PRECISION
                 + 2 * Constants.DECIMAL_PRECISION + 1).nextProbablePrime();  //Zq must be a prime field
@@ -96,8 +97,7 @@ public class LinearRegressionTraining extends Model {
         try {
             gamma1Inv = matrixInversion.call();
         } catch (Exception ex) {
-            Logger.getLogger(LinearRegressionTraining.class.getName())
-                    .log(Level.SEVERE, null, ex);
+            LOGGER.log(Level.SEVERE, null, ex);
         }
         
         MatrixMultiplication matrixMultiplication = new MatrixMultiplication(gamma1Inv,
@@ -109,16 +109,15 @@ public class LinearRegressionTraining extends Model {
         try {
             beta = matrixMultiplication.call();
         } catch (Exception ex) {
-            Logger.getLogger(LinearRegressionTraining.class.getName())
-                    .log(Level.SEVERE, null, ex);
+            LOGGER.log(Level.SEVERE, null, ex);
         }
         
         long stopTime = System.currentTimeMillis();
         long elapsedTime = stopTime - startTime;
         //TODO: push time to a csv file
-        System.out.println("Avg time duration:" + elapsedTime + " for partyId:"
-                + clientId);
-
+        LOGGER.log(Level.INFO, "Avg time duration:{0} for partyId:{1}", 
+                new Object[]{elapsedTime, clientId});
+        
         FileIO.writeToCSV(beta, outputPath, "beta", clientId);
         
     }

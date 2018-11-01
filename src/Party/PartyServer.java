@@ -55,6 +55,7 @@ public class PartyServer implements Runnable {
             // first send the id for the BA to store
             oStream.writeInt(clientId);
             oStream.writeInt(asymmetricBit);
+            oStream.flush();
         } catch (IOException ex) {
             LOGGER.log(Level.SEVERE, "Error sending clientId", ex);
             return;

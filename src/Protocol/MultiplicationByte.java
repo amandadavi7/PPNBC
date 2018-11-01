@@ -22,7 +22,7 @@ import java.util.logging.Logger;
  *
  * @author anisha
  */
-public class MultiplicationByte extends Protocol implements Callable {
+public class MultiplicationByte extends Protocol implements Callable<Integer> {
 
     int x;
     int y;
@@ -70,7 +70,7 @@ public class MultiplicationByte extends Protocol implements Callable {
      * @return shares of product
      */
     @Override
-    public Object call() {
+    public Integer call() {
         initProtocol();
         Message receivedMessage = null;
         List<Integer> diffList = null;

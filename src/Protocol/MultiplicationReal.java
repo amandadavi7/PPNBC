@@ -25,6 +25,8 @@ import java.util.logging.Logger;
  */
 public class MultiplicationReal extends Protocol implements Callable<BigInteger> {
 
+    private static final Logger LOGGER = Logger.getLogger(MultiplicationReal.class.getName());
+    
     BigInteger x;
     BigInteger y;
     TripleReal tiRealShares;
@@ -77,19 +79,22 @@ public class MultiplicationReal extends Protocol implements Callable<BigInteger>
             try {
                 Message receivedMessage = pidMapper.get(protocolIdQueue).take();
                 List<BigInteger> diffList = (List<BigInteger>) receivedMessage.getValue();
-                d = d.add(diffList.get(0));
-                e = e.add(diffList.get(1));
+                d = d.add(diffList.get(0)).mod(prime);
+                e = e.add(diffList.get(1)).mod(prime);
             } catch (InterruptedException ex) {
                 ex.printStackTrace();
             }
         }
         
-        d = x.subtract(tiRealShares.u).add(d).mod(prime);
-        e = y.subtract(tiRealShares.v).add(e).mod(prime);
+        d = x.subtract(tiRealShares.u).mod(prime).add(d).mod(prime);
+        e = y.subtract(tiRealShares.v).mod(prime).add(e).mod(prime);
+        
         BigInteger product = tiRealShares.w
-                .add(d.multiply(tiRealShares.v))
-                .add(e.multiply(tiRealShares.u))
-                .add(d.multiply(e).multiply(BigInteger.valueOf(asymmetricBit)))
+                .add(d.multiply(tiRealShares.v).mod(prime))
+                .mod(prime)
+                .add(e.multiply(tiRealShares.u).mod(prime))
+                .mod(prime)
+                .add(d.multiply(e).mod(prime).multiply(BigInteger.valueOf(asymmetricBit)).mod(prime))
                 .mod(prime);
 
         return product;
@@ -109,8 +114,7 @@ public class MultiplicationReal extends Protocol implements Callable<BigInteger>
         try {
             senderQueue.put(senderMessage);
         } catch (InterruptedException ex) {
-            ex.printStackTrace();
-            Logger.getLogger(MultiplicationReal.class.getName()).log(Level.SEVERE, null, ex);
+            LOGGER.log(Level.SEVERE, null, ex);
         }
 
     }

@@ -26,17 +26,18 @@ import java.util.logging.Logger;
 
 /**
  * Dot product of two matrices x and y, shared element wise
- * 
+ *
  * uses xShares.size() tiShares
- * 
+ *
  * @author anisha
  */
 public class DotProductReal extends DotProduct implements Callable<BigInteger> {
 
+    private static final Logger LOGGER = Logger.getLogger(DotProductReal.class.getName());
     List<BigInteger> xShares, yShares;
     BigInteger prime;
     List<TripleReal> tiShares;
-    
+
     /**
      * Constructor for DotProduct on Real Numbers
      *
@@ -53,8 +54,8 @@ public class DotProductReal extends DotProduct implements Callable<BigInteger> {
      * @param partyCount
      */
     public DotProductReal(List<BigInteger> xShares, List<BigInteger> yShares,
-            List<TripleReal> tiShares, 
-            ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper, 
+            List<TripleReal> tiShares,
+            ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper,
             BlockingQueue<Message> senderqueue,
             Queue<Integer> protocolIdQueue,
             int clientID, BigInteger prime,
@@ -81,7 +82,7 @@ public class DotProductReal extends DotProduct implements Callable<BigInteger> {
 
         BigInteger dotProduct = BigInteger.ZERO;
         int vectorLength = xShares.size();
-        
+
         ExecutorService mults = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
         ExecutorCompletionService<BigInteger[]> multCompletionService = new ExecutorCompletionService<>(mults);
 
@@ -100,7 +101,7 @@ public class DotProductReal extends DotProduct implements Callable<BigInteger> {
             i = toIndex;
 
         } while (i < vectorLength);
-
+        
         mults.shutdown();
 
         for (i = 0; i < startpid; i++) {
@@ -108,14 +109,13 @@ public class DotProductReal extends DotProduct implements Callable<BigInteger> {
                 Future<BigInteger[]> prod = multCompletionService.take();
                 BigInteger[] products = prod.get();
                 for (BigInteger j : products) {
-                    dotProduct = dotProduct.add(j);
+                    dotProduct = dotProduct.add(j).mod(prime);
                 }
             } catch (InterruptedException | ExecutionException ex) {
-                Logger.getLogger(DotProductReal.class.getName()).log(Level.SEVERE, null, ex);
+                LOGGER.log(Level.SEVERE, null, ex);
             }
         }
 
-        dotProduct = dotProduct.mod(prime);
         return dotProduct;
 
     }
