@@ -35,7 +35,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- *
+ * KNN Sort and Swap - Sort K elements and iteratively swap to maintain the top K
  * @author keerthanaa
  */
 public class KNNSortAndSwap extends Model {
@@ -48,10 +48,10 @@ public class KNNSortAndSwap extends Model {
     int ccTICount, prime, bitLength, comparisonTICount, bitDTICount;
     List<TripleInteger> decimalTiShares;
     List<TripleByte> binaryTiShares;
-    Logger LOGGER;
+    private static final Logger LOGGER = Logger.getLogger(KNNSortAndSwap.class.getName());
 
     /**
-     * 
+     * Constructor
      * @param asymmetricBit
      * @param pidMapper
      * @param senderQueue
@@ -65,7 +65,8 @@ public class KNNSortAndSwap extends Model {
      */
     public KNNSortAndSwap(int asymmetricBit, ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper, 
             BlockingQueue<Message> senderQueue, int clientId, List<TripleByte> binaryTriples,
-            List<TripleInteger> decimalTriples, int partyCount, String[] args, Queue<Integer> protocolIdQueue, int protocolID) {
+            List<TripleInteger> decimalTriples, int partyCount, String[] args, 
+            Queue<Integer> protocolIdQueue, int protocolID) {
 
         super(pidMapper, senderQueue, clientId, asymmetricBit, partyCount, protocolIdQueue, protocolID);
         pid = 0;
@@ -82,8 +83,6 @@ public class KNNSortAndSwap extends Model {
         
         this.binaryTiShares = binaryTriples;
         this.decimalTiShares = decimalTriples;
-        
-        LOGGER = Logger.getLogger(KNNSortAndSwap.class.getName());
 
         this.decimalTiIndex = 0;
         this.binaryTiIndex = 0;
@@ -92,7 +91,7 @@ public class KNNSortAndSwap extends Model {
     }
 
     /**
-     * 
+     * Initialize model variables
      * @param args 
      */
     private void initalizeModelVariables(String[] args) {
@@ -209,6 +208,7 @@ public class KNNSortAndSwap extends Model {
                 Constants.binaryPrime);
         
         ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
+        
         List<Future<Integer>> taskList = new ArrayList<>();
         
         for (int i = 1; i < K; i++) {
@@ -306,7 +306,7 @@ public class KNNSortAndSwap extends Model {
     }
 
     /**
-     * 
+     * Compute the majority class label and return
      * @return 
      */
     int computeMajorityClassLabel() throws InterruptedException, ExecutionException {
@@ -359,17 +359,15 @@ public class KNNSortAndSwap extends Model {
         
         return predictedClassLabel;
     }
-
     
     /**
-     * 
+     * run the KNN model
      * @return 
      * @throws java.lang.InterruptedException 
      * @throws java.util.concurrent.ExecutionException 
      */
-    public int KNN_Model() throws InterruptedException, ExecutionException {
+    public int runModel() throws InterruptedException, ExecutionException {
         //Jaccard Computation for all the training shares
-        
         long startTime = System.currentTimeMillis();
         
         int decTICount = attrLength * 2 * trainingSharesCount;
@@ -398,7 +396,8 @@ public class KNNSortAndSwap extends Model {
                 asymmetricBit, decimalTiShares, binaryTiShares,
                 pidMapper, commonSender, clientId, prime, pid,
                 new LinkedList<>(protocolIdQueue), partyCount, K, bitLength);
-        List<List<Integer>> sortTask = sortModule.call();
+
+        KjaccardDistances = sortModule.call();
 
         LOGGER.log(Level.FINE, "KjaccardDistances:{0}", KjaccardDistances);
 

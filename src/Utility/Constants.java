@@ -64,7 +64,6 @@ public class Constants {
         DECIMAL_PRECISION = Integer.parseInt(prop.getProperty("decimal.precision"));
         INTEGER_PRECISION = Integer.parseInt(prop.getProperty("integer.precision"));
         NEWTON_RAPHSON_ROUNDS = Integer.parseInt(prop.getProperty("newton.raphson.rounds"));
-        
         ROUND_OFF_BIT = BigInteger.valueOf(2).pow(INTEGER_PRECISION
                 + 2 * DECIMAL_PRECISION - 1);
         

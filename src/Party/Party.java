@@ -8,6 +8,7 @@ package Party;
 import Communication.Message;
 import Model.DecisionTreeScoring;
 import Model.KNNSortAndSwap;
+import Model.KNNThresholdKSelect;
 import Model.LinearRegressionEvaluation;
 import Model.LinearRegressionEvaluationDAMF;
 import Model.LinearRegressionTraining;
@@ -249,13 +250,22 @@ public class Party {
             case "KNNSortAndSwap":
                 // KNN
                 
-                KNNSortAndSwap knnModel = new KNNSortAndSwap(asymmetricBit, pidMapper, senderQueue, partyId, 
+                KNNSortAndSwap knnModel = new KNNSortAndSwap(asymmetricBit, pidMapper,
+                        senderQueue, partyId, tiShares.binaryShares, 
+                        tiShares.decimalShares, partyCount, args, protocolIdQueue, modelId);
+        
+                knnModel.runModel();
+                break;
+                
+            case "KNNThresholdKSelect":
+                // KNN threshold K Select (binary search approach)
+                KNNThresholdKSelect knnThresholdSelectModel = new KNNThresholdKSelect(
+                        asymmetricBit, pidMapper, senderQueue, partyId,
                         tiShares.binaryShares, tiShares.decimalShares, partyCount,
                         args, protocolIdQueue, modelId);
-        
-                knnModel.KNN_Model();
+                knnThresholdSelectModel.runModel();
                 break;
-            
+                
             case "TreeEnsemble":
                 //Random Forest
                 TreeEnsemble TEModel = new TreeEnsemble(asymmetricBit, pidMapper,

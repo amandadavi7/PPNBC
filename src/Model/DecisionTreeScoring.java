@@ -340,6 +340,13 @@ public class DecisionTreeScoring extends Model {
         LOGGER.fine("threshold comparison results:" + Arrays.toString(comparisonOutputs));
     }
 
+    
+    /**
+     * convert decimal number to bit shares of length size
+     * @param decimal
+     * @param size
+     * @return 
+     */
     Integer[] convertToBits(int decimal, int size) {
         Integer[] binaryNum = new Integer[size];
         int i = 0;
