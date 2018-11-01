@@ -250,7 +250,7 @@ public class Party {
                         senderQueue, partyId, tiShares.binaryShares, 
                         tiShares.decimalShares, partyCount, args, protocolIdQueue, modelId);
         
-                knnModel.KNN_Model();
+                knnModel.runModel();
                 break;
                 
             case "KNNThresholdKSelect":
@@ -259,7 +259,7 @@ public class Party {
                         asymmetricBit, pidMapper, senderQueue, partyId,
                         tiShares.binaryShares, tiShares.decimalShares, partyCount,
                         args, protocolIdQueue, modelId);
-                knnThresholdSelectModel.KNN_Model();
+                knnThresholdSelectModel.runModel();
                 break;
                 
             case "TreeEnsemble":

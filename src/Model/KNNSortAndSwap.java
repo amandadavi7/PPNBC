@@ -388,7 +388,7 @@ public class KNNSortAndSwap extends Model {
      * 
      * @return 
      */
-    public int KNN_Model() {
+    public int runModel() {
         //Jaccard Computation for all the training shares
         long startTime = System.currentTimeMillis();
         

@@ -91,12 +91,6 @@ public class KNNThresholdKSelect extends Model {
         this.binaryTiIndex = 0;
         this.comparisonResults = null;
         
-        //Bit Shares of K - used in multiple places
-        BitDecomposition bitD = new BitDecomposition(asymmetricBit*K, binaryTiShares,
-                    asymmetricBit, bitLength, pidMapper, commonSender,
-                    new LinkedList<>(protocolIdQueue), clientId, Constants.binaryPrime, pid, partyCount);
-        pid++;
-        KBitShares = bitD.call();
     }
 
     /**
@@ -523,7 +517,15 @@ public class KNNThresholdKSelect extends Model {
      * 
      * @return 
      */
-    public int KNN_Model() {
+    public int runModel() {
+        
+        //Bit Shares of K - used in multiple places
+        BitDecomposition bitD = new BitDecomposition(asymmetricBit*K, binaryTiShares,
+                    asymmetricBit, bitLength, pidMapper, commonSender,
+                    new LinkedList<>(protocolIdQueue), clientId, Constants.binaryPrime, pid, partyCount);
+        pid++;
+        KBitShares = bitD.call();
+        
         //Jaccard Computation for all the training shares
         long startTime = System.currentTimeMillis();
 
