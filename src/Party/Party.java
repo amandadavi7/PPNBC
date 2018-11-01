@@ -141,7 +141,7 @@ public class Party {
             Logger.getLogger(Party.class.getName()).log(Level.SEVERE, null, ex);
         } 
 
-        tearDownSocket();
+        checkAndTearDownSocket();
     }
 
     /**
@@ -206,7 +206,10 @@ public class Party {
     /**
      * shut down the party sockets
      */
-    private static void tearDownSocket() {
+    private static void checkAndTearDownSocket() {
+        // wait for the party to send all messages before closing the socket.
+        while(!senderQueue.isEmpty()){
+        }
         partySocketEs.shutdownNow();
     }
 
