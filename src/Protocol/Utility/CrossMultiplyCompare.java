@@ -156,7 +156,7 @@ public class CrossMultiplyCompare extends CompositeProtocol implements Callable<
         
         Future<Integer> comparisonTask = es.submit(comparisonModule);
         pid++; 
-        binaryTiIndex += comparisonTICount;
+        //binaryTiIndex += comparisonTICount;
         es.shutdown();
         int result = 0;
         try {

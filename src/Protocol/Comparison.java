@@ -99,7 +99,7 @@ public class Comparison extends CompositeProtocol implements Callable<Integer> {
      * @throws Exception
      */
     @Override
-    public Integer call() throws Exception {
+    public Integer call() {
         int w = -1;
         computeEShares();
 
@@ -129,8 +129,13 @@ public class Comparison extends CompositeProtocol implements Callable<Integer> {
         threadService.shutdown();
 
         // Compute c and w sequentially when both threads end
-        boolean threadsCompleted = threadService.awaitTermination(
-                Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+        boolean threadsCompleted = false;
+        try {
+            threadsCompleted = threadService.awaitTermination(
+                    Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+        } catch (InterruptedException ex) {
+            Logger.getLogger(Comparison.class.getName()).log(Level.SEVERE, null, ex);
+        }
 
         if (threadsCompleted) {
             computeCShares();
