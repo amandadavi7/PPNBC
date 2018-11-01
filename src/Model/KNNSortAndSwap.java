@@ -35,7 +35,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- *
+ * KNN Sort and Swap - Sort K elements and iteratively swap to maintain the top K
  * @author keerthanaa
  */
 public class KNNSortAndSwap extends Model {
@@ -51,7 +51,7 @@ public class KNNSortAndSwap extends Model {
     private static final Logger LOGGER = Logger.getLogger(KNNSortAndSwap.class.getName());
 
     /**
-     * 
+     * Constructor
      * @param asymmetricBit
      * @param pidMapper
      * @param senderQueue
@@ -91,7 +91,7 @@ public class KNNSortAndSwap extends Model {
     }
 
     /**
-     * 
+     * Initialize model variables
      * @param args 
      */
     private void initalizeModelVariables(String[] args) {
@@ -322,7 +322,7 @@ public class KNNSortAndSwap extends Model {
     }
 
     /**
-     * 
+     * Compute the majority class label and return
      * @return 
      */
     int computeMajorityClassLabel() {
@@ -385,7 +385,7 @@ public class KNNSortAndSwap extends Model {
     }
     
     /**
-     * 
+     * run the KNN model
      * @return 
      */
     public int runModel() {

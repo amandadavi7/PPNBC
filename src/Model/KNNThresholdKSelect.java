@@ -35,7 +35,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- *
+ * KNN Threshold K Select - binary search based KNN implementation
  * @author keerthanaa
  */
 public class KNNThresholdKSelect extends Model {
@@ -53,7 +53,7 @@ public class KNNThresholdKSelect extends Model {
     private static final Logger LOGGER = Logger.getLogger(KNNThresholdKSelect.class.getName());
 
     /**
-     * 
+     * Constructor
      * @param asymmetricBit
      * @param pidMapper
      * @param senderQueue
@@ -94,7 +94,7 @@ public class KNNThresholdKSelect extends Model {
     }
 
     /**
-     * 
+     * Initialize model variables
      * @param args 
      */
     private void initalizeModelVariables(String[] args) {
@@ -355,7 +355,7 @@ public class KNNThresholdKSelect extends Model {
 
     
     /**
-     * 
+     * Compute the majority class label and return
      * @param thresholds
      * @return 
      */
