@@ -6,7 +6,6 @@
 package Protocol.Utility;
 
 import Communication.Message;
-import Model.TestModel;
 import Protocol.CompositeProtocol;
 import TrustedInitializer.TripleByte;
 import Utility.Constants;
@@ -23,8 +22,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * Polynomial circuit for scoring Decision Trees
@@ -59,11 +56,11 @@ public class PolynomialComputing extends CompositeProtocol implements Callable<I
     public PolynomialComputing(Integer[] y_j, Integer[] jBinary, int alpha, int depth,
             int[] zOutputs, List<TripleByte> tiShares,
             Queue<Integer> protocolIdQueue,
-            ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper, 
-            BlockingQueue<Message> senderQueue, 
+            ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper,
+            BlockingQueue<Message> senderQueue,
             int protocolID, int clientId, int asymmetricBit, int partyCount) {
 
-        super(protocolID, pidMapper, senderQueue, protocolIdQueue, clientId, 
+        super(protocolID, pidMapper, senderQueue, protocolIdQueue, clientId,
                 asymmetricBit, partyCount);
 
         this.level = depth;
@@ -77,10 +74,11 @@ public class PolynomialComputing extends CompositeProtocol implements Callable<I
 
     /**
      *
-     * @return @throws Exception
+     * @return @throws java.lang.InterruptedException
+     * @throws java.util.concurrent.ExecutionException
      */
     @Override
-    public Integer[] call() throws Exception {
+    public Integer[] call() throws InterruptedException, ExecutionException {
 
         int pid = 0;
 
@@ -95,10 +93,10 @@ public class PolynomialComputing extends CompositeProtocol implements Callable<I
             int i = 0;
             do {
                 int toIndex = Math.min(i + Constants.BATCH_SIZE, alpha);
-                
+
                 BatchMultiplicationByte mults = new BatchMultiplicationByte(
                         yj.subList(i, toIndex), compResultNode, tiShares.subList(i, toIndex),
-                        pidMapper, senderQueue, 
+                        pidMapper, senderQueue,
                         new LinkedList<>(protocolIdQueue), clientID,
                         Constants.binaryPrime, pid, asymmetricBit, protocolId,
                         partyCount);
@@ -115,22 +113,16 @@ public class PolynomialComputing extends CompositeProtocol implements Callable<I
             int globalIndex = 0;
             for (i = 0; i < batches; i++) {
                 Future<Integer[]> taskResponse = taskList.get(i);
-                try {
-                    Integer[] arr = taskResponse.get();
-                    for (int l = 0; l < arr.length; l++) {
-                        y_j[globalIndex] = arr[l];
-                        globalIndex++;
-                    }
-                } catch (InterruptedException | ExecutionException ex) {
-                    Logger.getLogger(PolynomialComputing.class.getName()).log(Level.SEVERE, null, ex);
+                Integer[] arr = taskResponse.get();
+                for (int l = 0; l < arr.length; l++) {
+                    y_j[globalIndex] = arr[l];
+                    globalIndex++;
                 }
             }
 
             nodeIndex = 2 * nodeIndex + jBinary[level - 1];
             level--;
         }
-
         return y_j;
-
     }
 }

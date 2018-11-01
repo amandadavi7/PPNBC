@@ -20,8 +20,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  *
@@ -36,9 +34,8 @@ public class OR_XOR extends CompositeProtocol implements Callable<Integer[]> {
     int prime;
 
     /**
-     * constantMultiplier = 1 for OR constantMultiplier = 2 for XOR 
-     * Does OR or XOR between given list of integers (size k) 
-     * Takes k TI Shares
+     * constantMultiplier = 1 for OR constantMultiplier = 2 for XOR Does OR or
+     * XOR between given list of integers (size k) Takes k TI Shares
      *
      * @param x
      * @param y
@@ -54,7 +51,7 @@ public class OR_XOR extends CompositeProtocol implements Callable<Integer[]> {
      * @param partyCount
      */
     public OR_XOR(List<Integer> x, List<Integer> y, List<TripleInteger> tiShares,
-            int asymmetricBit, int constantMultiplier, 
+            int asymmetricBit, int constantMultiplier,
             ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper,
             BlockingQueue<Message> senderQueue,
             Queue<Integer> protocolIdQueue,
@@ -71,11 +68,13 @@ public class OR_XOR extends CompositeProtocol implements Callable<Integer[]> {
     }
 
     /**
-     * 
-     * @return 
+     *
+     * @return
+     * @throws java.lang.InterruptedException
+     * @throws java.util.concurrent.ExecutionException
      */
     @Override
-    public Integer[] call() {
+    public Integer[] call() throws InterruptedException, ExecutionException {
         Integer[] output = new Integer[bitLength];
         //System.out.println("x=" + xShares + " y=" + yShares);
         ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
@@ -108,19 +107,14 @@ public class OR_XOR extends CompositeProtocol implements Callable<Integer[]> {
         int taskLen = taskList.size();
 
         for (i = 0; i < taskLen; i++) {
-            try {
-                Future<Integer[]> prod = taskList.get(i);
-                Integer[] products = prod.get();
-                int prodLen = products.length;
-                for (int j = 0; j < prodLen; j++) {
-                    output[globalIndex] = Math.floorMod(xShares.get(globalIndex) + yShares.get(globalIndex)
-                            - (constantMultiplier * products[j]), prime);
-                    globalIndex++;
-                }
-            } catch (InterruptedException | ExecutionException ex) {
-                Logger.getLogger(OR_XOR.class.getName()).log(Level.SEVERE, null, ex);
+            Future<Integer[]> prod = taskList.get(i);
+            Integer[] products = prod.get();
+            int prodLen = products.length;
+            for (int j = 0; j < prodLen; j++) {
+                output[globalIndex] = Math.floorMod(xShares.get(globalIndex) + yShares.get(globalIndex)
+                        - (constantMultiplier * products[j]), prime);
+                globalIndex++;
             }
-
         }
 
         return output;

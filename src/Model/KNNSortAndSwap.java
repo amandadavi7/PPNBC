@@ -135,7 +135,7 @@ public class KNNSortAndSwap extends Model {
      * @param index
      * @return 
      */
-    Integer[] getKComparisonResults(int index) {
+    Integer[] getKComparisonResults(int index) throws InterruptedException, ExecutionException {
         ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
         List<Future<Integer>> taskList = new ArrayList<>();
         //Do all the k comparisons with the training share
@@ -162,11 +162,7 @@ public class KNNSortAndSwap extends Model {
 
         for (int i = 0; i < K; i++) {
             Future<Integer> ccTask = taskList.get(i);
-            try {
-                comparisonResults[i] = ccTask.get();
-            } catch (InterruptedException | ExecutionException ex) {
-                Logger.getLogger(KNNSortAndSwap.class.getName()).log(Level.SEVERE, null, ex);
-            }
+            comparisonResults[i] = ccTask.get();
         }
 
         return comparisonResults;
@@ -178,7 +174,7 @@ public class KNNSortAndSwap extends Model {
      * @param comparisonResults
      * @return 
      */
-    Integer[] comparisonMultiplicationResultsSequential(Integer[] comparisonResults) {
+    Integer[] comparisonMultiplicationResultsSequential(Integer[] comparisonResults) throws InterruptedException {
         Integer[] comparisonMultiplications = new Integer[K];
         comparisonMultiplications[0] = 0;
         comparisonMultiplications[1] = comparisonResults[0];
@@ -201,7 +197,7 @@ public class KNNSortAndSwap extends Model {
      *
      * @param index
      */
-    void swapTrainingShares(int index) {
+    void swapTrainingShares(int index) throws InterruptedException, ExecutionException {
 
         //get all the K comparison results
         Integer[] comparisonResults = getKComparisonResults(index);
@@ -230,11 +226,7 @@ public class KNNSortAndSwap extends Model {
 
         for (int i = 1; i < K; i++) {
             Future<Integer> multTask = taskList.get(i - 1);
-            try {
-                comparisonMultiplications[i] = multTask.get();
-            } catch (InterruptedException | ExecutionException ex) {
-                Logger.getLogger(KNNSortAndSwap.class.getName()).log(Level.SEVERE, null, ex);
-            }
+            comparisonMultiplications[i] = multTask.get();
         }
 
         //Do xor between comparison results to change the prime
@@ -274,12 +266,8 @@ public class KNNSortAndSwap extends Model {
         pid++;
         //decimalTiIndex += K;
 
-        try {
-            comparisonResults = xorTask1.get();
+        comparisonResults = xorTask1.get();
             comparisonMultiplications = xorTask2.get();
-        } catch (InterruptedException | ExecutionException ex) {
-            Logger.getLogger(KNNSortAndSwap.class.getName()).log(Level.SEVERE, null, ex);
-        }
 
         List<Future<Integer[]>> swapTaskList = new ArrayList<>();
 
@@ -309,14 +297,10 @@ public class KNNSortAndSwap extends Model {
         // update positions from (kth to 1st) position, as kth position is independent of the rest
         for (int i = K - 1; i >= 0; i--) {
             Future<Integer[]> swapTask = swapTaskList.get(i);
-            try {
-                Integer[] results = swapTask.get();
+            Integer[] results = swapTask.get();
                 for (int j = 0; j < 3; j++) {
                     KjaccardDistances.get(i).set(j, results[j]);
                 }
-            } catch (InterruptedException | ExecutionException ex) {
-                Logger.getLogger(KNNSortAndSwap.class.getName()).log(Level.SEVERE, null, ex);
-            }
         }
 
     }
@@ -325,7 +309,7 @@ public class KNNSortAndSwap extends Model {
      * 
      * @return 
      */
-    int computeMajorityClassLabel() {
+    int computeMajorityClassLabel() throws InterruptedException, ExecutionException {
         int classLabelSum = 0;
         int predictedClassLabel = -1;
 
@@ -359,14 +343,9 @@ public class KNNSortAndSwap extends Model {
         //binaryTiIndex += bitDTICount;
         Future<List<Integer>> bitTaskZero = es.submit(bitDModuleZero);
 
-        List<Integer> numOfOnePredictions = null, numOfZeroPredictions = null;
         es.shutdown();
-        try {
-            numOfOnePredictions = bitTaskOne.get();
-            numOfZeroPredictions = bitTaskZero.get();
-        } catch (InterruptedException | ExecutionException ex) {
-            Logger.getLogger(KNNSortAndSwap.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        List<Integer> numOfOnePredictions = bitTaskOne.get();
+            List<Integer> numOfZeroPredictions = bitTaskZero.get();
         
         Comparison compClassLabels = new Comparison(numOfOnePredictions, numOfZeroPredictions, 
                 binaryTiShares.subList(binaryTiIndex, binaryTiIndex + comparisonTICount),
@@ -374,11 +353,7 @@ public class KNNSortAndSwap extends Model {
                 new LinkedList<>(protocolIdQueue), clientId, Constants.binaryPrime, 
                 pid, partyCount);
 
-        try {
-            predictedClassLabel = compClassLabels.call();
-        } catch (Exception ex) {
-            Logger.getLogger(KNNSortAndSwap.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        predictedClassLabel = compClassLabels.call();
         pid++;
         //binaryTiIndex += comparisonTICount;
         
@@ -389,8 +364,10 @@ public class KNNSortAndSwap extends Model {
     /**
      * 
      * @return 
+     * @throws java.lang.InterruptedException 
+     * @throws java.util.concurrent.ExecutionException 
      */
-    public int KNN_Model() {
+    public int KNN_Model() throws InterruptedException, ExecutionException {
         //Jaccard Computation for all the training shares
         
         long startTime = System.currentTimeMillis();
@@ -415,7 +392,7 @@ public class KNNSortAndSwap extends Model {
         }
 
         //Sorting the first K numbers
-        LOGGER.fine("KjaccardDistances before:" + KjaccardDistances);
+        LOGGER.log(Level.FINE, "KjaccardDistances before:{0}", KjaccardDistances);
         
         BatcherSortKNN sortModule = new BatcherSortKNN(KjaccardDistances,
                 asymmetricBit, decimalTiShares, binaryTiShares,
@@ -423,23 +400,23 @@ public class KNNSortAndSwap extends Model {
                 new LinkedList<>(protocolIdQueue), partyCount, K, bitLength);
         List<List<Integer>> sortTask = sortModule.call();
 
-        LOGGER.fine("KjaccardDistances:" + KjaccardDistances);
+        LOGGER.log(Level.FINE, "KjaccardDistances:{0}", KjaccardDistances);
 
         //Iterator circuit for rest of the training examples
         for (int i = K; i < trainingSharesCount; i++) {
-            LOGGER.info("calling for training example:" + i);
+            LOGGER.log(Level.INFO, "calling for training example:{0}", i);
             swapTrainingShares(i);
         }
 
-        LOGGER.fine("KjaccardDistances after iterating all the training examples:" + KjaccardDistances);
+        LOGGER.log(Level.FINE, "KjaccardDistances after iterating all the training examples:{0}", KjaccardDistances);
 
         int predictedLabel = computeMajorityClassLabel();
 
         long stopTime = System.currentTimeMillis();
         long elapsedTime = stopTime - startTime;
 
-        LOGGER.info("Label:" + predictedLabel);
-        LOGGER.info("Time taken:" + elapsedTime + "ms");
+        LOGGER.log(Level.INFO, "Label:{0}", predictedLabel);
+        LOGGER.log(Level.INFO, "Time taken:{0}ms", elapsedTime);
         return predictedLabel;
     }
 

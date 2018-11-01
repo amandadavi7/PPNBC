@@ -36,6 +36,7 @@ import java.util.stream.Collectors;
  */
 public class Comparison extends CompositeProtocol implements Callable<Integer> {
 
+    private static final Logger LOGGER = Logger.getLogger(Comparison.class.getName());
     List<Integer> x;
     List<Integer> y;
     List<TripleByte> tiShares;
@@ -96,10 +97,11 @@ public class Comparison extends CompositeProtocol implements Callable<Integer> {
      * the value. Returns 1 if x>=y, 0 otherwise
      *
      * @return shares of [1] if x>=y and [0] if x<y
-     * @throws Exception
+     * @throws java.lang.InterruptedException
+     * @throws java.util.concurrent.ExecutionException
      */
     @Override
-    public Integer call() throws Exception {
+    public Integer call() throws InterruptedException, ExecutionException {
         int w = -1;
         computeEShares();
 
@@ -109,9 +111,8 @@ public class Comparison extends CompositeProtocol implements Callable<Integer> {
             try {
                 computeDSHares();
             } catch (InterruptedException | ExecutionException ex) {
-                Logger.getLogger(Comparison.class.getName())
-                        .log(Level.SEVERE, null, ex);
-            }
+                LOGGER.log(Level.SEVERE, null, ex);
+            } 
         };
 
         threadService.submit(dThread);
@@ -119,10 +120,9 @@ public class Comparison extends CompositeProtocol implements Callable<Integer> {
         Runnable eThread = () -> {
             try {
                 computeMultiplicationEParallel();
-            } catch (InterruptedException ex) {
-                Logger.getLogger(Comparison.class.getName())
-                        .log(Level.SEVERE, null, ex);
-            }
+            } catch (InterruptedException | ExecutionException ex) {
+                LOGGER.log(Level.SEVERE, null, ex);
+            } 
         };
 
         threadService.submit(eThread);
@@ -191,8 +191,7 @@ public class Comparison extends CompositeProtocol implements Callable<Integer> {
         int taskLen = taskList.size();
         // Now when the result for all is received, compute y - x*y and add it to d[i]
         for (i = 0; i < taskLen; i++) {
-            try {
-                Future<Integer[]> prod = taskList.get(i);
+            Future<Integer[]> prod = taskList.get(i);
                 Integer[] products = prod.get();
                 int prodLen = products.length;
                 for (int j = 0; j < prodLen; j++) {
@@ -201,11 +200,6 @@ public class Comparison extends CompositeProtocol implements Callable<Integer> {
                     localDiff = Math.floorMod(localDiff, prime);
                     dShares[globalIndex] = localDiff;
                 }
-            } catch (InterruptedException | ExecutionException ex) {
-                Logger.getLogger(Comparison.class.getName())
-                        .log(Level.SEVERE, null, ex);
-            }
-
         }
     }
 
@@ -214,7 +208,7 @@ public class Comparison extends CompositeProtocol implements Callable<Integer> {
      *
      * @throws InterruptedException
      */
-    private void computeMultiplicationEParallel() throws InterruptedException {
+    private void computeMultiplicationEParallel() throws InterruptedException, ExecutionException {
         List<Integer> tempMultE = Arrays.stream(eShares).boxed()
                 .collect(Collectors.toList());
 
@@ -260,13 +254,8 @@ public class Comparison extends CompositeProtocol implements Callable<Integer> {
             List<Integer> products = new ArrayList<>();
             // Now when all result is received, compute y+ x*y and add it to d[i]
             for (i = 0; i < taskLen; i++) {
-                try {
-                    Future<Integer[]> prod = taskList.get(i);
+                Future<Integer[]> prod = taskList.get(i);
                     products.addAll(Arrays.asList(prod.get()));
-                } catch (InterruptedException | ExecutionException ex) {
-                    Logger.getLogger(Comparison.class.getName())
-                            .log(Level.SEVERE, null, ex);
-                }
             }
 
             // in the end of one iteration, update tempmultE for next round of execution
@@ -288,7 +277,7 @@ public class Comparison extends CompositeProtocol implements Callable<Integer> {
     /**
      * Compute [di] * integration(ej); j=i+1->l using distributed multiplication
      */
-    private void computeCShares() {
+    private void computeCShares() throws InterruptedException, ExecutionException {
 
         List<Integer> multiplicationEList = Arrays.stream(multiplicationE)
                 .boxed().collect(Collectors.toList());
@@ -327,19 +316,13 @@ public class Comparison extends CompositeProtocol implements Callable<Integer> {
         int taskLen = taskList.size();
         // Now when result for all is received, compute y+ x*y and add it to d[i]
         for (i = 0; i < taskLen; i++) {
-            try {
-                Future<Integer[]> prod = taskList.get(i);
+            Future<Integer[]> prod = taskList.get(i);
                 Integer[] products = prod.get();
                 int prodLen = products.length;
                 for (int j = 0; j < prodLen; j++) {
                     int globalIndex = i * 10 + j;
                     cShares[globalIndex] = products[j];
                 }
-            } catch (InterruptedException | ExecutionException ex) {
-                Logger.getLogger(Comparison.class.getName())
-                        .log(Level.SEVERE, null, ex);
-            }
-
         }
 
         cShares[bitLength - 1] = dShares[bitLength - 1];

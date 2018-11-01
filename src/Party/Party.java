@@ -134,7 +134,11 @@ public class Party {
 
         startPartyConnections();
 
-        callModel(args);
+        try {
+            callModel(args);
+        } catch (InterruptedException | ExecutionException ex) {
+            Logger.getLogger(Party.class.getName()).log(Level.SEVERE, null, ex);
+        } 
 
         tearDownSocket();
     }
@@ -209,7 +213,7 @@ public class Party {
      * Call the model class with the input args
      * @param args 
      */
-    private static void callModel(String[] args) {
+    private static void callModel(String[] args) throws InterruptedException, ExecutionException {
         int modelId = 1;
         
         switch (modelName) {

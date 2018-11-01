@@ -13,8 +13,6 @@ import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * The protocol computes the multiplication of shares of x and y and returns the
@@ -67,29 +65,23 @@ public class MultiplicationInteger extends Protocol implements Callable {
      * the value
      *
      * @return shares of product
+     * @throws java.lang.InterruptedException
      */
     @Override
-    public Object call() {
+    public Object call() throws InterruptedException {
         initProtocol();
-        Message receivedMessage = null;
         int d = 0, e = 0;
-        List<Integer> diffList = null;
         for (int i = 0; i < partyCount - 1; i++) {
-            try {
-                receivedMessage = pidMapper.get(protocolIdQueue).take();
-                diffList = (List<Integer>) receivedMessage.getValue();
-                d += diffList.get(0);
-                e += diffList.get(1);
-            } catch (InterruptedException ex) {
-                Logger.getLogger(MultiplicationInteger.class.getName())
-                    .log(Level.SEVERE, null, ex);
-            }
+            Message receivedMessage = pidMapper.get(protocolIdQueue).take();
+            List<Integer> diffList = (List<Integer>) receivedMessage.getValue();
+            d += diffList.get(0);
+            e += diffList.get(1);
         }
 
         d = Math.floorMod(x - tiShares.u + d, prime);
         e = Math.floorMod(y - tiShares.v + e, prime);
-        int product = tiShares.w + (d * tiShares.v) + (tiShares.u * e) + 
-                (d * e * asymmetricBit);
+        int product = tiShares.w + (d * tiShares.v) + (tiShares.u * e)
+                + (d * e * asymmetricBit);
         product = Math.floorMod(product, prime);
         return product;
 
@@ -98,19 +90,14 @@ public class MultiplicationInteger extends Protocol implements Callable {
     /**
      * Bundle the d and e values and add to the sender queue
      */
-    private void initProtocol() {
+    private void initProtocol() throws InterruptedException {
         List<Integer> diffList = new ArrayList<>();
         diffList.add(Math.floorMod(x - tiShares.u, prime));
         diffList.add(Math.floorMod(y - tiShares.v, prime));
 
         Message senderMessage = new Message(diffList,
                 clientID, protocolIdQueue);
-        try {
-            senderQueue.put(senderMessage);
-        } catch (InterruptedException ex) {
-            Logger.getLogger(MultiplicationInteger.class.getName())
-                    .log(Level.SEVERE, null, ex);
-        }
+        senderQueue.put(senderMessage);
 
     }
 

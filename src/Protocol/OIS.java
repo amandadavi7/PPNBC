@@ -16,6 +16,7 @@ import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -106,10 +107,11 @@ public class OIS extends CompositeProtocol implements Callable<Integer[]> {
      * and yShares vector
      *
      * @return
-     * @throws Exception
+     * @throws java.lang.InterruptedException
+     * @throws java.util.concurrent.ExecutionException
      */
     @Override
-    public Integer[] call() throws Exception {
+    public Integer[] call() throws InterruptedException, ExecutionException {
         Integer[] output = new Integer[bitLength];
         
         ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);

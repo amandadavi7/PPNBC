@@ -21,11 +21,11 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
- * Takes List of training rows and test row and computes Jaccard Distances between the two
+ * Takes List of training rows and test row and computes Jaccard Distances
+ * between the two
+ *
  * @author bhagatsanchya
  */
 public class JaccardDistance extends CompositeProtocol implements Callable<List<List<Integer>>> {
@@ -64,11 +64,12 @@ public class JaccardDistance extends CompositeProtocol implements Callable<List<
     }
 
     /**
-     * 
-     * @return 
+     *
+     * @return @throws java.lang.InterruptedException
+     * @throws java.util.concurrent.ExecutionException
      */
     @Override
-    public List<List<Integer>> call() {
+    public List<List<Integer>> call() throws InterruptedException, ExecutionException {
 
         List<List<Integer>> result = new ArrayList<>();
         int startpid = 0;
@@ -101,25 +102,20 @@ public class JaccardDistance extends CompositeProtocol implements Callable<List<
 
         es.shutdown();
 
-        try {
-            // These scores are additive shares over prime (Constants.prime)
-            // We eventually need sum of individual list over prime
-            for (int i = 0; i < trainingShares.size(); i++) {
-                Future<Integer[]> orTask = taskList.get(2 * i);
-                Future<Integer[]> xorTask = taskList.get(2 * i + 1);
+        // These scores are additive shares over prime (Constants.prime)
+        // We eventually need sum of individual list over prime
+        for (int i = 0; i < trainingShares.size(); i++) {
+            Future<Integer[]> orTask = taskList.get(2 * i);
+            Future<Integer[]> xorTask = taskList.get(2 * i + 1);
 
-                Integer[] orOutput = orTask.get();
-                Integer[] xorOutput = xorTask.get();
+            Integer[] orOutput = orTask.get();
+            Integer[] xorOutput = xorTask.get();
 
-                //row stores or, xor outputs for a training example
-                List<Integer> row = new ArrayList<>();
-                row.add(getScoreFromList(orOutput));
-                row.add(getScoreFromList(xorOutput));
-                result.add(row);
-            }
-
-        } catch (InterruptedException | ExecutionException ex) {
-            Logger.getLogger(JaccardDistance.class.getName()).log(Level.SEVERE, null, ex);
+            //row stores or, xor outputs for a training example
+            List<Integer> row = new ArrayList<>();
+            row.add(getScoreFromList(orOutput));
+            row.add(getScoreFromList(xorOutput));
+            result.add(row);
         }
         return result;
     }
