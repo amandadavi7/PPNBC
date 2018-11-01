@@ -136,7 +136,6 @@ public class KNNSortAndSwap extends Model {
      */
     Integer[] getKComparisonResults(int index) {
         ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
-        
         List<Future<Integer>> taskList = new ArrayList<>();
         //Do all the k comparisons with the training share
         Integer[] comparisonResults = new Integer[K];
@@ -361,14 +360,13 @@ public class KNNSortAndSwap extends Model {
         Future<List<Integer>> bitTaskZero = es.submit(bitDModuleZero);
         es.shutdown();
         List<Integer> numOfOnePredictions = null, numOfZeroPredictions = null;
-
+        es.shutdown();
         try {
             numOfOnePredictions = bitTaskOne.get();
             numOfZeroPredictions = bitTaskZero.get();
         } catch (InterruptedException | ExecutionException ex) {
             Logger.getLogger(KNNSortAndSwap.class.getName()).log(Level.SEVERE, null, ex);
         }
-
         Comparison compClassLabels = new Comparison(numOfOnePredictions, numOfZeroPredictions, 
                 binaryTiShares.subList(binaryTiIndex, binaryTiIndex + comparisonTICount),
                 asymmetricBit, pidMapper, commonSender,
@@ -381,11 +379,11 @@ public class KNNSortAndSwap extends Model {
             Logger.getLogger(KNNSortAndSwap.class.getName()).log(Level.SEVERE, null, ex);
         }
         pid++;
-        //binaryTiIndex += comparisonTiCount;
-
+        //binaryTiIndex += comparisonTICount;
+        
         return predictedClassLabel;
     }
-
+    
     /**
      * 
      * @return 
@@ -420,6 +418,7 @@ public class KNNSortAndSwap extends Model {
                 asymmetricBit, decimalTiShares, binaryTiShares,
                 pidMapper, commonSender, clientId, prime, pid,
                 new LinkedList<>(protocolIdQueue), partyCount, K, bitLength);
+
         KjaccardDistances = sortModule.call();
 
         LOGGER.fine("KjaccardDistances:" + KjaccardDistances);
@@ -430,13 +429,13 @@ public class KNNSortAndSwap extends Model {
             swapTrainingShares(i);
         }
 
-        LOGGER.fine("KjaccardDistances after iterating all the training examples:"
-                + KjaccardDistances);
+        LOGGER.fine("KjaccardDistances after iterating all the training examples:" + KjaccardDistances);
 
         int predictedLabel = computeMajorityClassLabel();
 
         long stopTime = System.currentTimeMillis();
         long elapsedTime = stopTime - startTime;
+
         LOGGER.info("Label:" + predictedLabel);
         LOGGER.info("Time taken:" + elapsedTime + "ms");
         return predictedLabel;

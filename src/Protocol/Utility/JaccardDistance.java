@@ -25,7 +25,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- *
+ * Takes List of training rows and test row and computes Jaccard Distances between the two
  * @author bhagatsanchya
  */
 public class JaccardDistance extends CompositeProtocol implements Callable<List<List<Integer>>> {
@@ -63,6 +63,10 @@ public class JaccardDistance extends CompositeProtocol implements Callable<List<
         this.prime = prime;
     }
 
+    /**
+     * 
+     * @return 
+     */
     @Override
     public List<List<Integer>> call() {
 
@@ -132,11 +136,4 @@ public class JaccardDistance extends CompositeProtocol implements Callable<List<
         return Math.floorMod(sum, Constants.prime);
     }
 
-    public static void printScoreList(Integer[] scoreList) {
-
-        for (int element : scoreList) {
-
-            System.out.println("[" + element + "]");
-        }
-    }
 }

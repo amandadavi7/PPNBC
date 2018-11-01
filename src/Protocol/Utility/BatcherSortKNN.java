@@ -29,7 +29,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- *
+ * Do Batcher Sort on K Jaccard Distances
  * @author keerthanaa
  */
 public class BatcherSortKNN extends CompositeProtocol implements Callable<List<List<Integer>>> {
@@ -84,11 +84,14 @@ public class BatcherSortKNN extends CompositeProtocol implements Callable<List<L
         
     }
     
+    /**
+     * Recursive Sort function
+     * @param indices
+     * @param next 
+     */
     void Sort(int[] indices, int next) {
         //base case
         int startIndex = 0, endIndex = indices.length - 1;
-        //System.out.println("in sort: startIndex=" + indices[0] + ", endIndex=" + 
-        //        indices[endIndex] + ",next:" + next);
         if (indices[startIndex] == indices[endIndex]) {
             return;
         }
@@ -97,8 +100,6 @@ public class BatcherSortKNN extends CompositeProtocol implements Callable<List<L
             //comparison
 
             ExecutorService es = Executors.newSingleThreadExecutor();
-
-            //System.out.println("calling crossmultiply and compare");
 
             CrossMultiplyCompare ccModule = new CrossMultiplyCompare(KJaccardDistances.get(indices[startIndex]).get(1),
                     KJaccardDistances.get(indices[startIndex]).get(0), 
@@ -123,8 +124,6 @@ public class BatcherSortKNN extends CompositeProtocol implements Callable<List<L
                 Logger.getLogger(KNNSortAndSwap.class.getName()).log(Level.SEVERE, null, ex);
             }
 
-            //System.out.println("comparing indices " + indices[startIndex] + " " + indices[endIndex] + ", result=" + comparisonresult);
-
             //circuit to swap
             swapCircuitSorting(indices[startIndex], indices[endIndex], comparisonresult);
 
@@ -141,12 +140,16 @@ public class BatcherSortKNN extends CompositeProtocol implements Callable<List<L
         Merge(indices, next);
     }
     
+    /**
+     * Merge
+     * @param indices
+     * @param next 
+     */
     void Merge(int[] indices, int next) {
 
         int startIndex = 0;
         int endIndex = indices.length - 1;
-        //System.out.println("In merge: startIndex=" + indices[startIndex] + " endIndex=" + indices[endIndex]);
-
+        
         //Sort even indexed
         int[] evenIndices = new int[indices.length / 2 + indices.length % 2];
         int[] oddIndices = new int[indices.length / 2];
@@ -167,8 +170,6 @@ public class BatcherSortKNN extends CompositeProtocol implements Callable<List<L
         //Compare adjacent numbers
         for (int i = startIndex + 1; i < endIndex - 1; i += 2) {
             //compare and swap jd(i) and jd(i+1)
-            //System.out.println("calling comparison between adjacent elements: indices - "
-            //        + indices[i] + " and " + indices[i + 1]);
             
             CrossMultiplyCompare ccModule = new CrossMultiplyCompare(KJaccardDistances.get(indices[i]).get(1),
                     KJaccardDistances.get(indices[i]).get(0), 
@@ -207,6 +208,12 @@ public class BatcherSortKNN extends CompositeProtocol implements Callable<List<L
 
     }
     
+    /**
+     * Swap circuit to interchange unsorted pairs
+     * @param leftIndex
+     * @param rightIndex
+     * @param comparisonOutput 
+     */
     void swapCircuitSorting(int leftIndex, int rightIndex, int comparisonOutput) {
 
         ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
@@ -286,9 +293,7 @@ public class BatcherSortKNN extends CompositeProtocol implements Callable<List<L
         Future<Integer[]> rightTask2 = es.submit(batchMult4);
 
         es.shutdown();
-        //System.out.println("before swapping indices:" + leftIndex + "and" + rightIndex);
-        //System.out.println(KjaccardDistances.get(leftIndex) + " " + KjaccardDistances.get(rightIndex));
-
+        
         //get the results
         Integer[] left1 = null, left2 = null, right1 = null, right2 = null;
 
@@ -306,11 +311,12 @@ public class BatcherSortKNN extends CompositeProtocol implements Callable<List<L
             KJaccardDistances.get(rightIndex).set(i, Math.floorMod(right1[i] + right2[i], prime));
         }
 
-        //System.out.println("after swapping indices:" + leftIndex + "and" + rightIndex);
-        //System.out.println(KjaccardDistances.get(leftIndex) + " " + KjaccardDistances.get(rightIndex));
-
     }
     
+    /**
+     * 
+     * @return 
+     */
     @Override
     public List<List<Integer>> call() {
         Sort(indices, 1);
