@@ -6,64 +6,64 @@
 package Party;
 
 import Communication.Message;
-import Utility.Connection;
 import java.io.IOException;
 import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
  * @author keerthanaa
  */
-public class PartyClient implements Runnable{
-    
-    BlockingQueue<Message> receiverQueue;
-    String peerServerIP;
-    int peerServerPort;
-    ObjectOutputStream oStream = null;
+public class PartyClient implements Runnable {
+
     ObjectInputStream iStream = null;
     Socket receiveSocket = null;
-    
+    ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper;
+
     /**
      * Constructor
-     * 
-     * @param queue
-     * @param ip
-     * @param port 
+     * takes common receiver queue, socket and input stream object
+     * @param pidMapper
+     * @param socket
+     * @param iStream
      */
-    public PartyClient(BlockingQueue<Message> queue, String ip, int port){
-        this.receiverQueue = queue;
-        this.peerServerIP = ip;
-        this.peerServerPort = port;
+    public PartyClient(ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper, 
+            Socket socket, ObjectInputStream iStream) {
+        this.pidMapper = pidMapper;
+        this.receiveSocket = socket;
+        this.iStream = iStream;
     }
-    
+
     /**
-     * receive message and add to receiver queue
+     * receive message from BA and add to receiver queue
      */
     @Override
-    public void run(){
-        while(true) {
+    public void run() {
+
+        while (!(Thread.currentThread().isInterrupted())) {
+            Message msgs;
             try {
-                    while(receiveSocket==null || !receiveSocket.isConnected()){
-                        receiveSocket = Connection.initializeClientConnection(peerServerIP, peerServerPort);
-                    }
-                    iStream = new ObjectInputStream(receiveSocket.getInputStream());
-                    oStream = new ObjectOutputStream(receiveSocket.getOutputStream());
-                    
-                    while(true) {
-                        if(receiveSocket != null && receiveSocket.isConnected()) {
-                            Message msg = (Message) iStream.readObject();
-                            receiverQueue.put(msg);
-                        } else {
-                            break;
-                        }
-                    }
-            } catch (IOException | ClassNotFoundException | InterruptedException ex)  {
-                
-            } 
+                msgs = (Message) iStream.readObject();
+                pidMapper.putIfAbsent(msgs.getProtocolIDs(), new LinkedBlockingQueue<>());
+                pidMapper.get(msgs.getProtocolIDs()).add(msgs);
+            } catch (IOException ex) {
+                try {
+                    iStream.close();
+                } catch (IOException ex1) {
+                    Logger.getLogger(PartyClient.class.getName()).log(Level.SEVERE, null, ex1);
+                }
+                break;
+            } catch (ClassNotFoundException ex) {
+                break;
+            }
+
         }
-        
+
     }
 }

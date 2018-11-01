@@ -6,55 +6,63 @@
 package Protocol.Utility;
 
 import Communication.Message;
-import Protocol.Multiplication;
-import TrustedInitializer.Triple;
-import Utility.Constants;
+import TrustedInitializer.TripleReal;
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
  * Batch multiplication of list of xshares with yshares
- * 
+ *
  * @author keerthanaa
  */
-public class BatchMultiplicationReal extends BatchMultiplication 
+public class BatchMultiplicationReal extends BatchMultiplication
         implements Callable<BigInteger[]> {
-    
+
+    private static final Logger LOGGER = Logger.getLogger(BatchMultiplicationReal.class.getName());
     List<BigInteger> x;
     List<BigInteger> y;
+    List<TripleReal> tiShares;
+
     BigInteger prime;
-    
+
     /**
      * Constructor
      *
      * @param x share of x
      * @param y share of y
      * @param tiShares
+     * @param pidMapper
      * @param senderQueue
-     * @param receiverQueue
+     * @param protocolIdQueue
      * @param clientId
      * @param prime
      * @param protocolID
-     * @param oneShare
+     * @param asymmetricBit
+     * @param parentID
+     * @param partyCount
      */
-    public BatchMultiplicationReal(List<BigInteger> x, List<BigInteger> y, 
-            List<Triple> tiShares, 
+    public BatchMultiplicationReal(List<BigInteger> x, List<BigInteger> y,
+            List<TripleReal> tiShares,
+            ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper,
             BlockingQueue<Message> senderQueue,
-            BlockingQueue<Message> receiverQueue, Queue<Integer> protocolIdQueue,
-            int clientId, BigInteger prime,
-            int protocolID, int oneShare, int parentID) {
+            Queue<Integer> protocolIdQueue,
+            int clientId, BigInteger prime, int protocolID, int asymmetricBit,
+            int parentID, int partyCount) {
 
-        super(tiShares, senderQueue, receiverQueue, protocolIdQueue, clientId, protocolID, 
-                oneShare, parentID);
+        super(pidMapper, senderQueue, protocolIdQueue, clientId, protocolID,
+                asymmetricBit, parentID, partyCount);
         this.x = x;
         this.y = y;
         this.prime = prime;
+        this.tiShares = tiShares;
     }
 
     /**
@@ -65,38 +73,51 @@ public class BatchMultiplicationReal extends BatchMultiplication
      * @throws Exception
      */
     @Override
-    public BigInteger[] call() throws Exception{
-        
+    public BigInteger[] call() throws Exception {
+
         int batchSize = x.size();
         BigInteger[] products = new BigInteger[batchSize];
-        
+
         initProtocol();
-        //System.out.println("Waiting for receiver. parentID=" + parentID + " mult ID=" + protocolID);
         Message receivedMessage = null;
+        List<BigInteger> d = new ArrayList<>(Collections.nCopies(batchSize,
+                BigInteger.ZERO));
+        List<BigInteger> e = new ArrayList<>(Collections.nCopies(batchSize,
+                BigInteger.ZERO));
         List<List<BigInteger>> diffList = null;
-        try {
-            receivedMessage = receiverQueue.take();
-            diffList = (List<List<BigInteger>>) receivedMessage.getValue();
-        } catch (InterruptedException ex) {
-            ex.printStackTrace();
+        for (int i = 0; i < partyCount - 1; i++) {
+            try {
+                receivedMessage = pidMapper.get(protocolIdQueue).take();
+                diffList = (List<List<BigInteger>>) receivedMessage.getValue();
+                for (int j = 0; j < batchSize; j++) {
+                    d.set(j, d.get(j).add(diffList.get(j).get(0)).mod(prime));
+                    e.set(j, e.get(j).add(diffList.get(j).get(1)).mod(prime));
+                }
+            } catch (InterruptedException ex) {
+                LOGGER.log(Level.SEVERE, null, ex);
+            }
         }
-        
-        for(int i=0;i<batchSize;i++){
+
+        for (int i = 0; i < batchSize; i++) {
             // TODO convert TI share to BigInteger
-            BigInteger d = x.get(i)
-                    .subtract(BigInteger.valueOf(tiShares.get(i).u))
-                    .add(diffList.get(i).get(0)).mod(prime);
-            BigInteger e = y.get(i)
-                    .subtract(BigInteger.valueOf(tiShares.get(i).v))
-                    .add(diffList.get(i).get(1)).mod(prime);
-            
-            BigInteger product = BigInteger.valueOf(tiShares.get(i).w)
-                    .add(d.multiply(BigInteger.valueOf(tiShares.get(i).v)))
-                    .add(e.multiply(BigInteger.valueOf(tiShares.get(i).u)))
-                    .add(d.multiply(e).multiply(BigInteger.valueOf(oneShare)))
+            BigInteger D = x.get(i)
+                    .subtract(tiShares.get(i).u)
+                    .mod(prime)
+                    .add(d.get(i)).mod(prime);
+            BigInteger E = y.get(i)
+                    .subtract(tiShares.get(i).v)
+                    .mod(prime)
+                    .add(e.get(i)).mod(prime);
+
+            products[i] = tiShares.get(i).w
+                    .add(D.multiply(tiShares.get(i).v).mod(prime))
+                    .mod(prime)
+                    .add(E.multiply(tiShares.get(i).u).mod(prime))
+                    .mod(prime)
+                    .add(D.multiply(E).multiply(BigInteger
+                            .valueOf(asymmetricBit)).mod(prime))
                     .mod(prime);
-            
-            products[i] = product;
+
         }
 
         return products;
@@ -110,27 +131,22 @@ public class BatchMultiplicationReal extends BatchMultiplication
     void initProtocol() {
         List<List<BigInteger>> diffList = new ArrayList<>();
         int batchSize = x.size();
-        
-        for(int i=0;i<batchSize;i++){
+
+        for (int i = 0; i < batchSize; i++) {
             List<BigInteger> newRow = new ArrayList<>();
-            newRow.add(x.get(i).subtract(BigInteger.valueOf(tiShares.get(i).u))
-                    .mod(prime));
-            newRow.add(y.get(i).subtract(BigInteger.valueOf(tiShares.get(i).v))
-                    .mod(prime));
+            newRow.add(x.get(i).subtract(tiShares.get(i).u).mod(prime));
+            newRow.add(y.get(i).subtract(tiShares.get(i).v).mod(prime));
             diffList.add(newRow);
         }
-        
-        Message senderMessage = new Message(Constants.localShares, diffList,
-                clientID, protocolIdQueue);
-        
+
+        Message senderMessage = new Message(diffList, clientID, protocolIdQueue);
+
         try {
             senderQueue.put(senderMessage);
-            //System.out.println("sending message for protocol id:"+ protocolId);
         } catch (InterruptedException ex) {
-            ex.printStackTrace();
-            Logger.getLogger(Multiplication.class.getName()).log(Level.SEVERE, null, ex);
+            LOGGER.log(Level.SEVERE, null, ex);
         }
 
     }
-    
+
 }

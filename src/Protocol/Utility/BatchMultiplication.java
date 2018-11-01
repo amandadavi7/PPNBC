@@ -7,10 +7,9 @@ package Protocol.Utility;
 
 import Communication.Message;
 import Protocol.Protocol;
-import TrustedInitializer.Triple;
-import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Batch multiplication of list of xshares with yshares
@@ -19,31 +18,30 @@ import java.util.concurrent.BlockingQueue;
  */
 public abstract class BatchMultiplication extends Protocol {
 
-    List<Triple> tiShares;
     int parentID;
-
+    
     /**
      * Constructor
-     * 
+     *
      * TODO - parent ID is only for testing - to be removed in the future
      *
-     * @param tiShares
+     * @param pidMapper
      * @param senderQueue
-     * @param receiverQueue
      * @param protocolIdQueue
      * @param clientId
      * @param protocolID
-     * @param oneShare
+     * @param asymmetricBit
+     * @param partyCount
      * @param parentID
      */
-    public BatchMultiplication(List<Triple> tiShares,
+    public BatchMultiplication(ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper,
             BlockingQueue<Message> senderQueue,
-            BlockingQueue<Message> receiverQueue, Queue<Integer> protocolIdQueue,
-            int clientId, 
-            int protocolID, int oneShare, int parentID) {
+            Queue<Integer> protocolIdQueue,
+            int clientId,
+            int protocolID, int asymmetricBit, int parentID, int partyCount) {
 
-        super(protocolID, senderQueue, receiverQueue, protocolIdQueue, clientId, oneShare);
-        this.tiShares = tiShares;
+        super(protocolID, pidMapper, senderQueue, protocolIdQueue, clientId,
+                asymmetricBit, partyCount);
         this.parentID = parentID;
     }
 

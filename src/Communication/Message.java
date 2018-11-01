@@ -15,35 +15,39 @@ import java.util.Queue;
  */
 public class Message implements Serializable {
 
-    String variableName;
     Object value;
     int clientId;
     Queue<Integer> protocolIds;
+    boolean isUnicast;
 
     /**
      * Constructor
      *
-     * @param name
      * @param value
      * @param clientId
      * @param protocolIdQueue
      */
-    //TODO - variableName - obsolete, clientId??
-    public Message(String name, Object value, int clientId,
+    public Message(Object value, int clientId,
             Queue<Integer> protocolIdQueue) {
-        variableName = name;
         this.value = value;
         this.clientId = clientId;
         protocolIds = protocolIdQueue;
     }
-
+    
     /**
-     * Get variable name
+     * Constructor
      *
-     * @return variable name
+     * @param value
+     * @param clientId
+     * @param protocolIdQueue
+     * @param isUnicast
      */
-    public String getName() {
-        return variableName;
+    public Message(Object value, int clientId,
+            Queue<Integer> protocolIdQueue, boolean isUnicast) {
+        this.value = value;
+        this.clientId = clientId;
+        this.isUnicast = isUnicast;
+        protocolIds = protocolIdQueue;
     }
 
     /**
@@ -53,6 +57,15 @@ public class Message implements Serializable {
      */
     public int getProtocolID() {
         return protocolIds.peek();
+    }
+
+    /**
+     * Get protocol ID
+     *
+     * @return
+     */
+    public Queue<Integer> getProtocolIDs() {
+        return protocolIds;
     }
 
     /**
@@ -90,12 +103,21 @@ public class Message implements Serializable {
     public int getClientId() {
         return clientId;
     }
+    
+    /**
+     * Get unicast bit
+     *
+     * @return unicast bit
+     */
+    public boolean isUnicast() {
+        return isUnicast;
+    }
 
     /**
      * Log values for the message
      */
     public void log() {
-        System.out.println("Message: Name-" + variableName + ", Value-" + value
+        System.out.println("Message: Value-" + value
                 + ", clientId-" + clientId);
     }
 

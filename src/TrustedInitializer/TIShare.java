@@ -14,32 +14,60 @@ import java.util.List;
  * @author keerthanaa
  */
 public class TIShare implements Serializable {
-    public List<Triple> decimalShares,binaryShares;
+
+    public List<TripleInteger> decimalShares;
+    public List<TripleByte> binaryShares;
+    public List<TripleReal> bigIntShares;
+    public List<TruncationPair> truncationPair;
     public List<Integer> equalityShares;
-    
+
+    /**
+     * Constructor
+     */    
     public TIShare(){
         decimalShares = new LinkedList<>();
         binaryShares = new LinkedList<>();
+        bigIntShares = new LinkedList<>();
+        truncationPair = new LinkedList<>();
         equalityShares = new LinkedList<>();
     }
-    
+
     /**
-     * add Triple object to decimal shares
-     * @param t 
+     * add TripleInteger object to decimalShares
+     *
+     * @param t
      */
-    public void addDecimal(Triple t){
+    public void addDecimal(TripleInteger t) {
         decimalShares.add(t);
     }
-    
+
     /**
-     * add Triple object to binary shares
-     * @param t 
+     * add TripleByte object to binaryShares
+     *
+     * @param t
      */
-    public void addBinary(Triple t){
+    public void addBinary(TripleByte t) {
         binaryShares.add(t);
     }
+
+    /**
+     * Add TripleReal object to bigIntShares
+     *
+     * @param t
+     */
+    public void addBigInt(TripleReal t) {
+        bigIntShares.add(t);
+    }
     
-    public void addEquality(int i) {
+    /**
+     * add Truncation pair object to real shares
+     * @param t 
+     */
+    public void addTruncationPair(TruncationPair t){
+        truncationPair.add(t);
+    }
+    
+    public void addEqualityShare(int i) {
         equalityShares.add(i);
     }
 }

@@ -8,51 +8,76 @@ package Party;
 import Communication.Message;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
-import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.concurrent.BlockingQueue;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
  * @author keerthanaa
  */
-public class PartyServer implements Runnable{
+public class PartyServer implements Runnable {
+
+    private static final Logger LOGGER = Logger.getLogger(PartyServer.class.getName());
     
-    ServerSocket socketServer;
+    Socket socket;
     BlockingQueue<Message> senderQueue;
+    ObjectOutputStream oStream;
+    int clientId, asymmetricBit;
 
     /**
-     * Constructor 
-     * @param socketserver
-     * @param queue 
+     * Constructor
+     * 
+     * @param socket
+     * @param queue
+     * @param oStream
+     * @param clientId
+     * @param asymmetricBit
      */
-    public PartyServer(ServerSocket socketserver, BlockingQueue<Message> queue){
-        this.socketServer = socketserver;
+    public PartyServer(Socket socket, BlockingQueue<Message> queue,
+            ObjectOutputStream oStream, int clientId, int asymmetricBit) {
+        this.socket = socket;
         this.senderQueue = queue;
+        this.oStream = oStream;
+        this.clientId = clientId;
+        this.asymmetricBit = asymmetricBit;
     }
-    
+
     /**
-     * Continuously running thread that takes entries from senderqueue and 
-     * send them to other parties
+     * Continuously running thread that takes entries from sender queue and send
+     * them to BA
      */
     @Override
-    public void run(){
-        
+    public void run() {
+
         try {
-            Socket clientSocket = socketServer.accept();
-            System.out.println("Connected to:" + clientSocket);
-            ObjectOutputStream oStream = new ObjectOutputStream(clientSocket.getOutputStream());
-            
-            while(true){
+            // first send the id for the BA to store
+            oStream.writeInt(clientId);
+            oStream.writeInt(asymmetricBit);
+            oStream.flush();
+        } catch (IOException ex) {
+            LOGGER.log(Level.SEVERE, "Error sending clientId", ex);
+            return;
+        }
+        while (!(Thread.currentThread().isInterrupted())) {
+            try {
                 Message msg = senderQueue.take();
                 oStream.writeObject(msg);
-                //oStream.flush();
-                
+                oStream.reset();
+                oStream.flush();
+            } catch (InterruptedException | IOException ex) {
+                break;
             }
-            
-        } catch (IOException | InterruptedException ex){
-            ex.printStackTrace();
-        } 
-        
+        }
+
+        try {
+            oStream.close();
+        } catch (IOException ex) {
+            LOGGER.log(Level.SEVERE, "Error closing stream", ex);
+        }
+
+        LOGGER.log(Level.INFO, "Party Server Closed for client:{0}", clientId);
+
     }
 }

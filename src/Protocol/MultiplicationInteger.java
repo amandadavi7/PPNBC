@@ -6,13 +6,13 @@
 package Protocol;
 
 import Communication.Message;
-import TrustedInitializer.Triple;
-import Utility.Constants;
+import TrustedInitializer.TripleInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -22,11 +22,11 @@ import java.util.logging.Logger;
  *
  * @author anisha
  */
-public class Multiplication extends Protocol implements Callable {
+public class MultiplicationInteger extends Protocol implements Callable {
 
     int x;
     int y;
-    Triple tiShares;
+    TripleInteger tiShares;
     int parentID;
     int prime;
 
@@ -36,24 +36,25 @@ public class Multiplication extends Protocol implements Callable {
      * @param x share of x
      * @param y share of y
      * @param tiShares
+     * @param pidMapper
      * @param senderQueue
-     * @param receiverQueue
      * @param protocolIdQueue
      * @param clientId
      * @param prime
      * @param protocolID
-     * @param oneShare
+     * @param asymmetricBit
      * @param parentID
+     * @param partyCount
      */
-    public Multiplication(int x, int y, Triple tiShares,
+    public MultiplicationInteger(int x, int y, TripleInteger tiShares,
+            ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper,
             BlockingQueue<Message> senderQueue,
-            BlockingQueue<Message> receiverQueue, Queue<Integer> protocolIdQueue,
+            Queue<Integer> protocolIdQueue,
             int clientId, int prime,
-            int protocolID, int oneShare, int parentID) {
+            int protocolID, int asymmetricBit, int parentID, int partyCount) {
 
-        super(protocolID, senderQueue, receiverQueue, protocolIdQueue,
-                clientId, oneShare);
-
+        super(protocolID, pidMapper, senderQueue, protocolIdQueue,
+                clientId, asymmetricBit, partyCount);
         this.x = x;
         this.y = y;
         this.tiShares = tiShares;
@@ -70,22 +71,26 @@ public class Multiplication extends Protocol implements Callable {
     @Override
     public Object call() {
         initProtocol();
-        //System.out.println("Waiting for receiver. parentID=" + parentID + " mult ID=" + protocolID);
         Message receivedMessage = null;
+        int d = 0, e = 0;
         List<Integer> diffList = null;
-        try {
-            receivedMessage = receiverQueue.take();
-            diffList = (List<Integer>) receivedMessage.getValue();
-        } catch (InterruptedException ex) {
-            ex.printStackTrace();
+        for (int i = 0; i < partyCount - 1; i++) {
+            try {
+                receivedMessage = pidMapper.get(protocolIdQueue).take();
+                diffList = (List<Integer>) receivedMessage.getValue();
+                d += diffList.get(0);
+                e += diffList.get(1);
+            } catch (InterruptedException ex) {
+                Logger.getLogger(MultiplicationInteger.class.getName())
+                    .log(Level.SEVERE, null, ex);
+            }
         }
 
-        int d = Math.floorMod((x - tiShares.u) + diffList.get(0), prime);
-        int e = Math.floorMod((y - tiShares.v) + diffList.get(1), prime);
-        int product = tiShares.w + (d * tiShares.v) + (tiShares.u * e) + (d * e * oneShare);
+        d = Math.floorMod(x - tiShares.u + d, prime);
+        e = Math.floorMod(y - tiShares.v + e, prime);
+        int product = tiShares.w + (d * tiShares.v) + (tiShares.u * e) + 
+                (d * e * asymmetricBit);
         product = Math.floorMod(product, prime);
-        //System.out.println("ti("+tiShares.u+","+tiShares.v+","+tiShares.w+"), "+"x*y("+x+","+y+"):"+product);
-        //System.out.println("parent ID=" + parentID + " mult ID=" + protocolID + " successful, product returned");
         return product;
 
     }
@@ -98,14 +103,13 @@ public class Multiplication extends Protocol implements Callable {
         diffList.add(Math.floorMod(x - tiShares.u, prime));
         diffList.add(Math.floorMod(y - tiShares.v, prime));
 
-        Message senderMessage = new Message(Constants.localShares, diffList,
+        Message senderMessage = new Message(diffList,
                 clientID, protocolIdQueue);
         try {
             senderQueue.put(senderMessage);
-            //System.out.println("sending message for protocol id:"+ protocolID);
         } catch (InterruptedException ex) {
-            ex.printStackTrace();
-            Logger.getLogger(Multiplication.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(MultiplicationInteger.class.getName())
+                    .log(Level.SEVERE, null, ex);
         }
 
     }

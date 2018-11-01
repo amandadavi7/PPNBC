@@ -6,8 +6,8 @@
 package Protocol;
 
 import Communication.Message;
-import Protocol.Utility.BatchMultiplicationNumber;
-import TrustedInitializer.Triple;
+import Protocol.Utility.BatchMultiplicationByte;
+import TrustedInitializer.TripleByte;
 import Utility.Constants;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -26,17 +27,18 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 /**
- * compares two numbers (x and y) (in bits) and returns 1 if x>=y and 0 otherwise
- * 
+ * compares two numbers (x and y) (in bits) and returns 1 if x>=y and 0
+ * otherwise
+ *
  * uses 2(bitlength) + (bitlength)(bitlength-1)/2 tiShares
- * 
+ *
  * @author anisha
  */
 public class Comparison extends CompositeProtocol implements Callable<Integer> {
 
     List<Integer> x;
     List<Integer> y;
-    List<Triple> tiShares;
+    List<TripleByte> tiShares;
 
     int[] dShares;
     int[] eShares;
@@ -50,25 +52,31 @@ public class Comparison extends CompositeProtocol implements Callable<Integer> {
     /**
      * Constructor
      *
-     * A comparison of two numbers with bit length L requires 2(L) + (L)(L-1)/2 tiShares
+     * A comparison of two numbers with bit length L requires 2(L) + (L)(L-1)/2
+     * tiShares
      *
      * @param x List of bits of shares of x
      * @param y List of bits of shares of y
      * @param tiShares
-     * @param oneShare [[1]] with the Party
+     * @param asymmetricBit [[1]] with the Party
+     * @param pidMapper
      * @param senderQueue
-     * @param receiverQueue
+     * @param protocolIdQueue
      * @param clientId
      * @param prime
      * @param protocolID
+     * @param partyCount
      */
-    public Comparison(List<Integer> x, List<Integer> y, List<Triple> tiShares,
-            int oneShare, BlockingQueue<Message> senderQueue,
-            BlockingQueue<Message> receiverQueue, Queue<Integer> protocolIdQueue,
+    public Comparison(List<Integer> x, List<Integer> y, List<TripleByte> tiShares,
+            int asymmetricBit, 
+            ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper,
+            BlockingQueue<Message> senderQueue,
+            Queue<Integer> protocolIdQueue,
             int clientId, int prime,
-            int protocolID) {
+            int protocolID, int partyCount) {
 
-        super(protocolID, senderQueue, receiverQueue, protocolIdQueue,clientId, oneShare);
+        super(protocolID, pidMapper, senderQueue, protocolIdQueue, clientId,
+                asymmetricBit, partyCount);
         this.x = x;
         this.y = y;
         this.tiShares = tiShares;
@@ -81,7 +89,6 @@ public class Comparison extends CompositeProtocol implements Callable<Integer> {
         cShares = new int[bitLength];
         multiplicationE = new int[bitLength];
 
-        //System.out.println("bitLength:" + bitLength);
     }
 
     /**
@@ -92,33 +99,29 @@ public class Comparison extends CompositeProtocol implements Callable<Integer> {
      * @throws Exception
      */
     @Override
-    public Integer call() throws Exception {
-        startHandlers();
+    public Integer call() {
         int w = -1;
         computeEShares();
 
-        ExecutorService threadService = Executors.newFixedThreadPool(Constants.threadCount);
-        Runnable dThread = new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    computeDSHares();
-                } catch (InterruptedException | ExecutionException ex) {
-                    Logger.getLogger(Comparison.class.getName()).log(Level.SEVERE, null, ex);
-                }
+        ExecutorService threadService = Executors.newFixedThreadPool(
+                Constants.THREAD_COUNT);
+        Runnable dThread = () -> {
+            try {
+                computeDSHares();
+            } catch (InterruptedException | ExecutionException ex) {
+                Logger.getLogger(Comparison.class.getName())
+                        .log(Level.SEVERE, null, ex);
             }
         };
 
         threadService.submit(dThread);
 
-        Runnable eThread = new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    computeMultiplicationEParallel();
-                } catch (InterruptedException ex) {
-                    Logger.getLogger(Comparison.class.getName()).log(Level.SEVERE, null, ex);
-                }
+        Runnable eThread = () -> {
+            try {
+                computeMultiplicationEParallel();
+            } catch (InterruptedException ex) {
+                Logger.getLogger(Comparison.class.getName())
+                        .log(Level.SEVERE, null, ex);
             }
         };
 
@@ -126,16 +129,19 @@ public class Comparison extends CompositeProtocol implements Callable<Integer> {
         threadService.shutdown();
 
         // Compute c and w sequentially when both threads end
-        boolean threadsCompleted = threadService.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+        boolean threadsCompleted = false;
+        try {
+            threadsCompleted = threadService.awaitTermination(
+                    Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+        } catch (InterruptedException ex) {
+            Logger.getLogger(Comparison.class.getName()).log(Level.SEVERE, null, ex);
+        }
 
         if (threadsCompleted) {
             computeCShares();
             w = computeW();
         }
 
-        System.out.println("w:" + w + " protocol id:" + protocolId);
-
-        tearDownHandlers();
         return w;
     }
 
@@ -144,11 +150,10 @@ public class Comparison extends CompositeProtocol implements Callable<Integer> {
      */
     private void computeEShares() {
         for (int i = 0; i < bitLength; i++) {
-            int eShare = x.get(i) + y.get(i) + oneShare;
+            int eShare = x.get(i) + y.get(i) + asymmetricBit;
             eShares[i] = Math.floorMod(eShare, prime);
 
         }
-        //Logging.logShares("eShares", eShares);
     }
 
     /**
@@ -159,7 +164,7 @@ public class Comparison extends CompositeProtocol implements Callable<Integer> {
      */
     private void computeDSHares() throws InterruptedException, ExecutionException {
 
-        ExecutorService es = Executors.newFixedThreadPool(Constants.threadCount);
+        ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
         List<Future<Integer[]>> taskList = new ArrayList<>();
 
         int i = 0;
@@ -168,16 +173,16 @@ public class Comparison extends CompositeProtocol implements Callable<Integer> {
         // The protocols for computation of d are assigned id 0-bitLength-1
         do {
             //System.out.println("Protocol " + protocolId + " batch " + startpid);
-            initQueueMap(recQueues, startpid);
+            int toIndex = Math.min(i + Constants.BATCH_SIZE, bitLength);
 
-            int toIndex = Math.min(i + Constants.batchSize, bitLength);
-
-            BatchMultiplicationNumber batchMultiplication = new BatchMultiplicationNumber(
-                    x.subList(i, toIndex),
-                    y.subList(i, toIndex),
-                    tiShares.subList(i, toIndex),
-                    senderQueue, recQueues.get(startpid), new LinkedList<>(protocolIdQueue),
-                    clientID, prime, startpid, oneShare, protocolId);
+            BatchMultiplicationByte batchMultiplication
+                    = new BatchMultiplicationByte(x.subList(i, toIndex),
+                            y.subList(i, toIndex),
+                            tiShares.subList(i, toIndex),
+                            pidMapper, senderQueue, 
+                            new LinkedList<>(protocolIdQueue),
+                            clientID, prime, startpid, asymmetricBit,
+                            protocolId, partyCount);
 
             Future<Integer[]> multiplicationTask = es.submit(batchMultiplication);
             taskList.add(multiplicationTask);
@@ -189,7 +194,7 @@ public class Comparison extends CompositeProtocol implements Callable<Integer> {
         es.shutdown();
 
         int taskLen = taskList.size();
-        // Now when I got the result for all, compute y - x*y and add it to d[i]
+        // Now when the result for all is received, compute y - x*y and add it to d[i]
         for (i = 0; i < taskLen; i++) {
             try {
                 Future<Integer[]> prod = taskList.get(i);
@@ -200,78 +205,82 @@ public class Comparison extends CompositeProtocol implements Callable<Integer> {
                     int localDiff = y.get(globalIndex) - products[j];
                     localDiff = Math.floorMod(localDiff, prime);
                     dShares[globalIndex] = localDiff;
-                    //dShares.put(globalIndex, localDiff);
                 }
             } catch (InterruptedException | ExecutionException ex) {
-                ex.printStackTrace();
+                Logger.getLogger(Comparison.class.getName())
+                        .log(Level.SEVERE, null, ex);
             }
 
         }
-
-        //Logging.logShares("dShares", dShares);
     }
 
+    /**
+     * Compute !e[i] for all i in parallel
+     *
+     * @throws InterruptedException
+     */
     private void computeMultiplicationEParallel() throws InterruptedException {
-        List<Integer> tempMultE = Arrays.stream(eShares).boxed().collect(Collectors.toList());
+        List<Integer> tempMultE = Arrays.stream(eShares).boxed()
+                .collect(Collectors.toList());
 
         int mainIndex = bitLength - 1;
         multiplicationE[mainIndex--] = eShares[bitLength - 1];
-        
-        //List<Integer> dShareList = Arrays.stream(dShares).boxed().collect(Collectors.toList());
+
         int startpid = bitLength;
-        
+
         // Runs log n times
         while (tempMultE.size() > 1) {
-            
-            ExecutorService es = Executors.newFixedThreadPool(Constants.threadCount);
+
+            ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
             List<Future<Integer[]>> taskList = new ArrayList<>();
 
             int i = 0;
-            
+
             // batch multiply each pair of tempMultE[i], tempMult[i+1]
             do {
-                //System.out.println("Protocol " + protocolId + " batch " + startpid);
-                initQueueMap(recQueues, startpid);
-
-                int toIndex = Math.min(i+Constants.batchSize, tempMultE.size());
+                int toIndex = Math.min(i + Constants.BATCH_SIZE, tempMultE.size());
                 int tiCount = toIndex - i;
 
-                BatchMultiplicationNumber batchMultiplication = new BatchMultiplicationNumber(
-                        tempMultE.subList(i, toIndex - 1),
-                        tempMultE.subList(i + 1, toIndex),
-                        tiShares.subList(tiStartIndex, tiStartIndex+tiCount), senderQueue,
-                        recQueues.get(startpid), new LinkedList<>(protocolIdQueue),clientID, prime, startpid,
-                        oneShare, protocolId);
+                BatchMultiplicationByte batchMultiplication
+                        = new BatchMultiplicationByte(
+                                tempMultE.subList(i, toIndex - 1),
+                                tempMultE.subList(i + 1, toIndex),
+                                tiShares.subList(tiStartIndex,
+                                        tiStartIndex + tiCount), pidMapper, senderQueue,
+                                new LinkedList<>(protocolIdQueue), clientID,
+                                prime, startpid, asymmetricBit, protocolId,
+                                partyCount);
 
                 Future<Integer[]> multiplicationTask = es.submit(batchMultiplication);
                 taskList.add(multiplicationTask);
 
                 startpid++;
-                i += toIndex-1;
+                i += toIndex - 1;
                 tiStartIndex += tiCount;
-            } while (i < tempMultE.size()-1);
+            } while (i < tempMultE.size() - 1);
 
             es.shutdown();
 
             int taskLen = taskList.size();
             List<Integer> products = new ArrayList<>();
-            // Now when I got the result for all, compute y+ x*y and add it to d[i]
+            // Now when all result is received, compute y+ x*y and add it to d[i]
             for (i = 0; i < taskLen; i++) {
                 try {
                     Future<Integer[]> prod = taskList.get(i);
                     products.addAll(Arrays.asList(prod.get()));
                 } catch (InterruptedException | ExecutionException ex) {
-                    ex.printStackTrace();
+                    Logger.getLogger(Comparison.class.getName())
+                            .log(Level.SEVERE, null, ex);
                 }
             }
-            
+
             // in the end of one iteration, update tempmultE for next round of execution
             if (es.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS)) {
                 // update all values
                 tempMultE.clear();
                 tempMultE = products;
             }
-            
+
             // store the main value in the end
             multiplicationE[mainIndex--] = tempMultE.get(tempMultE.size() - 1);
         }
@@ -286,28 +295,29 @@ public class Comparison extends CompositeProtocol implements Callable<Integer> {
      */
     private void computeCShares() {
 
-        List<Integer> multiplicationEList = Arrays.stream(multiplicationE).boxed().collect(Collectors.toList());
-        List<Integer> dShareList = Arrays.stream(dShares).boxed().collect(Collectors.toList());
+        List<Integer> multiplicationEList = Arrays.stream(multiplicationE)
+                .boxed().collect(Collectors.toList());
+        List<Integer> dShareList = Arrays.stream(dShares).boxed()
+                .collect(Collectors.toList());
 
-        ExecutorService es = Executors.newFixedThreadPool(Constants.threadCount);
+        ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
         List<Future<Integer[]>> taskList = new ArrayList<>();
 
         int startpid = cProcessId;
         int i = 0;
 
         do {
-            //System.out.println("Protocol " + protocolId + " batch " + startpid);
-            initQueueMap(recQueues, startpid);
-
-            int toIndex = Math.min(i + Constants.batchSize, bitLength - 1);
+            int toIndex = Math.min(i + Constants.BATCH_SIZE, bitLength - 1);
             int tiCount = toIndex - i;
 
-            BatchMultiplicationNumber batchMultiplication = new BatchMultiplicationNumber(
-                    multiplicationEList.subList(i + 1, toIndex + 1),
-                    dShareList.subList(i, toIndex),
-                    tiShares.subList(tiStartIndex, tiStartIndex + tiCount), senderQueue,
-                    recQueues.get(startpid), new LinkedList<>(protocolIdQueue),clientID, prime, startpid,
-                    oneShare, protocolId);
+            BatchMultiplicationByte batchMultiplication
+                    = new BatchMultiplicationByte(
+                            multiplicationEList.subList(i + 1, toIndex + 1),
+                            dShareList.subList(i, toIndex),
+                            tiShares.subList(tiStartIndex, 
+                                    tiStartIndex + tiCount), pidMapper, senderQueue,
+                            new LinkedList<>(protocolIdQueue), clientID, prime, 
+                            startpid, asymmetricBit, protocolId, partyCount);
 
             Future<Integer[]> multiplicationTask = es.submit(batchMultiplication);
             taskList.add(multiplicationTask);
@@ -320,7 +330,7 @@ public class Comparison extends CompositeProtocol implements Callable<Integer> {
         es.shutdown();
 
         int taskLen = taskList.size();
-        // Now when I got the result for all, compute y+ x*y and add it to d[i]
+        // Now when result for all is received, compute y+ x*y and add it to d[i]
         for (i = 0; i < taskLen; i++) {
             try {
                 Future<Integer[]> prod = taskList.get(i);
@@ -329,16 +339,15 @@ public class Comparison extends CompositeProtocol implements Callable<Integer> {
                 for (int j = 0; j < prodLen; j++) {
                     int globalIndex = i * 10 + j;
                     cShares[globalIndex] = products[j];
-                    //cShares.put(globalIndex, products[j]);
                 }
             } catch (InterruptedException | ExecutionException ex) {
-                ex.printStackTrace();
+                Logger.getLogger(Comparison.class.getName())
+                        .log(Level.SEVERE, null, ex);
             }
 
         }
 
         cShares[bitLength - 1] = dShares[bitLength - 1];
-        //Logging.logShares("cShares", cShares);
 
     }
 
@@ -348,13 +357,12 @@ public class Comparison extends CompositeProtocol implements Callable<Integer> {
      * @return
      */
     private int computeW() {
-        int w = oneShare;
+        int w = asymmetricBit;
         for (int i = 0; i < bitLength; i++) {
             w += cShares[i];
             w = Math.floorMod(w, prime);
         }
 
-        //Logging.logValue("w", w);
         return w;
     }
 

@@ -8,17 +8,22 @@ package Model;
 import Communication.Message;
 import Protocol.ArgMax;
 import Protocol.BitDecomposition;
-import Protocol.DotProductNumber;
+import Protocol.DotProductByte;
+import Protocol.DotProductInteger;
 import Protocol.Equality;
-import Protocol.Multiplication;
-import Protocol.Utility.BatchMultiplicationNumber;
+import Protocol.MultiplicationInteger;
+import Protocol.Utility.BatchMultiplicationInteger;
 import TrustedInitializer.Triple;
+import TrustedInitializer.TripleByte;
+import TrustedInitializer.TripleInteger;
 import Utility.Constants;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -43,6 +48,8 @@ public class ID3 extends Model {
     Integer[] subsetTransactionsBitVector; //dataset currently considered
     Integer[] attributeBitVector;
     List<Integer> equalityTiShares;
+    List<TripleByte> binaryTiShares;
+    List<TripleInteger> decimalTiShares;
     
     int alpha; //the corrective factor to multiply (value is 8 in the paper)
     
@@ -50,16 +57,18 @@ public class ID3 extends Model {
     List<List<Integer[]>> attrValueBitVector; //list(k attr) of list(j values) of arrays[bit representation of ak,j]
     List<Integer[]> classValueBitVector; //same as the above but for class values
     
-    int pid, binaryIndex, decimalIndex, equalityIndex; // a global ID series - TODO
+    int pid, binaryTiIndex, decimalTiIndex, equalityTiIndex; // a global ID series - TODO
     
     //oneshares to equalityShares - common for all the models
-    public ID3(int oneShares, BlockingQueue<Message> senderQueue,
-            BlockingQueue<Message> receiverQueue, int clientId, List<Triple> binaryTriples, 
-            List<Triple> decimalTriple, List<Integer> equalityShares, int classesCount, 
+    public ID3(int asymmetricBit, ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper, 
+            BlockingQueue<Message> senderQueue, int clientId, List<TripleByte> binaryTriples, 
+            List<TripleInteger> decimalTriple, List<Integer> equalityShares, int classesCount, 
             int attrCount, int attrValueCount, int[][] dataset, List<List<Integer[]>> attrValues, 
-            Integer[] classLabels, List<Integer[]> classValues) {
+            Integer[] classLabels, List<Integer[]> classValues, int partyCount,
+            Queue<Integer> protocolIdQueue, int protocolID) {
         
-        super(senderQueue, receiverQueue, clientId, oneShares, binaryTriples, decimalTriple);
+        super(pidMapper, senderQueue, clientId, asymmetricBit, partyCount, protocolIdQueue, protocolID);
+        
         this.equalityTiShares = equalityShares;
         this.classLabelCount = classesCount;
         this.attrCount = attrCount;
@@ -69,8 +78,13 @@ public class ID3 extends Model {
         classIndexLabelMapping = classLabels;
         this.rCounter = attrCount-1;
         this.classValueBitVector = classValues;
+        this.decimalTiShares = decimalTriple;
+        this.binaryTiShares = binaryTriples;
         this.alpha = 8;
         pid = 0;
+        decimalTiIndex = 0;
+        binaryTiIndex = 0;
+        equalityTiIndex = 0;
         
     }
     
@@ -93,19 +107,18 @@ public class ID3 extends Model {
     Integer[] findCommonClassIndex(Integer[] subsetTransactions) {
         /// total no. of rows / class label
         int[] s = new int[classLabelCount];
-        ExecutorService es = Executors.newFixedThreadPool(Constants.threadCount);
+        ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
         List<Future<Integer>> DPtaskList = new ArrayList<>();
         
         for(int i=0;i<classLabelCount;i++) {
             
-            initQueueMap(recQueues, i+pid);
-            
-            DotProductNumber dp = new DotProductNumber(Arrays.asList(subsetTransactions), 
-                    Arrays.asList(classValueBitVector.get(i)), binaryTiShares, 
-                    commonSender, recQueues.get(i+pid), new LinkedList<>(protocolIdQueue), 
-                    clientId, Constants.binaryPrime, i+pid, oneShare);
+            DotProductByte dp = new DotProductByte(Arrays.asList(subsetTransactions), 
+                    Arrays.asList(classValueBitVector.get(i)), binaryTiShares, pidMapper, 
+                    commonSender, new LinkedList<>(protocolIdQueue), clientId, Constants.binaryPrime,
+                    pid, asymmetricBit, partyCount);
             
             Future<Integer> dpresult = es.submit(dp);
+            pid++;
             DPtaskList.add(dpresult);
         }
         
@@ -125,11 +138,11 @@ public class ID3 extends Model {
         
         //Need to handle tishares sublist
         for(int i=0;i<classLabelCount;i++) {
-            initQueueMap(recQueues, i+pid);
             BitDecomposition bitD = new BitDecomposition(s[i], binaryTiShares, 
-                    oneShare, Constants.bitLength, commonSender, 
-                    recQueues.get(i+pid), new LinkedList<>(protocolIdQueue), clientId, 
-                    Constants.binaryPrime, i+pid);
+                    asymmetricBit, Constants.bitLength, pidMapper, commonSender, 
+                    new LinkedList<>(protocolIdQueue), clientId, 
+                    Constants.binaryPrime, pid, partyCount);
+            pid++;
             Future<List<Integer>> task = es.submit(bitD);
             BDtaskList.add(task);
         }
@@ -148,10 +161,9 @@ public class ID3 extends Model {
         
         //compute argmax
         Integer[] commonClassLabel = new Integer[classLabelCount];
-        initQueueMap(recQueues, pid);
-        ArgMax argmax = new ArgMax(bitSharesS, binaryTiShares, oneShare, commonSender, 
-                recQueues.get(pid), new LinkedList<>(protocolIdQueue), clientId, 
-                Constants.binaryPrime, pid);
+        ArgMax argmax = new ArgMax(bitSharesS, binaryTiShares, asymmetricBit,
+                pidMapper, commonSender, new LinkedList<>(protocolIdQueue),
+                clientId, Constants.binaryPrime, pid, partyCount);
         Future<Integer[]> argmaxTask = es.submit(argmax);
         pid++;
         
@@ -162,11 +174,10 @@ public class ID3 extends Model {
         }
         
         //compute the class index using the above result
-        initQueueMap(recQueues, pid);
-        DotProductNumber dp = new DotProductNumber(Arrays.asList(commonClassLabel), Arrays.asList(classIndexLabelMapping),
-                decimalTiShares, commonSender, recQueues.get(pid), 
+        DotProductInteger dp = new DotProductInteger(Arrays.asList(commonClassLabel), Arrays.asList(classIndexLabelMapping),
+                decimalTiShares, pidMapper, commonSender, 
                 new LinkedList<>(protocolIdQueue),
-                clientId, Constants.prime, pid, oneShare);
+                clientId, Constants.prime, pid, asymmetricBit, partyCount);
             
         Future<Integer> ci = es.submit(dp);
         Integer[] commonClass = new Integer[2];
@@ -179,11 +190,10 @@ public class ID3 extends Model {
         }
         
         //compute the si using argmax result
-        initQueueMap(recQueues, pid);
-        DotProductNumber dp2 = new DotProductNumber(Arrays.asList(commonClassLabel), 
+        DotProductInteger dp2 = new DotProductInteger(Arrays.asList(commonClassLabel), 
                 Arrays.asList(classIndexLabelMapping), decimalTiShares, 
-                commonSender, recQueues.get(pid), new LinkedList<>(protocolIdQueue), clientId, 
-                Constants.prime, pid, oneShare);
+                pidMapper, commonSender, new LinkedList<>(protocolIdQueue), clientId, 
+                Constants.prime, pid, asymmetricBit, partyCount);
         
         Future<Integer> si = es.submit(dp2);
         pid++;
@@ -209,7 +219,7 @@ public class ID3 extends Model {
     Integer ID3_Model(Integer[] transactions, Integer[] attributes, int r) {
         //Finding the most common class Label
         Integer[] ci = findCommonClassIndex(transactions);
-        ExecutorService es = Executors.newFixedThreadPool(Constants.threadCount);
+        ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
         //Check the stopping criteria
         if(r==0) {
             return ci[0];
@@ -220,10 +230,10 @@ public class ID3 extends Model {
         for(int i=0;i<datasetSize;i++) {
             transactionCount+=subsetTransactionsBitVector[i];
         }
-        initQueueMap(recQueues, pid);
+        
         Equality eq = new Equality(transactionCount, ci[1], equalityTiShares.get(0), 
-                decimalTiShares.get(0), oneShare, commonSender, recQueues.get(pid), 
-                clientId, Constants.prime, pid, new LinkedList<>(protocolIdQueue));
+                decimalTiShares.get(0), asymmetricBit, pidMapper, commonSender, 
+                clientId, Constants.prime, pid, new LinkedList<>(protocolIdQueue), partyCount);
         Future<Integer> eqTask = es.submit(eq);
         pid++;
         int eqResult = 0;
@@ -240,12 +250,13 @@ public class ID3 extends Model {
         List<Future<Integer[]>> UtaskList = new ArrayList<>();
         
         for(int i=0;i<classLabelCount;i++) {
-            initQueueMap(recQueues, i+pid);
             //TODO - regulate the batch size and call in iterations
-            BatchMultiplicationNumber batchMult = new BatchMultiplicationNumber(Arrays.asList(subsetTransactionsBitVector), 
-                    Arrays.asList(classValueBitVector.get(i)), binaryTiShares, 
-                    commonSender, recQueues.get(i+pid), new LinkedList<>(protocolIdQueue), clientId, 
-                    Constants.binaryPrime, pid, oneShare, 0);
+            BatchMultiplicationInteger batchMult = new BatchMultiplicationInteger(Arrays.asList(subsetTransactionsBitVector),
+                    Arrays.asList(classValueBitVector.get(i)), decimalTiShares,
+                    pidMapper, commonSender, new LinkedList<>(protocolIdQueue),
+                    clientId, Constants.prime, pid, asymmetricBit, modelProtocolId, partyCount);
+            pid++;    
+                   
             Future<Integer[]> batchMultTask = es.submit(batchMult);
             UtaskList.add(batchMultTask);
         }
@@ -274,11 +285,10 @@ public class ID3 extends Model {
                 Y[k][j] = 0;
                 for(int i=0;i<classLabelCount;i++) { //For each class value
                     //compute xij
-                    initQueueMap(recQueues, pid+i);
-                    DotProductNumber dp = new DotProductNumber(Arrays.asList(U.get(i)), 
+                    DotProductByte dp = new DotProductByte(Arrays.asList(U.get(i)), 
                         Arrays.asList(attrValueBitVector.get(k).get(j)), binaryTiShares, 
-                        commonSender, recQueues.get(pid+i), new LinkedList<>(protocolIdQueue), 
-                        clientId, Constants.prime, pid+i, oneShare);
+                        pidMapper, commonSender, new LinkedList<>(protocolIdQueue), 
+                        clientId, Constants.binaryPrime, pid, asymmetricBit, partyCount);
                     Future<Integer> dpTask = es.submit(dp);
                     xTasks.add(dpTask);
                     
@@ -302,11 +312,10 @@ public class ID3 extends Model {
             //Compute x^2
             List<Future<Integer[]>> batchMultTasks = new ArrayList<>();
             for(int i=0;i<classLabelCount;i++) {
-                initQueueMap(recQueues, pid+i);
-                BatchMultiplicationNumber batchMult = new BatchMultiplicationNumber(Arrays.asList(X[k][i]), 
-                        Arrays.asList(X[k][i]), decimalTiShares, commonSender, 
-                        recQueues.get(pid+i), new LinkedList<>(protocolIdQueue), 
-                        clientId, Constants.prime, pid+i, oneShare, 0);
+                BatchMultiplicationInteger batchMult = new BatchMultiplicationInteger(Arrays.asList(X[k][i]), 
+                        Arrays.asList(X[k][i]), decimalTiShares, pidMapper, commonSender, 
+                        new LinkedList<>(protocolIdQueue), 
+                        clientId, Constants.prime, pid, asymmetricBit, modelProtocolId, partyCount);
                 Future<Integer[]> bmTask = es.submit(batchMult);
                 batchMultTasks.add(bmTask);
             }
@@ -328,11 +337,11 @@ public class ID3 extends Model {
             }
             
             Integer YProd = Y[k][0];
-            initQueueMap(recQueues, pid);
             for(int j=1;j<attrValueCount;j++) {
-                Multiplication mult = new Multiplication(YProd, Y[k][j], decimalTiShares.get(0), 
-                        commonSender, recQueues.get(pid), new LinkedList<>(protocolIdQueue), 
-                        clientId, Constants.prime, pid, oneShare, 0);
+                MultiplicationInteger mult = new MultiplicationInteger(YProd, Y[k][j], decimalTiShares.get(0), 
+                        pidMapper, commonSender, new LinkedList<>(protocolIdQueue), 
+                        clientId, Constants.prime, pid, asymmetricBit, 0, partyCount);
+                pid++;
                 Future<Integer> multTask = es.submit(mult);
                 try {
                     YProd = multTask.get();

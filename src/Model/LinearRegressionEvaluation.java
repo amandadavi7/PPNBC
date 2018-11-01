@@ -7,57 +7,68 @@ package Model;
 
 import Communication.Message;
 import Protocol.DotProductReal;
-import TrustedInitializer.Triple;
+import Protocol.Utility.BatchTruncation;
+import TrustedInitializer.TripleReal;
+import TrustedInitializer.TruncationPair;
 import Utility.Constants;
-import java.io.FileWriter;
-import java.io.IOException;
+import Utility.FileIO;
+import Utility.Logging;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
 import java.util.concurrent.*;
 import java.util.logging.*;
 
 /**
- * Each party receives the shares of x and the co-efficients(beta) and computes 
+ * Each party receives the shares of x and the co-efficients(beta) and computes
  * the shares of y, such that y = beta.x
- * 
+ *
  * @author anisha
  */
 public class LinearRegressionEvaluation extends Model {
 
+    private static final Logger LOGGER = Logger.getLogger(LinearRegressionEvaluation.class.getName());
     List<List<BigInteger>> x;
     List<BigInteger> beta;
-    List<BigInteger> y;
-    int testCases;
+    BigInteger[] y;
     BigInteger prime;
+    String outputPath;
+    int testCases;
+    List<TripleReal> realTiShares;
+    List<TruncationPair> truncationTiShares;
 
     /**
      * Constructor
-     * @param x     data matrix 
-     * @param beta  co-efficient array
-     * @param decimalTriples
-     * @param oneShares
+     *
+     * @param realTriples
+     * @param truncationShares
+     * @param asymmetricBit
+     * @param pidMapper
      * @param senderQueue
-     * @param receiverQueue 
      * @param clientId
-     * @param prime 
+     * @param partyCount
+     * @param args
+     * @param protocolIdQueue
+     * @param protocolID
+     *
      */
-    public LinearRegressionEvaluation(List<List<BigInteger>> x,
-            List<BigInteger> beta, List<Triple> decimalTriples,
-            int oneShares, BlockingQueue<Message> senderQueue,
-            BlockingQueue<Message> receiverQueue, int clientId, 
-            BigInteger prime) {
+    public LinearRegressionEvaluation(List<TripleReal> realTriples,
+            List<TruncationPair> truncationShares, int asymmetricBit,
+            ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper,
+            BlockingQueue<Message> senderQueue, int clientId, int partyCount,
+            String[] args, Queue<Integer> protocolIdQueue, int protocolID) {
 
-        super(senderQueue, receiverQueue, clientId, oneShares, null, 
-                decimalTriples);
+        super(pidMapper, senderQueue, clientId, asymmetricBit, partyCount, protocolIdQueue, protocolID);
+        this.realTiShares = realTriples;
+        this.truncationTiShares = truncationShares;
 
-        this.x = x;
-        this.beta = beta;
-        this.prime = prime;
-        testCases = x.size();
-        y = new ArrayList<>();
+        prime = BigInteger.valueOf(2).pow(Constants.INTEGER_PRECISION
+                + 2 * Constants.DECIMAL_PRECISION + 1).nextProbablePrime();  //Zq must be a prime field
 
+        initalizeModelVariables(args);
+        
     }
 
     /**
@@ -65,10 +76,16 @@ public class LinearRegressionEvaluation extends Model {
      */
     public void predictValues() {
 
-        startModelHandlers();
+        long startTime = System.currentTimeMillis();
         computeDotProduct();
-        teardownModelHandlers();
-        writeToCSV();
+        long stopTime = System.currentTimeMillis();
+        long elapsedTime = stopTime - startTime;
+        //TODO: push time to a csv file
+        LOGGER.log(Level.INFO, "Avg time duration:{0} for partyId:{1}, "
+                + "for size:{2}", new Object[]{elapsedTime, clientId, y.length});
+        
+        // TODO make it async
+        FileIO.writeToCSV(y, outputPath, "y", clientId);
         
     }
 
@@ -77,64 +94,85 @@ public class LinearRegressionEvaluation extends Model {
      * y[i] = x[i].beta
      */
     public void computeDotProduct() {
-        ExecutorService es = Executors.newFixedThreadPool(Constants.threadCount);
+        ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
         List<Future<BigInteger>> taskList = new ArrayList<>();
 
         int tiStartIndex = 0;
-        long startTime = System.currentTimeMillis();
         for (int i = 0; i < testCases; i++) {
 
-            initQueueMap(recQueues,i);
-            
             DotProductReal DPModule = new DotProductReal(x.get(i),
-                    beta, decimalTiShares.subList(
-                            tiStartIndex, tiStartIndex+x.get(i).size()), 
-                    commonSender, recQueues.get(i), 
+                    beta, realTiShares.subList(
+                            tiStartIndex, tiStartIndex + x.get(i).size()),
+                    pidMapper, commonSender, 
                     new LinkedList<>(protocolIdQueue),
-                    clientId, prime, i, oneShare);
+                    clientId, prime, i, asymmetricBit, partyCount);
 
             Future<BigInteger> DPTask = es.submit(DPModule);
             taskList.add(DPTask);
-            tiStartIndex += tiStartIndex+x.get(i).size();
+            tiStartIndex += x.get(i).size();
         }
-
-        es.shutdown();
-
+        
+        BigInteger[] dotProductResult = new BigInteger[testCases];
         for (int i = 0; i < testCases; i++) {
             Future<BigInteger> dWorkerResponse = taskList.get(i);
             try {
                 BigInteger result = dWorkerResponse.get();
-                y.add(result);
-                System.out.println(" #:" + i);
-            } catch (InterruptedException ex) {
-                Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
-            } catch (ExecutionException ex) {
-                Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
-            }
+                dotProductResult[i] = result;
+            } catch (InterruptedException | ExecutionException ex) {
+                LOGGER.log(Level.SEVERE, null, ex);
+            } 
         }
 
-        long stopTime = System.currentTimeMillis();
-        long elapsedTime = stopTime - startTime;
-        //TODO: push time to a csv file
-        System.out.println("Avg time duration:" + elapsedTime);
+        BatchTruncation truncationModule = new BatchTruncation(dotProductResult,
+                truncationTiShares, pidMapper, 
+                commonSender,
+                new LinkedList<>(protocolIdQueue),
+                clientId, prime, testCases, asymmetricBit, partyCount);
+        Future<BigInteger[]> truncationTask = es.submit(truncationModule);
+
+        try {
+            y = truncationTask.get();
+        } catch (InterruptedException | ExecutionException ex) {
+            LOGGER.log(Level.SEVERE, null, ex);
+        }
+        
+        es.shutdown();
     }
 
     /**
-     * Push results of the prediction (shares) to a csv to send it to the client
-     * 
-     * TODO: Move this to FileIO Utility
+     * initialize input variables from command line
+     *
+     * @param args command line arguments
      */
-    private void writeToCSV() {
-        try {
-            FileWriter writer = new FileWriter("y_"+clientId+".csv");
-            for(int i=0;i<testCases;i++) {
-                writer.write(y.get(i).toString());
-                writer.write("\n");
+    private void initalizeModelVariables(String[] args) {
+        for (String arg : args) {
+            String[] currInput = arg.split("=");
+            if (currInput.length < 2) {
+                Logging.partyUsage();
+                System.exit(0);
             }
-        } catch (IOException ex) {
-            Logger.getLogger(LinearRegressionEvaluation.class.getName()).log(Level.SEVERE, null, ex);
+            String command = currInput[0];
+            String value = currInput[1];
+
+            switch (command) {
+                case "xCsv":
+                    x = FileIO.loadMatrixFromFile(value);
+                    break;
+                case "beta":
+                    beta = FileIO.loadListFromFile(value);
+                    break;
+                case "output":
+                    outputPath = value;
+                    break;
+
+            }
+
         }
-        
+        if(x == null || beta == null) {
+            System.exit(1);
+        }
+        testCases = x.size();
+        y = new BigInteger[testCases];
     }
 
 }

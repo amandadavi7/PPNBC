@@ -9,128 +9,113 @@ import Utility.Connection;
 import Utility.Constants;
 import Utility.Logging;
 import java.net.ServerSocket;
-import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 /**
+ * Trusted Initializer that generates the randomness
  *
  * @author keerthanaa
  */
 public class TI {
-    
-    static int tiPort, decTriples, binTriples, equalityCount;
-    static TIShare[] uvw;
-    
+
+    static int tiPort, clientCount, decTriples, binTriples, bigIntTriples, 
+            truncationPairs, equalityCount;
+    static TIShare[] tiShare;
+
     /**
      * Constructor
-     * 
-     * @param port
-     * @param count1
-     * @param count2 
+     *
+     * @param args
      */
-    public static void initializeVariables(String port,String count1, String count2, String count3){
-        tiPort = Integer.parseInt(port);
-        decTriples = Integer.parseInt(count1);
-        binTriples = Integer.parseInt(count2);
-        equalityCount = Integer.parseInt(count3);
-        uvw = new TIShare[Constants.clientCount];
-        for(int i=0;i<Constants.clientCount;i++){
-            uvw[i] = new TIShare();
-        }
-    }
-    
-    /**
-     * Function to generate the given number of decimal and binary triples,
-     * and splits them into shares for the parties
-     */
-    public static void generateUVW(){
-        Random rand = new Random();
-        for(int i=0;i<decTriples;i++){
-            int U = rand.nextInt(Constants.prime)+1;
-            int V = rand.nextInt((Constants.prime-1)/U + 1);
-            int W = U*V;
-            int usum = 0, vsum = 0, wsum = 0;
-            for(int j=0;j<Constants.clientCount-1;j++){
-                Triple t = new Triple();
-                t.u = rand.nextInt(Constants.prime);
-                t.v = rand.nextInt(Constants.prime);
-                t.w = rand.nextInt(Constants.prime);
-                usum+=t.u;
-                vsum+=t.v;
-                wsum+=t.w;
-                uvw[j].addDecimal(t);
+    public static void initializeVariables(String[] args) {
+
+        for (String arg : args) {
+            String[] currInput = arg.split("=");
+            if (currInput.length < 2) {
+                Logging.tiUsage();
+                System.exit(0);
             }
-            Triple t = new Triple();
-            t.u = Math.floorMod(U-usum, Constants.prime);
-            t.v = Math.floorMod(V-vsum, Constants.prime);
-            t.w = Math.floorMod(W-wsum, Constants.prime);
-            uvw[Constants.clientCount-1].addDecimal(t);
+            String command = currInput[0];
+            String value = currInput[1];
+            switch (command) {
+                case "port":
+                    tiPort = Integer.parseInt(value);
+                    break;
+                case "partyCount":
+                    clientCount = Integer.valueOf(value);
+                    break;
+                case "decimal":
+                    decTriples = Integer.parseInt(value);
+                    break;
+                case "binary":
+                    binTriples = Integer.valueOf(value);
+                    break;
+                case "real":
+                    bigIntTriples = Integer.parseInt(value);
+                    break;
+                case "truncation":
+                    truncationPairs = Integer.valueOf(value);
+                    break;
+                case "equality":
+                    equalityCount = Integer.parseInt(value);
+                    break;
+            }
+        }
+
+        tiShare = new TIShare[clientCount];
+        for (int i = 0; i < clientCount; i++) {
+            tiShare[i] = new TIShare();
         }
         
-        for(int i=0;i<binTriples;i++){
-            int U = rand.nextInt(Constants.binaryPrime);
-            int V = rand.nextInt(Constants.binaryPrime);
-            int W = U*V;
-            int usum = 0, vsum = 0, wsum = 0;
-            for(int j=0;j<Constants.clientCount-1;j++){
-                Triple t = new Triple();
-                t.u = rand.nextInt(Constants.binaryPrime);
-                t.v = rand.nextInt(Constants.binaryPrime);
-                t.w = rand.nextInt(Constants.binaryPrime);
-                usum+=t.u;
-                vsum+=t.v;
-                wsum+=t.w;
-                uvw[j].addBinary(t);
-            }
-            Triple t = new Triple();
-            t.u = Math.floorMod(U-usum, Constants.binaryPrime);
-            t.v = Math.floorMod(V-vsum, Constants.binaryPrime);
-            t.w = Math.floorMod(W-wsum, Constants.binaryPrime);
-            uvw[Constants.clientCount-1].addBinary(t);
-        }
-        
-        for(int i=0;i<equalityCount;i++) {
-            int R = rand.nextInt(Constants.prime-1) + 1;
-            int rsum = 0;
-            for(int j=0;j<Constants.clientCount-1;j++){
-                int r = rand.nextInt(Constants.prime);
-                rsum+=r;
-                uvw[j].addEquality(r);
-            }
-            int r = Math.floorMod(R-rsum, Constants.prime);
-            uvw[Constants.clientCount-1].addEquality(r);
-        }
     }
+
     
+
     /**
      * Send shares to parties
      */
-    public static void sendShares(){
+    public static void sendShares() {
         System.out.println("Sending shares to parties");
         ServerSocket tiserver = Connection.createServerSocket(tiPort);
-        
-        for(int i=0;i<Constants.clientCount;i++){
-            ExecutorService send = Executors.newSingleThreadExecutor();
-            Runnable sendtask = new TItoPeerCommunication(tiserver, uvw[i]);
+
+        ExecutorService send = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
+        for (int i = 0; i < clientCount; i++) {
+
+            Runnable sendtask = new TItoPeerCommunication(tiserver, tiShare[i]);
             send.execute(sendtask);
-            send.shutdown();
+
         }
+        send.shutdown();
     }
-    
+
+    /**
+     * Main method
+     *
+     * @param args
+     */
     public static void main(String[] args) {
-        if(args.length < 4){
+        if (args.length < 4) {
             Logging.tiUsage();
             System.exit(0);
         }
-        
-        initializeVariables(args[0],args[1],args[2],args[3]);
-        
-        System.out.println("Generating " + decTriples+" decimal triples, " + 
-                binTriples + " binary triples and " + equalityCount + " equality shares");
-        generateUVW();
-        
-        sendShares();        
+
+        initializeVariables(args);
+
+        generateRandomShares();
+        System.out.println("Generated shares");
+
+        sendShares();
     }
+
+    private static void generateRandomShares() {
+        RandomGenerator.generateDecimalTriples(decTriples, clientCount, tiShare);
+        RandomGenerator.generateBinaryTriples(binTriples, clientCount, tiShare);
+        RandomGenerator.generateBigIntTriples(bigIntTriples, clientCount, tiShare);
+        RandomGenerator.generateTruncationPairs(truncationPairs, clientCount, tiShare);
+        RandomGenerator.generateEqualityShares(equalityCount, clientCount, tiShare);
+    }
+
     
+
 }

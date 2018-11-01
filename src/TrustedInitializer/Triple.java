@@ -5,20 +5,16 @@
  */
 package TrustedInitializer;
 
-import java.io.Serializable;
-
 /**
+ * Triple interface
  *
  * @author keerthanaa
  */
-public class Triple implements Serializable{
-    public int u,v,w;
-    
+public interface Triple {
+
     /**
-     * Logs the Triplet
+     *
      */
-    public void log() {
-        System.out.println("ti share: u:"+u+", v:"+v+", w:"+w);
-    }
-    
+    public void log();
+
 }
