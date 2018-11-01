@@ -137,7 +137,7 @@ public class Party {
 
         callModel(args);
 
-        tearDownSocket();
+        checkAndTearDownSocket();
     }
 
     /**
@@ -202,7 +202,9 @@ public class Party {
     /**
      * shut down the party sockets
      */
-    private static void tearDownSocket() {
+    private static void checkAndTearDownSocket() {
+        while(!senderQueue.isEmpty()){
+        }
         partySocketEs.shutdownNow();
     }
 
