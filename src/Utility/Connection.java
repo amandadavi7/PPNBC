@@ -25,15 +25,10 @@ public class Connection {
      *
      * @param port
      * @return socket
+     * @throws java.io.IOException
      */
-    public static ServerSocket createServerSocket(int port) {
-        ServerSocket socket = null;
-        try {
-            socket = new ServerSocket(port);
-        } catch (IOException ex) {
-            Logger.getLogger(Connection.class.getName())
-                    .log(Level.SEVERE, null, ex);
-        }
+    public static ServerSocket createServerSocket(int port) throws IOException {
+        ServerSocket socket = new ServerSocket(port);
         return socket;
     }
 
@@ -42,16 +37,11 @@ public class Connection {
      *
      * @param serverSocket
      * @return true - if successfully closed
+     * @throws java.io.IOException
      */
-    public static boolean closeServerSocket(ServerSocket serverSocket) {
+    public static boolean closeServerSocket(ServerSocket serverSocket) throws IOException {
         System.out.println("Closing server socket");
-        try {
-            serverSocket.close();
-        } catch (IOException ex) {
-            Logger.getLogger(Connection.class.getName())
-                    .log(Level.SEVERE, null, ex);
-            return false;
-        }
+        serverSocket.close();
         return true;
     }
 
@@ -61,20 +51,11 @@ public class Connection {
      * @param ip
      * @param port
      * @return socket
+     * @throws java.io.IOException
      */
-    public static Socket initializeClientConnection(String ip, int port) {
-        Socket socket = null;
-        try {
-            socket = new Socket(ip, port);
-
-        } catch (ConnectException ex) {
-            socket = null;
-        } catch (IOException ex) {
-            Logger.getLogger(Connection.class.getName())
-                    .log(Level.SEVERE, null, ex);
-        }
+    public static Socket initializeClientConnection(String ip, int port) throws IOException {
+        Socket socket = new Socket(ip, port);
         return socket;
-
     }
 
 }

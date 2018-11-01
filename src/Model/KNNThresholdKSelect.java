@@ -137,6 +137,8 @@ public class KNNThresholdKSelect extends Model {
      * converted comparison output to decimal prime
      * @param thresholds
      * @return 
+     * @throws java.lang.InterruptedException 
+     * @throws java.util.concurrent.ExecutionException 
      */
     public Integer[] getComparisonResults(int[] thresholds) throws InterruptedException, ExecutionException {
         Integer[] comparisonResults = new Integer[trainingSharesCount];
@@ -156,11 +158,7 @@ public class KNNThresholdKSelect extends Model {
         es.shutdown();
         for (int i = 0; i < trainingSharesCount; i++) {
             Future<Integer> task = ccTaskList.get(i);
-            try {
-                comparisonResults[i] = task.get();
-            } catch (InterruptedException | ExecutionException ex) {
-                Logger.getLogger(KNNThresholdKSelect.class.getName()).log(Level.SEVERE, null, ex);
-            }
+            comparisonResults[i] = task.get();
         }
 
         List<Integer> dummy = new ArrayList<>(Collections.nCopies(trainingSharesCount, 0));
@@ -192,7 +190,7 @@ public class KNNThresholdKSelect extends Model {
      * @return 
      */
     public int[] getThreshold(int lbound_numerator, int lbound_denominator,
-            int ubound_numerator, int ubound_denominator) {
+            int ubound_numerator, int ubound_denominator) throws InterruptedException, ExecutionException {
         ExecutorService es = Executors.newFixedThreadPool(3);
         MultiplicationInteger mult1 = new MultiplicationInteger(lbound_numerator,
                 ubound_denominator, decimalTiShares.get(decimalTiIndex), pidMapper,
@@ -214,18 +212,9 @@ public class KNNThresholdKSelect extends Model {
         Future<Integer> task3 = es.submit(mult3);
         es.shutdown();
         int[] thresholds = new int[2];
-        try {
-            thresholds[0] = Math.floorMod(task1.get() + task2.get(), prime);
-        } catch (InterruptedException | ExecutionException ex) {
-            Logger.getLogger(KNNThresholdKSelect.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        thresholds[0] = Math.floorMod(task1.get() + task2.get(), prime);
         
-        int p = 0;
-        try {
-            p = task3.get();
-        } catch (InterruptedException | ExecutionException ex) {
-            Logger.getLogger(KNNThresholdKSelect.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        int p = task3.get();
         
         thresholds[1] = Math.floorMod(2*p, prime);
         
@@ -278,14 +267,8 @@ public class KNNThresholdKSelect extends Model {
             Future<Integer> ltTask = es.submit(lessThanModule);
             pid++;
             
-            int gt = 0, lt = 0;
-            try {
-                gt = gtTask.get();
-                lt = ltTask.get();
-            } catch (InterruptedException | ExecutionException ex) {
-                Logger.getLogger(KNNThresholdKSelect.class.getName()).log(Level.SEVERE, null, ex);
-            }
-
+            int gt = gtTask.get();
+               int lt = ltTask.get();
             LOGGER.fine("lt: " + lt + " gt: " + gt);
             
             MultiplicationByte multTask = new MultiplicationByte(gt, lt,
@@ -300,13 +283,9 @@ public class KNNThresholdKSelect extends Model {
             Message senderMessage = new Message(ltgt, clientId, protocolIdQueue);
             Message receivedMessage = null;
             int ltgt_party = 0;
-            try {
-                commonSender.put(senderMessage);
+            commonSender.put(senderMessage);
                 receivedMessage = pidMapper.get(protocolIdQueue).take();
                 ltgt_party = (int) receivedMessage.getValue();
-            } catch (InterruptedException ex) {
-                Logger.getLogger(KNNThresholdKSelect.class.getName()).log(Level.SEVERE, null, ex);
-            }
             stoppingBit = (ltgt + ltgt_party) % 2;
             if(stoppingBit == 1) {
                 break;
@@ -396,11 +375,7 @@ public class KNNThresholdKSelect extends Model {
             List<List<Integer>> bitDResults = new ArrayList<>();
             for(int i=0;i<batchSize;i++){
                 Future<List<Integer>> bitDtask = bitDTasks.get(i);
-                try {
-                    bitDResults.add(bitDtask.get());
-                } catch (InterruptedException | ExecutionException ex) {
-                    Logger.getLogger(KNNThresholdKSelect.class.getName()).log(Level.SEVERE, null, ex);
-                }
+                bitDResults.add(bitDtask.get());
             }
             
             List<Future<Integer>> compTasks = new ArrayList<>();
@@ -416,23 +391,14 @@ public class KNNThresholdKSelect extends Model {
             
             for(int i=0;i<batchSize;i++){
                 Future<Integer> compTask = compTasks.get(i);
-                try {
-                    compResults[i] = compTask.get();
-                } catch (InterruptedException | ExecutionException ex) {
-                    Logger.getLogger(KNNThresholdKSelect.class.getName()).log(Level.SEVERE, null, ex);
-                }
+                compResults[i] = compTask.get();
             }
             
             Message senderMessage = new Message(compResults, clientId, protocolIdQueue);
-            Message receivedMessage = null;
             int[] compResults_party = null;
-            try {
-                commonSender.put(senderMessage);
-                receivedMessage = pidMapper.get(protocolIdQueue).take();
+            commonSender.put(senderMessage);
+                Message receivedMessage = pidMapper.get(protocolIdQueue).take();
                 compResults_party = (int[]) receivedMessage.getValue();
-            } catch (InterruptedException ex) {
-                Logger.getLogger(KNNThresholdKSelect.class.getName()).log(Level.SEVERE, null, ex);
-            }
             for(int i=0;i<batchSize;i++){
                 
                 if((compResults[i] + compResults_party[i])%2==1) {
@@ -459,14 +425,10 @@ public class KNNThresholdKSelect extends Model {
 
         for(i=0;i<taskList.size();i++) {
             Future<Integer[]> task = taskList.get(i);
-            try {
-                Integer[] products = task.get();
+            Integer[] products = task.get();
                 for(int p: products) {
                     classLabelSum += p;
                 }
-            } catch (InterruptedException | ExecutionException ex) {
-                Logger.getLogger(KNNThresholdKSelect.class.getName()).log(Level.SEVERE, null, ex);
-            }
         }
         
         
@@ -492,14 +454,9 @@ public class KNNThresholdKSelect extends Model {
         pid++;
         //binaryTiIndex += bitDTICount;
         Future<List<Integer>> bitTaskZero = es.submit(bitDModuleZero);
-        List<Integer> numOfOnePredictions = null, numOfZeroPredictions = null;
         es.shutdown();
-        try {
-            numOfOnePredictions = bitTaskOne.get();
-            numOfZeroPredictions = bitTaskZero.get();
-        } catch (InterruptedException | ExecutionException ex) {
-            Logger.getLogger(KNNSortAndSwap.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        List<Integer> numOfOnePredictions = bitTaskOne.get();
+        List<Integer>  numOfZeroPredictions = bitTaskZero.get();
 
         Comparison compClassLabels = new Comparison(numOfOnePredictions, numOfZeroPredictions,
                 binaryTiShares.subList(binaryTiIndex, binaryTiIndex + comparisonTICount),

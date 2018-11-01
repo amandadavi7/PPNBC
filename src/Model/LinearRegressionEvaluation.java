@@ -73,8 +73,10 @@ public class LinearRegressionEvaluation extends Model {
 
     /**
      * Compute shares of the prediction for each entry of the dataset:x
+     * @throws java.lang.InterruptedException
+     * @throws java.util.concurrent.ExecutionException
      */
-    public void predictValues() {
+    public void predictValues() throws InterruptedException, ExecutionException {
 
         long startTime = System.currentTimeMillis();
         computeDotProduct();
@@ -92,8 +94,10 @@ public class LinearRegressionEvaluation extends Model {
     /**
      * Compute the shares of the prediction using secure dot product such that
      * y[i] = x[i].beta
+     * @throws java.lang.InterruptedException
+     * @throws java.util.concurrent.ExecutionException
      */
-    public void computeDotProduct() {
+    public void computeDotProduct() throws InterruptedException, ExecutionException {
         ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
         List<Future<BigInteger>> taskList = new ArrayList<>();
 
@@ -115,12 +119,7 @@ public class LinearRegressionEvaluation extends Model {
         BigInteger[] dotProductResult = new BigInteger[testCases];
         for (int i = 0; i < testCases; i++) {
             Future<BigInteger> dWorkerResponse = taskList.get(i);
-            try {
-                BigInteger result = dWorkerResponse.get();
-                dotProductResult[i] = result;
-            } catch (InterruptedException | ExecutionException ex) {
-                LOGGER.log(Level.SEVERE, null, ex);
-            } 
+            dotProductResult[i] = dWorkerResponse.get();
         }
 
         BatchTruncation truncationModule = new BatchTruncation(dotProductResult,
@@ -130,12 +129,7 @@ public class LinearRegressionEvaluation extends Model {
                 clientId, prime, testCases, asymmetricBit, partyCount);
         Future<BigInteger[]> truncationTask = es.submit(truncationModule);
 
-        try {
-            y = truncationTask.get();
-        } catch (InterruptedException | ExecutionException ex) {
-            LOGGER.log(Level.SEVERE, null, ex);
-        }
-        
+        y = truncationTask.get();        
         es.shutdown();
     }
 

@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -75,8 +76,10 @@ public class LinearRegressionTraining extends Model {
 
     /**
      * Compute shares of the coefficients for the training dataset
+     * @throws java.lang.InterruptedException
+     * @throws java.util.concurrent.ExecutionException
      */
-    public void trainModel() {
+    public void trainModel() throws InterruptedException, ExecutionException {
 
         long startTime = System.currentTimeMillis();
         
@@ -93,24 +96,14 @@ public class LinearRegressionTraining extends Model {
 
         globalProtocolId++;
 
-        BigInteger[][] gamma1Inv = null;
-        try {
-            gamma1Inv = matrixInversion.call();
-        } catch (Exception ex) {
-            LOGGER.log(Level.SEVERE, null, ex);
-        }
+        BigInteger[][] gamma1Inv = matrixInversion.call();
         
         MatrixMultiplication matrixMultiplication = new MatrixMultiplication(gamma1Inv,
                 gamma2, realTriples, tiTruncationPair, clientId, prime, globalProtocolId,
                 asymmetricBit, pidMapper, commonSender,
                 new LinkedList<>(protocolIdQueue), partyCount);
 
-        BigInteger[][] beta = null;
-        try {
-            beta = matrixMultiplication.call();
-        } catch (Exception ex) {
-            LOGGER.log(Level.SEVERE, null, ex);
-        }
+        BigInteger[][] beta = matrixMultiplication.call();
         
         long stopTime = System.currentTimeMillis();
         long elapsedTime = stopTime - startTime;
