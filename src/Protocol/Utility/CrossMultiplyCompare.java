@@ -120,50 +120,13 @@ public class CrossMultiplyCompare extends CompositeProtocol implements Callable<
             Logger.getLogger(KNNSortAndSwap.class.getName()).log(Level.SEVERE, null, ex);
         }
         
-        // TODO - binaryTiShares sublist in bit decompositions
-        BitDecomposition firstTask = new BitDecomposition(first, binaryTiShares.subList(binaryTiIndex, 
-                                        binaryTiIndex + bitDTICount),
-                                        asymmetricBit, bitLength, pidMapper, senderQueue, 
-                                        new LinkedList<>(protocolIdQueue), 
-                                        clientID, binaryPrime, pid,partyCount);
-        pid++;
-        binaryTiIndex += bitDTICount;
-        Future<List<Integer>> future1 = es.submit(firstTask);
-        
-        BitDecomposition secondTask = new BitDecomposition(second, binaryTiShares.subList(binaryTiIndex, 
-                                        binaryTiIndex + bitDTICount),
-                                        asymmetricBit, bitLength, pidMapper, senderQueue, 
-                                        new LinkedList<>(protocolIdQueue), 
-                                        clientID, binaryPrime, pid,partyCount);
-        pid++;
-        binaryTiIndex += bitDTICount;
-        Future<List<Integer>> future2 = es.submit(secondTask);
-        
-        List<Integer> firstNumber = null, secondNumber = null;
-        try {
-            firstNumber = future1.get();
-            secondNumber = future2.get();            
-        } catch (InterruptedException | ExecutionException ex) {
-            Logger.getLogger(KNNSortAndSwap.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        
-        
-        // TODO - binaryti index management in Comparison
-        Comparison comparisonModule = new Comparison(firstNumber,
-                                     secondNumber, binaryTiShares.subList(binaryTiIndex, binaryTiIndex + comparisonTICount), 
-                                    asymmetricBit, pidMapper, senderQueue, new LinkedList<>(protocolIdQueue), 
-                                    clientID, binaryPrime, pid, partyCount);
-        
-        Future<Integer> comparisonTask = es.submit(comparisonModule);
-        pid++; 
-        //binaryTiIndex += comparisonTICount;
         es.shutdown();
-        int result = 0;
-        try {
-            result = comparisonTask.get();
-        } catch (InterruptedException | ExecutionException ex) {
-            Logger.getLogger(KNNSortAndSwap.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        
+        int result = CompareAndConvertField.compareIntegers(first, second, binaryTiShares,
+                asymmetricBit, pidMapper, senderQueue, protocolIdQueue, clientID,
+                pid, bitLength, partyCount, pid, false, null);
+        
+        //binaryTiIndex += 2*bitDTICount + comparisonTICount;
         
         return result;
     }

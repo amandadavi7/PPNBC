@@ -10,8 +10,8 @@ import Protocol.BitDecomposition;
 import Protocol.Comparison;
 import Protocol.MultiplicationByte;
 import Protocol.MultiplicationInteger;
-import Protocol.OR_XOR;
 import Protocol.Utility.BatchMultiplicationInteger;
+import Protocol.Utility.CompareAndConvertField;
 import Protocol.Utility.CrossMultiplyCompare;
 import Protocol.Utility.JaccardDistance;
 import TrustedInitializer.TripleByte;
@@ -21,7 +21,6 @@ import Utility.FileIO;
 import Utility.Logging;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
@@ -163,21 +162,10 @@ public class KNNThresholdKSelect extends Model {
             }
         }
 
-        List<Integer> dummy = new ArrayList<>(Collections.nCopies(trainingSharesCount, 0));
-        OR_XOR xorModule;
-        // Binary to decimal prime conversion
-        if (clientId == 1) {
-            xorModule = new OR_XOR(Arrays.asList(comparisonResults),
-                    dummy, decimalTiShares, asymmetricBit, 2, pidMapper, commonSender,
-                    new LinkedList<>(protocolIdQueue), clientId, prime, pid, partyCount);
-
-        } else {
-            xorModule = new OR_XOR(dummy, Arrays.asList(comparisonResults),
-                    decimalTiShares, asymmetricBit, 2, pidMapper, commonSender,
-                    new LinkedList<>(protocolIdQueue), clientId, prime, pid, partyCount);
-        }
+        comparisonResults = CompareAndConvertField.changeBinaryToDecimalField(Arrays.asList(comparisonResults),
+                decimalTiShares, pid, pidMapper, commonSender, protocolIdQueue,
+                asymmetricBit, clientId, prime, partyCount);
         pid++;
-        comparisonResults = xorModule.call();
 
         return comparisonResults;
     }
@@ -317,19 +305,13 @@ public class KNNThresholdKSelect extends Model {
             //Similarly, lbound = threshold if lt == 1 and lbound remains the same otherwise
             //lbound = threshold*lt + lbound*gt
             //convert primes of lt and gt from 2 to prime
-            OR_XOR xorModule;
-            if(asymmetricBit == 1) {
-                xorModule = new OR_XOR(Arrays.asList(lt, gt), Arrays.asList(0, 0),
-                        decimalTiShares, asymmetricBit, 2, pidMapper, commonSender,
-                        new LinkedList<>(protocolIdQueue), clientId, prime, pid, partyCount);
-            } else {
-                xorModule = new OR_XOR(Arrays.asList(0, 0), Arrays.asList(lt, gt),
-                        decimalTiShares, asymmetricBit, 2, pidMapper, commonSender,
-                        new LinkedList<>(protocolIdQueue), clientId, prime, pid, partyCount);
-            }
+            Integer[] xorOutputs = CompareAndConvertField.changeBinaryToDecimalField(Arrays.asList(lt, gt),
+                    decimalTiShares.subList(decimalTiIndex, decimalTiIndex+2),
+                    pid, pidMapper, commonSender, protocolIdQueue, asymmetricBit,
+                    clientId, prime, partyCount);
             
             pid++;
-            Integer[] xorOutputs = xorModule.call();
+            //decimalTiIndex+=2;
             
             BatchMultiplicationInteger bmInteger = new BatchMultiplicationInteger(
                     Arrays.asList(xorOutputs[0], xorOutputs[1], xorOutputs[0], 
@@ -370,21 +352,29 @@ public class KNNThresholdKSelect extends Model {
         int endIndex = K, distanceIndexStart = K-1;
         int batchSize = 20, sum = 0;
         int[] comparisonSum = new int[batchSize];
+        
+        //add the first K-1 comparison results
         for(int i=0;i<K-1;i++){
             sum += comparisonResults[i];
         }
         sum = Math.floorMod(sum, prime);
         
         boolean stoppingCriteria = false;
-        int[] compResults = new int[batchSize];
+        int[] compResults = new int[batchSize]; //result of comparison sum compared to K
+        
+        //As long as there are less than K elements that are within the threshold, keep looking further
         while(!stoppingCriteria) {
             comparisonSum[0] = Math.floorMod(sum + comparisonResults[distanceIndexStart], prime);
-            for(int i=1;i<batchSize;i++){
+            
+            // Doing this in case the number of training examples left is less than the batch size
+            int localBatchSize = Math.min(batchSize, trainingSharesCount-distanceIndexStart);
+            
+            for(int i=1;i<localBatchSize;i++){
                 comparisonSum[i] = Math.floorMod(comparisonSum[i-1] + comparisonResults[distanceIndexStart+i], prime);
             }
             
             List<Future<List<Integer>>> bitDTasks = new ArrayList<>();
-            for(int i=0;i<batchSize;i++){
+            for(int i=0;i<localBatchSize;i++){
                 BitDecomposition bitDmodule = new BitDecomposition(comparisonSum[i], 
                     binaryTiShares, asymmetricBit, bitLength, pidMapper, 
                     commonSender, new LinkedList<>(protocolIdQueue),
@@ -394,7 +384,7 @@ public class KNNThresholdKSelect extends Model {
                 bitDTasks.add(bitDtask);
             }
             List<List<Integer>> bitDResults = new ArrayList<>();
-            for(int i=0;i<batchSize;i++){
+            for(int i=0;i<localBatchSize;i++){
                 Future<List<Integer>> bitDtask = bitDTasks.get(i);
                 try {
                     bitDResults.add(bitDtask.get());
@@ -405,7 +395,7 @@ public class KNNThresholdKSelect extends Model {
             
             List<Future<Integer>> compTasks = new ArrayList<>();
             
-            for(int i=0;i<batchSize;i++) {
+            for(int i=0;i<localBatchSize;i++) {
                 Comparison comModule = new Comparison(bitDResults.get(i), KBitShares, binaryTiShares,
                     asymmetricBit, pidMapper, commonSender, new LinkedList<>(protocolIdQueue),
                     clientId, Constants.binaryPrime, pid, partyCount);
@@ -414,7 +404,7 @@ public class KNNThresholdKSelect extends Model {
                 compTasks.add(compTask);
             }
             
-            for(int i=0;i<batchSize;i++){
+            for(int i=0;i<localBatchSize;i++){
                 Future<Integer> compTask = compTasks.get(i);
                 try {
                     compResults[i] = compTask.get();
@@ -433,7 +423,7 @@ public class KNNThresholdKSelect extends Model {
             } catch (InterruptedException ex) {
                 Logger.getLogger(KNNThresholdKSelect.class.getName()).log(Level.SEVERE, null, ex);
             }
-            for(int i=0;i<batchSize;i++){
+            for(int i=0;i<localBatchSize;i++){
                 
                 if((compResults[i] + compResults_party[i])%2==1) {
                     endIndex = distanceIndexStart + i + 1;
@@ -441,8 +431,8 @@ public class KNNThresholdKSelect extends Model {
                     break;
                 }
             }
-            distanceIndexStart += batchSize;
-            sum = comparisonSum[batchSize-1];
+            distanceIndexStart += localBatchSize;
+            sum = comparisonSum[localBatchSize-1];
         }
         
         int i=0;
@@ -474,41 +464,10 @@ public class KNNThresholdKSelect extends Model {
         // The number of zeroCounts is just K - oneCount
         int zeroCount = Math.floorMod(asymmetricBit * K - classLabelSum, prime);
         
-        //Do a comparison between oneCount and zeroCount
-        BitDecomposition bitDModuleOne = new BitDecomposition(oneCount,
-                binaryTiShares.subList(binaryTiIndex, binaryTiIndex + bitDTICount),
-                asymmetricBit, bitLength, pidMapper, commonSender,
-                new LinkedList<>(protocolIdQueue), clientId, Constants.binaryPrime,
-                pid, partyCount);
-        pid++;
-        //binaryTiIndex += bitDTICount;
-        Future<List<Integer>> bitTaskOne = es.submit(bitDModuleOne);
-
-        BitDecomposition bitDModuleZero = new BitDecomposition(zeroCount,
-                binaryTiShares.subList(binaryTiIndex, binaryTiIndex + bitDTICount),
-                asymmetricBit, bitLength, pidMapper, commonSender,
-                new LinkedList<>(protocolIdQueue), clientId, Constants.binaryPrime,
-                pid, partyCount);
-        pid++;
-        //binaryTiIndex += bitDTICount;
-        Future<List<Integer>> bitTaskZero = es.submit(bitDModuleZero);
-        List<Integer> numOfOnePredictions = null, numOfZeroPredictions = null;
-        es.shutdown();
-        try {
-            numOfOnePredictions = bitTaskOne.get();
-            numOfZeroPredictions = bitTaskZero.get();
-        } catch (InterruptedException | ExecutionException ex) {
-            Logger.getLogger(KNNSortAndSwap.class.getName()).log(Level.SEVERE, null, ex);
-        }
-
-        Comparison compClassLabels = new Comparison(numOfOnePredictions, numOfZeroPredictions,
-                binaryTiShares.subList(binaryTiIndex, binaryTiIndex + comparisonTICount),
-                asymmetricBit, pidMapper, commonSender,
-                new LinkedList<>(protocolIdQueue), clientId, Constants.binaryPrime,
-                pid, partyCount);
-
-        predictedClassLabel = compClassLabels.call();
-        pid++;
+        predictedClassLabel = CompareAndConvertField.compareIntegers(oneCount, zeroCount, binaryTiShares,
+                asymmetricBit, pidMapper, commonSender, protocolIdQueue, clientId,
+                prime, bitLength, partyCount, pid, false, null);
+        pid+=3;
 
         return predictedClassLabel;
     }

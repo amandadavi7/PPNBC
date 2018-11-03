@@ -6,11 +6,9 @@
 package Model;
 
 import Communication.Message;
-import Protocol.BitDecomposition;
-import Protocol.Comparison;
 import Protocol.MultiplicationByte;
-import Protocol.OR_XOR;
 import Protocol.Utility.BatcherSortKNN;
+import Protocol.Utility.CompareAndConvertField;
 import Protocol.Utility.CrossMultiplyCompare;
 import Protocol.Utility.JaccardDistance;
 import Protocol.Utility.SwapCircuitKNN;
@@ -21,7 +19,6 @@ import Utility.FileIO;
 import Utility.Logging;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
@@ -237,49 +234,18 @@ public class KNNSortAndSwap extends Model {
             }
         }
 
-        //Do xor between comparison results to change the prime
-        List<Integer> dummy = new ArrayList<>(Collections.nCopies(K, 0));
-        OR_XOR xorComp = null, xorCompMults = null;
-
         // Convert comparisonResults and comparisonMultiplications from binary prime to decimal prime
-        if (asymmetricBit == 1) {
-            xorComp = new OR_XOR(Arrays.asList(comparisonResults), dummy, 
-                    decimalTiShares.subList(decimalTiIndex, decimalTiIndex + K),
-                    asymmetricBit, 2, pidMapper, commonSender, 
-                    new LinkedList<>(protocolIdQueue), clientId, prime, 
-                    pid, partyCount);
-            pid++;
-            //decimalTiIndex += K;
-            xorCompMults = new OR_XOR(Arrays.asList(comparisonMultiplications), 
-                    dummy, decimalTiShares.subList(decimalTiIndex, decimalTiIndex + K),
-                    asymmetricBit, 2, pidMapper, commonSender,
-                    new LinkedList<>(protocolIdQueue), clientId, prime, 
-                    pid, partyCount);
-        } else {
-            xorComp = new OR_XOR(dummy, Arrays.asList(comparisonResults), 
-                    decimalTiShares.subList(decimalTiIndex, decimalTiIndex + K),
-                    asymmetricBit, 2, pidMapper, commonSender, 
-                    new LinkedList<>(protocolIdQueue), clientId, prime, 
-                    pid, partyCount);
-            pid++;
-            //decimalTiIndex += K;
-            xorCompMults = new OR_XOR(dummy, Arrays.asList(comparisonMultiplications), 
-                    decimalTiShares.subList(decimalTiIndex, decimalTiIndex + K), asymmetricBit, 
-                    2, pidMapper, commonSender, new LinkedList<>(protocolIdQueue),
-                    clientId, prime, pid, partyCount);
-        }
-
-        Future<Integer[]> xorTask1 = es.submit(xorComp);
-        Future<Integer[]> xorTask2 = es.submit(xorCompMults);
+        comparisonResults = CompareAndConvertField.changeBinaryToDecimalField(
+                Arrays.asList(comparisonResults), decimalTiShares, pid, pidMapper,
+                commonSender, protocolIdQueue, asymmetricBit, clientId, prime, partyCount);
+        pid++;
+        //decimalTiIndex+=K;
+        
+        comparisonMultiplications = CompareAndConvertField.changeBinaryToDecimalField(
+                Arrays.asList(comparisonMultiplications), decimalTiShares, pid,
+                pidMapper, commonSender, protocolIdQueue, asymmetricBit, clientId, prime, partyCount);
         pid++;
         //decimalTiIndex += K;
-
-        try {
-            comparisonResults = xorTask1.get();
-            comparisonMultiplications = xorTask2.get();
-        } catch (InterruptedException | ExecutionException ex) {
-            Logger.getLogger(KNNSortAndSwap.class.getName()).log(Level.SEVERE, null, ex);
-        }
 
         List<Future<Integer[]>> swapTaskList = new ArrayList<>();
 
@@ -338,48 +304,12 @@ public class KNNSortAndSwap extends Model {
         // The number of zeroCounts is just K - oneCount
         int zeroCount = Math.floorMod(asymmetricBit * K - classLabelSum, prime);
 
-        ExecutorService es = Executors.newFixedThreadPool(2);
-
-        //Do a comparison between oneCount and zeroCount
-        BitDecomposition bitDModuleOne = new BitDecomposition(oneCount,
-                binaryTiShares.subList(binaryTiIndex, binaryTiIndex + bitDTICount), 
-                asymmetricBit, bitLength, pidMapper, commonSender,
-                new LinkedList<>(protocolIdQueue), clientId, Constants.binaryPrime, 
-                pid, partyCount);
-        pid++;
-        //binaryTiIndex += bitDTICount;
-        Future<List<Integer>> bitTaskOne = es.submit(bitDModuleOne);
-
-        BitDecomposition bitDModuleZero = new BitDecomposition(zeroCount,
-                binaryTiShares.subList(binaryTiIndex, binaryTiIndex + bitDTICount), 
-                asymmetricBit, bitLength, pidMapper, commonSender,
-                new LinkedList<>(protocolIdQueue), clientId, Constants.binaryPrime, 
-                pid, partyCount);
-        pid++;
-        //binaryTiIndex += bitDTICount;
-        Future<List<Integer>> bitTaskZero = es.submit(bitDModuleZero);
-        es.shutdown();
-        List<Integer> numOfOnePredictions = null, numOfZeroPredictions = null;
-        es.shutdown();
-        try {
-            numOfOnePredictions = bitTaskOne.get();
-            numOfZeroPredictions = bitTaskZero.get();
-        } catch (InterruptedException | ExecutionException ex) {
-            Logger.getLogger(KNNSortAndSwap.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        Comparison compClassLabels = new Comparison(numOfOnePredictions, numOfZeroPredictions, 
-                binaryTiShares.subList(binaryTiIndex, binaryTiIndex + comparisonTICount),
-                asymmetricBit, pidMapper, commonSender,
-                new LinkedList<>(protocolIdQueue), clientId, Constants.binaryPrime, 
-                pid, partyCount);
-
-        try {
-            predictedClassLabel = compClassLabels.call();
-        } catch (Exception ex) {
-            Logger.getLogger(KNNSortAndSwap.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        pid++;
-        //binaryTiIndex += comparisonTICount;
+        predictedClassLabel = CompareAndConvertField.compareIntegers(oneCount, zeroCount,
+                binaryTiShares, asymmetricBit, pidMapper, commonSender, protocolIdQueue,
+                clientId, prime, bitLength, partyCount, pid, false, null);
+        
+        pid+=3;
+        //binaryTiIndex += 2*bitDTICount + comparisonTICount;
         
         return predictedClassLabel;
     }
