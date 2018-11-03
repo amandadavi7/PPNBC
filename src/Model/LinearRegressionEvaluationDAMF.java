@@ -48,6 +48,8 @@ public class LinearRegressionEvaluationDAMF extends Model {
      * @param clientId
      * @param partyCount
      * @param args
+     * @param protocolIdQueue
+     * @param protocolID
      *
      */
     public LinearRegressionEvaluationDAMF(int asymmetricBit,

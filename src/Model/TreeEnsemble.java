@@ -72,15 +72,11 @@ public class TreeEnsemble extends Model {
             ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper,
             BlockingQueue<Message> senderQueue, int clientId, List<TripleByte> binaryTriples,
             List<TripleInteger> decimalTriples, int partyCount, String[] args,
-            Queue<Integer> protocolIdQueue, int protocolID) {
+            Queue<Integer> protocolIdQueue, int protocolID) throws IOException {
 
         super(pidMapper, senderQueue, clientId, asymmetricBit, partyCount, protocolIdQueue, protocolID);
 
-        try {
-            initializeModelVariables(args);
-        } catch (IOException ex) {
-            Logger.getLogger(TreeEnsemble.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        initializeModelVariables(args);
         pid = 0;
         this.binaryTiShares = binaryTriples;
         this.decimalTiShares = decimalTriples;
