@@ -43,6 +43,8 @@ public class Constants {
     public static final int NEWTON_RAPHSON_ROUNDS;
 
     static {
+        System.setProperty("java.util.logging.SimpleFormatter.format", 
+            "%1$tF %1$tT %4$s %2$s %5$s%6$s%n");
         Properties prop = new Properties();
         Properties defaultProperty = new Properties();
         InputStream input = ClassLoader.getSystemClassLoader().getResourceAsStream(DEFAULT_PROPERTIES);
