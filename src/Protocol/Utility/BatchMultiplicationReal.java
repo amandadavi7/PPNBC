@@ -26,6 +26,7 @@ import java.util.logging.Logger;
 public class BatchMultiplicationReal extends BatchMultiplication
         implements Callable<BigInteger[]> {
 
+    private static final Logger LOGGER = Logger.getLogger(BatchMultiplicationReal.class.getName());
     List<BigInteger> x;
     List<BigInteger> y;
     List<TripleReal> tiShares;
@@ -64,7 +65,6 @@ public class BatchMultiplicationReal extends BatchMultiplication
         this.tiShares = tiShares;
     }
 
-    
     /**
      * Waits for the shares of (x-u) and (y-v), computes the product and returns
      * the value
@@ -80,22 +80,21 @@ public class BatchMultiplicationReal extends BatchMultiplication
 
         initProtocol();
         Message receivedMessage = null;
-        List<BigInteger> d = new ArrayList<>(Collections.nCopies(batchSize, 
+        List<BigInteger> d = new ArrayList<>(Collections.nCopies(batchSize,
                 BigInteger.ZERO));
-        List<BigInteger> e = new ArrayList<>(Collections.nCopies(batchSize, 
+        List<BigInteger> e = new ArrayList<>(Collections.nCopies(batchSize,
                 BigInteger.ZERO));
         List<List<BigInteger>> diffList = null;
         for (int i = 0; i < partyCount - 1; i++) {
             try {
                 receivedMessage = pidMapper.get(protocolIdQueue).take();
                 diffList = (List<List<BigInteger>>) receivedMessage.getValue();
-                for(int j=0;j<batchSize;j++) {
+                for (int j = 0; j < batchSize; j++) {
                     d.set(j, d.get(j).add(diffList.get(j).get(0)).mod(prime));
                     e.set(j, e.get(j).add(diffList.get(j).get(1)).mod(prime));
                 }
             } catch (InterruptedException ex) {
-                Logger.getLogger(BatchMultiplicationReal.class.getName())
-                    .log(Level.SEVERE, null, ex);
+                LOGGER.log(Level.SEVERE, null, ex);
             }
         }
 
@@ -103,19 +102,22 @@ public class BatchMultiplicationReal extends BatchMultiplication
             // TODO convert TI share to BigInteger
             BigInteger D = x.get(i)
                     .subtract(tiShares.get(i).u)
+                    .mod(prime)
                     .add(d.get(i)).mod(prime);
             BigInteger E = y.get(i)
                     .subtract(tiShares.get(i).v)
+                    .mod(prime)
                     .add(e.get(i)).mod(prime);
 
-            BigInteger product = tiShares.get(i).w
-                    .add(D.multiply(tiShares.get(i).v))
-                    .add(E.multiply(tiShares.get(i).u))
+            products[i] = tiShares.get(i).w
+                    .add(D.multiply(tiShares.get(i).v).mod(prime))
+                    .mod(prime)
+                    .add(E.multiply(tiShares.get(i).u).mod(prime))
+                    .mod(prime)
                     .add(D.multiply(E).multiply(BigInteger
-                            .valueOf(asymmetricBit)))
+                            .valueOf(asymmetricBit)).mod(prime))
                     .mod(prime);
 
-            products[i] = product;
         }
 
         return products;
@@ -137,14 +139,12 @@ public class BatchMultiplicationReal extends BatchMultiplication
             diffList.add(newRow);
         }
 
-        Message senderMessage = new Message(diffList,
-                clientID, protocolIdQueue);
+        Message senderMessage = new Message(diffList, clientID, protocolIdQueue);
 
         try {
             senderQueue.put(senderMessage);
         } catch (InterruptedException ex) {
-            Logger.getLogger(BatchMultiplicationReal.class.getName())
-                    .log(Level.SEVERE, null, ex);
+            LOGGER.log(Level.SEVERE, null, ex);
         }
 
     }

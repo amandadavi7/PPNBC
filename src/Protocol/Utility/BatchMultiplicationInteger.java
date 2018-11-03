@@ -71,7 +71,7 @@ public class BatchMultiplicationInteger extends BatchMultiplication
      * @throws Exception
      */
     @Override
-    public Integer[] call() throws Exception {
+    public Integer[] call() {
 
         int batchSize = x.size();
         Integer[] products = new Integer[batchSize];

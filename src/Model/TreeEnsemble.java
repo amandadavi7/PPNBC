@@ -32,7 +32,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- *
+ * Tree Ensemble - Random Forest and Boosted Decision Trees
  * @author keerthanaa
  */
 public class TreeEnsemble extends Model {
@@ -84,7 +84,7 @@ public class TreeEnsemble extends Model {
     }
 
     /**
-     * 
+     * Initialize variables
      * @param args 
      */
     private void initializeModelVariables(String[] args) {

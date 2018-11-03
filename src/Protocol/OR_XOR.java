@@ -31,7 +31,7 @@ public class OR_XOR extends CompositeProtocol implements Callable<Integer[]> {
 
     List<Integer> xShares, yShares;
     int constantMultiplier;
-    List<TripleInteger> tiShares;
+    List<TripleInteger> decimalTiShares;
     int bitLength;
     int prime;
 
@@ -67,8 +67,7 @@ public class OR_XOR extends CompositeProtocol implements Callable<Integer[]> {
         this.prime = prime;
         bitLength = xShares.size();
         this.constantMultiplier = constantMultiplier;
-        this.tiShares = tiShares;
-
+        this.decimalTiShares = tiShares;
     }
 
     /**
@@ -80,6 +79,7 @@ public class OR_XOR extends CompositeProtocol implements Callable<Integer[]> {
         Integer[] output = new Integer[bitLength];
         //System.out.println("x=" + xShares + " y=" + yShares);
         ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
+
         List<Future<Integer[]>> taskList = new ArrayList<>();
 
         int i = 0;
@@ -87,14 +87,12 @@ public class OR_XOR extends CompositeProtocol implements Callable<Integer[]> {
 
         do {
 
-            //System.out.println("Protocol " + protocolId + " batch " + startpid);
             int toIndex = Math.min(i + Constants.BATCH_SIZE, bitLength);
 
             BatchMultiplicationInteger batchMultiplication = new BatchMultiplicationInteger(
                     xShares.subList(i, toIndex),
                     yShares.subList(i, toIndex),
-                    tiShares.subList(i, toIndex),
-                    pidMapper,
+                    decimalTiShares.subList(i, toIndex), pidMapper,
                     senderQueue, new LinkedList<>(protocolIdQueue),
                     clientID, prime, startpid, asymmetricBit, protocolId, partyCount);
 

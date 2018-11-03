@@ -8,6 +8,7 @@ package Utility;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.math.BigInteger;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -41,6 +42,11 @@ public class Constants {
     public static final int INTEGER_PRECISION;
 
     public static final int NEWTON_RAPHSON_ROUNDS;
+    
+    // Constants used for real numbers
+    
+    public static final BigInteger ROUND_OFF_BIT;
+    public static final BigInteger F_POW_2;
 
     static {
         System.setProperty("java.util.logging.SimpleFormatter.format", 
@@ -100,9 +106,14 @@ public class Constants {
         } else {
             PRIME = -1;
         }
+        ROUND_OFF_BIT = BigInteger.valueOf(2).pow(INTEGER_PRECISION
+                + 2 * DECIMAL_PRECISION - 1);
         
+        F_POW_2 = BigInteger.valueOf(2).pow(DECIMAL_PRECISION);
+
         LOGGER.info("Properties file parsed:" + DEFAULT_PROPERTIES);
-        LOGGER.log(Level.INFO, "New ThreadCount:{0}", THREAD_COUNT);
+        LOGGER.log(Level.INFO, "Thread Count:{0}", THREAD_COUNT);
+
     }
 
 }
