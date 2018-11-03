@@ -6,11 +6,9 @@
 package Model;
 
 import Communication.Message;
-import Protocol.BitDecomposition;
-import Protocol.Comparison;
 import Protocol.MultiplicationByte;
-import Protocol.OR_XOR;
 import Protocol.Utility.BatcherSortKNN;
+import Protocol.Utility.CompareAndConvertField;
 import Protocol.Utility.CrossMultiplyCompare;
 import Protocol.Utility.JaccardDistance;
 import Protocol.Utility.SwapCircuitKNN;
@@ -21,7 +19,6 @@ import Utility.FileIO;
 import Utility.Logging;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
@@ -61,26 +58,26 @@ public class KNNSortAndSwap extends Model {
      * @param partyCount
      * @param args
      * @param protocolIdQueue
-     * @param protocolID 
+     * @param protocolID
      */
-    public KNNSortAndSwap(int asymmetricBit, ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper, 
+    public KNNSortAndSwap(int asymmetricBit, ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper,
             BlockingQueue<Message> senderQueue, int clientId, List<TripleByte> binaryTriples,
-            List<TripleInteger> decimalTriples, int partyCount, String[] args, 
+            List<TripleInteger> decimalTriples, int partyCount, String[] args,
             Queue<Integer> protocolIdQueue, int protocolID) {
 
         super(pidMapper, senderQueue, clientId, asymmetricBit, partyCount, protocolIdQueue, protocolID);
         pid = 0;
 
         initalizeModelVariables(args);
-        
+
         this.prime = (int) Math.pow(2.0, bitLength);
-        comparisonTICount = (2*bitLength) + ((bitLength*(bitLength-1))/2);
-        bitDTICount = bitLength*3 - 2;
-        ccTICount = comparisonTICount + 2*bitDTICount;
+        comparisonTICount = (2 * bitLength) + ((bitLength * (bitLength - 1)) / 2);
+        bitDTICount = bitLength * 3 - 2;
+        ccTICount = comparisonTICount + 2 * bitDTICount;
 
         this.attrLength = testShare.size();
         this.trainingSharesCount = trainingShares.size();
-        
+
         this.binaryTiShares = binaryTriples;
         this.decimalTiShares = decimalTriples;
 
@@ -92,7 +89,7 @@ public class KNNSortAndSwap extends Model {
 
     /**
      * Initialize model variables
-     * @param args 
+     * @param args
      */
     private void initalizeModelVariables(String[] args) {
 
@@ -130,9 +127,9 @@ public class KNNSortAndSwap extends Model {
 
     /**
      * Compare the JD(index) with the first K JDs
-     * 
+     *
      * @param index
-     * @return 
+     * @return
      */
     Integer[] getKComparisonResults(int index) throws InterruptedException, ExecutionException {
         ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
@@ -141,12 +138,12 @@ public class KNNSortAndSwap extends Model {
         Integer[] comparisonResults = new Integer[K];
         for (int i = 0; i < K; i++) {
             CrossMultiplyCompare ccModule = new CrossMultiplyCompare(jaccardDistances.get(index).get(1),
-                    jaccardDistances.get(index).get(0), KjaccardDistances.get(i).get(1), 
-                    KjaccardDistances.get(i).get(0), asymmetricBit, 
-                    decimalTiShares.subList(decimalTiIndex, decimalTiIndex + 2), 
-                    binaryTiShares.subList(binaryTiIndex, binaryTiIndex + ccTICount), 
+                    jaccardDistances.get(index).get(0), KjaccardDistances.get(i).get(1),
+                    KjaccardDistances.get(i).get(0), asymmetricBit,
+                    decimalTiShares.subList(decimalTiIndex, decimalTiIndex + 2),
+                    binaryTiShares.subList(binaryTiIndex, binaryTiIndex + ccTICount),
                     pidMapper, commonSender, clientId, prime,
-                    Constants.binaryPrime, pid, new LinkedList<>(protocolIdQueue), 
+                    Constants.binaryPrime, pid, new LinkedList<>(protocolIdQueue),
                     partyCount, bitLength);
 
             pid++;
@@ -169,9 +166,9 @@ public class KNNSortAndSwap extends Model {
 
     /**
      * Product of comparison outputs sequentially
-     * 
+     *
      * @param comparisonResults
-     * @return 
+     * @return
      */
     Integer[] comparisonMultiplicationResultsSequential(Integer[] comparisonResults) throws InterruptedException {
         Integer[] comparisonMultiplications = new Integer[K];
@@ -179,9 +176,9 @@ public class KNNSortAndSwap extends Model {
         comparisonMultiplications[1] = comparisonResults[0];
 
         for (int i = 1; i < K - 1; i++) {
-            MultiplicationByte mult = new MultiplicationByte(comparisonMultiplications[i], 
-                    comparisonResults[i], binaryTiShares.get(binaryTiIndex), 
-                    pidMapper, commonSender, new LinkedList<>(protocolIdQueue), 
+            MultiplicationByte mult = new MultiplicationByte(comparisonMultiplications[i],
+                    comparisonResults[i], binaryTiShares.get(binaryTiIndex),
+                    pidMapper, commonSender, new LinkedList<>(protocolIdQueue),
                     clientId, Constants.binaryPrime, pid, asymmetricBit, 0, partyCount);
             pid++;
             comparisonMultiplications[i + 1] = mult.call();
@@ -200,17 +197,17 @@ public class KNNSortAndSwap extends Model {
 
         //get all the K comparison results
         Integer[] comparisonResults = getKComparisonResults(index);
-        
+
         //get all PI(Cj) from j = 0 to j = K-2 index
         Integer[] comparisonMultiplications = comparisonMultiplicationResultsSequential(comparisonResults);
 
-        comparisonMultiplications[0] = Math.floorMod(asymmetricBit - comparisonResults[0], 
+        comparisonMultiplications[0] = Math.floorMod(asymmetricBit - comparisonResults[0],
                 Constants.binaryPrime);
-        
+
         ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
-        
+
         List<Future<Integer>> taskList = new ArrayList<>();
-        
+
         for (int i = 1; i < K; i++) {
             MultiplicationByte mult = new MultiplicationByte(comparisonMultiplications[i],
                     Math.floorMod(asymmetricBit - comparisonResults[i], Constants.binaryPrime),
@@ -229,45 +226,18 @@ public class KNNSortAndSwap extends Model {
             comparisonMultiplications[i] = multTask.get();
         }
 
-        //Do xor between comparison results to change the prime
-        List<Integer> dummy = new ArrayList<>(Collections.nCopies(K, 0));
-        OR_XOR xorComp = null, xorCompMults = null;
-
         // Convert comparisonResults and comparisonMultiplications from binary prime to decimal prime
-        if (asymmetricBit == 1) {
-            xorComp = new OR_XOR(Arrays.asList(comparisonResults), dummy, 
-                    decimalTiShares.subList(decimalTiIndex, decimalTiIndex + K),
-                    asymmetricBit, 2, pidMapper, commonSender, 
-                    new LinkedList<>(protocolIdQueue), clientId, prime, 
-                    pid, partyCount);
-            pid++;
-            //decimalTiIndex += K;
-            xorCompMults = new OR_XOR(Arrays.asList(comparisonMultiplications), 
-                    dummy, decimalTiShares.subList(decimalTiIndex, decimalTiIndex + K),
-                    asymmetricBit, 2, pidMapper, commonSender,
-                    new LinkedList<>(protocolIdQueue), clientId, prime, 
-                    pid, partyCount);
-        } else {
-            xorComp = new OR_XOR(dummy, Arrays.asList(comparisonResults), 
-                    decimalTiShares.subList(decimalTiIndex, decimalTiIndex + K),
-                    asymmetricBit, 2, pidMapper, commonSender, 
-                    new LinkedList<>(protocolIdQueue), clientId, prime, 
-                    pid, partyCount);
-            pid++;
-            //decimalTiIndex += K;
-            xorCompMults = new OR_XOR(dummy, Arrays.asList(comparisonMultiplications), 
-                    decimalTiShares.subList(decimalTiIndex, decimalTiIndex + K), asymmetricBit, 
-                    2, pidMapper, commonSender, new LinkedList<>(protocolIdQueue),
-                    clientId, prime, pid, partyCount);
-        }
+        comparisonResults = CompareAndConvertField.changeBinaryToDecimalField(
+                Arrays.asList(comparisonResults), decimalTiShares, pid, pidMapper,
+                commonSender, protocolIdQueue, asymmetricBit, clientId, prime, partyCount);
+        pid++;
+        //decimalTiIndex+=K;
 
-        Future<Integer[]> xorTask1 = es.submit(xorComp);
-        Future<Integer[]> xorTask2 = es.submit(xorCompMults);
+        comparisonMultiplications = CompareAndConvertField.changeBinaryToDecimalField(
+                Arrays.asList(comparisonMultiplications), decimalTiShares, pid,
+                pidMapper, commonSender, protocolIdQueue, asymmetricBit, clientId, prime, partyCount);
         pid++;
         //decimalTiIndex += K;
-
-        comparisonResults = xorTask1.get();
-            comparisonMultiplications = xorTask2.get();
 
         List<Future<Integer[]>> swapTaskList = new ArrayList<>();
 
@@ -282,8 +252,8 @@ public class KNNSortAndSwap extends Model {
 
             SwapCircuitKNN swapModule = new SwapCircuitKNN(index,
                     i, comparisonResults, comparisonMultiplications, pid,
-                    new LinkedList<>(protocolIdQueue), prime, asymmetricBit, 
-                    pidMapper, commonSender, clientId, 
+                    new LinkedList<>(protocolIdQueue), prime, asymmetricBit,
+                    pidMapper, commonSender, clientId,
                     decimalTiShares.subList(decimalTiIndex, decimalTiIndex + 9),
                     jaccardDistances.get(index), KjaccardDistances.get(i), prev, partyCount);
 
@@ -298,16 +268,16 @@ public class KNNSortAndSwap extends Model {
         for (int i = K - 1; i >= 0; i--) {
             Future<Integer[]> swapTask = swapTaskList.get(i);
             Integer[] results = swapTask.get();
-                for (int j = 0; j < 3; j++) {
-                    KjaccardDistances.get(i).set(j, results[j]);
-                }
+            for (int j = 0; j < 3; j++) {
+                KjaccardDistances.get(i).set(j, results[j]);
+            }
         }
 
     }
 
     /**
      * Compute the majority class label and return
-     * @return 
+     * @return
      */
     int computeMajorityClassLabel() throws InterruptedException, ExecutionException {
         int classLabelSum = 0;
@@ -322,58 +292,31 @@ public class KNNSortAndSwap extends Model {
         // The number of zeroCounts is just K - oneCount
         int zeroCount = Math.floorMod(asymmetricBit * K - classLabelSum, prime);
 
-        ExecutorService es = Executors.newFixedThreadPool(2);
+        predictedClassLabel = CompareAndConvertField.compareIntegers(oneCount, zeroCount,
+                binaryTiShares, asymmetricBit, pidMapper, commonSender, protocolIdQueue,
+                clientId, prime, bitLength, partyCount, pid, false, null);
 
-        //Do a comparison between oneCount and zeroCount
-        BitDecomposition bitDModuleOne = new BitDecomposition(oneCount,
-                binaryTiShares.subList(binaryTiIndex, binaryTiIndex + bitDTICount), 
-                asymmetricBit, bitLength, pidMapper, commonSender,
-                new LinkedList<>(protocolIdQueue), clientId, Constants.binaryPrime, 
-                pid, partyCount);
-        pid++;
-        //binaryTiIndex += bitDTICount;
-        Future<List<Integer>> bitTaskOne = es.submit(bitDModuleOne);
+        pid += 3;
+        //binaryTiIndex += 2*bitDTICount + comparisonTICount;
 
-        BitDecomposition bitDModuleZero = new BitDecomposition(zeroCount,
-                binaryTiShares.subList(binaryTiIndex, binaryTiIndex + bitDTICount), 
-                asymmetricBit, bitLength, pidMapper, commonSender,
-                new LinkedList<>(protocolIdQueue), clientId, Constants.binaryPrime, 
-                pid, partyCount);
-        pid++;
-        //binaryTiIndex += bitDTICount;
-        Future<List<Integer>> bitTaskZero = es.submit(bitDModuleZero);
-
-        es.shutdown();
-        List<Integer> numOfOnePredictions = bitTaskOne.get();
-            List<Integer> numOfZeroPredictions = bitTaskZero.get();
-        
-        Comparison compClassLabels = new Comparison(numOfOnePredictions, numOfZeroPredictions, 
-                binaryTiShares.subList(binaryTiIndex, binaryTiIndex + comparisonTICount),
-                asymmetricBit, pidMapper, commonSender,
-                new LinkedList<>(protocolIdQueue), clientId, Constants.binaryPrime, 
-                pid, partyCount);
-
-        predictedClassLabel = compClassLabels.call();
-        pid++;
-        //binaryTiIndex += comparisonTICount;
-        
         return predictedClassLabel;
     }
-    
+
     /**
      * run the KNN model
-     * @return 
-     * @throws java.lang.InterruptedException 
-     * @throws java.util.concurrent.ExecutionException 
+     *
+     * @return
+     * @throws java.lang.InterruptedException
+     * @throws java.util.concurrent.ExecutionException
      */
     public int runModel() throws InterruptedException, ExecutionException {
         //Jaccard Computation for all the training shares
         long startTime = System.currentTimeMillis();
-        
+
         int decTICount = attrLength * 2 * trainingSharesCount;
         JaccardDistance jdModule = new JaccardDistance(trainingShares, testShare,
                 asymmetricBit, decimalTiShares, pidMapper, commonSender,
-                clientId, prime, pid, 
+                clientId, prime, pid,
                 new LinkedList<>(protocolIdQueue), partyCount);
 
         jaccardDistances = jdModule.call();
@@ -391,7 +334,7 @@ public class KNNSortAndSwap extends Model {
 
         //Sorting the first K numbers
         LOGGER.log(Level.FINE, "KjaccardDistances before:{0}", KjaccardDistances);
-        
+
         BatcherSortKNN sortModule = new BatcherSortKNN(KjaccardDistances,
                 asymmetricBit, decimalTiShares, binaryTiShares,
                 pidMapper, commonSender, clientId, prime, pid,

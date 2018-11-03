@@ -6,8 +6,6 @@
 package Protocol.Utility;
 
 import Communication.Message;
-import Protocol.BitDecomposition;
-import Protocol.Comparison;
 import Protocol.CompositeProtocol;
 import Protocol.MultiplicationInteger;
 import TrustedInitializer.TripleByte;
@@ -114,39 +112,13 @@ public class CrossMultiplyCompare extends CompositeProtocol implements Callable<
         int first = firstCrossMultiplication.get();
         int second = secondCrossMultiplication.get();
 
-        // TODO - binaryTiShares sublist in bit decompositions
-        BitDecomposition firstTask = new BitDecomposition(first, binaryTiShares.subList(binaryTiIndex,
-                binaryTiIndex + bitDTICount),
-                asymmetricBit, bitLength, pidMapper, senderQueue,
-                new LinkedList<>(protocolIdQueue),
-                clientID, binaryPrime, pid, partyCount);
-        pid++;
-        binaryTiIndex += bitDTICount;
-        Future<List<Integer>> future1 = es.submit(firstTask);
-
-        BitDecomposition secondTask = new BitDecomposition(second, binaryTiShares.subList(binaryTiIndex,
-                binaryTiIndex + bitDTICount),
-                asymmetricBit, bitLength, pidMapper, senderQueue,
-                new LinkedList<>(protocolIdQueue),
-                clientID, binaryPrime, pid, partyCount);
-        pid++;
-        binaryTiIndex += bitDTICount;
-        Future<List<Integer>> future2 = es.submit(secondTask);
-
-        List<Integer> firstNumber = future1.get();
-        List<Integer> secondNumber = future2.get();
-
-        // TODO - binaryti index management in Comparison
-        Comparison comparisonModule = new Comparison(firstNumber,
-                secondNumber, binaryTiShares.subList(binaryTiIndex, binaryTiIndex + comparisonTICount),
-                asymmetricBit, pidMapper, senderQueue, new LinkedList<>(protocolIdQueue),
-                clientID, binaryPrime, pid, partyCount);
-
-        Future<Integer> comparisonTask = es.submit(comparisonModule);
-        pid++;
-        //binaryTiIndex += comparisonTICount;
         es.shutdown();
-        int result = comparisonTask.get();
+
+        int result = CompareAndConvertField.compareIntegers(first, second, binaryTiShares,
+                asymmetricBit, pidMapper, senderQueue, protocolIdQueue, clientID,
+                pid, bitLength, partyCount, pid, false, null);
+
+        //binaryTiIndex += 2*bitDTICount + comparisonTICount;
         return result;
     }
 

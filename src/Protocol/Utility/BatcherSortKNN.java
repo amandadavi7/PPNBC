@@ -7,7 +7,6 @@ package Protocol.Utility;
 
 import Communication.Message;
 import Protocol.CompositeProtocol;
-import Protocol.OR_XOR;
 import TrustedInitializer.TripleByte;
 import TrustedInitializer.TripleInteger;
 import Utility.Constants;
@@ -210,30 +209,13 @@ public class BatcherSortKNN extends CompositeProtocol implements Callable<List<L
         ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
 
         //Do xor between comparison results....
-        List<Integer> cShares = new ArrayList<>();
-        cShares.add(comparisonOutput);
+        Integer[] c = CompareAndConvertField.changeBinaryToDecimalField(Arrays.asList(comparisonOutput),
+                decimalTiShares.subList(decimalTiIndex, decimalTiIndex + 1), pid,
+                pidMapper, senderQueue, protocolIdQueue, asymmetricBit, clientID,
+                prime, partyCount);
 
-        List<Integer> dummy = new ArrayList<>();
-        dummy.add(0);
-        OR_XOR xor = null;
-
-        if (clientID == 1) {
-            xor = new OR_XOR(cShares, dummy, decimalTiShares.subList(decimalTiIndex, decimalTiIndex + 1),
-                    asymmetricBit, 2, pidMapper, senderQueue,
-                    new LinkedList<>(protocolIdQueue), clientID, prime,
-                    pid, partyCount);
-        } else if (clientID == 2) {
-            xor = new OR_XOR(dummy, cShares, decimalTiShares.subList(decimalTiIndex, decimalTiIndex + 1),
-                    asymmetricBit, 2, pidMapper, senderQueue,
-                    new LinkedList<>(protocolIdQueue), clientID, prime,
-                    pid, partyCount);
-        }
-
-        Future<Integer[]> xorTask = es.submit(xor);
         pid++;
         //decimalTiIndex++;
-
-        Integer[] c = xorTask.get();
 
         List<Integer> C = new ArrayList<>(Collections.nCopies(3, c[0]));
         List<Integer> notC = new ArrayList<>(Collections.nCopies(3, Math.floorMod(asymmetricBit - c[0], prime)));
