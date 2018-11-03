@@ -352,21 +352,29 @@ public class KNNThresholdKSelect extends Model {
         int endIndex = K, distanceIndexStart = K-1;
         int batchSize = 20, sum = 0;
         int[] comparisonSum = new int[batchSize];
+        
+        //add the first K-1 comparison results
         for(int i=0;i<K-1;i++){
             sum += comparisonResults[i];
         }
         sum = Math.floorMod(sum, prime);
         
         boolean stoppingCriteria = false;
-        int[] compResults = new int[batchSize];
+        int[] compResults = new int[batchSize]; //result of comparison sum compared to K
+        
+        //As long as there are less than K elements that are within the threshold, keep looking further
         while(!stoppingCriteria) {
             comparisonSum[0] = Math.floorMod(sum + comparisonResults[distanceIndexStart], prime);
-            for(int i=1;i<batchSize;i++){
+            
+            // Doing this in case the number of training examples left is less than the batch size
+            int localBatchSize = Math.min(batchSize, trainingSharesCount-distanceIndexStart);
+            
+            for(int i=1;i<localBatchSize;i++){
                 comparisonSum[i] = Math.floorMod(comparisonSum[i-1] + comparisonResults[distanceIndexStart+i], prime);
             }
             
             List<Future<List<Integer>>> bitDTasks = new ArrayList<>();
-            for(int i=0;i<batchSize;i++){
+            for(int i=0;i<localBatchSize;i++){
                 BitDecomposition bitDmodule = new BitDecomposition(comparisonSum[i], 
                     binaryTiShares, asymmetricBit, bitLength, pidMapper, 
                     commonSender, new LinkedList<>(protocolIdQueue),
@@ -376,7 +384,7 @@ public class KNNThresholdKSelect extends Model {
                 bitDTasks.add(bitDtask);
             }
             List<List<Integer>> bitDResults = new ArrayList<>();
-            for(int i=0;i<batchSize;i++){
+            for(int i=0;i<localBatchSize;i++){
                 Future<List<Integer>> bitDtask = bitDTasks.get(i);
                 try {
                     bitDResults.add(bitDtask.get());
@@ -387,7 +395,7 @@ public class KNNThresholdKSelect extends Model {
             
             List<Future<Integer>> compTasks = new ArrayList<>();
             
-            for(int i=0;i<batchSize;i++) {
+            for(int i=0;i<localBatchSize;i++) {
                 Comparison comModule = new Comparison(bitDResults.get(i), KBitShares, binaryTiShares,
                     asymmetricBit, pidMapper, commonSender, new LinkedList<>(protocolIdQueue),
                     clientId, Constants.binaryPrime, pid, partyCount);
@@ -396,7 +404,7 @@ public class KNNThresholdKSelect extends Model {
                 compTasks.add(compTask);
             }
             
-            for(int i=0;i<batchSize;i++){
+            for(int i=0;i<localBatchSize;i++){
                 Future<Integer> compTask = compTasks.get(i);
                 try {
                     compResults[i] = compTask.get();
@@ -415,7 +423,7 @@ public class KNNThresholdKSelect extends Model {
             } catch (InterruptedException ex) {
                 Logger.getLogger(KNNThresholdKSelect.class.getName()).log(Level.SEVERE, null, ex);
             }
-            for(int i=0;i<batchSize;i++){
+            for(int i=0;i<localBatchSize;i++){
                 
                 if((compResults[i] + compResults_party[i])%2==1) {
                     endIndex = distanceIndexStart + i + 1;
@@ -423,8 +431,8 @@ public class KNNThresholdKSelect extends Model {
                     break;
                 }
             }
-            distanceIndexStart += batchSize;
-            sum = comparisonSum[batchSize-1];
+            distanceIndexStart += localBatchSize;
+            sum = comparisonSum[localBatchSize-1];
         }
         
         int i=0;
