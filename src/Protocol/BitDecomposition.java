@@ -57,7 +57,7 @@ public class BitDecomposition extends CompositeProtocol implements
      * @param partyCount
      */
     public BitDecomposition(Integer input, List<TripleByte> tiShares,
-            int asymmetricBit, int bitLength, 
+            int asymmetricBit, int bitLength,
             ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper,
             BlockingQueue<Message> senderQueue,
             Queue<Integer> protocolIdQueue,
@@ -106,9 +106,11 @@ public class BitDecomposition extends CompositeProtocol implements
      * Convert shares of the value to shares of bit representation of the value
      *
      * @return
+     * @throws java.lang.InterruptedException
+     * @throws java.util.concurrent.ExecutionException
      */
     @Override
-    public List<Integer> call(){
+    public List<Integer> call() throws InterruptedException, ExecutionException {
 
         // Function to initialze y[i] and put x1 <- y1
         initY();
@@ -145,8 +147,11 @@ public class BitDecomposition extends CompositeProtocol implements
      * @param first_bit
      * @param second_bit
      * @return
+     * @throws java.lang.InterruptedException
+     * @throws java.util.concurrent.ExecutionException
      */
-    public int bitMultiplication(int first_bit, int second_bit) {
+    public int bitMultiplication(int first_bit, int second_bit)
+            throws InterruptedException, ExecutionException {
 
         int multiplication_result = -1;
 
@@ -164,13 +169,7 @@ public class BitDecomposition extends CompositeProtocol implements
         // Assign the multiplication task to ExecutorService object.
         Future<Integer> multiplicationTask = es.submit(multiplicationModule);
         es.shutdown();
-        try {
-            multiplication_result = multiplicationTask.get();
-
-        } catch (InterruptedException | ExecutionException ex) {
-            Logger.getLogger(BitDecomposition.class.getName())
-                    .log(Level.SEVERE, null, ex);
-        }
+        multiplication_result = multiplicationTask.get();
 
         return multiplication_result;
     }
@@ -182,7 +181,7 @@ public class BitDecomposition extends CompositeProtocol implements
      * @throws InterruptedException
      * @throws ExecutionException
      */
-    private void computeDShares() {
+    private void computeDShares() throws InterruptedException, ExecutionException {
 
         ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
         List<Future<Integer[]>> taskList = new ArrayList<>();
@@ -199,7 +198,7 @@ public class BitDecomposition extends CompositeProtocol implements
                             inputShares.get(0).subList(i, toIndex),
                             inputShares.get(1).subList(i, toIndex),
                             tiShares.subList(tiIndex, tiIndex + tiCount),
-                            pidMapper, senderQueue, 
+                            pidMapper, senderQueue,
                             new LinkedList<>(protocolIdQueue),
                             clientID, prime, globalPid, asymmetricBit,
                             protocolId, partyCount);
@@ -220,18 +219,13 @@ public class BitDecomposition extends CompositeProtocol implements
         // Save d[i] to dShares
         int globalIndex = 1;
         for (int j = 0; j < taskLength; j++) {
-            try {
-                Future<Integer[]> dWorkerResponse = taskList.get(j);
-                Integer[] d_batch = dWorkerResponse.get();
+            Future<Integer[]> dWorkerResponse = taskList.get(j);
+            Integer[] d_batch = dWorkerResponse.get();
 
-                // Iterate through each batch to do computations and save values in dShares
-                for (Integer d_batch1 : d_batch) {
-                    int d = d_batch1 + asymmetricBit;
-                    dShares[globalIndex++] = Math.floorMod(d, prime);
-                }
-            } catch (InterruptedException | ExecutionException ex) {
-                Logger.getLogger(BitDecomposition.class.getName())
-                        .log(Level.SEVERE, null, ex);
+            // Iterate through each batch to do computations and save values in dShares
+            for (Integer d_batch1 : d_batch) {
+                int d = d_batch1 + asymmetricBit;
+                dShares[globalIndex++] = Math.floorMod(d, prime);
             }
         }
 
@@ -257,14 +251,20 @@ public class BitDecomposition extends CompositeProtocol implements
      *
      * @throws InterruptedException
      */
-    private void computeVariables(int index) {
+    private void computeVariables(int index) throws InterruptedException,
+            ExecutionException {
         ExecutorService es = Executors.newFixedThreadPool(2);
 
         Runnable eThread = () -> {
-            int e_result = bitMultiplication(yShares[index],
+            try {
+                int e_result = bitMultiplication(yShares[index],
                         cShares[index - 1]) + asymmetricBit;
                 e_result = Math.floorMod(e_result, prime);
                 eShares[index] = e_result;
+            } catch (InterruptedException | ExecutionException ex) {
+                Logger.getLogger(BitDecomposition.class.getName())
+                        .log(Level.SEVERE, null, ex);
+            }
         };
 
         es.submit(eThread);
@@ -279,20 +279,13 @@ public class BitDecomposition extends CompositeProtocol implements
 
         es.shutdown();
         // Compute c and w sequentially when both threads end
-        boolean threadsCompleted;
-        try {
-            threadsCompleted = es.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
-            if (threadsCompleted) {
-                int c_result = bitMultiplication(eShares[index], dShares[index])
-                        + asymmetricBit;
-                c_result = Math.floorMod(c_result, prime);
-                cShares[index] = c_result;
-            }
-        } catch (InterruptedException ex) {
-            Logger.getLogger(BitDecomposition.class.getName()).log(Level.SEVERE, null, ex);
+        boolean threadsCompleted = es.awaitTermination(Long.MAX_VALUE,
+                TimeUnit.NANOSECONDS);
+        if (threadsCompleted) {
+            int c_result = bitMultiplication(eShares[index], dShares[index])
+                    + asymmetricBit;
+            c_result = Math.floorMod(c_result, prime);
+            cShares[index] = c_result;
         }
-            
-
     }
-
 }

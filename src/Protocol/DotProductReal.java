@@ -21,8 +21,6 @@ import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * Dot product of two matrices x and y, shared element wise
@@ -33,7 +31,6 @@ import java.util.logging.Logger;
  */
 public class DotProductReal extends DotProduct implements Callable<BigInteger> {
 
-    private static final Logger LOGGER = Logger.getLogger(DotProductReal.class.getName());
     List<BigInteger> xShares, yShares;
     BigInteger prime;
     List<TripleReal> tiShares;
@@ -76,9 +73,11 @@ public class DotProductReal extends DotProduct implements Callable<BigInteger> {
      * return
      *
      * @return
+     * @throws java.lang.InterruptedException
+     * @throws java.util.concurrent.ExecutionException
      */
     @Override
-    public BigInteger call() {
+    public BigInteger call() throws InterruptedException, ExecutionException {
 
         BigInteger dotProduct = BigInteger.ZERO;
         int vectorLength = xShares.size();
@@ -101,23 +100,17 @@ public class DotProductReal extends DotProduct implements Callable<BigInteger> {
             i = toIndex;
 
         } while (i < vectorLength);
-        
+
         mults.shutdown();
 
         for (i = 0; i < startpid; i++) {
-            try {
-                Future<BigInteger[]> prod = multCompletionService.take();
-                BigInteger[] products = prod.get();
-                for (BigInteger j : products) {
-                    dotProduct = dotProduct.add(j).mod(prime);
-                }
-            } catch (InterruptedException | ExecutionException ex) {
-                LOGGER.log(Level.SEVERE, null, ex);
+            Future<BigInteger[]> prod = multCompletionService.take();
+            BigInteger[] products = prod.get();
+            for (BigInteger j : products) {
+                dotProduct = dotProduct.add(j).mod(prime);
             }
         }
-
         return dotProduct;
-
     }
 
 }

@@ -19,11 +19,6 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * Matrix inversion using Newton Raphson
@@ -33,7 +28,6 @@ import java.util.logging.Logger;
 public class MatrixInversion extends CompositeProtocol implements
         Callable<BigInteger[][]> {
 
-    private static final Logger LOGGER = Logger.getLogger(MatrixInversion.class.getName()); 
     private static BigInteger[][] Ashares, I2;
     
     List<TripleReal> tishares;
@@ -71,7 +65,7 @@ public class MatrixInversion extends CompositeProtocol implements
     }
 
     @Override
-    public BigInteger[][] call() throws Exception {
+    public BigInteger[][] call() throws InterruptedException, ExecutionException {
         BigInteger c = calculateTrace(Ashares);
         BigInteger cInv = computeCInv(c);
         BigInteger[][] X = createIdentity(cInv);
@@ -146,7 +140,7 @@ public class MatrixInversion extends CompositeProtocol implements
      * @param c
      * @return
      */
-    private BigInteger computeCInv(BigInteger c) {
+    private BigInteger computeCInv(BigInteger c) throws InterruptedException {
         BigInteger Xs = BigInteger.ZERO;
         if (asymmetricBit == 1) {
             Xs = LocalMath.realToZq(0.00000001, Constants.DECIMAL_PRECISION, prime);
@@ -178,7 +172,7 @@ public class MatrixInversion extends CompositeProtocol implements
      * @return 
      */
     private BigInteger[][] newtonRaphsonAlgorithm(BigInteger[][] A,
-            BigInteger[][] X, int rounds) {
+            BigInteger[][] X, int rounds) throws InterruptedException, ExecutionException {
         
         int n = A.length;
 
@@ -198,17 +192,11 @@ public class MatrixInversion extends CompositeProtocol implements
             //tiTruncationIndex += (n*n);
             globalPid++;
             
-            BigInteger[][] AX = null;
-            try {
-                AX = matrixMultiplication.call();
-            } catch (Exception ex) {
-                LOGGER.log(Level.SEVERE, null, ex);
-            }
+            BigInteger[][] AX = matrixMultiplication.call();
             
             BigInteger[][] subtractedAX = subtractFromTwo(AX);
             
             // X = DM(X.temp2)
-            BigInteger[][] Xs1 = null;
             MatrixMultiplication matrixMultiplicationNext = new MatrixMultiplication(
                     X, subtractedAX, tishares.subList(tiRealIndex,
                             tiRealIndex + (int) (tiRealIndex + Math.pow(n, 3))),
@@ -221,14 +209,8 @@ public class MatrixInversion extends CompositeProtocol implements
             //tiRealIndex += Math.pow(n, 3);
             //tiTruncationIndex += (n*n);
             globalPid++;
-            try {
-                Xs1 = matrixMultiplicationNext.call();
-            } catch (Exception ex) {
-                LOGGER.log(Level.SEVERE, null, ex);
-            }
+            X = matrixMultiplicationNext.call();
 
-            X = Xs1;
-            
         }
         return X;
     }
@@ -241,7 +223,7 @@ public class MatrixInversion extends CompositeProtocol implements
      * @return
      */
     private BigInteger newtonRaphsonAlgorithm(BigInteger A,
-            BigInteger X) {
+            BigInteger X) throws InterruptedException {
         for (int i = 0; i < nrRounds; i++) {
 
             // AX = DM(A.X)
@@ -254,8 +236,7 @@ public class MatrixInversion extends CompositeProtocol implements
             //tiRealIndex++;
             globalPid++;
 
-            BigInteger AX = null;
-            AX = multiplicationModule.call();
+            BigInteger AX = multiplicationModule.call();
 
             Truncation truncationModule = new Truncation(AX,
                     tiTruncationPair.get(tiTruncationIndex), pidMapper, senderQueue,
@@ -266,12 +247,7 @@ public class MatrixInversion extends CompositeProtocol implements
             //tiTruncationIndex++;
             globalPid++;
             
-            BigInteger truncatedAX = null;
-            try {
-                truncatedAX = truncationModule.call();
-            } catch (Exception ex) {
-                LOGGER.log(Level.SEVERE, null, ex);
-            }
+            BigInteger truncatedAX = truncationModule.call();
 
             // subtracted AX = (2-AX). this computation is local
             BigInteger subtractedAX = LocalMath.realToZq(2 * asymmetricBit,
@@ -299,20 +275,13 @@ public class MatrixInversion extends CompositeProtocol implements
                     clientID, prime, globalPid, asymmetricBit, partyCount);
             
             BigInteger truncatedX = null;
-            try {
-                truncatedX = truncationModuleNext.call();
-            } catch (Exception ex) {
-                LOGGER.log(Level.SEVERE, null, ex);
-            }
+            truncatedX = truncationModuleNext.call();
 
             // TODO uncomment to not reuse the shares
             //tiTruncationIndex++;
             globalPid++;
             X = truncatedX;
-
-        }
-        
+        }   
         return X;
     }
-
 }

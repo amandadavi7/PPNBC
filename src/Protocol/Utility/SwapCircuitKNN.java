@@ -6,7 +6,6 @@
 package Protocol.Utility;
 
 import Communication.Message;
-import Model.KNNSortAndSwap;
 import Protocol.CompositeProtocol;
 import TrustedInitializer.TripleInteger;
 import Utility.Constants;
@@ -23,17 +22,16 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * Implements the swap circuit for KNN Sort and Swap algorithm
- * 
+ *
  * return jdj = CM.notC.jdi + notCj-1.jdj-1 + C.jdj
- * 
+ *
  * @author keerthanaa
  */
-public class SwapCircuitKNN extends CompositeProtocol implements Callable<Integer[]>{
+public class SwapCircuitKNN extends CompositeProtocol implements Callable<Integer[]> {
+
     int trainingIndex;
     int position;
     Integer[] comparisonResults;
@@ -82,18 +80,19 @@ public class SwapCircuitKNN extends CompositeProtocol implements Callable<Intege
     }
 
     /**
-     * 
-     * @return 
+     *
+     * @return @throws java.lang.InterruptedException
+     * @throws java.util.concurrent.ExecutionException
      */
     @Override
-    public Integer[] call() {
+    public Integer[] call() throws InterruptedException, ExecutionException {
         int pid = 0, decimalTiIndex = 0;
         ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
-        
+
         //first mult
         List<Integer> productComps = new ArrayList<>(Collections.nCopies(3, comparisonMultiplications[position]));
         BatchMultiplicationInteger cmNotCJdi = new BatchMultiplicationInteger(jaccardDistanceTraining,
-                productComps, decimalTiShares.subList(decimalTiIndex, decimalTiIndex + 3), 
+                productComps, decimalTiShares.subList(decimalTiIndex, decimalTiIndex + 3),
                 pidMapper, senderQueue,
                 new LinkedList<>(protocolIdQueue), clientID, prime,
                 pid, asymmetricBit, 0, partyCount);
@@ -104,7 +103,7 @@ public class SwapCircuitKNN extends CompositeProtocol implements Callable<Intege
         //third mult
         List<Integer> C = new ArrayList<>(Collections.nCopies(3, comparisonResults[position]));
         BatchMultiplicationInteger CJdj = new BatchMultiplicationInteger(jaccardDistanceSorted,
-                C, decimalTiShares.subList(decimalTiIndex, decimalTiIndex + 3), 
+                C, decimalTiShares.subList(decimalTiIndex, decimalTiIndex + 3),
                 pidMapper, senderQueue,
                 new LinkedList<>(protocolIdQueue), clientID, prime,
                 pid, asymmetricBit, 0, partyCount);
@@ -117,10 +116,10 @@ public class SwapCircuitKNN extends CompositeProtocol implements Callable<Intege
 
         if (position != 0) {
             //second mult
-            List<Integer> notC = new ArrayList<>(Collections.nCopies(3, 
+            List<Integer> notC = new ArrayList<>(Collections.nCopies(3,
                     Math.floorMod(asymmetricBit - comparisonResults[position - 1], prime)));
             BatchMultiplicationInteger notCprevJdprev = new BatchMultiplicationInteger(jaccardDistanceSortedPrevious,
-                    notC, decimalTiShares.subList(decimalTiIndex, decimalTiIndex + 3), 
+                    notC, decimalTiShares.subList(decimalTiIndex, decimalTiIndex + 3),
                     pidMapper, senderQueue,
                     new LinkedList<>(protocolIdQueue), clientID, prime,
                     pid, asymmetricBit, 0, partyCount);
@@ -128,27 +127,19 @@ public class SwapCircuitKNN extends CompositeProtocol implements Callable<Intege
             pid++;
             //decimalTiIndex += 3;
 
-            try {
-                Integer[] Mults = multTask2.get();
-                for (int i = 0; i < 3; i++) {
-                    results[i] += Mults[i];
-                }
-            } catch (InterruptedException | ExecutionException ex) {
-                Logger.getLogger(KNNSortAndSwap.class.getName()).log(Level.SEVERE, null, ex);
-            }
-        }
-        es.shutdown();
-        try {
-            Integer[] Mults = multTask1.get();
+            Integer[] Mults = multTask2.get();
             for (int i = 0; i < 3; i++) {
                 results[i] += Mults[i];
             }
-            Mults = multTask3.get();
-            for (int i = 0; i < 3; i++) {
-                results[i] = Math.floorMod(results[i] + Mults[i], prime);
-            }
-        } catch (InterruptedException | ExecutionException ex) {
-            Logger.getLogger(KNNSortAndSwap.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        es.shutdown();
+        Integer[] Mults = multTask1.get();
+        for (int i = 0; i < 3; i++) {
+            results[i] += Mults[i];
+        }
+        Mults = multTask3.get();
+        for (int i = 0; i < 3; i++) {
+            results[i] = Math.floorMod(results[i] + Mults[i], prime);
         }
 
         //System.out.println("results retuning: " + Arrays.toString(results));

@@ -42,11 +42,10 @@ public class PeerTICommunication implements Callable<TIShare> {
 
     /**
      * 
-     * @return
-     * @throws Exception 
+     * @return 
      */
     @Override
-    public TIShare call() throws Exception {
+    public TIShare call() {
 
         try {
             tiShares = (TIShare) iStream.readObject();

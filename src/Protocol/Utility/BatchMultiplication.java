@@ -48,6 +48,6 @@ public abstract class BatchMultiplication extends Protocol {
     /**
      * Bundle the d and e values and add to the sender queue
      */
-    abstract void initProtocol();
+    abstract void initProtocol() throws InterruptedException;
 
 }

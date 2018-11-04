@@ -59,18 +59,15 @@ public class DecisionTreeScoring extends Model {
     Logger LOGGER;
 
     /**
-     * Constructor 
-     * 2 party DT scoring: 
-     * 
-     * one party has the tree, one party has the
-     * feature vector In args, 
-     * 
-     * party1: pass the feature vector as csv file
-     * (testCsv) pass the tree properties (depth, attribute count, attribute
-     * bitlength, class label count in properties file (treeproperties) 
-     * 
-     * party2:
-     * pass the tree as a properties file (storedtree)
+     * Constructor 2 party DT scoring:
+     *
+     * one party has the tree, one party has the feature vector In args,
+     *
+     * party1: pass the feature vector as csv file (testCsv) pass the tree
+     * properties (depth, attribute count, attribute bitlength, class label
+     * count in properties file (treeproperties)
+     *
+     * party2: pass the tree as a properties file (storedtree)
      *
      * @param asymmetricBit
      * @param pidMapper
@@ -82,7 +79,7 @@ public class DecisionTreeScoring extends Model {
      * @param protocolIdQueue
      * @param protocolID
      */
-    public DecisionTreeScoring(int asymmetricBit, ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper, 
+    public DecisionTreeScoring(int asymmetricBit, ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper,
             BlockingQueue<Message> senderQueue, int clientId, List<TripleByte> binaryTriples,
             int partyCount, String[] args, Queue<Integer> protocolIdQueue, int protocolID) {
 
@@ -100,7 +97,7 @@ public class DecisionTreeScoring extends Model {
      *
      * @param args
      */
-    private void initializeModelVariables(String[] args) {
+    private void initializeModelVariables(String[] args) throws FileNotFoundException, IOException {
         leafToClassIndexMapping = null;
         nodeToAttributeIndexMapping = null;
         attributeThresholds = null;
@@ -126,15 +123,8 @@ public class DecisionTreeScoring extends Model {
                     //party has the tree
                     partyHasTree = true;
                     Properties prop = new Properties();
-                    InputStream input = null;
-                    try {
-                        input = new FileInputStream(value);
-                        prop.load(input);
-                    } catch (FileNotFoundException ex) {
-                        LOGGER.log(Level.SEVERE, null, ex);
-                    } catch (IOException ex) {
-                        LOGGER.log(Level.SEVERE, null, ex);
-                    }
+                    InputStream input = new FileInputStream(value);
+                    prop.load(input);
                     depth = Integer.parseInt(prop.getProperty("depth"));
                     attributeCount = Integer.parseInt(prop.getProperty("attribute.count"));
                     attributeBitLength = Integer.parseInt(prop.getProperty("attribute.bitlength"));
@@ -157,15 +147,8 @@ public class DecisionTreeScoring extends Model {
                     //party has feature vector
                     partyHasTree = false;
                     prop = new Properties();
-                    input = null;
-                    try {
-                        input = new FileInputStream(value);
-                        prop.load(input);
-                    } catch (FileNotFoundException ex) {
-                        LOGGER.log(Level.SEVERE, null, ex);
-                    } catch (IOException ex) {
-                        LOGGER.log(Level.SEVERE, null, ex);
-                    }
+                    input = new FileInputStream(value);
+                    prop.load(input);
                     depth = Integer.parseInt(prop.getProperty("depth"));
                     attributeCount = Integer.parseInt(prop.getProperty("attribute.count"));
                     attributeBitLength = Integer.parseInt(prop.getProperty("attribute.bitlength"));
@@ -190,7 +173,7 @@ public class DecisionTreeScoring extends Model {
     /**
      * Doing common initializations for both parties here
      */
-    void init() {
+    void init() throws IOException {
         initializeModelVariables(args);
         leafNodes = (int) Math.pow(2, depth);
         featureVectors = new Integer[leafNodes - 1][attributeBitLength];
@@ -202,8 +185,12 @@ public class DecisionTreeScoring extends Model {
 
     /**
      * Main method for the DT Scoring algorithm
+     *
+     * @throws java.io.IOException
+     * @throws java.lang.InterruptedException
+     * @throws java.util.concurrent.ExecutionException
      */
-    public void scoreDecisionTree() {
+    public void scoreDecisionTree() throws IOException, InterruptedException, ExecutionException {
 
         init();
 
@@ -219,7 +206,7 @@ public class DecisionTreeScoring extends Model {
 
         getFeatureVectors();
 
-        LOGGER.fine("got the feature vectors:" + Arrays.deepToString(featureVectors));
+        LOGGER.log(Level.FINE, "got the feature vectors:{0}", Arrays.deepToString(featureVectors));
 
         doThresholdComparisons();
 
@@ -228,8 +215,8 @@ public class DecisionTreeScoring extends Model {
         long stopTime = System.currentTimeMillis();
         long elapsedTime = stopTime - startTime;
 
-        LOGGER.info("the output in bits: " + Arrays.toString(finalOutputs));
-        LOGGER.info("Avg time duration:" + elapsedTime);
+        LOGGER.log(Level.INFO, "the output in bits: {0}", Arrays.toString(finalOutputs));
+        LOGGER.log(Level.INFO, "Avg time duration:{0}", elapsedTime);
 
     }
 
@@ -237,7 +224,7 @@ public class DecisionTreeScoring extends Model {
      * gets the feature vectors for each attribute of internal node using
      * Oblivious Input selection Protocol
      */
-    void getFeatureVectors() {
+    void getFeatureVectors() throws InterruptedException, ExecutionException {
 
         ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
         List<Future<Integer[]>> taskList = new ArrayList<>();
@@ -275,11 +262,7 @@ public class DecisionTreeScoring extends Model {
 
         for (int i = 0; i < leafNodes - 1; i++) {
             Future<Integer[]> taskResponse = taskList.get(i);
-            try {
-                featureVectors[i] = taskResponse.get();
-            } catch (InterruptedException | ExecutionException ex) {
-                LOGGER.log(Level.SEVERE, null, ex);
-            }
+            featureVectors[i] = taskResponse.get();
         }
 
     }
@@ -308,7 +291,7 @@ public class DecisionTreeScoring extends Model {
      *
      * @param startpid
      */
-    void doThresholdComparisons() {
+    void doThresholdComparisons() throws InterruptedException, ExecutionException {
 
         ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
         List<Future<Integer>> taskList = new ArrayList<>();
@@ -330,22 +313,18 @@ public class DecisionTreeScoring extends Model {
 
         for (int i = 0; i < leafNodes - 1; i++) {
             Future<Integer> taskResponse = taskList.get(i);
-            try {
-                comparisonOutputs[i] = taskResponse.get();
-            } catch (InterruptedException | ExecutionException ex) {
-                LOGGER.log(Level.SEVERE, null, ex);
-            }
+            comparisonOutputs[i] = taskResponse.get();
         }
 
-        LOGGER.fine("threshold comparison results:" + Arrays.toString(comparisonOutputs));
+        LOGGER.log(Level.FINE, "threshold comparison results:{0}", Arrays.toString(comparisonOutputs));
     }
 
-    
     /**
      * convert decimal number to bit shares of length size
+     *
      * @param decimal
      * @param size
-     * @return 
+     * @return
      */
     Integer[] convertToBits(int decimal, int size) {
         Integer[] binaryNum = new Integer[size];
@@ -366,9 +345,10 @@ public class DecisionTreeScoring extends Model {
 
     /**
      * calls the PolynomialComputing class and gets the final output
+     *
      * @param startpid
      */
-    void computePolynomialEquation() {
+    void computePolynomialEquation() throws InterruptedException, ExecutionException {
 
         Integer[][] yShares = new Integer[leafNodes][alpha];
 
@@ -398,9 +378,9 @@ public class DecisionTreeScoring extends Model {
             Integer[] jBinary = convertToBits(j, depth);
 
             PolynomialComputing pc = new PolynomialComputing(yShares[j], jBinary, alpha,
-                    depth, comparisonOutputs, binaryTiShares.subList(tiBinaryStartIndex, 
+                    depth, comparisonOutputs, binaryTiShares.subList(tiBinaryStartIndex,
                             tiBinaryStartIndex + polynomialComputationTiCount),
-                    new LinkedList<>(protocolIdQueue), pidMapper, commonSender, 
+                    new LinkedList<>(protocolIdQueue), pidMapper, commonSender,
                     pid, clientId, asymmetricBit, partyCount);
 
             pid++;
@@ -413,11 +393,7 @@ public class DecisionTreeScoring extends Model {
 
         for (int j = 0; j < leafNodes; j++) {
             Future<Integer[]> taskResponse = taskList.get(j);
-            try {
-                yShares[j] = taskResponse.get();
-            } catch (InterruptedException | ExecutionException ex) {
-                LOGGER.log(Level.SEVERE, null, ex);
-            }
+            yShares[j] = taskResponse.get();
         }
 
         for (int i = 0; i < alpha; i++) {

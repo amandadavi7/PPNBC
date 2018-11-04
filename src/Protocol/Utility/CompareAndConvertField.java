@@ -24,8 +24,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  *
@@ -53,12 +51,14 @@ public class CompareAndConvertField {
      * @param changeFieldToDecimal
      * @param decimalTiShares
      * @return 
+     * @throws java.lang.InterruptedException 
+     * @throws java.util.concurrent.ExecutionException 
      */
     public static int compareIntegers(int x, int y, List<TripleByte> binaryTiShares,
             int asymmetricBit, ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper,
             BlockingQueue<Message> senderQueue, Queue<Integer> protocolIdQueue,
             int clientId, int prime, int bitLength, int partyCount, int pid,
-            boolean changeFieldToDecimal,  List<TripleInteger> decimalTiShares) {
+            boolean changeFieldToDecimal,  List<TripleInteger> decimalTiShares) throws InterruptedException, ExecutionException {
         
         ExecutorService es = Executors.newFixedThreadPool(2);
         List<Integer> xShares = null, yShares = null;
@@ -85,12 +85,8 @@ public class CompareAndConvertField {
         Future<List<Integer>> future2 = es.submit(yBitTask);
         es.shutdown();
         
-        try {
-            xShares = future1.get();
-            yShares = future2.get();
-        } catch (InterruptedException | ExecutionException ex) {
-            Logger.getLogger(CompareAndConvertField.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        xShares = future1.get();
+        yShares = future2.get();
         
         // call comparison between bitshares
         Comparison comparisonModule = new Comparison(xShares, yShares, 
@@ -124,12 +120,14 @@ public class CompareAndConvertField {
      * @param prime
      * @param partyCount
      * @return 
+     * @throws java.lang.InterruptedException 
+     * @throws java.util.concurrent.ExecutionException 
      */
     public static Integer[] changeBinaryToDecimalField(List<Integer> binaryNumbers,
             List<TripleInteger> decimalTiShares, int pid,
             ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper,
             BlockingQueue<Message> senderQueue, Queue<Integer> protocolIdQueue,
-            int asymmetricBit, int clientId, int prime, int partyCount) {
+            int asymmetricBit, int clientId, int prime, int partyCount) throws InterruptedException, ExecutionException {
         
         List<Integer> dummy = new ArrayList<>(Collections.nCopies(binaryNumbers.size(), 0));
         OR_XOR xorModule;

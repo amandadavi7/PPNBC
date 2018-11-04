@@ -14,8 +14,6 @@ import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * The protocol computes the multiplication of shares of x and y and returns the
@@ -25,14 +23,12 @@ import java.util.logging.Logger;
  */
 public class MultiplicationReal extends Protocol implements Callable<BigInteger> {
 
-    private static final Logger LOGGER = Logger.getLogger(MultiplicationReal.class.getName());
-    
     BigInteger x;
     BigInteger y;
     TripleReal tiRealShares;
     BigInteger prime;
-    
-     /**
+
+    /**
      * Constructor
      *
      * @param x share of x
@@ -49,13 +45,12 @@ public class MultiplicationReal extends Protocol implements Callable<BigInteger>
      *
      */
     public MultiplicationReal(BigInteger x, BigInteger y, TripleReal tiShares,
-            ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper, 
+            ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper,
             BlockingQueue<Message> senderQueue,
             Queue<Integer> protocolIdQueue,
             int clientId, BigInteger prime,
             int protocolID, int asymmetricBit, int partyCount) {
 
-        
         super(protocolID, pidMapper, senderQueue, protocolIdQueue,
                 clientId, asymmetricBit, partyCount);
         this.x = x;
@@ -69,26 +64,23 @@ public class MultiplicationReal extends Protocol implements Callable<BigInteger>
      * the value
      *
      * @return shares of product
+     * @throws java.lang.InterruptedException
      */
     @Override
-    public BigInteger call() {
+    public BigInteger call() throws InterruptedException {
         initProtocol();
         BigInteger d = BigInteger.ZERO;
         BigInteger e = BigInteger.ZERO;
         for (int i = 0; i < partyCount - 1; i++) {
-            try {
-                Message receivedMessage = pidMapper.get(protocolIdQueue).take();
-                List<BigInteger> diffList = (List<BigInteger>) receivedMessage.getValue();
-                d = d.add(diffList.get(0)).mod(prime);
-                e = e.add(diffList.get(1)).mod(prime);
-            } catch (InterruptedException ex) {
-                ex.printStackTrace();
-            }
+            Message receivedMessage = pidMapper.get(protocolIdQueue).take();
+            List<BigInteger> diffList = (List<BigInteger>) receivedMessage.getValue();
+            d = d.add(diffList.get(0)).mod(prime);
+            e = e.add(diffList.get(1)).mod(prime);
         }
-        
+
         d = x.subtract(tiRealShares.u).mod(prime).add(d).mod(prime);
         e = y.subtract(tiRealShares.v).mod(prime).add(e).mod(prime);
-        
+
         BigInteger product = tiRealShares.w
                 .add(d.multiply(tiRealShares.v).mod(prime))
                 .mod(prime)
@@ -104,19 +96,13 @@ public class MultiplicationReal extends Protocol implements Callable<BigInteger>
     /**
      * Bundle the d and e values and add to the sender queue
      */
-    private void initProtocol() {
+    private void initProtocol() throws InterruptedException {
         List<BigInteger> diffList = new ArrayList<>();
         diffList.add(x.subtract(tiRealShares.u).mod(prime));
         diffList.add(y.subtract(tiRealShares.v).mod(prime));
 
         Message senderMessage = new Message(diffList,
                 clientID, protocolIdQueue);
-        try {
-            senderQueue.put(senderMessage);
-        } catch (InterruptedException ex) {
-            LOGGER.log(Level.SEVERE, null, ex);
-        }
-
+        senderQueue.put(senderMessage);
     }
-
 }
