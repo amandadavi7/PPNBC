@@ -58,11 +58,12 @@ java -Dconfig.properties=config.properties -jar Party.jar party_port=<Party Port
  - Client:
  
  The data owner that splits the into #Party shares and stores the data in csv files.
- ```
-   
- java -Dconfig.properties=config.properties -jar Client.jar ShareDistribution partyCount=<number of parties> sourceFile=<input file path> destPath=<output path>
-   
- ```
+ 
+```
+
+java -Dconfig.properties=config.properties -jar Client.jar ShareDistribution partyCount=<number of parties> sourceFile=<input file path> destPath=<output path>
+
+```
 
 ## Documentation
 
