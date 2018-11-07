@@ -292,7 +292,7 @@ public class RandomForestDTScoring extends DecisionTreeScoring implements Callab
 
         List<Future<Integer>> dpTaskList = new ArrayList<>();
         if(leafToClassIndexMappingTransposed == null) {
-            for(int i=0;i<classLabelCount;i++) {
+            for(int i = 0; i < classLabelCount; i++) {
                 DotProductInteger dpModule = new DotProductInteger(Arrays.asList(one_hot_encoding_leaf_predicted), 
                         dummy, decimalTiShares, pidMapper, commonSender, 
                         new LinkedList<>(protocolIdQueue), clientId, prime, pid, asymmetricBit, partyCount);
@@ -304,7 +304,7 @@ public class RandomForestDTScoring extends DecisionTreeScoring implements Callab
                 DotProductInteger dpModule = new DotProductInteger(Arrays.asList(one_hot_encoding_leaf_predicted),
                         Arrays.asList(leafToClassIndexMappingTransposed[i]), decimalTiShares,
                         pidMapper, commonSender, new LinkedList<>(protocolIdQueue),
-                        clientId, Constants.PRIME, pid, asymmetricBit, partyCount);
+                        clientId, prime, pid, asymmetricBit, partyCount);
                 dpTaskList.add(es.submit(dpModule));
                 pid++;
             }

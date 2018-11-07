@@ -182,7 +182,7 @@ public class TreeEnsemble extends Model {
         int[] weightedProbabilityVector = new int[classLabelCount];
         
         for(Integer[] output: treeOutputs) {
-            for(int i=0; i<classLabelCount;i++) {
+            for(int i = 0; i < classLabelCount; i++) {
                 weightedProbabilityVector[i] = Math.floorMod(weightedProbabilityVector[i]+output[i], prime);
             }
         }
@@ -190,7 +190,7 @@ public class TreeEnsemble extends Model {
         LOGGER.log(Level.FINE, "weighted prob vector output{0}", Arrays.toString(weightedProbabilityVector));
 
         List<Future<List<Integer>>> bitDtaskList = new ArrayList<>();
-        for(int i=0;i<classLabelCount;i++) {
+        for(int i = 0; i < classLabelCount; i++) {
             BitDecomposition bitDModule = new BitDecomposition(weightedProbabilityVector[i], 
                     binaryTiShares, asymmetricBit, bitLength, pidMapper, commonSender, 
                     new LinkedList<>(protocolIdQueue), clientId, Constants.BINARY_PRIME, pid, partyCount);

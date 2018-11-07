@@ -362,7 +362,7 @@ public class KNNThresholdKSelect extends Model {
             }
 
             List<Future<List<Integer>>> bitDTasks = new ArrayList<>();
-            for(int i=0;i<batchSize;i++){
+            for(int i = 0; i < localBatchSize; i++){
                 BitDecomposition bitDmodule = new BitDecomposition(comparisonSum[i], 
                     binaryTiShares, asymmetricBit, bitLength, pidMapper, 
                     commonSender, new LinkedList<>(protocolIdQueue),
