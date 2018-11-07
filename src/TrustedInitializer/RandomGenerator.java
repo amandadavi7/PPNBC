@@ -170,14 +170,14 @@ public class RandomGenerator {
             TIShare[] tiShare) {
         Random rand = new java.util.Random();
         for(int i=0;i<equalityCount;i++) {
-            int R = rand.nextInt(Constants.prime-1) + 1;
+            int R = rand.nextInt(Constants.PRIME-1) + 1;
             int rsum = 0;
             for(int j=0;j<clientCount-1;j++){
-                int r = rand.nextInt(Constants.prime);
+                int r = rand.nextInt(Constants.PRIME);
                 rsum+=r;
                 tiShare[j].addEqualityShare(r);
             }
-            int r = Math.floorMod(R-rsum, Constants.prime);
+            int r = Math.floorMod(R-rsum, Constants.PRIME);
             tiShare[clientCount-1].addEqualityShare(r);
         }
         

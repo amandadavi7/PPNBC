@@ -58,10 +58,10 @@ public class DecisionTreeTraining extends Model {
     int alpha; //the corrective factor to multiply (value is 8 in the paper)
     
     //probably shared adhering to asymmetricBit rules??
-    List<List<List<Integer>>> attrValueBitVector; //list(k attr) of list(j values) of arrays[bit representation of ak,j] Sk,j - each Integer array - bit vector
-    List<List<List<Integer>>> attrValueBitVectorDecimal;
-    List<List<Integer>> classValueBitVector; //same as the above but for class values
-    List<List<Integer>> classValueBitVectorDecimal; //same as the above but for class values in decimal field
+    List<List<List<Integer>>> attributeValueTransactionVector; //list(k attr) of list(j values) of arrays[bit representation of ak,j] Sk,j - each Integer array - bit vector
+    List<List<List<Integer>>> attributeValueTransactionVectorDecimal;
+    List<List<Integer>> classValueTransactionVector; //same as the above but for class values
+    List<List<Integer>> classValueTransactionVectorDecimal; //same as the above but for class values in decimal field
     
     int pid, binaryTiIndex, decimalTiIndex, equalityTiIndex; // a global ID series - TODO
     int bitDTiCount, comparisonTiCount, bitLength, prime;
@@ -100,12 +100,12 @@ public class DecisionTreeTraining extends Model {
         this.dataset = dataset;
         this.datasetSize = datasetSize;
         
-        this.attrValueBitVector = attrValues;
+        this.attributeValueTransactionVector = attrValues;
         this.attrValueCount = attrValues.get(0).size();
         
         //classIndexLabelMapping = classLabels;
         
-        this.classValueBitVector = classValues;
+        this.classValueTransactionVector = classValues;
         this.classLabelCount = classValues.size();
         
         this.decimalTiShares = decimalTriple;
@@ -144,21 +144,22 @@ public class DecisionTreeTraining extends Model {
         }
         
         for(int i=0;i<classLabelCount;i++){
-            classValueBitVectorDecimal.add(Arrays.asList(CompareAndConvertField.changeBinaryToDecimalField(
-                    classValueBitVector.get(i), decimalTiShares,
-                    pid, pidMapper, commonSender, protocolIdQueue, asymmetricBit,
-                    clientId, prime, partyCount)));
+            classValueTransactionVectorDecimal.add(Arrays.asList(
+                    CompareAndConvertField.changeBinaryToDecimalField(classValueTransactionVector.get(i),
+                            decimalTiShares, pid, pidMapper, commonSender, protocolIdQueue,
+                            asymmetricBit, clientId, prime, partyCount)));
             pid++;
             // TODO - decimalTiShares increment
         }
         
         // TODO - handle decimal ti shares sublist and increment
         for(int i=0;i<attributeCount;i++) {
-            attrValueBitVectorDecimal.add(new ArrayList());
+            attributeValueTransactionVectorDecimal.add(new ArrayList());
             for(int j=0;j<attrValueCount;j++) {
-                attrValueBitVectorDecimal.get(i).add(Arrays.asList(CompareAndConvertField.changeBinaryToDecimalField(
-                        attrValueBitVector.get(i).get(j), decimalTiShares, pid, pidMapper,
-                        commonSender, protocolIdQueue, asymmetricBit, clientId, prime, partyCount)));
+                attributeValueTransactionVectorDecimal.get(i).add(Arrays.asList(
+                        CompareAndConvertField.changeBinaryToDecimalField(attributeValueTransactionVector.get(i).get(j),
+                                decimalTiShares, pid, pidMapper, commonSender, protocolIdQueue,
+                                asymmetricBit, clientId, prime, partyCount)));
                 pid++;
             }
         }
@@ -189,7 +190,7 @@ public class DecisionTreeTraining extends Model {
         for(int i=0;i<classLabelCount;i++) {
             
             DotProductInteger dp = new DotProductInteger(Arrays.asList(subsetTransactionsDecimal), 
-                    classValueBitVectorDecimal.get(i), decimalTiShares, pidMapper, 
+                    classValueTransactionVectorDecimal.get(i), decimalTiShares, pidMapper, 
                     commonSender, new LinkedList<>(protocolIdQueue), clientId, prime,
                     pid, asymmetricBit, partyCount);
             
@@ -232,39 +233,6 @@ public class DecisionTreeTraining extends Model {
         
         Integer[] commonClassLabel = argmax.call();
         
-        /*
-        //compute the class index using the above result
-        DotProductInteger dp = new DotProductInteger(Arrays.asList(commonClassLabel), Arrays.asList(classIndexLabelMapping),
-                decimalTiShares, pidMapper, commonSender, 
-                new LinkedList<>(protocolIdQueue),
-                clientId, Constants.prime, pid, asymmetricBit, partyCount);
-            
-        Future<Integer> ci = es.submit(dp);
-        Integer[] commonClass = new Integer[2];
-        pid++;
-        
-        try {
-            commonClass[0] = ci.get();
-        } catch (InterruptedException | ExecutionException ex) {
-            Logger.getLogger(ID3.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        
-        //compute the si using argmax result
-        DotProductInteger dp2 = new DotProductInteger(Arrays.asList(commonClassLabel), 
-                Arrays.asList(classIndexLabelMapping), decimalTiShares, 
-                pidMapper, commonSender, new LinkedList<>(protocolIdQueue), clientId, 
-                Constants.prime, pid, asymmetricBit, partyCount);
-        
-        Future<Integer> si = es.submit(dp2);
-        pid++;
-        es.shutdown();
-        
-        try{
-            commonClass[1] = si.get();
-        } catch (InterruptedException | ExecutionException ex) {
-            Logger.getLogger(ID3.class.getName()).log(Level.SEVERE, null, ex);
-        }*/
-        
         return commonClassLabel;
         
     }
@@ -272,11 +240,11 @@ public class DecisionTreeTraining extends Model {
     public void trainDecisionTree() throws InterruptedException, ExecutionException {
         init();
         
-        ID3_Model(subsetTransactionsBitVector, attributeBitVector, levelCounter);
+        ID3Model(subsetTransactionsBitVector, attributeBitVector, levelCounter);
     }
     
     
-    Integer[] ID3_Model(Integer[] transactions, Integer[] attributes, int r) 
+    Integer[] ID3Model(Integer[] transactions, Integer[] attributes, int r) 
             throws InterruptedException, ExecutionException {
         
         //Finding the most common class Label
@@ -301,7 +269,7 @@ public class DecisionTreeTraining extends Model {
         List<Future<Integer>> dpTasks = new ArrayList<>();
         for(int i=0;i<classLabelCount;i++){
             DotProductInteger dpModule = new DotProductInteger(Collections.nCopies(datasetSize, majorityClassIndexDecimal[i]),
-                    classValueBitVectorDecimal.get(i), decimalTiShares, pidMapper,
+                    classValueTransactionVectorDecimal.get(i), decimalTiShares, pidMapper,
                     commonSender, new LinkedList<>(protocolIdQueue), clientId,
                     prime, pid, asymmetricBit, partyCount);
             pid++;
@@ -329,10 +297,33 @@ public class DecisionTreeTraining extends Model {
         
         //TODO another stopping criteria and return class label after doing or between the 2
         
+        // Comparison - TODO
+        int compResult = 0;
         
+        Integer[] compResultDec = CompareAndConvertField.changeBinaryToDecimalField(Arrays.asList(compResult),
+                decimalTiShares, pid, pidMapper, commonSender, protocolIdQueue,
+                asymmetricBit, clientId, prime, partyCount);
+        pid++;
         
+        // Reveal the output of the product to both sides and if product is 0, exit with leaf node
+        // Doing AND of converse instead of doing an OR (check again)
         
+        MultiplicationInteger mult = new MultiplicationInteger(eqResult, compResult,
+                decimalTiShares.get(decimalTiIndex), pidMapper, commonSender, 
+                new LinkedList<>(protocolIdQueue), clientId, prime, pid, asymmetricBit,
+                modelProtocolId, partyCount);
+        pid++;
+        int stoppingBit = mult.call();
         
+        //share the results with each other
+        Message senderMessage = new Message(stoppingBit, clientId, protocolIdQueue);
+        int stoppingBit2 = 0;
+        commonSender.put(senderMessage);
+        Message receivedMessage = pidMapper.get(protocolIdQueue).take();
+        stoppingBit2 = (int) receivedMessage.getValue();
+        if(Math.floorMod(stoppingBit+stoppingBit2,prime)==0){
+            return majorityClassIndex;
+        }
         
         // Find the best splitting attribute based on the GINI Gain
         // Step 1. Get the set of transactions with each class label (U)
@@ -343,7 +334,7 @@ public class DecisionTreeTraining extends Model {
         for(int i=0;i<classLabelCount;i++) {
             //TODO - regulate the batch size and call in iterations, handle Ti Shares
             BatchMultiplicationByte batchMult = new BatchMultiplicationByte(
-                    Arrays.asList(transactions), classValueBitVector.get(i), binaryTiShares,
+                    Arrays.asList(transactions), classValueTransactionVector.get(i), binaryTiShares,
                     pidMapper, commonSender, new LinkedList<>(protocolIdQueue),
                     clientId, Constants.BINARY_PRIME, pid, asymmetricBit, modelProtocolId, partyCount);
             pid++;    
@@ -376,7 +367,7 @@ public class DecisionTreeTraining extends Model {
                 for(int i=0;i<classLabelCount;i++) { //For each class value
                     //compute xij
                     DotProductInteger dp = new DotProductInteger(UDecimal.get(i), 
-                        attrValueBitVectorDecimal.get(k).get(j), decimalTiShares, 
+                        attributeValueTransactionVectorDecimal.get(k).get(j), decimalTiShares, 
                         pidMapper, commonSender, new LinkedList<>(protocolIdQueue), 
                         clientId, prime, pid, asymmetricBit, partyCount);
                     pid++;
@@ -422,7 +413,7 @@ public class DecisionTreeTraining extends Model {
             
             Integer YProd = Y[k][0];
             for(int j=1;j<attrValueCount;j++) {
-                MultiplicationInteger mult = new MultiplicationInteger(YProd, Y[k][j], decimalTiShares.get(0), 
+                mult = new MultiplicationInteger(YProd, Y[k][j], decimalTiShares.get(0), 
                         pidMapper, commonSender, new LinkedList<>(protocolIdQueue), 
                         clientId, prime, pid, asymmetricBit, 0, partyCount);
                 pid++;
