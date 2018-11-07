@@ -7,6 +7,7 @@ package Party;
 
 import Communication.Message;
 import Model.DecisionTreeScoring;
+import Model.DecisionTreeTraining;
 import Model.KNNSortAndSwap;
 import Model.KNNThresholdKSelect;
 import Model.LinearRegressionEvaluation;
@@ -292,6 +293,15 @@ public class Party {
                                 partyId, partyCount, args, protocolIdQueue, modelId);
 
                 regressionEvaluationModelDAMF.predictValues();
+                break;
+                
+            case "DecisionTreeTraining":
+                // Decision Tree Training
+                /*DecisionTreeTraining dtModel = new DecisionTreeTraining(asymmetricBit,
+                        pidMapper, senderQueue, partyId, tiShares.binaryShares,
+                        tiShares.decimalShares, tiShares.equalityShares, 2, 3, 2, 10,
+                        dataset, attrValues, classLabels, classValues, partyCount, protocolIdQueue, modelId);
+                dtModel.trainDecisionTree();*/
                 break;
             
             default:

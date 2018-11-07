@@ -6,9 +6,7 @@
 package Protocol;
 
 import Communication.Message;
-import TrustedInitializer.Triple;
 import TrustedInitializer.TripleInteger;
-import Utility.Constants;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
@@ -27,6 +25,21 @@ public class Equality extends CompositeProtocol implements Callable<Integer> {
     int xShare, yShare, rShare, prime;
     TripleInteger decimalTiShare;
     
+    /**
+     * 
+     * @param xShare
+     * @param yShare
+     * @param rShare
+     * @param tiShare
+     * @param asymmetricBit
+     * @param pidMapper
+     * @param senderqueue
+     * @param clientId
+     * @param prime
+     * @param protocolID
+     * @param protocolIdQueue
+     * @param partyCount 
+     */
     public Equality(int xShare, int yShare, int rShare,
             TripleInteger tiShare, int asymmetricBit, 
             ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper,
@@ -44,9 +57,13 @@ public class Equality extends CompositeProtocol implements Callable<Integer> {
         
     }
     
-    
+    /**
+     * 
+     * @return 
+     * @throws java.lang.InterruptedException 
+     */
     @Override
-    public Integer call() throws Exception {
+    public Integer call() throws InterruptedException {
         int diff = Math.floorMod(this.xShare - this.yShare, prime);
         
         List<Integer> diffList = new ArrayList<>();
@@ -64,12 +81,9 @@ public class Equality extends CompositeProtocol implements Callable<Integer> {
         
         Message receivedMessage = null;
         diffList = null;
-        try {
-            receivedMessage = pidMapper.get(protocolIdQueue).take();
-            diffList = (List<Integer>) receivedMessage.getValue();
-        } catch (InterruptedException ex) {
-            Logger.getLogger(Equality.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        
+        receivedMessage = pidMapper.get(protocolIdQueue).take();
+        diffList = (List<Integer>) receivedMessage.getValue();
 
         int d = Math.floorMod((diff - decimalTiShare.u) + diffList.get(0), prime);
         int e = Math.floorMod((rShare - decimalTiShare.v) + diffList.get(1), prime);

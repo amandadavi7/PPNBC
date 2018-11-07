@@ -13,12 +13,13 @@ import Protocol.DotProductInteger;
 import Protocol.Equality;
 import Protocol.MultiplicationInteger;
 import Protocol.Utility.BatchMultiplicationInteger;
-import TrustedInitializer.Triple;
+import Protocol.Utility.CompareAndConvertField;
 import TrustedInitializer.TripleByte;
 import TrustedInitializer.TripleInteger;
 import Utility.Constants;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
@@ -35,86 +36,148 @@ import java.util.logging.Logger;
  *
  * @author keerthanaa
  */
-public class ID3 extends Model {
+public class DecisionTreeTraining extends Model {
     
-    //classLabelCount - total no. of class labels, attrCount - total no. of attributes
-    //datasetSize - total no. of rows in the DB, rCounter - the counter to decrement no. of attributes left
+    //classLabelCount - total no. of class labels, attributeCount - total no. of attributes
+    //datasetSize - total no. of rows in the DB, levelCounter - the counter to decrement no. of attributes left
     //attrValueCount - total no. of attribute values per attribute (make it constant by adding dummy variable)
     //For now, input accordingly, TODO -  how to manage this dummy value addition??
-    int classLabelCount, attrCount, datasetSize, rCounter, attrValueCount;
+    int classLabelCount, attributeCount, datasetSize, levelCounter, attrValueCount;
     int[][] dataset;    //the dataset
-    int attrLabelCounts[]; //Mapping between attr index to no. of attr values for each attr (may or may not be needed
+    //int attrLabelCounts[]; //Mapping between attr index to no. of attr values for each attr (may or may not be needed
+    
     Integer[] classIndexLabelMapping;
     Integer[] subsetTransactionsBitVector; //dataset currently considered
     Integer[] attributeBitVector;
+    
     List<Integer> equalityTiShares;
     List<TripleByte> binaryTiShares;
     List<TripleInteger> decimalTiShares;
     
     int alpha; //the corrective factor to multiply (value is 8 in the paper)
     
-    //probably shared adhering to oneShare rules??
-    List<List<Integer[]>> attrValueBitVector; //list(k attr) of list(j values) of arrays[bit representation of ak,j]
-    List<Integer[]> classValueBitVector; //same as the above but for class values
+    //probably shared adhering to asymmetricBit rules??
+    List<List<List<Integer>>> attrValueBitVector; //list(k attr) of list(j values) of arrays[bit representation of ak,j] Sk,j - each Integer array - bit vector
+    List<List<Integer>> classValueBitVector; //same as the above but for class values
+    List<List<Integer>> classValueBitVectorDecimal; //same as the above but for class values in decimal field
     
     int pid, binaryTiIndex, decimalTiIndex, equalityTiIndex; // a global ID series - TODO
+    int bitDTiCount, comparisonTiCount, bitLength, prime;
     
-    //oneshares to equalityShares - common for all the models
-    public ID3(int asymmetricBit, ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper, 
+    /**
+     * 
+     * @param asymmetricBit
+     * @param pidMapper
+     * @param senderQueue
+     * @param clientId
+     * @param binaryTriples
+     * @param decimalTriple
+     * @param equalityShares
+     * @param classLabelCount
+     * @param attrCount
+     * @param attrValueCount
+     * @param datasetSize
+     * @param dataset
+     * @param attrValues
+     * @param classLabels
+     * @param classValues
+     * @param partyCount
+     * @param protocolIdQueue
+     * @param protocolID 
+     */
+    public DecisionTreeTraining(int asymmetricBit, ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper, 
             BlockingQueue<Message> senderQueue, int clientId, List<TripleByte> binaryTriples, 
-            List<TripleInteger> decimalTriple, List<Integer> equalityShares, int classesCount, 
-            int attrCount, int attrValueCount, int[][] dataset, List<List<Integer[]>> attrValues, 
-            Integer[] classLabels, List<Integer[]> classValues, int partyCount,
+            List<TripleInteger> decimalTriple, List<Integer> equalityShares, int classLabelCount, 
+            int attrCount, int attrValueCount, int datasetSize, int[][] dataset, List<List<List<Integer>>> attrValues, 
+            Integer[] classLabels, List<List<Integer>> classValues, int partyCount,
             Queue<Integer> protocolIdQueue, int protocolID) {
         
         super(pidMapper, senderQueue, clientId, asymmetricBit, partyCount, protocolIdQueue, protocolID);
         
-        this.equalityTiShares = equalityShares;
-        this.classLabelCount = classesCount;
-        this.attrCount = attrCount;
-        this.attrValueCount = attrValueCount;
+        this.attributeCount = attrCount;
         this.dataset = dataset;
+        this.datasetSize = datasetSize;
+        
         this.attrValueBitVector = attrValues;
-        classIndexLabelMapping = classLabels;
-        this.rCounter = attrCount-1;
+        this.attrValueCount = attrValues.get(0).size();
+        
+        //classIndexLabelMapping = classLabels;
+        
         this.classValueBitVector = classValues;
+        this.classLabelCount = classValues.size();
+        
         this.decimalTiShares = decimalTriple;
         this.binaryTiShares = binaryTriples;
+        this.equalityTiShares = equalityShares;
+        
+        this.levelCounter = attrCount-1;
         this.alpha = 8;
         pid = 0;
         decimalTiIndex = 0;
         binaryTiIndex = 0;
         equalityTiIndex = 0;
+        bitLength = (int) Math.ceil(Math.log(datasetSize)/Math.log(2));
+        prime = (int) Math.pow(2, bitLength);
+        bitDTiCount = bitLength * 3 - 2;
+        comparisonTiCount = (2 * bitLength) + ((bitLength * (bitLength - 1)) / 2);
         
     }
     
-    void init() {
-        //Initialize the transaction vector to 1 (one or oneshare???)
-        subsetTransactionsBitVector = new Integer[dataset.length];
+    /**
+     * 
+     * @throws InterruptedException
+     * @throws ExecutionException 
+     */
+    void init() throws InterruptedException, ExecutionException {
+        //Initialize the set of input transactions to asymmetricBit
+        subsetTransactionsBitVector = new Integer[datasetSize];
         for(int i=0;i<datasetSize;i++){
-            subsetTransactionsBitVector[i] = 1;
+            subsetTransactionsBitVector[i] = asymmetricBit;
         }
         
-        //Initially all attributes are available (may need to be changed to oneShares instead of 1
-        //To check
-        attributeBitVector = new Integer[attrCount];
-        for(int i=0;i<attrCount;i++) {
-            attributeBitVector[i] = 1;
+        //Initially all attributes are available
+        attributeBitVector = new Integer[attributeCount];
+        for(int i=0;i<attributeCount;i++) {
+            attributeBitVector[i] = asymmetricBit;
+        }
+        
+        for(int i=0;i<classLabelCount;i++){
+            classValueBitVectorDecimal.add(Arrays.asList(CompareAndConvertField.changeBinaryToDecimalField(
+                    classValueBitVector.get(i), decimalTiShares,
+                    pid, pidMapper, commonSender, protocolIdQueue, asymmetricBit,
+                    clientId, prime, partyCount)));
+            pid++;
+            // TODO - decimalTiShares increment
         }
         
     }
     
-    Integer[] findCommonClassIndex(Integer[] subsetTransactions) {
-        /// total no. of rows / class label
+    /**
+     * Find the most common class label in subsetTransactions
+     * Returns one hot encoding share of majority class label
+     * @param subsetTransactions
+     * @return 
+     */
+    Integer[] findCommonClassIndex(Integer[] subsetTransactions) throws InterruptedException, ExecutionException {
+        
         int[] s = new int[classLabelCount];
         ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
         List<Future<Integer>> DPtaskList = new ArrayList<>();
         
+        //subsetTransaction is over field 2, change to prime before doing argmax
+        Integer[] subsetTransactionsDecimal = CompareAndConvertField.changeBinaryToDecimalField(
+                Arrays.asList(subsetTransactions), decimalTiShares, pid, pidMapper,
+                commonSender, protocolIdQueue, asymmetricBit, clientId, prime, partyCount);
+        pid++;
+        
+        // for each class label do a Dot Product with the input transactions
+        // outputs shares of number of transactions holding every class label
+        // TODO - handle TI Shares
         for(int i=0;i<classLabelCount;i++) {
             
-            DotProductByte dp = new DotProductByte(Arrays.asList(subsetTransactions), 
-                    Arrays.asList(classValueBitVector.get(i)), binaryTiShares, pidMapper, 
-                    commonSender, new LinkedList<>(protocolIdQueue), clientId, Constants.binaryPrime,
+            DotProductInteger dp = new DotProductInteger(Arrays.asList(subsetTransactionsDecimal), 
+                    classValueBitVectorDecimal.get(i), decimalTiShares, pidMapper, 
+                    commonSender, new LinkedList<>(protocolIdQueue), clientId, prime,
                     pid, asymmetricBit, partyCount);
             
             Future<Integer> dpresult = es.submit(dp);
@@ -123,23 +186,17 @@ public class ID3 extends Model {
         }
         
         for(int i=0;i<classLabelCount;i++){
-            try {
-                Future<Integer> dpresult = DPtaskList.get(i);
-                s[i] = dpresult.get();
-            } catch (InterruptedException | ExecutionException ex) {
-                Logger.getLogger(ID3.class.getName()).log(Level.SEVERE, null, ex);
-            }
+            Future<Integer> dpresult = DPtaskList.get(i);
+            s[i] = dpresult.get();
         }
         
-        pid+=classLabelCount;
-        ///////////////////////////////////// convert the above results to bits
+        // convert the above results to bits so that we can do ArgMax
         List<Future<List<Integer>>> BDtaskList = new ArrayList<>();
         
-        
-        //Need to handle tishares sublist
+        // TODO handle tishares sublist
         for(int i=0;i<classLabelCount;i++) {
             BitDecomposition bitD = new BitDecomposition(s[i], binaryTiShares, 
-                    asymmetricBit, Constants.bitLength, pidMapper, commonSender, 
+                    asymmetricBit, bitLength, pidMapper, commonSender, 
                     new LinkedList<>(protocolIdQueue), clientId, 
                     Constants.binaryPrime, pid, partyCount);
             pid++;
@@ -147,32 +204,22 @@ public class ID3 extends Model {
             BDtaskList.add(task);
         }
         
-        pid+=classLabelCount;
-        
         List<List<Integer>> bitSharesS = new ArrayList<>();
         for (int i = 0; i < classLabelCount; i++) {
             Future<List<Integer>> taskResponse = BDtaskList.get(i);
-            try {
-                bitSharesS.add(taskResponse.get());
-            } catch (InterruptedException | ExecutionException ex) {
-                Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
-            }        
+            bitSharesS.add(taskResponse.get());        
         }
         
-        //compute argmax
-        Integer[] commonClassLabel = new Integer[classLabelCount];
+        //compute argmax - will hold one hot encoding of majority class label
+        // TODO - handle tishares
         ArgMax argmax = new ArgMax(bitSharesS, binaryTiShares, asymmetricBit,
                 pidMapper, commonSender, new LinkedList<>(protocolIdQueue),
                 clientId, Constants.binaryPrime, pid, partyCount);
-        Future<Integer[]> argmaxTask = es.submit(argmax);
         pid++;
         
-        try {
-            commonClassLabel = argmaxTask.get();
-        } catch (InterruptedException | ExecutionException ex) {
-            Logger.getLogger(ID3.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        Integer[] commonClassLabel = argmax.call();
         
+        /*
         //compute the class index using the above result
         DotProductInteger dp = new DotProductInteger(Arrays.asList(commonClassLabel), Arrays.asList(classIndexLabelMapping),
                 decimalTiShares, pidMapper, commonSender, 
@@ -203,47 +250,73 @@ public class ID3 extends Model {
             commonClass[1] = si.get();
         } catch (InterruptedException | ExecutionException ex) {
             Logger.getLogger(ID3.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        }*/
         
-        return commonClass;
+        return commonClassLabel;
         
     }
     
-    public void Compute() {
+    public void trainDecisionTree() throws InterruptedException, ExecutionException {
         init();
         
-        ID3_Model(subsetTransactionsBitVector, attributeBitVector, rCounter);
+        ID3_Model(subsetTransactionsBitVector, attributeBitVector, levelCounter);
     }
     
     
-    Integer ID3_Model(Integer[] transactions, Integer[] attributes, int r) {
+    Integer[] ID3_Model(Integer[] transactions, Integer[] attributes, int r) 
+            throws InterruptedException, ExecutionException {
+        
         //Finding the most common class Label
-        Integer[] ci = findCommonClassIndex(transactions);
-        ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
+        Integer[] majorityClassIndex = findCommonClassIndex(transactions);
+        
         //Check the stopping criteria
+        // 1. no more attributes left, just return i_star label
         if(r==0) {
-            return ci[0];
+            return majorityClassIndex;
         }
         
-        //doing secure equality between |T| and ci[1]
+        // 2. |T| <= e|T'| or 3. Si* = |T|
+        //Step 1: convert fields of argmax output
+        //Step 2: do Dot Product
+        
+        Integer[] majorityClassIndexDecimal = CompareAndConvertField.changeBinaryToDecimalField(
+                Arrays.asList(majorityClassIndex), decimalTiShares, pid, pidMapper, commonSender,
+                protocolIdQueue, asymmetricBit, clientId, prime, partyCount);
+        pid++;
+        
+        ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
+        List<Future<Integer>> dpTasks = new ArrayList<>();
+        for(int i=0;i<classLabelCount;i++){
+            DotProductInteger dpModule = new DotProductInteger(Collections.nCopies(datasetSize, majorityClassIndexDecimal[i]),
+                    classValueBitVectorDecimal.get(i), decimalTiShares, pidMapper,
+                    commonSender, new LinkedList<>(protocolIdQueue), clientId,
+                    prime, pid, asymmetricBit, partyCount);
+            pid++;
+            dpTasks.add(es.submit(dpModule));
+        }
+        
+        int majorityClassTransactionCount = 0;
+        for(int i=0;i<classLabelCount;i++) {
+            Future<Integer> dpResult = dpTasks.get(i);
+            majorityClassTransactionCount += dpResult.get();
+        }
+        
+        // do a security equality between the two numbers
         int transactionCount = 0;
         for(int i=0;i<datasetSize;i++) {
-            transactionCount+=subsetTransactionsBitVector[i];
+            transactionCount += transactions[i];
         }
         
-        Equality eq = new Equality(transactionCount, ci[1], equalityTiShares.get(0), 
-                decimalTiShares.get(0), asymmetricBit, pidMapper, commonSender, 
-                clientId, Constants.prime, pid, new LinkedList<>(protocolIdQueue), partyCount);
-        Future<Integer> eqTask = es.submit(eq);
+        Equality eq = new Equality(transactionCount, majorityClassTransactionCount,
+                equalityTiShares.get(0), decimalTiShares.get(0), asymmetricBit,
+                pidMapper, commonSender, clientId, Constants.prime, pid,
+                new LinkedList<>(protocolIdQueue), partyCount);
         pid++;
-        int eqResult = 0;
-        try {
-            eqResult = eqTask.get();
-        } catch (InterruptedException | ExecutionException ex) {
-            Logger.getLogger(ID3.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        int eqResult = eq.call();
         
-        //TODO another stopping criteria and return class label
+        //TODO another stopping criteria and return class label after doing or between the 2
+        
+        
         
         //U computation starts.......................................
         List<Integer[]> U = new ArrayList<>();
@@ -252,7 +325,7 @@ public class ID3 extends Model {
         for(int i=0;i<classLabelCount;i++) {
             //TODO - regulate the batch size and call in iterations
             BatchMultiplicationInteger batchMult = new BatchMultiplicationInteger(Arrays.asList(subsetTransactionsBitVector),
-                    Arrays.asList(classValueBitVector.get(i)), decimalTiShares,
+                    classValueBitVector.get(i), decimalTiShares,
                     pidMapper, commonSender, new LinkedList<>(protocolIdQueue),
                     clientId, Constants.prime, pid, asymmetricBit, modelProtocolId, partyCount);
             pid++;    
@@ -273,20 +346,20 @@ public class ID3 extends Model {
         //U computation ends.......................................
         
         //Computing Gini Gain and argmax
-        Integer[][][] X = new Integer[attrCount][classLabelCount][attrValueCount]; //xij for each attribute
-        Integer[][][] X2 = new Integer[attrCount][classLabelCount][attrValueCount]; //x^2
-        Integer[][] Y = new Integer[attrCount][attrValueCount]; //yj for each attribute
-        Integer[] Denominator = new Integer[attrCount]; //denominator for all attributes
+        Integer[][][] X = new Integer[attributeCount][classLabelCount][attrValueCount]; //xij for each attribute
+        Integer[][][] X2 = new Integer[attributeCount][classLabelCount][attrValueCount]; //x^2
+        Integer[][] Y = new Integer[attributeCount][attrValueCount]; //yj for each attribute
+        Integer[] Denominator = new Integer[attributeCount]; //denominator for all attributes
         List<Future<Integer>> xTasks = new ArrayList<>();
         
-        for(int k=0;k<attrCount;k++) { //For each attribute
+        for(int k=0;k<attributeCount;k++) { //For each attribute
             for(int j=0;j<attrValueCount;j++) { //For each possible value attribute k can take
                 xTasks.clear();
                 Y[k][j] = 0;
                 for(int i=0;i<classLabelCount;i++) { //For each class value
                     //compute xij
                     DotProductByte dp = new DotProductByte(Arrays.asList(U.get(i)), 
-                        Arrays.asList(attrValueBitVector.get(k).get(j)), binaryTiShares, 
+                        attrValueBitVector.get(k).get(j), binaryTiShares, 
                         pidMapper, commonSender, new LinkedList<>(protocolIdQueue), 
                         clientId, Constants.binaryPrime, pid, asymmetricBit, partyCount);
                     Future<Integer> dpTask = es.submit(dp);
@@ -301,7 +374,7 @@ public class ID3 extends Model {
                         X[k][i][j] = dpTask.get();
                         Y[k][j] += X[k][i][j];
                     } catch (InterruptedException | ExecutionException ex) {
-                        Logger.getLogger(ID3.class.getName()).log(Level.SEVERE, null, ex);
+                        Logger.getLogger(DecisionTreeTraining.class.getName()).log(Level.SEVERE, null, ex);
                     }
                 }
                 // TODO - verify if floor mod on prime is needed here
@@ -325,7 +398,7 @@ public class ID3 extends Model {
                 try {
                     X2[k][i] = bmTask.get();
                 } catch (InterruptedException | ExecutionException ex) {
-                    Logger.getLogger(ID3.class.getName()).log(Level.SEVERE, null, ex);
+                    Logger.getLogger(DecisionTreeTraining.class.getName()).log(Level.SEVERE, null, ex);
                 }
             }
             
@@ -346,7 +419,7 @@ public class ID3 extends Model {
                 try {
                     YProd = multTask.get();
                 } catch (InterruptedException | ExecutionException ex) {
-                    Logger.getLogger(ID3.class.getName()).log(Level.SEVERE, null, ex);
+                    Logger.getLogger(DecisionTreeTraining.class.getName()).log(Level.SEVERE, null, ex);
                 }
             }
             
@@ -355,7 +428,7 @@ public class ID3 extends Model {
         }
         
         //do argmax of Gk and return
-        return 0;
+        return null;
     }
        
 }
