@@ -46,6 +46,7 @@ public class RandomForestDTScoring extends DecisionTreeScoring implements Callab
     Integer[][] leafToClassIndexMappingTransposed;                //leaf node index to class index mapping (stored by the party that has the tree)
     List<TripleInteger> decimalTiShares;
     Logger LOGGER;
+    int prime;
     
     /**
      * Constructor 
@@ -85,6 +86,10 @@ public class RandomForestDTScoring extends DecisionTreeScoring implements Callab
         tiBinaryStartIndex = 0;
         this.decimalTiShares = decimalTriples;
         LOGGER = Logger.getLogger(RandomForestDTScoring.class.getName());
+        this.prime = Constants.PRIME;
+        if(prime == -1) {
+            throw new IllegalArgumentException("Please add a valid prime to the config file");
+        }
     }
 
     /**

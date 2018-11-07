@@ -44,6 +44,7 @@ public class TreeEnsemble extends Model {
     List<TripleByte> binaryTiShares;
     List<Integer[]> treeOutputs;
     List<TripleInteger> decimalTiShares;
+    int prime;
     Logger LOGGER;
 
     /**
@@ -81,6 +82,10 @@ public class TreeEnsemble extends Model {
         this.decimalTiShares = decimalTriples;
         treeOutputs = new ArrayList<>();
         LOGGER = Logger.getLogger(TreeEnsemble.class.getName());
+        this.prime = Constants.PRIME;
+        if(prime == -1) {
+            throw new IllegalArgumentException("Please add a valid prime to the config file");
+        }
     }
 
     /**
