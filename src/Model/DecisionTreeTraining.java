@@ -198,7 +198,7 @@ public class DecisionTreeTraining extends Model {
             BitDecomposition bitD = new BitDecomposition(s[i], binaryTiShares, 
                     asymmetricBit, bitLength, pidMapper, commonSender, 
                     new LinkedList<>(protocolIdQueue), clientId, 
-                    Constants.binaryPrime, pid, partyCount);
+                    Constants.BINARY_PRIME, pid, partyCount);
             pid++;
             Future<List<Integer>> task = es.submit(bitD);
             BDtaskList.add(task);
@@ -214,7 +214,7 @@ public class DecisionTreeTraining extends Model {
         // TODO - handle tishares
         ArgMax argmax = new ArgMax(bitSharesS, binaryTiShares, asymmetricBit,
                 pidMapper, commonSender, new LinkedList<>(protocolIdQueue),
-                clientId, Constants.binaryPrime, pid, partyCount);
+                clientId, Constants.BINARY_PRIME, pid, partyCount);
         pid++;
         
         Integer[] commonClassLabel = argmax.call();
@@ -309,7 +309,7 @@ public class DecisionTreeTraining extends Model {
         
         Equality eq = new Equality(transactionCount, majorityClassTransactionCount,
                 equalityTiShares.get(0), decimalTiShares.get(0), asymmetricBit,
-                pidMapper, commonSender, clientId, Constants.prime, pid,
+                pidMapper, commonSender, clientId, prime, pid,
                 new LinkedList<>(protocolIdQueue), partyCount);
         pid++;
         int eqResult = eq.call();
@@ -327,7 +327,7 @@ public class DecisionTreeTraining extends Model {
             BatchMultiplicationInteger batchMult = new BatchMultiplicationInteger(Arrays.asList(subsetTransactionsBitVector),
                     classValueBitVector.get(i), decimalTiShares,
                     pidMapper, commonSender, new LinkedList<>(protocolIdQueue),
-                    clientId, Constants.prime, pid, asymmetricBit, modelProtocolId, partyCount);
+                    clientId, prime, pid, asymmetricBit, modelProtocolId, partyCount);
             pid++;    
                    
             Future<Integer[]> batchMultTask = es.submit(batchMult);
@@ -361,7 +361,7 @@ public class DecisionTreeTraining extends Model {
                     DotProductByte dp = new DotProductByte(Arrays.asList(U.get(i)), 
                         attrValueBitVector.get(k).get(j), binaryTiShares, 
                         pidMapper, commonSender, new LinkedList<>(protocolIdQueue), 
-                        clientId, Constants.binaryPrime, pid, asymmetricBit, partyCount);
+                        clientId, Constants.BINARY_PRIME, pid, asymmetricBit, partyCount);
                     Future<Integer> dpTask = es.submit(dp);
                     xTasks.add(dpTask);
                     
@@ -378,7 +378,7 @@ public class DecisionTreeTraining extends Model {
                     }
                 }
                 // TODO - verify if floor mod on prime is needed here
-                Y[k][j] = Math.floorMod(alpha*Y[k][j] + 1, Constants.prime);
+                Y[k][j] = Math.floorMod(alpha*Y[k][j] + 1, prime);
             }
             //compute Gk
             
@@ -388,7 +388,7 @@ public class DecisionTreeTraining extends Model {
                 BatchMultiplicationInteger batchMult = new BatchMultiplicationInteger(Arrays.asList(X[k][i]), 
                         Arrays.asList(X[k][i]), decimalTiShares, pidMapper, commonSender, 
                         new LinkedList<>(protocolIdQueue), 
-                        clientId, Constants.prime, pid, asymmetricBit, modelProtocolId, partyCount);
+                        clientId, prime, pid, asymmetricBit, modelProtocolId, partyCount);
                 Future<Integer[]> bmTask = es.submit(batchMult);
                 batchMultTasks.add(bmTask);
             }
@@ -413,7 +413,7 @@ public class DecisionTreeTraining extends Model {
             for(int j=1;j<attrValueCount;j++) {
                 MultiplicationInteger mult = new MultiplicationInteger(YProd, Y[k][j], decimalTiShares.get(0), 
                         pidMapper, commonSender, new LinkedList<>(protocolIdQueue), 
-                        clientId, Constants.prime, pid, asymmetricBit, 0, partyCount);
+                        clientId, prime, pid, asymmetricBit, 0, partyCount);
                 pid++;
                 Future<Integer> multTask = es.submit(mult);
                 try {
