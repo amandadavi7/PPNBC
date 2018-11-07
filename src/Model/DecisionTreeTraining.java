@@ -12,6 +12,7 @@ import Protocol.DotProductByte;
 import Protocol.DotProductInteger;
 import Protocol.Equality;
 import Protocol.MultiplicationInteger;
+import Protocol.Utility.BatchMultiplicationByte;
 import Protocol.Utility.BatchMultiplicationInteger;
 import Protocol.Utility.CompareAndConvertField;
 import TrustedInitializer.TripleByte;
@@ -58,6 +59,7 @@ public class DecisionTreeTraining extends Model {
     
     //probably shared adhering to asymmetricBit rules??
     List<List<List<Integer>>> attrValueBitVector; //list(k attr) of list(j values) of arrays[bit representation of ak,j] Sk,j - each Integer array - bit vector
+    List<List<List<Integer>>> attrValueBitVectorDecimal;
     List<List<Integer>> classValueBitVector; //same as the above but for class values
     List<List<Integer>> classValueBitVectorDecimal; //same as the above but for class values in decimal field
     
@@ -148,6 +150,17 @@ public class DecisionTreeTraining extends Model {
                     clientId, prime, partyCount)));
             pid++;
             // TODO - decimalTiShares increment
+        }
+        
+        // TODO - handle decimal ti shares sublist and increment
+        for(int i=0;i<attributeCount;i++) {
+            attrValueBitVectorDecimal.add(new ArrayList());
+            for(int j=0;j<attrValueCount;j++) {
+                attrValueBitVectorDecimal.get(i).add(Arrays.asList(CompareAndConvertField.changeBinaryToDecimalField(
+                        attrValueBitVector.get(i).get(j), decimalTiShares, pid, pidMapper,
+                        commonSender, protocolIdQueue, asymmetricBit, clientId, prime, partyCount)));
+                pid++;
+            }
         }
         
     }
@@ -318,38 +331,42 @@ public class DecisionTreeTraining extends Model {
         
         
         
-        //U computation starts.......................................
-        List<Integer[]> U = new ArrayList<>();
+        
+        
+        
+        // Find the best splitting attribute based on the GINI Gain
+        // Step 1. Get the set of transactions with each class label (U)
+        
+        List<List<Integer>> UDecimal = new ArrayList<>();
         List<Future<Integer[]>> UtaskList = new ArrayList<>();
         
         for(int i=0;i<classLabelCount;i++) {
-            //TODO - regulate the batch size and call in iterations
-            BatchMultiplicationInteger batchMult = new BatchMultiplicationInteger(Arrays.asList(subsetTransactionsBitVector),
-                    classValueBitVector.get(i), decimalTiShares,
+            //TODO - regulate the batch size and call in iterations, handle Ti Shares
+            BatchMultiplicationByte batchMult = new BatchMultiplicationByte(
+                    Arrays.asList(transactions), classValueBitVector.get(i), binaryTiShares,
                     pidMapper, commonSender, new LinkedList<>(protocolIdQueue),
-                    clientId, prime, pid, asymmetricBit, modelProtocolId, partyCount);
+                    clientId, Constants.BINARY_PRIME, pid, asymmetricBit, modelProtocolId, partyCount);
             pid++;    
-                   
-            Future<Integer[]> batchMultTask = es.submit(batchMult);
-            UtaskList.add(batchMultTask);
+            UtaskList.add(es.submit(batchMult));
         }
         pid+=classLabelCount;
-        
+        // We use U only in Dot products in the future, which means we need to do a field conversion now
         for (int i = 0; i < classLabelCount; i++) {
             Future<Integer[]> taskResponse = UtaskList.get(i);
-            try {
-                U.add(taskResponse.get());
-            } catch (InterruptedException | ExecutionException ex) {
-                Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
-            }        
+            UDecimal.add(Arrays.asList(CompareAndConvertField.changeBinaryToDecimalField(
+                    Arrays.asList(taskResponse.get()), decimalTiShares, pid, pidMapper,
+                    commonSender, protocolIdQueue, asymmetricBit, clientId, prime, partyCount)));      
+            pid++;
         }
+        
         //U computation ends.......................................
         
-        //Computing Gini Gain and argmax
-        Integer[][][] X = new Integer[attributeCount][classLabelCount][attrValueCount]; //xij for each attribute
-        Integer[][][] X2 = new Integer[attributeCount][classLabelCount][attrValueCount]; //x^2
-        Integer[][] Y = new Integer[attributeCount][attrValueCount]; //yj for each attribute
-        Integer[] Denominator = new Integer[attributeCount]; //denominator for all attributes
+        //Computing Gini Gain and argmax for every attribute k
+        Integer[][][] X = new Integer[attributeCount][classLabelCount][attrValueCount]; //xij for each attribute k*i*j
+        Integer[][][] X2 = new Integer[attributeCount][classLabelCount][attrValueCount]; //x^2 of the x above
+        Integer[][] Y = new Integer[attributeCount][attrValueCount]; //yj for each attribute k*j
+        Integer[] Denominator = new Integer[attributeCount]; //denominator for all attributes k
+        
         List<Future<Integer>> xTasks = new ArrayList<>();
         
         for(int k=0;k<attributeCount;k++) { //For each attribute
@@ -358,26 +375,23 @@ public class DecisionTreeTraining extends Model {
                 Y[k][j] = 0;
                 for(int i=0;i<classLabelCount;i++) { //For each class value
                     //compute xij
-                    DotProductByte dp = new DotProductByte(Arrays.asList(U.get(i)), 
-                        attrValueBitVector.get(k).get(j), binaryTiShares, 
+                    DotProductInteger dp = new DotProductInteger(UDecimal.get(i), 
+                        attrValueBitVectorDecimal.get(k).get(j), decimalTiShares, 
                         pidMapper, commonSender, new LinkedList<>(protocolIdQueue), 
-                        clientId, Constants.BINARY_PRIME, pid, asymmetricBit, partyCount);
+                        clientId, prime, pid, asymmetricBit, partyCount);
+                    pid++;
                     Future<Integer> dpTask = es.submit(dp);
                     xTasks.add(dpTask);
-                    
                 }
-                pid+=classLabelCount;
+
                 //compute yj
                 for(int i=0;i<classLabelCount;i++) {
                     Future<Integer> dpTask = xTasks.get(i);
-                    try {
-                        X[k][i][j] = dpTask.get();
-                        Y[k][j] += X[k][i][j];
-                    } catch (InterruptedException | ExecutionException ex) {
-                        Logger.getLogger(DecisionTreeTraining.class.getName()).log(Level.SEVERE, null, ex);
-                    }
+                    X[k][i][j] = dpTask.get();
+                    Y[k][j] += X[k][i][j];
                 }
-                // TODO - verify if floor mod on prime is needed here
+                
+                // TODO - verify if floor mod on prime is needed here what if value becomes 0 after floormod
                 Y[k][j] = Math.floorMod(alpha*Y[k][j] + 1, prime);
             }
             //compute Gk
@@ -389,17 +403,14 @@ public class DecisionTreeTraining extends Model {
                         Arrays.asList(X[k][i]), decimalTiShares, pidMapper, commonSender, 
                         new LinkedList<>(protocolIdQueue), 
                         clientId, prime, pid, asymmetricBit, modelProtocolId, partyCount);
+                pid++;
                 Future<Integer[]> bmTask = es.submit(batchMult);
                 batchMultTasks.add(bmTask);
             }
-            pid+=classLabelCount;
+            
             for(int i=0;i<classLabelCount;i++) {
                 Future<Integer[]> bmTask = batchMultTasks.get(i);
-                try {
-                    X2[k][i] = bmTask.get();
-                } catch (InterruptedException | ExecutionException ex) {
-                    Logger.getLogger(DecisionTreeTraining.class.getName()).log(Level.SEVERE, null, ex);
-                }
+                X2[k][i] = bmTask.get();
             }
             
             Integer numerator = 0;
@@ -415,15 +426,12 @@ public class DecisionTreeTraining extends Model {
                         pidMapper, commonSender, new LinkedList<>(protocolIdQueue), 
                         clientId, prime, pid, asymmetricBit, 0, partyCount);
                 pid++;
-                Future<Integer> multTask = es.submit(mult);
-                try {
-                    YProd = multTask.get();
-                } catch (InterruptedException | ExecutionException ex) {
-                    Logger.getLogger(DecisionTreeTraining.class.getName()).log(Level.SEVERE, null, ex);
-                }
+                YProd = mult.call();
             }
             
             Integer denominator = YProd;
+            
+            //keep track of max gini gain and the corresponding k???
            
         }
         

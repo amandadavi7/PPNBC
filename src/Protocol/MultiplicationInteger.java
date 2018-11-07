@@ -20,7 +20,7 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  * @author anisha
  */
-public class MultiplicationInteger extends Protocol implements Callable {
+public class MultiplicationInteger extends Protocol implements Callable<Integer> {
 
     int x;
     int y;
@@ -68,7 +68,7 @@ public class MultiplicationInteger extends Protocol implements Callable {
      * @throws java.lang.InterruptedException
      */
     @Override
-    public Object call() throws InterruptedException {
+    public Integer call() throws InterruptedException {
         initProtocol();
         int d = 0, e = 0;
         for (int i = 0; i < partyCount - 1; i++) {
