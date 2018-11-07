@@ -104,9 +104,9 @@ public class BatcherSortKNN extends CompositeProtocol implements Callable<List<L
                     KJaccardDistances.get(indices[endIndex]).get(1),
                     KJaccardDistances.get(indices[endIndex]).get(0), asymmetricBit,
                     decimalTiShares.subList(decimalTiIndex, decimalTiIndex + 2),
-                    binaryTiShares.subList(binaryTiIndex, binaryTiIndex + ccTICount),
-                    pidMapper, senderQueue, clientID, prime,
-                    Constants.binaryPrime, pid, new LinkedList<>(protocolIdQueue),
+                    binaryTiShares.subList(binaryTiIndex, binaryTiIndex + ccTICount), 
+                    pidMapper, senderQueue, clientID, prime, 
+                    Constants.BINARY_PRIME, pid, new LinkedList<>(protocolIdQueue), 
                     partyCount, bitLength);
 
             Future<Integer> resultTask = es.submit(ccModule);
@@ -169,9 +169,9 @@ public class BatcherSortKNN extends CompositeProtocol implements Callable<List<L
                     KJaccardDistances.get(indices[i + 1]).get(1),
                     KJaccardDistances.get(indices[i + 1]).get(0), asymmetricBit,
                     decimalTiShares.subList(decimalTiIndex, decimalTiIndex + 2),
-                    binaryTiShares.subList(binaryTiIndex, binaryTiIndex + ccTICount),
-                    pidMapper, senderQueue, clientID, prime,
-                    Constants.binaryPrime, pid, new LinkedList<>(protocolIdQueue),
+                    binaryTiShares.subList(binaryTiIndex, binaryTiIndex + ccTICount), 
+                    pidMapper, senderQueue, clientID, prime, 
+                    Constants.BINARY_PRIME, pid, new LinkedList<>(protocolIdQueue), 
                     partyCount, bitLength);
 
             Future<Integer> resultTask = es.submit(ccModule);

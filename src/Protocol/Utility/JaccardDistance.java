@@ -103,7 +103,7 @@ public class JaccardDistance extends CompositeProtocol implements Callable<List<
 
         es.shutdown();
 
-        // These scores are additive shares over prime (Constants.prime)
+        // These scores are additive shares over prime (prime)
         // We eventually need sum of individual list over prime
         for (int i = 0; i < trainingShares.size(); i++) {
             Future<Integer[]> orTask = orTaskList.get(i);
@@ -121,7 +121,7 @@ public class JaccardDistance extends CompositeProtocol implements Callable<List<
         return result;
     }
 
-    public static int getScoreFromList(Integer[] scoreList) {
+    public int getScoreFromList(Integer[] scoreList) {
 
         int sum = 0;
         for (int element : scoreList) {
@@ -129,7 +129,7 @@ public class JaccardDistance extends CompositeProtocol implements Callable<List<
             sum = sum + element;
         }
 
-        return Math.floorMod(sum, Constants.prime);
+        return Math.floorMod(sum, prime);
     }
 
 }

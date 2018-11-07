@@ -235,7 +235,7 @@ public class DecisionTreeScoring extends Model {
                 OIS ois = new OIS(null, binaryTiShares.subList(tiBinaryStartIndex,
                         tiBinaryStartIndex + (attributeBitLength * attributeCount)),
                         asymmetricBit, pidMapper, commonSender, new LinkedList<>(protocolIdQueue),
-                        clientId, Constants.binaryPrime, pid, attributeBitLength,
+                        clientId, Constants.BINARY_PRIME, pid, attributeBitLength,
                         nodeToAttributeIndexMapping[i], attributeCount, partyCount);
                 tiBinaryStartIndex += attributeBitLength * attributeCount;
                 pid++;
@@ -249,7 +249,7 @@ public class DecisionTreeScoring extends Model {
                 OIS ois = new OIS(testVector, binaryTiShares.subList(tiBinaryStartIndex,
                         tiBinaryStartIndex + (attributeBitLength * attributeCount)),
                         asymmetricBit, pidMapper, commonSender, new LinkedList<>(protocolIdQueue),
-                        clientId, Constants.binaryPrime, pid,
+                        clientId, Constants.BINARY_PRIME, pid,
                         attributeBitLength, -1, attributeCount, partyCount);
                 tiBinaryStartIndex += attributeBitLength * attributeCount;
                 pid++;
@@ -301,7 +301,7 @@ public class DecisionTreeScoring extends Model {
             Comparison comp = new Comparison(Arrays.asList(featureVectors[i]), attributeThresholdsBitShares.get(i),
                     binaryTiShares.subList(tiBinaryStartIndex, tiBinaryStartIndex + comparisonTiCount),
                     asymmetricBit, pidMapper, commonSender, new LinkedList<>(protocolIdQueue),
-                    clientId, Constants.binaryPrime, pid, partyCount);
+                    clientId, Constants.BINARY_PRIME, pid, partyCount);
 
             Future<Integer> task = es.submit(comp);
             pid++;
@@ -401,7 +401,7 @@ public class DecisionTreeScoring extends Model {
             for (int j = 0; j < leafNodes; j++) {
                 finalOutputs[i] += yShares[j][i];
             }
-            finalOutputs[i] %= Constants.binaryPrime;
+            finalOutputs[i] %= Constants.BINARY_PRIME;
         }
     }
 
