@@ -45,6 +45,7 @@ public class TreeEnsemble extends Model {
     List<TripleByte> binaryTiShares;
     List<Integer[]> treeOutputs;
     List<TripleInteger> decimalTiShares;
+    int prime;
     Logger LOGGER;
 
     /**
@@ -82,6 +83,10 @@ public class TreeEnsemble extends Model {
         this.decimalTiShares = decimalTriples;
         treeOutputs = new ArrayList<>();
         LOGGER = Logger.getLogger(TreeEnsemble.class.getName());
+        this.prime = Constants.PRIME;
+        if(prime == -1) {
+            throw new IllegalArgumentException("Please add a valid prime to the config file");
+        }
     }
 
     /**
@@ -134,6 +139,8 @@ public class TreeEnsemble extends Model {
 
     /**
      * Main method
+     * @throws java.lang.InterruptedException
+     * @throws java.util.concurrent.ExecutionException
      */
     public void runTreeEnsembles() throws InterruptedException, ExecutionException {
 
@@ -173,20 +180,20 @@ public class TreeEnsemble extends Model {
 
         int classLabelCount = treeOutputs.get(0).length;
         int[] weightedProbabilityVector = new int[classLabelCount];
-
-        for (Integer[] output : treeOutputs) {
-            for (int i = 0; i < classLabelCount; i++) {
-                weightedProbabilityVector[i] = Math.floorMod(weightedProbabilityVector[i] + output[i], Constants.prime);
+        
+        for(Integer[] output: treeOutputs) {
+            for(int i = 0; i < classLabelCount; i++) {
+                weightedProbabilityVector[i] = Math.floorMod(weightedProbabilityVector[i]+output[i], prime);
             }
         }
 
         LOGGER.log(Level.FINE, "weighted prob vector output{0}", Arrays.toString(weightedProbabilityVector));
 
         List<Future<List<Integer>>> bitDtaskList = new ArrayList<>();
-        for (int i = 0; i < classLabelCount; i++) {
-            BitDecomposition bitDModule = new BitDecomposition(weightedProbabilityVector[i],
-                    binaryTiShares, asymmetricBit, bitLength, pidMapper, commonSender,
-                    new LinkedList<>(protocolIdQueue), clientId, Constants.binaryPrime, pid, partyCount);
+        for(int i = 0; i < classLabelCount; i++) {
+            BitDecomposition bitDModule = new BitDecomposition(weightedProbabilityVector[i], 
+                    binaryTiShares, asymmetricBit, bitLength, pidMapper, commonSender, 
+                    new LinkedList<>(protocolIdQueue), clientId, Constants.BINARY_PRIME, pid, partyCount);
             bitDtaskList.add(es.submit(bitDModule));
             pid++;
         }
@@ -199,7 +206,7 @@ public class TreeEnsemble extends Model {
 
         ArgMax argmaxModule = new ArgMax(bitSharesProbs, binaryTiShares, asymmetricBit,
                 pidMapper, commonSender, new LinkedList<>(protocolIdQueue), clientId,
-                Constants.binaryPrime, pid, partyCount);
+                Constants.BINARY_PRIME, pid, partyCount);
         pid++;
 
         Future<Integer[]> classIndexResult = es.submit(argmaxModule);

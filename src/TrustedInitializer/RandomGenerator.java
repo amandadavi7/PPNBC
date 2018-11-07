@@ -26,24 +26,24 @@ public class RandomGenerator {
             TIShare[] tiShare) {
         Random rand = new java.util.Random();
         for (int i = 0; i < decTriples; i++) {
-            int U = rand.nextInt(Constants.prime);
-            int V = rand.nextInt(Constants.prime);
-            int W = Math.floorMod(U * V, Constants.prime);
+            int U = rand.nextInt(Constants.PRIME);
+            int V = rand.nextInt(Constants.PRIME);
+            int W = Math.floorMod(U * V, Constants.PRIME);
             int usum = 0, vsum = 0, wsum = 0;
             for (int j = 0; j < clientCount - 1; j++) {
                 TripleInteger t = new TripleInteger();
-                t.u = rand.nextInt(Constants.prime);
-                t.v = rand.nextInt(Constants.prime);
-                t.w = rand.nextInt(Constants.prime);
+                t.u = rand.nextInt(Constants.PRIME);
+                t.v = rand.nextInt(Constants.PRIME);
+                t.w = rand.nextInt(Constants.PRIME);
                 usum += t.u;
                 vsum += t.v;
                 wsum += t.w;
                 tiShare[j].addDecimal(t);
             }
             TripleInteger t = new TripleInteger();
-            t.u = Math.floorMod(U - usum, Constants.prime);
-            t.v = Math.floorMod(V - vsum, Constants.prime);
-            t.w = Math.floorMod(W - wsum, Constants.prime);
+            t.u = Math.floorMod(U - usum, Constants.PRIME);
+            t.v = Math.floorMod(V - vsum, Constants.PRIME);
+            t.w = Math.floorMod(W - wsum, Constants.PRIME);
             tiShare[clientCount - 1].addDecimal(t);
         }
     }
@@ -59,24 +59,24 @@ public class RandomGenerator {
             TIShare[] tiShare) {
         Random rand = new java.util.Random();
         for (int i = 0; i < binTriples; i++) {
-            int U = rand.nextInt(Constants.binaryPrime);
-            int V = rand.nextInt(Constants.binaryPrime);
+            int U = rand.nextInt(Constants.BINARY_PRIME);
+            int V = rand.nextInt(Constants.BINARY_PRIME);
             int W = U * V;
             int usum = 0, vsum = 0, wsum = 0;
             for (int j = 0; j < clientCount - 1; j++) {
                 TripleByte t = new TripleByte();
-                t.u = (byte) rand.nextInt(Constants.binaryPrime);
-                t.v = (byte) rand.nextInt(Constants.binaryPrime);
-                t.w = (byte) rand.nextInt(Constants.binaryPrime);
+                t.u = (byte) rand.nextInt(Constants.BINARY_PRIME);
+                t.v = (byte) rand.nextInt(Constants.BINARY_PRIME);
+                t.w = (byte) rand.nextInt(Constants.BINARY_PRIME);
                 usum += t.u;
                 vsum += t.v;
                 wsum += t.w;
                 tiShare[j].addBinary(t);
             }
             TripleByte t = new TripleByte();
-            t.u = (byte) Math.floorMod(U - usum, Constants.binaryPrime);
-            t.v = (byte) Math.floorMod(V - vsum, Constants.binaryPrime);
-            t.w = (byte) Math.floorMod(W - wsum, Constants.binaryPrime);
+            t.u = (byte) Math.floorMod(U - usum, Constants.BINARY_PRIME);
+            t.v = (byte) Math.floorMod(V - vsum, Constants.BINARY_PRIME);
+            t.w = (byte) Math.floorMod(W - wsum, Constants.BINARY_PRIME);
             tiShare[clientCount - 1].addBinary(t);
         }
     }

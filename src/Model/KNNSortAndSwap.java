@@ -143,7 +143,7 @@ public class KNNSortAndSwap extends Model {
                     decimalTiShares.subList(decimalTiIndex, decimalTiIndex + 2),
                     binaryTiShares.subList(binaryTiIndex, binaryTiIndex + ccTICount),
                     pidMapper, commonSender, clientId, prime,
-                    Constants.binaryPrime, pid, new LinkedList<>(protocolIdQueue),
+                    Constants.BINARY_PRIME, pid, new LinkedList<>(protocolIdQueue), 
                     partyCount, bitLength);
 
             pid++;
@@ -176,10 +176,10 @@ public class KNNSortAndSwap extends Model {
         comparisonMultiplications[1] = comparisonResults[0];
 
         for (int i = 1; i < K - 1; i++) {
-            MultiplicationByte mult = new MultiplicationByte(comparisonMultiplications[i],
-                    comparisonResults[i], binaryTiShares.get(binaryTiIndex),
-                    pidMapper, commonSender, new LinkedList<>(protocolIdQueue),
-                    clientId, Constants.binaryPrime, pid, asymmetricBit, 0, partyCount);
+            MultiplicationByte mult = new MultiplicationByte(comparisonMultiplications[i], 
+                    comparisonResults[i], binaryTiShares.get(binaryTiIndex), 
+                    pidMapper, commonSender, new LinkedList<>(protocolIdQueue), 
+                    clientId, Constants.BINARY_PRIME, pid, asymmetricBit, 0, partyCount);
             pid++;
             comparisonMultiplications[i + 1] = mult.call();
         }
@@ -201,19 +201,19 @@ public class KNNSortAndSwap extends Model {
         //get all PI(Cj) from j = 0 to j = K-2 index
         Integer[] comparisonMultiplications = comparisonMultiplicationResultsSequential(comparisonResults);
 
-        comparisonMultiplications[0] = Math.floorMod(asymmetricBit - comparisonResults[0],
-                Constants.binaryPrime);
-
+        comparisonMultiplications[0] = Math.floorMod(asymmetricBit - comparisonResults[0], 
+                Constants.BINARY_PRIME);
+        
         ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
 
         List<Future<Integer>> taskList = new ArrayList<>();
 
         for (int i = 1; i < K; i++) {
             MultiplicationByte mult = new MultiplicationByte(comparisonMultiplications[i],
-                    Math.floorMod(asymmetricBit - comparisonResults[i], Constants.binaryPrime),
+                    Math.floorMod(asymmetricBit - comparisonResults[i], Constants.BINARY_PRIME),
                     binaryTiShares.get(binaryTiIndex), pidMapper, commonSender,
                     new LinkedList<>(protocolIdQueue), clientId,
-                    Constants.binaryPrime, pid, asymmetricBit, 0, partyCount);
+                    Constants.BINARY_PRIME, pid, asymmetricBit, 0, partyCount);
 
             //binaryTiIndex++;
             pid++;

@@ -71,7 +71,7 @@ public class CompareAndConvertField {
         BitDecomposition xBitTask = new BitDecomposition(x, 
                 binaryTiShares.subList(binaryTiIndex, binaryTiIndex + bitDTICount),
                 asymmetricBit, bitLength, pidMapper, senderQueue, new LinkedList<>(protocolIdQueue),
-                clientId, Constants.binaryPrime, pid, partyCount);
+                clientId, Constants.BINARY_PRIME, pid, partyCount);
         pid++;
         binaryTiIndex += bitDTICount;
         Future<List<Integer>> future1 = es.submit(xBitTask);
@@ -79,7 +79,7 @@ public class CompareAndConvertField {
         BitDecomposition yBitTask = new BitDecomposition(y,
                 binaryTiShares.subList(binaryTiIndex, binaryTiIndex + bitDTICount),
                 asymmetricBit, bitLength, pidMapper, senderQueue, new LinkedList<>(protocolIdQueue),
-                clientId, Constants.binaryPrime, pid, partyCount);
+                clientId, Constants.BINARY_PRIME, pid, partyCount);
         pid++;
         binaryTiIndex += bitDTICount;
         Future<List<Integer>> future2 = es.submit(yBitTask);
@@ -92,7 +92,7 @@ public class CompareAndConvertField {
         Comparison comparisonModule = new Comparison(xShares, yShares, 
                 binaryTiShares.subList(binaryTiIndex, binaryTiIndex + comparisonTICount), 
                 asymmetricBit, pidMapper, senderQueue, new LinkedList<>(protocolIdQueue), 
-                clientId, Constants.binaryPrime, pid, partyCount);
+                clientId, Constants.BINARY_PRIME, pid, partyCount);
         
         int comparisonResult = comparisonModule.call();
         

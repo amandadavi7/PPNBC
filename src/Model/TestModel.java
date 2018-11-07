@@ -48,7 +48,8 @@ public class TestModel extends Model {
     List<List<List<Integer>>> v;
 
     List<TruncationPair> tiTruncationPair;
-    BigInteger prime;
+    BigInteger bigIntPrime;
+    int decPrime;
     String outputPath;
     List<TripleByte> binaryTiShares;
     List<TripleInteger> decimalTiShares;
@@ -78,14 +79,14 @@ public class TestModel extends Model {
 
         super(pidMapper, senderQueue, clientId, asymmetricBit, partyCount, protocolIdQueue, protocolID);
         this.tiTruncationPair = tiTruncationPair;
-        prime = BigInteger.valueOf(2).pow(Constants.INTEGER_PRECISION
+        bigIntPrime = BigInteger.valueOf(2).pow(Constants.INTEGER_PRECISION
                 + 2 * Constants.DECIMAL_PRECISION + 1).nextProbablePrime();
         v = new ArrayList<>();
+        this.decPrime = Constants.PRIME;
         this.binaryTiShares = binaryTriples;
         this.decimalTiShares = decimalTriples;
         this.realTiShares = realTiShares;
         initalizeModelVariables(args);
-
     }
 
     /**
@@ -96,9 +97,9 @@ public class TestModel extends Model {
         ExecutorService es = Executors.newFixedThreadPool(1);
 
         BitDecomposition bitTest = new BitDecomposition(2, binaryTiShares,
-                asymmetricBit, Constants.bitLength, pidMapper, commonSender,
+                asymmetricBit, 5, pidMapper, commonSender,
                 new LinkedList<>(protocolIdQueue), clientId,
-                Constants.binaryPrime, 1, partyCount);
+                Constants.BINARY_PRIME, 1, partyCount);
 
         Future<List<Integer>> bitdecompositionTask = es.submit(bitTest);
 
@@ -126,7 +127,7 @@ public class TestModel extends Model {
 
             ArgMax argmaxModule = new ArgMax(v.get(i), binaryTiShares, asymmetricBit,
                     pidMapper, commonSender, new LinkedList<>(protocolIdQueue),
-                    clientId, Constants.binaryPrime, i, partyCount);
+                    clientId, Constants.BINARY_PRIME, i, partyCount);
 
             System.out.println("submitted " + i + " argmax");
 
@@ -157,6 +158,8 @@ public class TestModel extends Model {
      * Call OR_XOR protocol in parallel for n test cases
      */
     public void callOR_XOR() {
+        
+        checkPrimeValidity();
 
         System.out.println("calling or_xor with x=" + x + " y=" + y);
 
@@ -170,7 +173,7 @@ public class TestModel extends Model {
 
             OR_XOR or_xor = new OR_XOR(x.get(i), y.get(i), decimalTiShares,
                     asymmetricBit, 1, pidMapper, commonSender,
-                    new LinkedList<>(protocolIdQueue), clientId, Constants.prime, i, partyCount);
+                    new LinkedList<>(protocolIdQueue), clientId, decPrime, i, partyCount);
 
             Future<Integer[]> task = es.submit(or_xor);
             taskList.add(task);
@@ -211,12 +214,12 @@ public class TestModel extends Model {
             System.out.println("v is null");
             ois = new OIS(null, binaryTiShares, asymmetricBit, pidMapper, commonSender,
                     new LinkedList<>(protocolIdQueue), clientId,
-                    Constants.binaryPrime, 0, 4, 1, 3, partyCount);
+                    Constants.BINARY_PRIME, 0, 4, 1, 3, partyCount);
         } else {
             System.out.println("v is not null");
             ois = new OIS(v.get(0), binaryTiShares, asymmetricBit, pidMapper, commonSender,
                     new LinkedList<>(protocolIdQueue), clientId,
-                    Constants.binaryPrime, 0, 4, -1, 3, partyCount);
+                    Constants.BINARY_PRIME, 0, 4, -1, 3, partyCount);
         }
 
         Future<Integer[]> task = es.submit(ois);
@@ -250,7 +253,7 @@ public class TestModel extends Model {
 
             Comparison comparisonModule = new Comparison(x.get(i), y.get(i),
                     binaryTiShares, asymmetricBit, pidMapper, commonSender,
-                    new LinkedList<>(protocolIdQueue), clientId, Constants.binaryPrime, i, partyCount);
+                    new LinkedList<>(protocolIdQueue), clientId, Constants.BINARY_PRIME, i, partyCount);
 
             Future<Integer> comparisonTask = es.submit(comparisonModule);
             taskList.add(comparisonTask);
@@ -274,11 +277,13 @@ public class TestModel extends Model {
     }
     
     public void callJaccard(){
+        checkPrimeValidity();
+        
         ExecutorService es = Executors.newFixedThreadPool(1);
         
         JaccardDistance jdistance = new JaccardDistance(x, y.get(0), asymmetricBit, 
                                     decimalTiShares, pidMapper, commonSender, 
-                                    clientId, Constants.prime, 0, 
+                                    clientId, decPrime, 0, 
                                     new LinkedList<>(protocolIdQueue),partyCount);
         
         Future<List<List<Integer>>> jaccardTask = es.submit(jdistance);
@@ -381,7 +386,7 @@ public class TestModel extends Model {
                     }
                     break;
                 case "xCsv":
-                    List<List<BigInteger>> xList = FileIO.loadMatrixFromFile(value, prime);
+                    List<List<BigInteger>> xList = FileIO.loadMatrixFromFile(value, bigIntPrime);
                     int row = xList.size();
                     int col = xList.get(0).size();
                     xBigInt = new BigInteger[row][col];
@@ -399,6 +404,12 @@ public class TestModel extends Model {
 
         }
     }
+    
+    private void checkPrimeValidity() {
+        if(decPrime == -1) {
+            throw new IllegalArgumentException("Please add a valid prime to the config file");
+        }
+    }
 
     private void callMatrixInversion() {
         ExecutorService es = Executors.newFixedThreadPool(1);
@@ -407,7 +418,7 @@ public class TestModel extends Model {
         MatrixInversion matrixInversion = new MatrixInversion(xBigInt, realTiShares,
                 tiTruncationPair,
                 1, pidMapper, commonSender, new LinkedList<>(protocolIdQueue),
-                clientId, asymmetricBit, partyCount, prime);
+                clientId, asymmetricBit, partyCount, bigIntPrime);
 
         Future<BigInteger[][]> matrixInversionTask = es.submit(matrixInversion);
 
@@ -443,7 +454,7 @@ public class TestModel extends Model {
         MatrixMultiplication matrixMultiplication = new MatrixMultiplication(
                 xT, xBigInt, realTiShares,
                 tiTruncationPair,
-                clientId, prime, 1, asymmetricBit, pidMapper, commonSender,
+                clientId, bigIntPrime, 1, asymmetricBit, pidMapper, commonSender,
                 new LinkedList<>(protocolIdQueue),
                 partyCount);
 
@@ -475,7 +486,7 @@ public class TestModel extends Model {
         BigInteger fac = BigInteger.valueOf(2).pow(Constants.DECIMAL_PRECISION);
         for (int i = 0; i < rows; i++) {
             for (int j = 0; j < cols; j++) {
-                xBigInt[i][j] = xBigInt[i][j].multiply(fac).mod(prime);
+                xBigInt[i][j] = xBigInt[i][j].multiply(fac).mod(bigIntPrime);
 
             }
         }
@@ -495,7 +506,7 @@ public class TestModel extends Model {
                     tiTruncationPair.subList(tiTruncationStartIndex,
                             tiTruncationStartIndex + xBigInt[i].length),
                     pidMapper, commonSender, new LinkedList<>(protocolIdQueue),
-                    clientId, prime, i, asymmetricBit, partyCount);
+                    clientId, bigIntPrime, i, asymmetricBit, partyCount);
 
             Future<BigInteger[]> task = es.submit(truncationPair);
             taskList.add(task);
@@ -526,6 +537,9 @@ public class TestModel extends Model {
      *
      */
     public void callMultiplication() {
+        
+        checkPrimeValidity();
+        
         ExecutorService es = Executors.newFixedThreadPool(100);
         List<Future<Integer>> taskList = new ArrayList<>();
 
@@ -536,7 +550,7 @@ public class TestModel extends Model {
             MultiplicationInteger multiplicationModule = new MultiplicationInteger(
                     x.get(i).get(0), y.get(i).get(0),
                     decimalTiShares.get(i), pidMapper, commonSender,
-                    new LinkedList<>(protocolIdQueue), clientId, Constants.prime, i, asymmetricBit, 0, partyCount);
+                    new LinkedList<>(protocolIdQueue), clientId, decPrime, i, asymmetricBit, 0, partyCount);
 
             Future<Integer> multiplicationTask = es.submit(multiplicationModule);
             taskList.add(multiplicationTask);
@@ -601,6 +615,9 @@ public class TestModel extends Model {
      *
      */
     public void callDotProduct() {
+        
+        checkPrimeValidity();
+        
         ExecutorService es = Executors.newFixedThreadPool(100);
         List<Future<Integer>> taskList = new ArrayList<>();
 
@@ -610,7 +627,7 @@ public class TestModel extends Model {
         for (int i = 0; i < totalCases; i++) {
             DotProductInteger DPModule = new DotProductInteger(x.get(i),
                     y.get(i), decimalTiShares, pidMapper, commonSender,
-                    new LinkedList<>(protocolIdQueue), clientId, Constants.prime, i, asymmetricBit, partyCount);
+                    new LinkedList<>(protocolIdQueue), clientId, decPrime, i, asymmetricBit, partyCount);
 
             Future<Integer> DPTask = es.submit(DPModule);
             taskList.add(DPTask);

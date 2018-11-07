@@ -150,7 +150,7 @@ public class KNNThresholdKSelect extends Model {
             CrossMultiplyCompare ccModule = new CrossMultiplyCompare(thresholds[0], thresholds[1],
                     jaccardDistances.get(i).get(1), jaccardDistances.get(i).get(0), asymmetricBit,
                     decimalTiShares, binaryTiShares, pidMapper, commonSender,
-                    clientId, prime, Constants.binaryPrime, pid,
+                    clientId, prime, Constants.BINARY_PRIME, pid,
                     new LinkedList<>(protocolIdQueue), partyCount, bitLength);
             Future<Integer> task = es.submit(ccModule);
             ccTaskList.add(task);
@@ -246,19 +246,19 @@ public class KNNThresholdKSelect extends Model {
 
             BitDecomposition bitD = new BitDecomposition(elementsLesser,
                     binaryTiShares, asymmetricBit, bitLength, pidMapper, commonSender,
-                    new LinkedList<>(protocolIdQueue), clientId, Constants.binaryPrime, pid, partyCount);
+                    new LinkedList<>(protocolIdQueue), clientId, Constants.BINARY_PRIME, pid, partyCount);
             pid++;
             List<Integer> lessThanBitShares = bitD.call();
 
             Comparison greaterThanModule = new Comparison(lessThanBitShares,
                     KBitShares, binaryTiShares, asymmetricBit, pidMapper, commonSender,
-                    new LinkedList<>(protocolIdQueue), clientId, Constants.binaryPrime, pid, partyCount);
+                    new LinkedList<>(protocolIdQueue), clientId, Constants.BINARY_PRIME, pid, partyCount);
             Future<Integer> gtTask = es.submit(greaterThanModule);
             pid++;
 
             Comparison lessThanModule = new Comparison(KBitShares, lessThanBitShares,
                     binaryTiShares, asymmetricBit, pidMapper, commonSender,
-                    new LinkedList<>(protocolIdQueue), clientId, Constants.binaryPrime, pid, partyCount);
+                    new LinkedList<>(protocolIdQueue), clientId, Constants.BINARY_PRIME, pid, partyCount);
             Future<Integer> ltTask = es.submit(lessThanModule);
             pid++;
 
@@ -268,7 +268,7 @@ public class KNNThresholdKSelect extends Model {
 
             MultiplicationByte multTask = new MultiplicationByte(gt, lt,
                     binaryTiShares.get(binaryTiIndex), pidMapper, commonSender,
-                    new LinkedList<>(protocolIdQueue), clientId, Constants.binaryPrime, pid,
+                    new LinkedList<>(protocolIdQueue), clientId, Constants.BINARY_PRIME, pid,
                     asymmetricBit, 0, partyCount);
             pid++;
 
@@ -362,11 +362,12 @@ public class KNNThresholdKSelect extends Model {
             }
 
             List<Future<List<Integer>>> bitDTasks = new ArrayList<>();
-            for (int i = 0; i < localBatchSize; i++) {
-                BitDecomposition bitDmodule = new BitDecomposition(comparisonSum[i],
-                        binaryTiShares, asymmetricBit, bitLength, pidMapper,
-                        commonSender, new LinkedList<>(protocolIdQueue),
-                        clientId, Constants.binaryPrime, pid, partyCount);
+            for(int i = 0; i < localBatchSize; i++){
+                BitDecomposition bitDmodule = new BitDecomposition(comparisonSum[i], 
+                    binaryTiShares, asymmetricBit, bitLength, pidMapper, 
+                    commonSender, new LinkedList<>(protocolIdQueue),
+                    clientId, Constants.BINARY_PRIME, pid, partyCount);
+
                 pid++;
                 Future<List<Integer>> bitDtask = es.submit(bitDmodule);
                 bitDTasks.add(bitDtask);
@@ -381,8 +382,8 @@ public class KNNThresholdKSelect extends Model {
 
             for (int i = 0; i < localBatchSize; i++) {
                 Comparison comModule = new Comparison(bitDResults.get(i), KBitShares, binaryTiShares,
-                        asymmetricBit, pidMapper, commonSender, new LinkedList<>(protocolIdQueue),
-                        clientId, Constants.binaryPrime, pid, partyCount);
+                    asymmetricBit, pidMapper, commonSender, new LinkedList<>(protocolIdQueue),
+                    clientId, Constants.BINARY_PRIME, pid, partyCount);
                 pid++;
                 Future<Integer> compTask = es.submit(comModule);
                 compTasks.add(compTask);
@@ -451,9 +452,9 @@ public class KNNThresholdKSelect extends Model {
     public int runModel() throws InterruptedException, ExecutionException {
 
         //Bit Shares of K - used in multiple places
-        BitDecomposition bitD = new BitDecomposition(asymmetricBit * K, binaryTiShares,
-                asymmetricBit, bitLength, pidMapper, commonSender,
-                new LinkedList<>(protocolIdQueue), clientId, Constants.binaryPrime, pid, partyCount);
+        BitDecomposition bitD = new BitDecomposition(asymmetricBit*K, binaryTiShares,
+                    asymmetricBit, bitLength, pidMapper, commonSender,
+                    new LinkedList<>(protocolIdQueue), clientId, Constants.BINARY_PRIME, pid, partyCount);
         pid++;
         KBitShares = bitD.call();
 
