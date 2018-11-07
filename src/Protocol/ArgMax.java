@@ -88,10 +88,11 @@ public class ArgMax extends CompositeProtocol implements Callable<Integer[]> {
      * Computes ArgMax by invoking comparison and multiplication protocols
      *
      * @return
-     * @throws Exception
+     * @throws java.lang.InterruptedException
+     * @throws java.util.concurrent.ExecutionException
      */
     @Override
-    public Integer[] call() throws Exception {
+    public Integer[] call() throws InterruptedException, ExecutionException {
 
         if (numberCount == 1) {
             wOutput[0] = 1;

@@ -131,19 +131,31 @@ public class Party {
     public static void main(String[] args) {
         initalizeVariables(args);
 
-        getSharesFromTI();  // This is a blocking call
+        try {
+            getSharesFromTI();  // This is a blocking call
+        } catch (IOException ex) {
+            Logger.getLogger(Party.class.getName()).log(Level.SEVERE, null, ex);
+        }
 
-        startPartyConnections();
+        try {
+            startPartyConnections();
+        } catch (IOException ex) {
+            Logger.getLogger(Party.class.getName()).log(Level.SEVERE, null, ex);
+        }
 
-        callModel(args);
+        try {
+            callModel(args);
+        } catch (InterruptedException | ExecutionException | IOException ex) {
+            Logger.getLogger(Party.class.getName()).log(Level.SEVERE, null, ex);
+        } 
 
-        tearDownSocket();
+        checkAndTearDownSocket();
     }
 
     /**
      * Gets shares from TI in a separate blocking thread and saves it.
      */
-    private static void getSharesFromTI() {
+    private static void getSharesFromTI() throws IOException {
         // Initialize TI socket and receive shares
         Socket socketTI = null;
 
@@ -174,7 +186,7 @@ public class Party {
     /**
      * Initiate connections with the BA as a client
      */
-    private static void startPartyConnections() {
+    private static void startPartyConnections() throws IOException {
         System.out.println("creating a party socket");
         ObjectOutputStream oStream = null;
         ObjectInputStream iStream = null;
@@ -202,7 +214,10 @@ public class Party {
     /**
      * shut down the party sockets
      */
-    private static void tearDownSocket() {
+    private static void checkAndTearDownSocket() {
+        // wait for the party to send all messages before closing the socket.
+        while(!senderQueue.isEmpty()){
+        }
         partySocketEs.shutdownNow();
     }
 
@@ -210,7 +225,7 @@ public class Party {
      * Call the model class with the input args
      * @param args 
      */
-    private static void callModel(String[] args) {
+    private static void callModel(String[] args) throws InterruptedException, ExecutionException, IOException {
         int modelId = 1;
         
         switch (modelName) {

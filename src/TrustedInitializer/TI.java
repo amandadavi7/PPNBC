@@ -8,9 +8,12 @@ package TrustedInitializer;
 import Utility.Connection;
 import Utility.Constants;
 import Utility.Logging;
+import java.io.IOException;
 import java.net.ServerSocket;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Trusted Initializer that generates the randomness
@@ -75,7 +78,7 @@ public class TI {
     /**
      * Send shares to parties
      */
-    public static void sendShares() {
+    public static void sendShares() throws IOException {
         System.out.println("Sending shares to parties");
         ServerSocket tiserver = Connection.createServerSocket(tiPort);
 
@@ -105,7 +108,11 @@ public class TI {
         generateRandomShares();
         System.out.println("Generated shares");
 
-        sendShares();
+        try {
+            sendShares();
+        } catch (IOException ex) {
+            Logger.getLogger(TI.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 
     private static void generateRandomShares() {

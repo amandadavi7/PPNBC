@@ -16,8 +16,6 @@ import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * Batch Truncation of n elements: converts shares of value from 2^2f to 2^f
@@ -28,20 +26,20 @@ import java.util.logging.Logger;
  */
 public class BatchTruncation extends CompositeProtocol implements Callable<BigInteger[]> {
 
-    private static final Logger LOGGER = Logger.getLogger(BatchTruncation.class.getName());
     BigInteger[] wShares;
     BigInteger[] T;
-    
+
     List<BigInteger> zShares;
     List<TruncationPair> truncationShares;
 
     BigInteger prime;
     int batchSize;
-    
+
     BigInteger fInv;
-    
+
     /**
      * Constructor
+     *
      * @param wShares
      * @param tiShares
      * @param pidMapper
@@ -51,10 +49,10 @@ public class BatchTruncation extends CompositeProtocol implements Callable<BigIn
      * @param prime
      * @param protocolID
      * @param asymmetricBit
-     * @param partyCount 
+     * @param partyCount
      */
     public BatchTruncation(BigInteger[] wShares,
-            List<TruncationPair> tiShares, 
+            List<TruncationPair> tiShares,
             ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper,
             BlockingQueue<Message> senderqueue,
             Queue<Integer> protocolIdQueue,
@@ -71,24 +69,24 @@ public class BatchTruncation extends CompositeProtocol implements Callable<BigIn
         batchSize = wShares.length;
         zShares = new ArrayList<>(batchSize);
         T = new BigInteger[batchSize];
-        
+
         fInv = prime.add(BigInteger.ONE).divide(BigInteger.valueOf(2)).
                 pow(Constants.DECIMAL_PRECISION).mod(prime);
-        
+
     }
 
     @Override
-    public BigInteger[] call() throws Exception {
+    public BigInteger[] call() throws InterruptedException {
         computeAndShareZShare();
         computeSecretShare();
-        
+
         return T;
     }
 
     /**
-     * Compute Z = [[w]] + [[r]] mod prime 
+     * Compute Z = [[w]] + [[r]] mod prime
      */
-    private void computeAndShareZShare() {
+    private void computeAndShareZShare() throws InterruptedException {
 
         // broadcast it to n parties
         List<BigInteger> diffList = new ArrayList<>(batchSize);
@@ -99,30 +97,21 @@ public class BatchTruncation extends CompositeProtocol implements Callable<BigIn
 
         Message senderMessage = new Message(diffList,
                 clientID, protocolIdQueue);
-
-        try {
-            senderQueue.put(senderMessage);
-        } catch (InterruptedException ex) {
-            LOGGER.log(Level.SEVERE, null, ex);
-        }
+        senderQueue.put(senderMessage);
     }
 
     /**
      * Compute the shares of the truncated value
      */
-    private void computeSecretShare() {
+    private void computeSecretShare() throws InterruptedException {
         Message receivedMessage = null;
         List<BigInteger> diffList = null;
         // Receive all zShares
         for (int i = 0; i < partyCount - 1; i++) {
-            try {
-                receivedMessage = pidMapper.get(protocolIdQueue).take();
-                diffList = (List<BigInteger>) receivedMessage.getValue();
-                for (int j = 0; j < batchSize; j++) {
-                    zShares.set(j, zShares.get(j).add(diffList.get(j)).mod(prime));
-                }
-            } catch (InterruptedException ex) {
-                LOGGER.log(Level.SEVERE, null, ex);
+            receivedMessage = pidMapper.get(protocolIdQueue).take();
+            diffList = (List<BigInteger>) receivedMessage.getValue();
+            for (int j = 0; j < batchSize; j++) {
+                zShares.set(j, zShares.get(j).add(diffList.get(j)).mod(prime));
             }
         }
 

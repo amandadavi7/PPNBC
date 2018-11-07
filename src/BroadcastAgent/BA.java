@@ -102,12 +102,13 @@ public class BA {
             System.exit(0);
         }
 
-        socketServer = Connection.createServerSocket(baPort);
-        if (socketServer == null) {
-            LOGGER.log(Level.SEVERE, "Socket creation error");
+        try {
+            socketServer = Connection.createServerSocket(baPort);
+        } catch (IOException ex) {
+            Logger.getLogger(BA.class.getName()).log(Level.SEVERE, null, ex);
             System.exit(0);
         }
-
+        
     }
 
     /**

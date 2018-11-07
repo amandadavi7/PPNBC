@@ -41,25 +41,22 @@ import java.util.logging.Logger;
  *
  * @author keerthanaa
  */
-public class RandomForestDTScoring extends DecisionTreeScoring implements Callable<Integer[]>{
+public class RandomForestDTScoring extends DecisionTreeScoring implements Callable<Integer[]> {
 
     Integer[][] leafToClassIndexMappingTransposed;                //leaf node index to class index mapping (stored by the party that has the tree)
     List<TripleInteger> decimalTiShares;
     Logger LOGGER;
-    
+
     /**
-     * Constructor 
-     * 2 party DT scoring: 
-     * 
-     * one party has the tree, one party has the
-     * feature vector In args, 
-     * 
-     * party1: pass the feature vector as csv file
-     * (testCsv) pass the tree properties (depth, attribute count, attribute
-     * bitlength, class label count in properties file (treeproperties) 
-     * 
-     * party2:
-     * pass the tree as a properties file (storedtree)
+     * Constructor 2 party DT scoring:
+     *
+     * one party has the tree, one party has the feature vector In args,
+     *
+     * party1: pass the feature vector as csv file (testCsv) pass the tree
+     * properties (depth, attribute count, attribute bitlength, class label
+     * count in properties file (treeproperties)
+     *
+     * party2: pass the tree as a properties file (storedtree)
      *
      * @param asymmetricBit
      * @param pidMapper
@@ -80,7 +77,7 @@ public class RandomForestDTScoring extends DecisionTreeScoring implements Callab
             int protocolID) {
 
         super(asymmetricBit, pidMapper, senderQueue, clientId, binaryTriples, partyCount, args, protocolIdQueue, protocolID);
-        
+
         pid = 0;
         tiBinaryStartIndex = 0;
         this.decimalTiShares = decimalTriples;
@@ -92,7 +89,7 @@ public class RandomForestDTScoring extends DecisionTreeScoring implements Callab
      *
      * @param args
      */
-    private void initializeModelVariables(String[] args) {
+    private void initializeModelVariables(String[] args) throws FileNotFoundException, IOException {
         leafToClassIndexMappingTransposed = null;
         nodeToAttributeIndexMapping = null;
         attributeThresholds = null;
@@ -118,15 +115,8 @@ public class RandomForestDTScoring extends DecisionTreeScoring implements Callab
                     //party has the tree
                     partyHasTree = true;
                     Properties prop = new Properties();
-                    InputStream input = null;
-                    try {
-                        input = new FileInputStream(value);
-                        prop.load(input);
-                    } catch (FileNotFoundException ex) {
-                        LOGGER.log(Level.SEVERE, null, ex);
-                    } catch (IOException ex) {
-                        LOGGER.log(Level.SEVERE, null, ex);
-                    }
+                    InputStream input = new FileInputStream(value);
+                    prop.load(input);
                     depth = Integer.parseInt(prop.getProperty("depth"));
                     attributeCount = Integer.parseInt(prop.getProperty("attribute.count"));
                     attributeBitLength = Integer.parseInt(prop.getProperty("attribute.bitlength"));
@@ -138,7 +128,7 @@ public class RandomForestDTScoring extends DecisionTreeScoring implements Callab
                     for (String vector : vectors) {
                         int j = 0;
                         String[] nums = vector.split(":");
-                        for(String num : nums){
+                        for (String num : nums) {
                             leafToClassIndexMappingTransposed[j][i] = Integer.parseInt(num);
                             j++;
                         }
@@ -153,15 +143,8 @@ public class RandomForestDTScoring extends DecisionTreeScoring implements Callab
                     //party has feature vector
                     partyHasTree = false;
                     prop = new Properties();
-                    input = null;
-                    try {
-                        input = new FileInputStream(value);
-                        prop.load(input);
-                    } catch (FileNotFoundException ex) {
-                        LOGGER.log(Level.SEVERE, null, ex);
-                    } catch (IOException ex) {
-                        LOGGER.log(Level.SEVERE, null, ex);
-                    }
+                    input = new FileInputStream(value);
+                    prop.load(input);
                     depth = Integer.parseInt(prop.getProperty("depth"));
                     attributeCount = Integer.parseInt(prop.getProperty("attribute.count"));
                     attributeBitLength = Integer.parseInt(prop.getProperty("attribute.bitlength"));
@@ -174,7 +157,8 @@ public class RandomForestDTScoring extends DecisionTreeScoring implements Callab
     /**
      * Doing common initializations for both parties here
      */
-    void init() {
+    @Override
+    void init() throws IOException {
         initializeModelVariables(args);
         leafNodes = (int) Math.pow(2, depth);
         featureVectors = new Integer[leafNodes - 1][attributeBitLength];
@@ -185,39 +169,43 @@ public class RandomForestDTScoring extends DecisionTreeScoring implements Callab
 
     /**
      * Main method for the DT Scoring algorithm
+     *
+     * @throws java.lang.InterruptedException
+     * @throws java.util.concurrent.ExecutionException
+     * @throws java.io.IOException
      */
     @Override
-    public Integer[] call() {
+    public Integer[] call() throws InterruptedException, ExecutionException, IOException {
         init();
-        
+
         convertThresholdsToBits();
         LOGGER.fine("Converted Thresholds to Bits");
-        
+
         if (!partyHasTree) {
             convertTestVectorToBits(testVectorsDecimal.get(0));
         }
 
         getFeatureVectors();
-        LOGGER.fine("got the feature vectors:" + Arrays.deepToString(featureVectors));
-        
+        LOGGER.log(Level.FINE, "got the feature vectors:{0}", Arrays.deepToString(featureVectors));
+
         doThresholdComparisons();
-        
+
         computePolynomialEquation();
 
-        LOGGER.info(modelProtocolId + "-the output in bits: " + Arrays.toString(finalOutputs));
+        LOGGER.log(Level.INFO, "{0}-the output in bits: {1}", new Object[]{modelProtocolId, Arrays.toString(finalOutputs)});
         return finalOutputs;
     }
-    
+
     /**
-     * 
+     *
      * @param index
      * @param size
-     * @return 
+     * @return
      */
     Integer[] oneHotEncoding(int index, int size) {
         Integer[] ohe = new Integer[size];
-        for(int i=0;i<size;i++) {
-            if(i==index){
+        for (int i = 0; i < size; i++) {
+            if (i == index) {
                 ohe[i] = asymmetricBit;
             } else {
                 ohe[i] = 0;
@@ -228,20 +216,21 @@ public class RandomForestDTScoring extends DecisionTreeScoring implements Callab
 
     /**
      * calls the PolynomialComputing class and gets the final output
+     *
      * @param startpid
      */
     @Override
-    void computePolynomialEquation() {
+    void computePolynomialEquation() throws InterruptedException, ExecutionException {
 
         Integer[][] yShares = new Integer[leafNodes][leafNodes];
 
         //y[j][r] initialization
         for (int j = 0; j < leafNodes; j++) {
-                Integer[] temp = oneHotEncoding(j, leafNodes);
-                for (int r = 0; r < leafNodes; r++) {
-                    yShares[j][r] = temp[r];
-                }
+            Integer[] temp = oneHotEncoding(j, leafNodes);
+            for (int r = 0; r < leafNodes; r++) {
+                yShares[j][r] = temp[r];
             }
+        }
 
         //Polynomial computation
         ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
@@ -253,7 +242,7 @@ public class RandomForestDTScoring extends DecisionTreeScoring implements Callab
             Integer[] jBinary = convertToBits(j, depth);
 
             PolynomialComputing pc = new PolynomialComputing(yShares[j], jBinary, leafNodes,
-                    depth, comparisonOutputs, binaryTiShares.subList(tiBinaryStartIndex, 
+                    depth, comparisonOutputs, binaryTiShares.subList(tiBinaryStartIndex,
                             tiBinaryStartIndex + polynomialComputationTiCount),
                     new LinkedList<>(protocolIdQueue), pidMapper, commonSender,
                     pid, clientId, asymmetricBit, partyCount);
@@ -266,11 +255,7 @@ public class RandomForestDTScoring extends DecisionTreeScoring implements Callab
 
         for (int j = 0; j < leafNodes; j++) {
             Future<Integer[]> taskResponse = taskList.get(j);
-            try {
-                yShares[j] = taskResponse.get();
-            } catch (InterruptedException | ExecutionException ex) {
-                LOGGER.log(Level.SEVERE, null, ex);
-            }
+            yShares[j] = taskResponse.get();
         }
 
         Integer[] result = new Integer[leafNodes];
@@ -281,41 +266,37 @@ public class RandomForestDTScoring extends DecisionTreeScoring implements Callab
             }
             result[i] %= Constants.binaryPrime;
         }
-            
+
         List<Integer> dummy = new ArrayList<>(Collections.nCopies(leafNodes, 0));
         Integer[] one_hot_encoding_leaf_predicted = null;
         OR_XOR xorModule;
-        
+
         //asymmetric xor to switch primes
-        if(asymmetricBit == 1) {
-            xorModule = new OR_XOR(Arrays.asList(result), dummy, decimalTiShares.subList(0, leafNodes), 
-                    asymmetricBit, 2, pidMapper, commonSender, new LinkedList<>(protocolIdQueue), 
+        if (asymmetricBit == 1) {
+            xorModule = new OR_XOR(Arrays.asList(result), dummy, decimalTiShares.subList(0, leafNodes),
+                    asymmetricBit, 2, pidMapper, commonSender, new LinkedList<>(protocolIdQueue),
                     clientId, Constants.prime, pid, partyCount);
         } else {
-            xorModule = new OR_XOR(dummy, Arrays.asList(result), decimalTiShares.subList(0, leafNodes), 
-                    asymmetricBit, 2, pidMapper, commonSender, new LinkedList<>(protocolIdQueue), 
+            xorModule = new OR_XOR(dummy, Arrays.asList(result), decimalTiShares.subList(0, leafNodes),
+                    asymmetricBit, 2, pidMapper, commonSender, new LinkedList<>(protocolIdQueue),
                     clientId, Constants.prime, pid, partyCount);
         }
         Future<Integer[]> xorTask = es.submit(xorModule);
-        try {
-            one_hot_encoding_leaf_predicted = xorTask.get();
-        } catch (InterruptedException | ExecutionException ex) {
-            LOGGER.log(Level.SEVERE, null, ex);
-        }
+        one_hot_encoding_leaf_predicted = xorTask.get();
         pid++;
-           
+
         List<Future<Integer>> dpTaskList = new ArrayList<>();
-        if(leafToClassIndexMappingTransposed == null) {
-            for(int i=0;i<classLabelCount;i++) {
-                DotProductInteger dpModule = new DotProductInteger(Arrays.asList(one_hot_encoding_leaf_predicted), 
-                        dummy, decimalTiShares, pidMapper, commonSender, 
+        if (leafToClassIndexMappingTransposed == null) {
+            for (int i = 0; i < classLabelCount; i++) {
+                DotProductInteger dpModule = new DotProductInteger(Arrays.asList(one_hot_encoding_leaf_predicted),
+                        dummy, decimalTiShares, pidMapper, commonSender,
                         new LinkedList<>(protocolIdQueue), clientId, Constants.prime, pid, asymmetricBit, partyCount);
                 dpTaskList.add(es.submit(dpModule));
                 pid++;
             }
         } else {
-            for(int i=0;i<classLabelCount;i++) {
-                DotProductInteger dpModule = new DotProductInteger(Arrays.asList(one_hot_encoding_leaf_predicted), 
+            for (int i = 0; i < classLabelCount; i++) {
+                DotProductInteger dpModule = new DotProductInteger(Arrays.asList(one_hot_encoding_leaf_predicted),
                         Arrays.asList(leafToClassIndexMappingTransposed[i]), decimalTiShares,
                         pidMapper, commonSender, new LinkedList<>(protocolIdQueue),
                         clientId, Constants.prime, pid, asymmetricBit, partyCount);
@@ -324,13 +305,9 @@ public class RandomForestDTScoring extends DecisionTreeScoring implements Callab
             }
         }
         es.shutdown();
-        for(int i=0;i<classLabelCount;i++) {
+        for (int i = 0; i < classLabelCount; i++) {
             Future<Integer> dpResult = dpTaskList.get(i);
-            try {
-                finalOutputs[i] = dpResult.get();
-            } catch (InterruptedException | ExecutionException ex) {
-                LOGGER.log(Level.SEVERE, null, ex);
-            }
+            finalOutputs[i] = dpResult.get();
         }
     }
 

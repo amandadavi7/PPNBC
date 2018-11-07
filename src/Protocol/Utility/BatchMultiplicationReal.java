@@ -15,8 +15,6 @@ import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * Batch multiplication of list of xshares with yshares
@@ -26,7 +24,6 @@ import java.util.logging.Logger;
 public class BatchMultiplicationReal extends BatchMultiplication
         implements Callable<BigInteger[]> {
 
-    private static final Logger LOGGER = Logger.getLogger(BatchMultiplicationReal.class.getName());
     List<BigInteger> x;
     List<BigInteger> y;
     List<TripleReal> tiShares;
@@ -70,10 +67,9 @@ public class BatchMultiplicationReal extends BatchMultiplication
      * the value
      *
      * @return shares of product
-     * @throws Exception
      */
     @Override
-    public BigInteger[] call() throws Exception {
+    public BigInteger[] call() throws InterruptedException {
 
         int batchSize = x.size();
         BigInteger[] products = new BigInteger[batchSize];
@@ -86,16 +82,12 @@ public class BatchMultiplicationReal extends BatchMultiplication
                 BigInteger.ZERO));
         List<List<BigInteger>> diffList = null;
         for (int i = 0; i < partyCount - 1; i++) {
-            try {
-                receivedMessage = pidMapper.get(protocolIdQueue).take();
+            receivedMessage = pidMapper.get(protocolIdQueue).take();
                 diffList = (List<List<BigInteger>>) receivedMessage.getValue();
                 for (int j = 0; j < batchSize; j++) {
                     d.set(j, d.get(j).add(diffList.get(j).get(0)).mod(prime));
                     e.set(j, e.get(j).add(diffList.get(j).get(1)).mod(prime));
                 }
-            } catch (InterruptedException ex) {
-                LOGGER.log(Level.SEVERE, null, ex);
-            }
         }
 
         for (int i = 0; i < batchSize; i++) {
@@ -128,7 +120,7 @@ public class BatchMultiplicationReal extends BatchMultiplication
      * Bundle the d and e values and add to the sender queue
      */
     @Override
-    void initProtocol() {
+    void initProtocol() throws InterruptedException {
         List<List<BigInteger>> diffList = new ArrayList<>();
         int batchSize = x.size();
 
@@ -140,13 +132,6 @@ public class BatchMultiplicationReal extends BatchMultiplication
         }
 
         Message senderMessage = new Message(diffList, clientID, protocolIdQueue);
-
-        try {
-            senderQueue.put(senderMessage);
-        } catch (InterruptedException ex) {
-            LOGGER.log(Level.SEVERE, null, ex);
-        }
-
+        senderQueue.put(senderMessage);
     }
-
 }
