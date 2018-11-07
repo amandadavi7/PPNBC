@@ -24,8 +24,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * Class to take care of matrix multiplication
@@ -37,7 +35,6 @@ import java.util.logging.Logger;
 public class MatrixMultiplication extends CompositeProtocol implements
         Callable<BigInteger[][]> {
 
-    private static final Logger LOGGER = Logger.getLogger(MatrixMultiplication.class.getName());
     BigInteger[][] a;
     List<List<BigInteger>> bT;
     List<TripleReal> tiRealShares;
@@ -98,10 +95,11 @@ public class MatrixMultiplication extends CompositeProtocol implements
      * result c(n*m)
      *
      * @return
-     * @throws Exception
+     * @throws java.lang.InterruptedException
+     * @throws java.util.concurrent.ExecutionException
      */
     @Override
-    public BigInteger[][] call() throws Exception {
+    public BigInteger[][] call() throws InterruptedException, ExecutionException {
 
         BigInteger[][] c2f = new BigInteger[n][l];
         BigInteger[][] c = new BigInteger[n][l];
@@ -136,11 +134,7 @@ public class MatrixMultiplication extends CompositeProtocol implements
         for (int i = 0; i < n; i++) {
             for (int j = 0; j < l; j++) {
                 Future<BigInteger> dWorkerResponse = taskList.get(testCases++);
-                try {
-                    c2f[i][j] = dWorkerResponse.get();
-                } catch (InterruptedException | ExecutionException ex) {
-                    LOGGER.log(Level.SEVERE, null, ex);
-                }
+                c2f[i][j] = dWorkerResponse.get();
             }
             
             BatchTruncation truncationModule = new BatchTruncation(c2f[i],
@@ -160,12 +154,7 @@ public class MatrixMultiplication extends CompositeProtocol implements
         
         for (int i = 0; i < n; i++) {
             Future<BigInteger[]> dWorkerResponse = taskListTruncation.get(i);
-            try {
-                c[i] = dWorkerResponse.get();
-            } catch (InterruptedException | ExecutionException ex) {
-                Logger.getLogger(MatrixMultiplication.class.getName())
-                        .log(Level.SEVERE, null, ex);
-            }
+            c[i] = dWorkerResponse.get();
         }
 
         es.shutdown();

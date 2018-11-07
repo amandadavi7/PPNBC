@@ -10,12 +10,14 @@ import Protocol.CompositeProtocol;
 import TrustedInitializer.TripleByte;
 import Utility.Constants;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -62,10 +64,12 @@ public class ParallelMultiplication extends CompositeProtocol implements Callabl
 
     /**
      *
-     * @return @throws Exception
+     * @return
+     * @throws java.lang.InterruptedException
+     * @throws java.util.concurrent.ExecutionException
      */
     @Override
-    public Integer call() throws Exception {
+    public Integer call() throws InterruptedException, ExecutionException {
         List<Integer> products = new ArrayList<>(wRow);
         int tiStartIndex = 0;
         
@@ -112,9 +116,7 @@ public class ParallelMultiplication extends CompositeProtocol implements Callabl
             for (int i = 0; i < startpid; i++) {
                 Future<Integer[]> prodFuture = multCompletionService.take();
                 Integer[] newProds = prodFuture.get();
-                for (int j : newProds) {
-                    newProducts.add(j);
-                }
+                newProducts.addAll(Arrays.asList(newProds));
             }
 
             products.clear();
@@ -127,7 +129,5 @@ public class ParallelMultiplication extends CompositeProtocol implements Callabl
         }
         //System.out.println("returning " + products.get(0));
         return products.get(0);
-
     }
-
 }

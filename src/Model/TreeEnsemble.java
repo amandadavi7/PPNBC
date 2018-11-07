@@ -33,6 +33,7 @@ import java.util.logging.Logger;
 
 /**
  * Tree Ensemble - Random Forest and Boosted Decision Trees
+ *
  * @author keerthanaa
  */
 public class TreeEnsemble extends Model {
@@ -54,8 +55,8 @@ public class TreeEnsemble extends Model {
      * file the metadata is passed to party as "randomforeststored" contains
      * number of trees and the names of the property files
      *
-     * party 2: csv file, properties file with name "randomforestproperties" - list of properties filenames about all
-     * the trees
+     * party 2: csv file, properties file with name "randomforestproperties" -
+     * list of properties filenames about all the trees
      *
      * @param asymmetricBit
      * @param pidMapper
@@ -70,9 +71,9 @@ public class TreeEnsemble extends Model {
      */
     public TreeEnsemble(int asymmetricBit,
             ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper,
-            BlockingQueue<Message> senderQueue, int clientId, List<TripleByte> binaryTriples, 
+            BlockingQueue<Message> senderQueue, int clientId, List<TripleByte> binaryTriples,
             List<TripleInteger> decimalTriples, int partyCount, String[] args,
-            Queue<Integer> protocolIdQueue, int protocolID) {
+            Queue<Integer> protocolIdQueue, int protocolID) throws IOException {
 
         super(pidMapper, senderQueue, clientId, asymmetricBit, partyCount, protocolIdQueue, protocolID);
 
@@ -90,9 +91,10 @@ public class TreeEnsemble extends Model {
 
     /**
      * Initialize variables
-     * @param args 
+     *
+     * @param args
      */
-    private void initializeModelVariables(String[] args) {
+    private void initializeModelVariables(String[] args) throws FileNotFoundException, IOException {
 
         for (String arg : args) {
             String[] currInput = arg.split("=");
@@ -113,15 +115,8 @@ public class TreeEnsemble extends Model {
                     //party has the tree
                     partyHasTrees = true;
                     Properties prop = new Properties();
-                    InputStream input = null;
-                    try {
-                        input = new FileInputStream(value);
-                        prop.load(input);
-                    } catch (FileNotFoundException ex) {
-                        LOGGER.log(Level.SEVERE, null, ex);
-                    } catch (IOException ex) {
-                        LOGGER.log(Level.SEVERE, null, ex);
-                    }
+                    InputStream input = new FileInputStream(value);
+                    prop.load(input);
                     treeCount = Integer.parseInt(prop.getProperty("treecount"));
                     String str = prop.getProperty("propertyfiles");
                     propertyFiles = str.split(",");
@@ -131,15 +126,8 @@ public class TreeEnsemble extends Model {
                     //party has feature vector
                     partyHasTrees = false;
                     prop = new Properties();
-                    input = null;
-                    try {
-                        input = new FileInputStream(value);
-                        prop.load(input);
-                    } catch (FileNotFoundException ex) {
-                        LOGGER.log(Level.SEVERE, null, ex);
-                    } catch (IOException ex) {
-                        LOGGER.log(Level.SEVERE, null, ex);
-                    }
+                    input = new FileInputStream(value);
+                    prop.load(input);
                     treeCount = Integer.parseInt(prop.getProperty("treecount"));
                     str = prop.getProperty("propertyfiles");
                     propertyFiles = str.split(",");
@@ -151,8 +139,10 @@ public class TreeEnsemble extends Model {
 
     /**
      * Main method
+     * @throws java.lang.InterruptedException
+     * @throws java.util.concurrent.ExecutionException
      */
-    public void runTreeEnsembles() {
+    public void runTreeEnsembles() throws InterruptedException, ExecutionException {
 
         ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
         List<Future<Integer[]>> taskList = new ArrayList<>();
@@ -161,9 +151,9 @@ public class TreeEnsemble extends Model {
 
         // TODO - How to handle TiShares here????
         String args[];
-        for(int i=0; i<treeCount; i++) {
+        for (int i = 0; i < treeCount; i++) {
             LOGGER.info("calling RF: " + pid);
-            if(partyHasTrees) {
+            if (partyHasTrees) {
                 args = new String[1];
                 args[0] = "storedtree=" + propertyFiles[i];
             } else {
@@ -171,10 +161,10 @@ public class TreeEnsemble extends Model {
                 args[0] = "testCsv=" + csvPath;
                 args[1] = "treeproperties=" + propertyFiles[i];
             }
-            
+
             RandomForestDTScoring DTScoreModule = new RandomForestDTScoring(asymmetricBit,
-                        pidMapper, commonSender, clientId, binaryTiShares, decimalTiShares,
-                        partyCount, args, new LinkedList<>(protocolIdQueue), pid);
+                    pidMapper, commonSender, clientId, binaryTiShares, decimalTiShares,
+                    partyCount, args, new LinkedList<>(protocolIdQueue), pid);
 
             Future<Integer[]> output = es.submit(DTScoreModule);
             taskList.add(output);
@@ -183,26 +173,22 @@ public class TreeEnsemble extends Model {
 
         for (int i = 0; i < treeCount; i++) {
             Future<Integer[]> DTScoreTask = taskList.get(i);
-            try {
-                treeOutputs.add(DTScoreTask.get());
-                LOGGER.info("received: " + i);
-            } catch (InterruptedException | ExecutionException ex) {
-                LOGGER.log(Level.SEVERE, null, ex);
-            }
-            
+            treeOutputs.add(DTScoreTask.get());
+            LOGGER.log(Level.INFO, "received: {0}", i);
+
         }
-        
+
         int classLabelCount = treeOutputs.get(0).length;
         int[] weightedProbabilityVector = new int[classLabelCount];
         
         for(Integer[] output: treeOutputs) {
             for(int i=0; i<classLabelCount;i++) {
-                weightedProbabilityVector[i] = Math.floorMod(weightedProbabilityVector[i]+output[i], Constants.PRIME);
+                weightedProbabilityVector[i] = Math.floorMod(weightedProbabilityVector[i]+output[i], prime);
             }
         }
-        
-        LOGGER.fine("weighted prob vector output" + Arrays.toString(weightedProbabilityVector));
-        
+
+        LOGGER.log(Level.FINE, "weighted prob vector output{0}", Arrays.toString(weightedProbabilityVector));
+
         List<Future<List<Integer>>> bitDtaskList = new ArrayList<>();
         for(int i=0;i<classLabelCount;i++) {
             BitDecomposition bitDModule = new BitDecomposition(weightedProbabilityVector[i], 
@@ -211,35 +197,26 @@ public class TreeEnsemble extends Model {
             bitDtaskList.add(es.submit(bitDModule));
             pid++;
         }
-        
+
         List<List<Integer>> bitSharesProbs = new ArrayList<>();
-        for(int i=0;i<classLabelCount;i++) {
+        for (int i = 0; i < classLabelCount; i++) {
             Future<List<Integer>> bitDResult = bitDtaskList.get(i);
-            try {
-                bitSharesProbs.add(bitDResult.get());
-            } catch (InterruptedException | ExecutionException ex) {
-                LOGGER.log(Level.SEVERE, null, ex);
-            }
+            bitSharesProbs.add(bitDResult.get());
         }
 
         ArgMax argmaxModule = new ArgMax(bitSharesProbs, binaryTiShares, asymmetricBit,
                 pidMapper, commonSender, new LinkedList<>(protocolIdQueue), clientId,
                 Constants.BINARY_PRIME, pid, partyCount);
         pid++;
-        
+
         Future<Integer[]> classIndexResult = es.submit(argmaxModule);
-        Integer[] finalClassIndex = null;
-        try {
-            finalClassIndex = classIndexResult.get();
-        } catch (InterruptedException | ExecutionException ex) {
-            LOGGER.log(Level.SEVERE, null, ex);
-        }
-        
+        Integer[] finalClassIndex = classIndexResult.get();
+
         long stopTime = System.currentTimeMillis();
         long elapsedTime = stopTime - startTime;
 
-        LOGGER.info("output final:" + Arrays.toString(finalClassIndex));
-        LOGGER.info("Avg time duration:" + elapsedTime);
+        LOGGER.log(Level.INFO, "output final:{0}", Arrays.toString(finalClassIndex));
+        LOGGER.log(Level.INFO, "Avg time duration:{0}", elapsedTime);
     }
 
 }

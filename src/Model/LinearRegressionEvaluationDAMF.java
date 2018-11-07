@@ -35,10 +35,10 @@ public class LinearRegressionEvaluationDAMF extends Model {
     static BigInteger prime;
     String outputPath;
     int testCases;
-    
+
     // The random ri 
     List<BigInteger> r;
-    
+
     /**
      * Constructor
      *
@@ -48,6 +48,8 @@ public class LinearRegressionEvaluationDAMF extends Model {
      * @param clientId
      * @param partyCount
      * @param args
+     * @param protocolIdQueue
+     * @param protocolID
      *
      */
     public LinearRegressionEvaluationDAMF(int asymmetricBit,
@@ -58,7 +60,7 @@ public class LinearRegressionEvaluationDAMF extends Model {
             Queue<Integer> protocolIdQueue, int protocolID) {
 
         super(pidMapper, senderQueue, clientId, asymmetricBit, partyCount, protocolIdQueue, protocolID);
-        
+
         prime = BigInteger.valueOf(2).pow(Constants.INTEGER_PRECISION
                 + 2 * Constants.DECIMAL_PRECISION + 1).nextProbablePrime();  //Zq must be a prime field
 
@@ -68,11 +70,12 @@ public class LinearRegressionEvaluationDAMF extends Model {
 
     /**
      * Compute shares of the prediction for each entry of the dataset:x
+     * @throws java.lang.InterruptedException
      */
-    public void predictValues() {
+    public void predictValues() throws InterruptedException {
 
         long startTime = System.currentTimeMillis();
-        
+
         BigInteger fac = BigInteger.valueOf(2).pow(Constants.INTEGER_PRECISION);
         // generate ri vector
         java.util.Random rand = new java.util.Random();
@@ -85,26 +88,18 @@ public class LinearRegressionEvaluationDAMF extends Model {
             // mask y by adding random r
             y.set(i, y.get(i).add(r.get(i)).mod(prime));
         }
-        
+
         // Broadcast random ri
         Message senderMessage = new Message(r,
                 clientId, protocolIdQueue, true);
-        try {
-            commonSender.put(senderMessage);
-        } catch (InterruptedException ex) {
-            LOGGER.log(Level.SEVERE, ErrorMessages.INTERRUPTED_EXCEPTION_PUT, ex);
-        }
+        commonSender.put(senderMessage);
 
         if (asymmetricBit == 1) {
             for (int i = 0; i < partyCount - 1; i++) {
-                try {
-                    Message receivedMessage = pidMapper.get(protocolIdQueue).take();
-                    List<BigInteger> otherPartyR = (List<BigInteger>) receivedMessage.getValue();
-                    for (int j = 0; j < testCases; j++) {
-                        r.set(j, r.get(j).add(otherPartyR.get(j)).mod(prime));
-                    }
-                } catch (InterruptedException ex) {
-                    LOGGER.log(Level.SEVERE, ErrorMessages.INTERRUPTED_EXCEPTION_TAKE, ex);
+                Message receivedMessage = pidMapper.get(protocolIdQueue).take();
+                List<BigInteger> otherPartyR = (List<BigInteger>) receivedMessage.getValue();
+                for (int j = 0; j < testCases; j++) {
+                    r.set(j, r.get(j).add(otherPartyR.get(j)).mod(prime));
                 }
             }
         }
@@ -114,11 +109,11 @@ public class LinearRegressionEvaluationDAMF extends Model {
         //TODO: push time to a csv file
         LOGGER.log(Level.INFO, "Avg time duration:{0} for partyId:{1}", new Object[]{elapsedTime, clientId});
         FileIO.writeToCSV(y, outputPath, "maskedY", clientId);
-        if(asymmetricBit == 1) {
+        if (asymmetricBit == 1) {
             FileIO.writeToCSV(r, outputPath, "R", clientId);
         }
     }
-    
+
     private void initalizeModelVariables(String[] args) {
         for (String arg : args) {
             String[] currInput = arg.split("=");

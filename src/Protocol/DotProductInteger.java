@@ -32,7 +32,7 @@ public class DotProductInteger extends DotProduct implements Callable<Integer> {
     List<Integer> xShares, yShares;
     List<TripleInteger> tiShares;
     int prime;
-    Logger LOGGER = Logger.getLogger(DotProductInteger.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(DotProductInteger.class.getName());
 
     /**
      * Constructor for DotProduct on Integers
@@ -49,10 +49,10 @@ public class DotProductInteger extends DotProduct implements Callable<Integer> {
      * @param asymmetricBit
      * @param partyCount
      */
-    public DotProductInteger(List<Integer> xShares, List<Integer> yShares, 
-            List<TripleInteger> tiShares, 
+    public DotProductInteger(List<Integer> xShares, List<Integer> yShares,
+            List<TripleInteger> tiShares,
             ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper,
-            BlockingQueue<Message> senderqueue, 
+            BlockingQueue<Message> senderqueue,
             Queue<Integer> protocolIdQueue,
             int clientID, int prime, int protocolID, int asymmetricBit, int partyCount) {
 
@@ -70,13 +70,15 @@ public class DotProductInteger extends DotProduct implements Callable<Integer> {
      * return
      *
      * @return
+     * @throws java.lang.InterruptedException
+     * @throws java.util.concurrent.ExecutionException
      */
     @Override
-    public Integer call() {
+    public Integer call() throws InterruptedException, ExecutionException {
 
         int dotProduct = 0;
         int vectorLength = xShares.size();
-        
+
         ExecutorService mults = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
         ExecutorCompletionService<Integer[]> multCompletionService = new ExecutorCompletionService<>(mults);
 
@@ -89,7 +91,7 @@ public class DotProductInteger extends DotProduct implements Callable<Integer> {
             LOGGER.log(Level.FINE, "Protocol {0} batch {1}", new Object[]{protocolId, startpid});
 
             multCompletionService.submit(new BatchMultiplicationInteger(xShares.subList(i, toIndex),
-                    yShares.subList(i, toIndex), tiShares.subList(i, toIndex), 
+                    yShares.subList(i, toIndex), tiShares.subList(i, toIndex),
                     pidMapper, senderQueue, new LinkedList<>(protocolIdQueue),
                     clientID, prime, startpid, asymmetricBit, protocolId, partyCount));
 
@@ -101,14 +103,10 @@ public class DotProductInteger extends DotProduct implements Callable<Integer> {
         mults.shutdown();
 
         for (i = 0; i < startpid; i++) {
-            try {
-                Future<Integer[]> prod = multCompletionService.take();
-                Integer[] products = prod.get();
-                for (int j : products) {
-                    dotProduct = Math.floorMod(dotProduct + j, prime);
-                }
-            } catch (InterruptedException | ExecutionException ex) {
-                LOGGER.log(Level.SEVERE, null, ex);
+            Future<Integer[]> prod = multCompletionService.take();
+            Integer[] products = prod.get();
+            for (int j : products) {
+                dotProduct = Math.floorMod(dotProduct + j, prime);
             }
         }
 
