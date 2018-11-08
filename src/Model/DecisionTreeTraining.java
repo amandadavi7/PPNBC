@@ -44,7 +44,7 @@ public class DecisionTreeTraining extends Model {
     //attrValueCount - total no. of attribute values per attribute (make it constant by adding dummy variable)
     //For now, input accordingly, TODO -  how to manage this dummy value addition??
     int classLabelCount, attributeCount, datasetSize, levelCounter, attrValueCount;
-    int[][] dataset;    //the dataset
+    int[][] dataset;    //the dataset (DO WE NEED IT??)(REMOVE IF NOT USED)
     //int attrLabelCounts[]; //Mapping between attr index to no. of attr values for each attr (may or may not be needed
     
     Integer[] classIndexLabelMapping;
