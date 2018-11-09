@@ -9,6 +9,7 @@ import Communication.Message;
 import TrustedInitializer.TripleByte;
 import Utility.Constants;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -20,6 +21,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Takes a feature vector, k (index (0 index) of the feature that needs to be
@@ -38,6 +41,7 @@ public class OIS extends CompositeProtocol implements Callable<Integer[]> {
     List<Integer> yShares;
     List<TripleByte> tiShares;
     int numberCount, bitLength, prime;
+    private static final Logger LOGGER = Logger.getLogger(OIS.class.getName());;
 
     /**
      * Constructor
@@ -74,7 +78,6 @@ public class OIS extends CompositeProtocol implements Callable<Integer[]> {
 
         featureVectorTransposed = new ArrayList<>();
         if (features == null) {
-            //System.out.println("features is null");
             for (int i = 0; i < bitLength; i++) {
                 List<Integer> temp = new ArrayList<>();
                 for (int j = 0; j < numberCount; j++) {
@@ -83,7 +86,6 @@ public class OIS extends CompositeProtocol implements Callable<Integer[]> {
                 featureVectorTransposed.add(temp);
             }
         } else {
-            //System.out.println("features is not null");
             for (int i = 0; i < bitLength; i++) {
                 featureVectorTransposed.add(new ArrayList<>());
             }
@@ -97,9 +99,9 @@ public class OIS extends CompositeProtocol implements Callable<Integer[]> {
 
         yShares = new ArrayList<>(Collections.nCopies(numberCount, 0));
         if (k != -1) {
-            //System.out.println("setting 1 for "+k);
             yShares.set(k, 1);
         }
+        
     }
 
     /**
@@ -134,12 +136,11 @@ public class OIS extends CompositeProtocol implements Callable<Integer[]> {
         es.shutdown();
 
         for (int i = 0; i < bitLength; i++) {
-            //System.out.println("waiting for dp:" + i);
             Future<Integer> dotprod = taskList.get(i);
             output[i] = dotprod.get();
         }
 
-        //System.out.println("OIS PID: " + protocolId + "-returning "); //+ Arrays.toString(output));
+        LOGGER.log(Level.FINE, "OIS PID: {0} - returning result: {1}", new Object[]{protocolId, Arrays.toString(output)});
         return output;
     }
 

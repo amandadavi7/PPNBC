@@ -275,7 +275,7 @@ public class TestModel extends Model {
 
         long stopTime = System.currentTimeMillis();
         long elapsedTime = stopTime - startTime;
-        System.out.println("Avg time duration:" + elapsedTime);
+        LOGGER.log(Level.INFO, "Avg time duration: {0}", elapsedTime);
     }
     
     /**
@@ -297,7 +297,7 @@ public class TestModel extends Model {
         es.shutdown();
         
         List<List<Integer>> result = jaccardTask.get();
-        System.out.println("result of jaccard distance comparison: " + result);
+        LOGGER.log(Level.INFO, "result of jaccard distance comparison: {0}", result);
 
     }
 
@@ -440,7 +440,7 @@ public class TestModel extends Model {
 
         long stopTime = System.currentTimeMillis();
         long elapsedTime = stopTime - startTime;
-        System.out.println("Avg time duration:" + elapsedTime);
+        LOGGER.log(Level.INFO, "Avg time duration: {0}", elapsedTime);
 
         FileIO.writeToCSV(result, outputPath, "matrixInversion", clientId);
     }
@@ -477,7 +477,7 @@ public class TestModel extends Model {
 
         long stopTime = System.currentTimeMillis();
         long elapsedTime = stopTime - startTime;
-        System.out.println("Avg time duration:" + elapsedTime);
+        LOGGER.log(Level.INFO, "Avg time duration: {0}", elapsedTime);
 
         FileIO.writeToCSV(result, outputPath, "matrixMultiplication", clientId);
 
@@ -489,7 +489,7 @@ public class TestModel extends Model {
      * @throws ExecutionException 
      */
     private void callTruncation() throws InterruptedException, ExecutionException {
-        System.out.println("calling truncation");
+        LOGGER.log(Level.INFO, "calling truncation");
 
         //Prepare matrix for truncation. Multiply the elements with 2^f
         int rows = xBigInt.length;
@@ -510,7 +510,7 @@ public class TestModel extends Model {
         int totalCases = xBigInt.length;
         int tiTruncationStartIndex = 0;
 
-        System.out.println("Total testcases:" + totalCases);
+        LOGGER.log(Level.INFO, "Total testcases: {0}", totalCases);
         for (int i = 0; i < totalCases; i++) {
 
             BatchTruncation truncationPair = new BatchTruncation(xBigInt[i],
@@ -532,7 +532,7 @@ public class TestModel extends Model {
 
         long stopTime = System.currentTimeMillis();
         long elapsedTime = stopTime - startTime;
-        System.out.println("Avg time duration:" + elapsedTime);
+        LOGGER.log(Level.INFO, "Avg time duration: {0}", elapsedTime);
 
         FileIO.writeToCSV(truncationOutput, outputPath, "truncation", clientId);
 
@@ -569,12 +569,12 @@ public class TestModel extends Model {
         for (int i = 0; i < totalCases; i++) {
             Future<Integer> dWorkerResponse = taskList.get(i);
             Integer result = dWorkerResponse.get();
-            //System.out.println("result:" + result + ", #:" + i);
+            LOGGER.log(Level.FINE, "result: {0}, #: {1}", new Object[]{result, i});
         }
 
         long stopTime = System.currentTimeMillis();
         long elapsedTime = stopTime - startTime;
-        System.out.println("Avg time duration:" + elapsedTime);
+        LOGGER.log(Level.INFO, "Avg time duration: {0}", elapsedTime);
     }
 
     /**
@@ -634,12 +634,12 @@ public class TestModel extends Model {
         for (int i = 0; i < totalCases; i++) {
             Future<Integer> dWorkerResponse = taskList.get(i);
             Integer result = dWorkerResponse.get();
-            //System.out.println("result:" + result + ", #:" + i);
+            LOGGER.log(Level.FINE, "result: {0}, #: {1}", new Object[]{result, i});
         }
 
         long stopTime = System.currentTimeMillis();
         long elapsedTime = stopTime - startTime;
-        System.out.println("Avg time duration:" + elapsedTime);
+        LOGGER.log(Level.INFO, "Avg time duration: {0}", elapsedTime);
     }
 
 }
