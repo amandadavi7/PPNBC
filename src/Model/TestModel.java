@@ -54,6 +54,7 @@ public class TestModel extends Model {
     List<TripleByte> binaryTiShares;
     List<TripleInteger> decimalTiShares;
     List<TripleReal> realTiShares;
+    private static final Logger LOGGER = Logger.getLogger(TestModel.class.getName());
 
     /**
      * Constructor
@@ -70,12 +71,13 @@ public class TestModel extends Model {
      * @param args
      * @param protocolIdQueue
      * @param protocolID
+     * @throws java.io.IOException
      */
     public TestModel(List<TripleByte> binaryTriples, List<TripleInteger> decimalTriples,
             List<TripleReal> realTiShares, List<TruncationPair> tiTruncationPair, 
             int asymmetricBit, ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper, 
             BlockingQueue<Message> senderQueue, int clientId, int partyCount, String[] args, 
-            Queue<Integer> protocolIdQueue, int protocolID) {
+            Queue<Integer> protocolIdQueue, int protocolID) throws IOException {
 
         super(pidMapper, senderQueue, clientId, asymmetricBit, partyCount, protocolIdQueue, protocolID);
         this.tiTruncationPair = tiTruncationPair;
@@ -90,31 +92,45 @@ public class TestModel extends Model {
     }
 
     /**
-     * Call bitD protocol for testing 1 test case
+     * Call bitD protocol in parallel for n test cases
+     * @throws java.lang.InterruptedException
+     * @throws java.util.concurrent.ExecutionException
      */
-    public void callBitDecomposition() {
+    public void callBitDecomposition() throws InterruptedException, ExecutionException {
 
-        ExecutorService es = Executors.newFixedThreadPool(1);
-
-        BitDecomposition bitTest = new BitDecomposition(2, binaryTiShares,
-                asymmetricBit, 5, pidMapper, commonSender,
-                new LinkedList<>(protocolIdQueue), clientId,
-                Constants.BINARY_PRIME, 1, partyCount);
-
-        Future<List<Integer>> bitdecompositionTask = es.submit(bitTest);
-
-        try {
-            List<Integer> result = bitdecompositionTask.get();
-            System.out.println("result of bitDecomposition: " + result);
-        } catch (InterruptedException | ExecutionException ex) {
-            Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
+        ExecutorService es = Executors.newFixedThreadPool(100);
+        List<Future<List<Integer>>> taskList = new ArrayList<>();
+        long startTime = System.currentTimeMillis();
+        
+        int totalCases = x.size();
+        for(int i=0; i<totalCases; i++) {
+            BitDecomposition bitDModule = new BitDecomposition(x.get(i).get(0),
+                    binaryTiShares, asymmetricBit, 10, pidMapper, commonSender,
+                    new LinkedList<>(protocolIdQueue), clientId,
+                    Constants.BINARY_PRIME, 1, partyCount);
+            
+            taskList.add(es.submit(bitDModule));
         }
+        
+        es.shutdown();
+        
+        for(int i=0;i<totalCases;i++) {
+            Future<List<Integer>> resultFuture = taskList.get(i);
+            List<Integer> result = resultFuture.get();
+            LOGGER.log(Level.FINE, "result: {0}, #: {1}", new Object[]{result , i});
+        }
+
+        long stopTime = System.currentTimeMillis();
+        long elapsedTime = stopTime - startTime;
+        LOGGER.log(Level.INFO, "Avg time duration: {0}", elapsedTime);
     }
 
     /**
      * Calling ArgMax protocol in parallel for n test cases
+     * @throws java.lang.InterruptedException
+     * @throws java.util.concurrent.ExecutionException
      */
-    public void callArgMax() {
+    public void callArgMax() throws InterruptedException, ExecutionException {
 
         ExecutorService es = Executors.newFixedThreadPool(100);
         List<Future<Integer[]>> taskList = new ArrayList<>();
@@ -129,39 +145,33 @@ public class TestModel extends Model {
                     pidMapper, commonSender, new LinkedList<>(protocolIdQueue),
                     clientId, Constants.BINARY_PRIME, i, partyCount);
 
-            System.out.println("submitted " + i + " argmax");
-
             Future<Integer[]> argmaxTask = es.submit(argmaxModule);
             taskList.add(argmaxTask);
-
         }
 
         es.shutdown();
 
         for (int i = 0; i < totalCases; i++) {
             Future<Integer[]> dWorkerResponse = taskList.get(i);
-            try {
-                Integer[] result = dWorkerResponse.get();
-                System.out.println("result:" + Arrays.toString(result) + ", #:" + i);
-            } catch (InterruptedException | ExecutionException ex) {
-                Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
-            }
+            Integer[] result = dWorkerResponse.get();
+            LOGGER.log(Level.FINE, "result: {0}, #: {1}", new Object[]{result, i});
         }
 
         long stopTime = System.currentTimeMillis();
         long elapsedTime = stopTime - startTime;
-        System.out.println("Avg time duration:" + elapsedTime);
+        LOGGER.log(Level.INFO, "Avg time duration: {0}", elapsedTime);
 
     }
 
     /**
      * Call OR_XOR protocol in parallel for n test cases
+     * @param val
+     * @throws java.lang.InterruptedException
+     * @throws java.util.concurrent.ExecutionException
      */
-    public void callOR_XOR() {
+    public void callOR_XOR(int val) throws InterruptedException, ExecutionException {
         
         checkPrimeValidity();
-
-        System.out.println("calling or_xor with x=" + x + " y=" + y);
 
         ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
         List<Future<Integer[]>> taskList = new ArrayList<>();
@@ -172,7 +182,7 @@ public class TestModel extends Model {
         for (int i = 0; i < totalCases; i++) {
 
             OR_XOR or_xor = new OR_XOR(x.get(i), y.get(i), decimalTiShares,
-                    asymmetricBit, 1, pidMapper, commonSender,
+                    asymmetricBit, val, pidMapper, commonSender,
                     new LinkedList<>(protocolIdQueue), clientId, decPrime, i, partyCount);
 
             Future<Integer[]> task = es.submit(or_xor);
@@ -182,25 +192,23 @@ public class TestModel extends Model {
         es.shutdown();
 
         for (int i = 0; i < totalCases; i++) {
-            try {
-                Future<Integer[]> task = taskList.get(i);
-                Integer[] result = task.get();
-                System.out.println("result: " + i + ": " + Arrays.toString(result));
-            } catch (InterruptedException | ExecutionException ex) {
-                Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
-            }
+            Future<Integer[]> task = taskList.get(i);
+            Integer[] result = task.get();
+            LOGGER.log(Level.FINE, "result: {0}, #: {1}", new Object[]{result , i});
         }
 
         long stopTime = System.currentTimeMillis();
         long elapsedTime = stopTime - startTime;
-        System.out.println("Avg time duration:" + elapsedTime);
+        LOGGER.log(Level.INFO, "Avg time duration: {0}", elapsedTime);
 
     }
 
     /**
-     * Call Oblivious Input Selection for 1 test case
+     * Call Oblivious Input Selection for n test cases in parallel
+     * @throws java.lang.InterruptedException
+     * @throws java.util.concurrent.ExecutionException
      */
-    public void callOIS() {
+    public void callOIS() throws InterruptedException, ExecutionException {
 
         System.out.println("calling OIS with v" + v);
 
@@ -226,16 +234,12 @@ public class TestModel extends Model {
 
         es.shutdown();
 
-        try {
-            Integer[] result = task.get();
-            System.out.println("result:" + Arrays.toString(result));
-        } catch (InterruptedException | ExecutionException ex) {
-            Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        Integer[] result = task.get();
+        LOGGER.log(Level.FINE, "result: {0}, #: {1}", new Object[]{result , 0});
 
         long stopTime = System.currentTimeMillis();
         long elapsedTime = stopTime - startTime;
-        System.out.println("Avg time duration:" + elapsedTime);
+        LOGGER.log(Level.INFO, "Avg time duration: {0}", elapsedTime);
     }
 
     /**
@@ -265,9 +269,9 @@ public class TestModel extends Model {
             Future<Integer> dWorkerResponse = taskList.get(i);
             try {
                 Integer result = dWorkerResponse.get();
-                //System.out.println("result:" + result + ", #:" + i);
+                LOGGER.log(Level.FINE, "result: {0}, #: {1}", new Object[]{result , i});
             } catch (InterruptedException | ExecutionException ex) {
-                Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
+                LOGGER.log(Level.SEVERE, null, ex);
             }
         }
 
@@ -293,7 +297,7 @@ public class TestModel extends Model {
             List<List<Integer>> result = jaccardTask.get();
             System.out.println("result of jaccard distance comparison: " + result);
         } catch (InterruptedException | ExecutionException ex) {
-            Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
+            LOGGER.log(Level.SEVERE, null, ex);
         }
     }
 
@@ -301,8 +305,10 @@ public class TestModel extends Model {
      * Main compute model function for the protocols
      *
      * @param protocolName
+     * @throws java.lang.InterruptedException
+     * @throws java.util.concurrent.ExecutionException
      */
-    public void compute(String protocolName) {
+    public void compute(String protocolName) throws InterruptedException, ExecutionException {
 
         switch (protocolName) {
             case "Truncation":
@@ -320,8 +326,11 @@ public class TestModel extends Model {
             case "OIS":
                 callOIS();
                 break;
-            case "OR_XOR":
-                callOR_XOR();
+            case "OR":
+                callOR_XOR(1);
+                break;
+            case "XOR":
+                callOR_XOR(2);
                 break;
             case "BitDecomposition":
                 callBitDecomposition();
@@ -348,7 +357,7 @@ public class TestModel extends Model {
      *
      * @param args
      */
-    private void initalizeModelVariables(String[] args) {
+    private void initalizeModelVariables(String[] args) throws FileNotFoundException, IOException{
 
         for (String arg : args) {
             String[] currInput = arg.split("=");
@@ -367,22 +376,16 @@ public class TestModel extends Model {
                     y = FileIO.loadIntListFromFile(value);
                     break;
                 case "vShares":
-                    try {
-                        BufferedReader buf = new BufferedReader(new FileReader(value));
-                        String line = null;
-                        while ((line = buf.readLine()) != null) {
-                            String[] vListShares = line.split(";");
-                            List<List<Integer>> vline = new ArrayList<>();
-                            for (String str : vListShares) {
-                                int lineInt[] = Arrays.stream(str.split(",")).mapToInt(Integer::parseInt).toArray();
-                                vline.add(Arrays.stream(lineInt).boxed().collect(Collectors.toList()));
-                            }
-                            v.add(vline);
+                    BufferedReader buf = new BufferedReader(new FileReader(value));
+                    String line = null;
+                    while ((line = buf.readLine()) != null) {
+                        String[] vListShares = line.split(";");
+                        List<List<Integer>> vline = new ArrayList<>();
+                        for (String str : vListShares) {
+                            int lineInt[] = Arrays.stream(str.split(",")).mapToInt(Integer::parseInt).toArray();
+                            vline.add(Arrays.stream(lineInt).boxed().collect(Collectors.toList()));
                         }
-                    } catch (FileNotFoundException ex) {
-                        Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
-                    } catch (IOException ex) {
-                        Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
+                        v.add(vline);
                     }
                     break;
                 case "xCsv":
