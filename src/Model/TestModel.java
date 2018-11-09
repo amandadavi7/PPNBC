@@ -245,8 +245,10 @@ public class TestModel extends Model {
     /**
      * Call comparison protocol for n test cases in parallel
      *
+     * @throws java.lang.InterruptedException
+     * @throws java.util.concurrent.ExecutionException
      */
-    public void callComparison() {
+    public void callComparison() throws InterruptedException, ExecutionException {
         ExecutorService es = Executors.newFixedThreadPool(100);
         List<Future<Integer>> taskList = new ArrayList<>();
 
@@ -267,12 +269,8 @@ public class TestModel extends Model {
 
         for (int i = 0; i < totalCases; i++) {
             Future<Integer> dWorkerResponse = taskList.get(i);
-            try {
-                Integer result = dWorkerResponse.get();
-                LOGGER.log(Level.FINE, "result: {0}, #: {1}", new Object[]{result , i});
-            } catch (InterruptedException | ExecutionException ex) {
-                LOGGER.log(Level.SEVERE, null, ex);
-            }
+            Integer result = dWorkerResponse.get();
+            LOGGER.log(Level.FINE, "result: {0}, #: {1}", new Object[]{result , i});
         }
 
         long stopTime = System.currentTimeMillis();
@@ -280,7 +278,12 @@ public class TestModel extends Model {
         System.out.println("Avg time duration:" + elapsedTime);
     }
     
-    public void callJaccard(){
+    /**
+     * 
+     * @throws InterruptedException
+     * @throws ExecutionException 
+     */
+    public void callJaccard() throws InterruptedException, ExecutionException{
         checkPrimeValidity();
         
         ExecutorService es = Executors.newFixedThreadPool(1);
@@ -293,12 +296,9 @@ public class TestModel extends Model {
         Future<List<List<Integer>>> jaccardTask = es.submit(jdistance);
         es.shutdown();
         
-        try {
-            List<List<Integer>> result = jaccardTask.get();
-            System.out.println("result of jaccard distance comparison: " + result);
-        } catch (InterruptedException | ExecutionException ex) {
-            LOGGER.log(Level.SEVERE, null, ex);
-        }
+        List<List<Integer>> result = jaccardTask.get();
+        System.out.println("result of jaccard distance comparison: " + result);
+
     }
 
     /**
@@ -408,13 +408,21 @@ public class TestModel extends Model {
         }
     }
     
+    /**
+     * check if the decimal prime is initialized
+     */
     private void checkPrimeValidity() {
         if(decPrime == -1) {
             throw new IllegalArgumentException("Please add a valid prime to the config file");
         }
     }
 
-    private void callMatrixInversion() {
+    /**
+     * 
+     * @throws InterruptedException
+     * @throws ExecutionException 
+     */
+    private void callMatrixInversion() throws InterruptedException, ExecutionException {
         ExecutorService es = Executors.newFixedThreadPool(1);
 
         long startTime = System.currentTimeMillis();
@@ -428,12 +436,7 @@ public class TestModel extends Model {
         es.shutdown();
 
         BigInteger[][] result = null;
-        try {
-            result = matrixInversionTask.get();
-
-        } catch (InterruptedException | ExecutionException ex) {
-            Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        result = matrixInversionTask.get();
 
         long stopTime = System.currentTimeMillis();
         long elapsedTime = stopTime - startTime;
@@ -442,7 +445,12 @@ public class TestModel extends Model {
         FileIO.writeToCSV(result, outputPath, "matrixInversion", clientId);
     }
 
-    private void callMatrixMultiplication() {
+    /**
+     * 
+     * @throws InterruptedException
+     * @throws ExecutionException 
+     */
+    private void callMatrixMultiplication() throws InterruptedException, ExecutionException {
         ExecutorService es = Executors.newFixedThreadPool(1);
 
         int n = xBigInt.length;
@@ -465,12 +473,7 @@ public class TestModel extends Model {
 
         es.shutdown();
         BigInteger[][] result = null;
-        try {
-            result = matrixMultiplicationTask.get();
-
-        } catch (InterruptedException | ExecutionException ex) {
-            Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        result = matrixMultiplicationTask.get();
 
         long stopTime = System.currentTimeMillis();
         long elapsedTime = stopTime - startTime;
@@ -480,7 +483,12 @@ public class TestModel extends Model {
 
     }
 
-    private void callTruncation() {
+    /**
+     * 
+     * @throws InterruptedException
+     * @throws ExecutionException 
+     */
+    private void callTruncation() throws InterruptedException, ExecutionException {
         System.out.println("calling truncation");
 
         //Prepare matrix for truncation. Multiply the elements with 2^f
@@ -518,13 +526,8 @@ public class TestModel extends Model {
         es.shutdown();
 
         for (int i = 0; i < totalCases; i++) {
-            try {
-                Future<BigInteger[]> task = taskList.get(i);
-                truncationOutput[i] = task.get();
-
-            } catch (InterruptedException | ExecutionException ex) {
-                Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
-            }
+            Future<BigInteger[]> task = taskList.get(i);
+            truncationOutput[i] = task.get();
         }
 
         long stopTime = System.currentTimeMillis();
@@ -538,8 +541,10 @@ public class TestModel extends Model {
     /**
      * Call multiplication for n test cases in parallel
      *
+     * @throws java.lang.InterruptedException
+     * @throws java.util.concurrent.ExecutionException
      */
-    public void callMultiplication() {
+    public void callMultiplication() throws InterruptedException, ExecutionException {
         
         checkPrimeValidity();
         
@@ -563,12 +568,8 @@ public class TestModel extends Model {
 
         for (int i = 0; i < totalCases; i++) {
             Future<Integer> dWorkerResponse = taskList.get(i);
-            try {
-                Integer result = dWorkerResponse.get();
-                //System.out.println("result:" + result + ", #:" + i);
-            } catch (InterruptedException | ExecutionException ex) {
-                Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
-            }
+            Integer result = dWorkerResponse.get();
+            //System.out.println("result:" + result + ", #:" + i);
         }
 
         long stopTime = System.currentTimeMillis();
@@ -579,8 +580,9 @@ public class TestModel extends Model {
     /**
      * Test Unicast feature for n parties
      *
+     * @throws java.lang.InterruptedException
      */
-    public void callUnicast() {
+    public void callUnicast() throws InterruptedException {
 
         Random random = new Random();
 
@@ -590,24 +592,13 @@ public class TestModel extends Model {
         Logger.getLogger(TestModel.class.getName())
                 .log(Level.INFO, "value sent:{0}, client Id:{1}", new Object[]{value, clientId});
 
-        try {
-            commonSender.put(senderMessage);
-        } catch (InterruptedException ex) {
-            Logger.getLogger(MultiplicationInteger.class.getName())
-                    .log(Level.SEVERE, null, ex);
-        }
+        commonSender.put(senderMessage);
 
         if (asymmetricBit == 1) {
             for (int i = 0; i < partyCount - 1; i++) {
-                try {
-                    Message receivedMessage = pidMapper.get(protocolIdQueue).take();
-                    value = (Integer) receivedMessage.getValue();
-                    Logger.getLogger(TestModel.class.getName())
-                            .log(Level.INFO, "value recieved:{0}, client Id:{1}", new Object[]{value, clientId});
-                } catch (InterruptedException ex) {
-                    Logger.getLogger(TestModel.class.getName())
-                            .log(Level.SEVERE, null, ex);
-                }
+                Message receivedMessage = pidMapper.get(protocolIdQueue).take();
+                value = (Integer) receivedMessage.getValue();
+                LOGGER.log(Level.INFO, "value recieved:{0}, client Id:{1}", new Object[]{value, clientId});
             }
         }
 
@@ -616,8 +607,10 @@ public class TestModel extends Model {
     /**
      * Call dot product protocol for n test cases in parallel
      *
+     * @throws java.lang.InterruptedException
+     * @throws java.util.concurrent.ExecutionException
      */
-    public void callDotProduct() {
+    public void callDotProduct() throws InterruptedException, ExecutionException {
         
         checkPrimeValidity();
         
@@ -640,12 +633,8 @@ public class TestModel extends Model {
 
         for (int i = 0; i < totalCases; i++) {
             Future<Integer> dWorkerResponse = taskList.get(i);
-            try {
-                Integer result = dWorkerResponse.get();
-                //System.out.println("result:" + result + ", #:" + i);
-            } catch (InterruptedException | ExecutionException ex) {
-                Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
-            }
+            Integer result = dWorkerResponse.get();
+            //System.out.println("result:" + result + ", #:" + i);
         }
 
         long stopTime = System.currentTimeMillis();
