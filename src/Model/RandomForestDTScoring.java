@@ -184,7 +184,7 @@ public class RandomForestDTScoring extends DecisionTreeScoring implements Callab
         init();
 
         convertThresholdsToBits();
-        LOGGER.fine("Converted Thresholds to Bits");
+        LOGGER.log(Level.FINE, "Converted Thresholds to Bits");
 
         if (!partyHasTree) {
             convertTestVectorToBits(testVectorsDecimal.get(0));

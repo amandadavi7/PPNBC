@@ -197,11 +197,11 @@ public class DecisionTreeScoring extends Model {
         long startTime = System.currentTimeMillis();
 
         convertThresholdsToBits();
-        LOGGER.fine("Converted Thresholds to Bits");
+        LOGGER.log(Level.FINE, "Converted Thresholds to Bits");
 
         if (!partyHasTree) {
             convertTestVectorToBits(testVectorsDecimal.get(0));
-            LOGGER.fine("Converted feature vector to bits");
+            LOGGER.log(Level.FINE, "Converted feature vector to bits");
         }
 
         getFeatureVectors();

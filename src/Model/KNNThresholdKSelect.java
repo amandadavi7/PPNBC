@@ -232,7 +232,7 @@ public class KNNThresholdKSelect extends Model {
         int maxIterations = (int) Math.ceil(Math.log(trainingSharesCount) / Math.log(2.0));
         ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
         while (stoppingBit == 0 && maxIterations >= 0) {
-            LOGGER.info("iteration countdown:" + maxIterations);
+            LOGGER.log(Level.INFO, "iteration countdown: {0}", maxIterations);
             thresholds = getThreshold(lbound_numerator,
                     lbound_denominator, ubound_numerator, ubound_denominator);
 

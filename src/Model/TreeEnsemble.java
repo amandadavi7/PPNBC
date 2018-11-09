@@ -152,7 +152,7 @@ public class TreeEnsemble extends Model {
         // TODO - How to handle TiShares here????
         String args[];
         for (int i = 0; i < treeCount; i++) {
-            LOGGER.info("calling RF: " + pid);
+            LOGGER.log(Level.INFO, "calling RF: {0}", pid);
             if (partyHasTrees) {
                 args = new String[1];
                 args[0] = "storedtree=" + propertyFiles[i];
