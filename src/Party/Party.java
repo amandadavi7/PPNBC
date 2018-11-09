@@ -308,7 +308,7 @@ public class Party {
                 // test model
                 TestModel testModel = new TestModel(tiShares.binaryShares,
                         tiShares.decimalShares, tiShares.bigIntShares,
-                        tiShares.truncationPair,
+                        tiShares.equalityShares, tiShares.truncationPair,
                         asymmetricBit, pidMapper, senderQueue, partyId,
                         partyCount, args, protocolIdQueue, modelId);
                 testModel.compute(protocolName);

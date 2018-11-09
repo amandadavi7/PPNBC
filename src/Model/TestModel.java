@@ -10,6 +10,7 @@ import Protocol.ArgMax;
 import Protocol.BitDecomposition;
 import Protocol.Comparison;
 import Protocol.DotProductInteger;
+import Protocol.Equality;
 import Protocol.MatrixInversion;
 import Protocol.MultiplicationInteger;
 import Protocol.OIS;
@@ -54,6 +55,7 @@ public class TestModel extends Model {
     List<TripleByte> binaryTiShares;
     List<TripleInteger> decimalTiShares;
     List<TripleReal> realTiShares;
+    List<Integer> equalityTiShares;
 
     /**
      * Constructor
@@ -61,6 +63,7 @@ public class TestModel extends Model {
      * @param binaryTriples
      * @param decimalTriples
      * @param realTiShares
+     * @param equalityTiShares
      * @param tiTruncationPair
      * @param asymmetricBit
      * @param senderQueue
@@ -72,7 +75,7 @@ public class TestModel extends Model {
      * @param protocolID
      */
     public TestModel(List<TripleByte> binaryTriples, List<TripleInteger> decimalTriples,
-            List<TripleReal> realTiShares, List<TruncationPair> tiTruncationPair, 
+            List<TripleReal> realTiShares, List<Integer> equalityTiShares, List<TruncationPair> tiTruncationPair, 
             int asymmetricBit, ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper, 
             BlockingQueue<Message> senderQueue, int clientId, int partyCount, String[] args, 
             Queue<Integer> protocolIdQueue, int protocolID) {
@@ -86,6 +89,7 @@ public class TestModel extends Model {
         this.binaryTiShares = binaryTriples;
         this.decimalTiShares = decimalTriples;
         this.realTiShares = realTiShares;
+        this.equalityTiShares = equalityTiShares;
         initalizeModelVariables(args);
     }
 
@@ -302,7 +306,7 @@ public class TestModel extends Model {
      *
      * @param protocolName
      */
-    public void compute(String protocolName) {
+    public void compute(String protocolName) throws InterruptedException, ExecutionException {
 
         switch (protocolName) {
             case "Truncation":
@@ -337,6 +341,9 @@ public class TestModel extends Model {
                 break;
             case "Unicast":
                 callUnicast();
+                break;
+            case "Equality":
+                callEquality();
                 break;
             default:
                 break;
@@ -410,7 +417,42 @@ public class TestModel extends Model {
             throw new IllegalArgumentException("Please add a valid prime to the config file");
         }
     }
+    
+    /**
+     * 
+     * @throws InterruptedException
+     * @throws ExecutionException 
+     */
+    private void callEquality() throws InterruptedException, ExecutionException {
+        checkPrimeValidity();
+        
+        ExecutorService es = Executors.newFixedThreadPool(100);
+        List<Future<Integer>> taskList = new ArrayList<>();
 
+        long startTime = System.currentTimeMillis();
+        int totalCases = x.size();
+        // totalcases number of protocols are submitted to the executorservice
+        for (int i = 0; i < totalCases; i++) {
+            Equality equalityModule = new Equality(x.get(i).get(0), y.get(i).get(0),
+                    equalityTiShares.get(i), decimalTiShares.get(i), asymmetricBit, pidMapper,
+                    commonSender, clientId, decPrime, i, new LinkedList<>(protocolIdQueue), partyCount);
+            
+            taskList.add(es.submit(equalityModule));
+        }
+        
+        es.shutdown();
+        
+        for(int i=0;i<totalCases;i++) {
+            Future<Integer> task = taskList.get(i);
+            Integer result = task.get();
+            //System.out.println("result:" + result + ", #:" + i);
+        }
+
+        long stopTime = System.currentTimeMillis();
+        long elapsedTime = stopTime - startTime;
+        System.out.println("Avg time duration:" + elapsedTime);
+    }
+    
     private void callMatrixInversion() {
         ExecutorService es = Executors.newFixedThreadPool(1);
 
