@@ -194,7 +194,7 @@ public class TestModel extends Model {
         for (int i = 0; i < totalCases; i++) {
             Future<Integer[]> task = taskList.get(i);
             Integer[] result = task.get();
-            LOGGER.log(Level.FINE, "result: {0}, #: {1}", new Object[]{result , i});
+            LOGGER.log(Level.FINE, "result: {0}, #: {1}", new Object[]{Arrays.toString(result) , i});
         }
 
         long stopTime = System.currentTimeMillis();
@@ -210,32 +210,34 @@ public class TestModel extends Model {
      */
     public void callOIS() throws InterruptedException, ExecutionException {
 
-        System.out.println("calling OIS with v" + v);
-
-        ExecutorService es = Executors.newSingleThreadExecutor();
-
+        ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
+        int totalCases = 100;
+        List<Future<Integer[]>> taskList = new ArrayList<>();
         long startTime = System.currentTimeMillis();
 
-        OIS ois;
+        for(int i=0;i<totalCases;i++) {
+            OIS ois;
+            if (v.isEmpty()) {
+                ois = new OIS(null, binaryTiShares, asymmetricBit, pidMapper, commonSender,
+                        new LinkedList<>(protocolIdQueue), clientId,
+                        Constants.BINARY_PRIME, 0, 4, 2, 3, partyCount);
+            } else {
+                ois = new OIS(v.get(i), binaryTiShares, asymmetricBit, pidMapper, commonSender,
+                        new LinkedList<>(protocolIdQueue), clientId,
+                        Constants.BINARY_PRIME, 0, 4, -1, 3, partyCount);
+            }
+            
+            taskList.add(es.submit(ois));
 
-        if (v.isEmpty()) {
-            System.out.println("v is null");
-            ois = new OIS(null, binaryTiShares, asymmetricBit, pidMapper, commonSender,
-                    new LinkedList<>(protocolIdQueue), clientId,
-                    Constants.BINARY_PRIME, 0, 4, 1, 3, partyCount);
-        } else {
-            System.out.println("v is not null");
-            ois = new OIS(v.get(0), binaryTiShares, asymmetricBit, pidMapper, commonSender,
-                    new LinkedList<>(protocolIdQueue), clientId,
-                    Constants.BINARY_PRIME, 0, 4, -1, 3, partyCount);
         }
-
-        Future<Integer[]> task = es.submit(ois);
-
+        
         es.shutdown();
-
-        Integer[] result = task.get();
-        LOGGER.log(Level.FINE, "result: {0}, #: {1}", new Object[]{result , 0});
+        
+        for(int i=0;i<totalCases;i++) {
+            Future<Integer[]> resultFuture = taskList.get(i);
+            Integer[] result = resultFuture.get();
+            LOGGER.log(Level.FINE, "result: {0}, #: {1}", new Object[]{Arrays.toString(result) , 0});
+        }
 
         long stopTime = System.currentTimeMillis();
         long elapsedTime = stopTime - startTime;
