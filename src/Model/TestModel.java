@@ -173,7 +173,7 @@ public class TestModel extends Model {
         
         checkPrimeValidity();
 
-        ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
+        ExecutorService es = Executors.newFixedThreadPool(100);
         List<Future<Integer[]>> taskList = new ArrayList<>();
 
         long startTime = System.currentTimeMillis();
@@ -210,7 +210,7 @@ public class TestModel extends Model {
      */
     public void callOIS() throws InterruptedException, ExecutionException {
 
-        ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
+        ExecutorService es = Executors.newFixedThreadPool(100);
         int totalCases = 100;
         List<Future<Integer[]>> taskList = new ArrayList<>();
         long startTime = System.currentTimeMillis();
