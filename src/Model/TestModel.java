@@ -405,6 +405,9 @@ public class TestModel extends Model {
         }
     }
     
+    /**
+     * Checking if the prime is initialized
+     */
     private void checkPrimeValidity() {
         if(decPrime == -1) {
             throw new IllegalArgumentException("Please add a valid prime to the config file");
