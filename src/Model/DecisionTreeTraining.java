@@ -8,7 +8,6 @@ package Model;
 import Communication.Message;
 import Protocol.ArgMax;
 import Protocol.BitDecomposition;
-import Protocol.DotProductByte;
 import Protocol.DotProductInteger;
 import Protocol.Equality;
 import Protocol.MultiplicationInteger;
@@ -30,8 +29,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  *
