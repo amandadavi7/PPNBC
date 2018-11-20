@@ -56,6 +56,7 @@ public class TestModel extends Model {
     List<TripleReal> realTiShares;
     private static final Logger LOGGER = Logger.getLogger(TestModel.class.getName());
 
+    
     /**
      * Constructor
      *
