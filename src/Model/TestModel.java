@@ -93,6 +93,63 @@ public class TestModel extends Model {
         this.realTiShares = realTiShares;
         initalizeModelVariables(args);
     }
+    
+    /**
+     * Main compute model function for the protocols
+     *
+     * @param protocolName
+     * @throws java.lang.InterruptedException
+     * @throws java.util.concurrent.ExecutionException
+     */
+    public void compute(String protocolName) throws InterruptedException, ExecutionException {
+
+        switch (protocolName) {
+            case "BatchTruncation":
+                callBatchTruncation();
+                break;
+            case "Truncation":
+                callTruncation();
+                break;
+            case "MatrixInversion":
+                callMatrixInversion();
+                break;
+            case "MatrixMultiplication":
+                callMatrixMultiplication();
+                break;
+            case "ArgMax":
+                callArgMax();
+                break;
+            case "OIS":
+                callOIS();
+                break;
+            case "OR":
+                callOR_XOR(1);
+                break;
+            case "XOR":
+                callOR_XOR(2);
+                break;
+            case "BitDecomposition":
+                callBitDecomposition();
+                break;
+            case "Multiplication":
+                callMultiplication();
+                break;
+            case "BatchMultiplication":
+                callBatchMultiplication();
+                break;
+            case "DotProduct":
+                callDotProduct();
+                break;
+            case "Comparison":
+                callComparison();
+                break;
+            case "Unicast":
+                callUnicast();
+                break;
+            default:
+                break;
+        }
+    }
 
     /**
      * Call bitD protocol in parallel for n test cases
@@ -299,60 +356,6 @@ public class TestModel extends Model {
         List<List<Integer>> result = jdistance.call();
         LOGGER.log(Level.INFO, "result of jaccard distance comparison: {0}", result);
 
-    }
-
-    /**
-     * Main compute model function for the protocols
-     *
-     * @param protocolName
-     * @throws java.lang.InterruptedException
-     * @throws java.util.concurrent.ExecutionException
-     */
-    public void compute(String protocolName) throws InterruptedException, ExecutionException {
-
-        switch (protocolName) {
-            case "Truncation":
-                callBatchTruncation();
-                break;
-            case "MatrixInversion":
-                callMatrixInversion();
-                break;
-            case "MatrixMultiplication":
-                callMatrixMultiplication();
-                break;
-            case "ArgMax":
-                callArgMax();
-                break;
-            case "OIS":
-                callOIS();
-                break;
-            case "OR":
-                callOR_XOR(1);
-                break;
-            case "XOR":
-                callOR_XOR(2);
-                break;
-            case "BitDecomposition":
-                callBitDecomposition();
-                break;
-            case "Multiplication":
-                callMultiplication();
-                break;
-            case "BatchMultiplication":
-                callBatchMultiplication();
-                break;
-            case "DotProduct":
-                callDotProduct();
-                break;
-            case "Comparison":
-                callComparison();
-                break;
-            case "Unicast":
-                callUnicast();
-                break;
-            default:
-                break;
-        }
     }
 
     /**
@@ -674,8 +677,7 @@ public class TestModel extends Model {
         int value = random.nextInt();
         Message senderMessage = new Message(value,
                 clientId, protocolIdQueue, true);
-        Logger.getLogger(TestModel.class.getName())
-                .log(Level.INFO, "value sent:{0}, client Id:{1}", new Object[]{value, clientId});
+        LOGGER.log(Level.INFO, "value sent:{0}, client Id:{1}", new Object[]{value, clientId});
 
         commonSender.put(senderMessage);
 
