@@ -14,6 +14,8 @@ import Protocol.MatrixInversion;
 import Protocol.MultiplicationInteger;
 import Protocol.OIS;
 import Protocol.OR_XOR;
+import Protocol.Truncation;
+import Protocol.Utility.BatchMultiplicationInteger;
 import Protocol.Utility.JaccardDistance;
 import Protocol.Utility.BatchTruncation;
 import Protocol.Utility.MatrixMultiplication;
@@ -54,7 +56,9 @@ public class TestModel extends Model {
     List<TripleByte> binaryTiShares;
     List<TripleInteger> decimalTiShares;
     List<TripleReal> realTiShares;
+    private static final Logger LOGGER = Logger.getLogger(TestModel.class.getName());
 
+    
     /**
      * Constructor
      *
@@ -70,12 +74,13 @@ public class TestModel extends Model {
      * @param args
      * @param protocolIdQueue
      * @param protocolID
+     * @throws java.io.IOException
      */
     public TestModel(List<TripleByte> binaryTriples, List<TripleInteger> decimalTriples,
             List<TripleReal> realTiShares, List<TruncationPair> tiTruncationPair, 
             int asymmetricBit, ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper, 
             BlockingQueue<Message> senderQueue, int clientId, int partyCount, String[] args, 
-            Queue<Integer> protocolIdQueue, int protocolID) {
+            Queue<Integer> protocolIdQueue, int protocolID) throws IOException {
 
         super(pidMapper, senderQueue, clientId, asymmetricBit, partyCount, protocolIdQueue, protocolID);
         this.tiTruncationPair = tiTruncationPair;
@@ -88,35 +93,106 @@ public class TestModel extends Model {
         this.realTiShares = realTiShares;
         initalizeModelVariables(args);
     }
-
+    
     /**
-     * Call bitD protocol for testing 1 test case
+     * Main compute model function for the protocols
+     *
+     * @param protocolName
+     * @throws java.lang.InterruptedException
+     * @throws java.util.concurrent.ExecutionException
      */
-    public void callBitDecomposition() {
+    public void compute(String protocolName) throws InterruptedException, ExecutionException {
 
-        ExecutorService es = Executors.newFixedThreadPool(1);
-
-        BitDecomposition bitTest = new BitDecomposition(2, binaryTiShares,
-                asymmetricBit, 5, pidMapper, commonSender,
-                new LinkedList<>(protocolIdQueue), clientId,
-                Constants.BINARY_PRIME, 1, partyCount);
-
-        Future<List<Integer>> bitdecompositionTask = es.submit(bitTest);
-
-        try {
-            List<Integer> result = bitdecompositionTask.get();
-            System.out.println("result of bitDecomposition: " + result);
-        } catch (InterruptedException | ExecutionException ex) {
-            Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
+        switch (protocolName) {
+            case "BatchTruncation":
+                callBatchTruncation();
+                break;
+            case "Truncation":
+                callTruncation();
+                break;
+            case "MatrixInversion":
+                callMatrixInversion();
+                break;
+            case "MatrixMultiplication":
+                callMatrixMultiplication();
+                break;
+            case "ArgMax":
+                callArgMax();
+                break;
+            case "OIS":
+                callOIS();
+                break;
+            case "OR":
+                callOR_XOR(1);
+                break;
+            case "XOR":
+                callOR_XOR(2);
+                break;
+            case "BitDecomposition":
+                callBitDecomposition();
+                break;
+            case "Multiplication":
+                callMultiplication();
+                break;
+            case "BatchMultiplication":
+                callBatchMultiplication();
+                break;
+            case "DotProduct":
+                callDotProduct();
+                break;
+            case "Comparison":
+                callComparison();
+                break;
+            case "Unicast":
+                callUnicast();
+                break;
+            default:
+                break;
         }
     }
 
     /**
-     * Calling ArgMax protocol in parallel for n test cases
+     * Call bitD protocol in parallel for n test cases
+     * @throws java.lang.InterruptedException
+     * @throws java.util.concurrent.ExecutionException
      */
-    public void callArgMax() {
+    public void callBitDecomposition() throws InterruptedException, ExecutionException {
 
-        ExecutorService es = Executors.newFixedThreadPool(100);
+        ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
+        List<Future<List<Integer>>> taskList = new ArrayList<>();
+        long startTime = System.currentTimeMillis();
+        
+        int totalCases = x.size();
+        for(int i=0; i<totalCases; i++) {
+            BitDecomposition bitDModule = new BitDecomposition(x.get(i).get(0),
+                    binaryTiShares, asymmetricBit, 10, pidMapper, commonSender,
+                    new LinkedList<>(protocolIdQueue), clientId,
+                    Constants.BINARY_PRIME, 1, partyCount);
+            
+            taskList.add(es.submit(bitDModule));
+        }
+        
+        es.shutdown();
+        
+        for(int i=0;i<totalCases;i++) {
+            Future<List<Integer>> resultFuture = taskList.get(i);
+            List<Integer> result = resultFuture.get();
+            LOGGER.log(Level.FINE, "result: {0}, #: {1}", new Object[]{result , i});
+        }
+
+        long stopTime = System.currentTimeMillis();
+        long elapsedTime = stopTime - startTime;
+        LOGGER.log(Level.INFO, "Avg time duration: {0}", elapsedTime);
+    }
+
+    /**
+     * Calling ArgMax protocol in parallel for n test cases
+     * @throws java.lang.InterruptedException
+     * @throws java.util.concurrent.ExecutionException
+     */
+    public void callArgMax() throws InterruptedException, ExecutionException {
+
+        ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
         List<Future<Integer[]>> taskList = new ArrayList<>();
         long startTime = System.currentTimeMillis();
 
@@ -129,41 +205,35 @@ public class TestModel extends Model {
                     pidMapper, commonSender, new LinkedList<>(protocolIdQueue),
                     clientId, Constants.BINARY_PRIME, i, partyCount);
 
-            System.out.println("submitted " + i + " argmax");
-
             Future<Integer[]> argmaxTask = es.submit(argmaxModule);
             taskList.add(argmaxTask);
-
         }
 
         es.shutdown();
 
         for (int i = 0; i < totalCases; i++) {
             Future<Integer[]> dWorkerResponse = taskList.get(i);
-            try {
-                Integer[] result = dWorkerResponse.get();
-                System.out.println("result:" + Arrays.toString(result) + ", #:" + i);
-            } catch (InterruptedException | ExecutionException ex) {
-                Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
-            }
+            Integer[] result = dWorkerResponse.get();
+            LOGGER.log(Level.FINE, "result: {0}, #: {1}", new Object[]{result, i});
         }
 
         long stopTime = System.currentTimeMillis();
         long elapsedTime = stopTime - startTime;
-        System.out.println("Avg time duration:" + elapsedTime);
+        LOGGER.log(Level.INFO, "Avg time duration: {0}", elapsedTime);
 
     }
 
     /**
      * Call OR_XOR protocol in parallel for n test cases
+     * @param val
+     * @throws java.lang.InterruptedException
+     * @throws java.util.concurrent.ExecutionException
      */
-    public void callOR_XOR() {
+    public void callOR_XOR(int val) throws InterruptedException, ExecutionException {
         
         checkPrimeValidity();
 
-        System.out.println("calling or_xor with x=" + x + " y=" + y);
-
-        ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
+        ExecutorService es = Executors.newFixedThreadPool(100);
         List<Future<Integer[]>> taskList = new ArrayList<>();
 
         long startTime = System.currentTimeMillis();
@@ -172,7 +242,7 @@ public class TestModel extends Model {
         for (int i = 0; i < totalCases; i++) {
 
             OR_XOR or_xor = new OR_XOR(x.get(i), y.get(i), decimalTiShares,
-                    asymmetricBit, 1, pidMapper, commonSender,
+                    asymmetricBit, val, pidMapper, commonSender,
                     new LinkedList<>(protocolIdQueue), clientId, decPrime, i, partyCount);
 
             Future<Integer[]> task = es.submit(or_xor);
@@ -182,68 +252,66 @@ public class TestModel extends Model {
         es.shutdown();
 
         for (int i = 0; i < totalCases; i++) {
-            try {
-                Future<Integer[]> task = taskList.get(i);
-                Integer[] result = task.get();
-                System.out.println("result: " + i + ": " + Arrays.toString(result));
-            } catch (InterruptedException | ExecutionException ex) {
-                Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
-            }
+            Future<Integer[]> task = taskList.get(i);
+            Integer[] result = task.get();
+            LOGGER.log(Level.FINE, "result: {0}, #: {1}", new Object[]{Arrays.toString(result) , i});
         }
 
         long stopTime = System.currentTimeMillis();
         long elapsedTime = stopTime - startTime;
-        System.out.println("Avg time duration:" + elapsedTime);
+        LOGGER.log(Level.INFO, "Avg time duration: {0}", elapsedTime);
 
     }
 
     /**
-     * Call Oblivious Input Selection for 1 test case
+     * Call Oblivious Input Selection for n test cases in parallel
+     * @throws java.lang.InterruptedException
+     * @throws java.util.concurrent.ExecutionException
      */
-    public void callOIS() {
+    public void callOIS() throws InterruptedException, ExecutionException {
 
-        System.out.println("calling OIS with v" + v);
-
-        ExecutorService es = Executors.newSingleThreadExecutor();
-
+        ExecutorService es = Executors.newFixedThreadPool(100);
+        int totalCases = 100;
+        List<Future<Integer[]>> taskList = new ArrayList<>();
         long startTime = System.currentTimeMillis();
 
-        OIS ois;
+        for(int i=0;i<totalCases;i++) {
+            OIS ois;
+            if (v.isEmpty()) {
+                ois = new OIS(null, binaryTiShares, asymmetricBit, pidMapper, commonSender,
+                        new LinkedList<>(protocolIdQueue), clientId,
+                        Constants.BINARY_PRIME, 0, 4, 2, 3, partyCount);
+            } else {
+                ois = new OIS(v.get(i), binaryTiShares, asymmetricBit, pidMapper, commonSender,
+                        new LinkedList<>(protocolIdQueue), clientId,
+                        Constants.BINARY_PRIME, 0, 4, -1, 3, partyCount);
+            }
+            
+            taskList.add(es.submit(ois));
 
-        if (v.isEmpty()) {
-            System.out.println("v is null");
-            ois = new OIS(null, binaryTiShares, asymmetricBit, pidMapper, commonSender,
-                    new LinkedList<>(protocolIdQueue), clientId,
-                    Constants.BINARY_PRIME, 0, 4, 1, 3, partyCount);
-        } else {
-            System.out.println("v is not null");
-            ois = new OIS(v.get(0), binaryTiShares, asymmetricBit, pidMapper, commonSender,
-                    new LinkedList<>(protocolIdQueue), clientId,
-                    Constants.BINARY_PRIME, 0, 4, -1, 3, partyCount);
         }
-
-        Future<Integer[]> task = es.submit(ois);
-
+        
         es.shutdown();
-
-        try {
-            Integer[] result = task.get();
-            System.out.println("result:" + Arrays.toString(result));
-        } catch (InterruptedException | ExecutionException ex) {
-            Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
+        
+        for(int i=0;i<totalCases;i++) {
+            Future<Integer[]> resultFuture = taskList.get(i);
+            Integer[] result = resultFuture.get();
+            LOGGER.log(Level.FINE, "result: {0}, #: {1}", new Object[]{Arrays.toString(result) , 0});
         }
 
         long stopTime = System.currentTimeMillis();
         long elapsedTime = stopTime - startTime;
-        System.out.println("Avg time duration:" + elapsedTime);
+        LOGGER.log(Level.INFO, "Avg time duration: {0}", elapsedTime);
     }
 
     /**
      * Call comparison protocol for n test cases in parallel
      *
+     * @throws java.lang.InterruptedException
+     * @throws java.util.concurrent.ExecutionException
      */
-    public void callComparison() {
-        ExecutorService es = Executors.newFixedThreadPool(100);
+    public void callComparison() throws InterruptedException, ExecutionException {
+        ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
         List<Future<Integer>> taskList = new ArrayList<>();
 
         long startTime = System.currentTimeMillis();
@@ -263,84 +331,31 @@ public class TestModel extends Model {
 
         for (int i = 0; i < totalCases; i++) {
             Future<Integer> dWorkerResponse = taskList.get(i);
-            try {
-                Integer result = dWorkerResponse.get();
-                //System.out.println("result:" + result + ", #:" + i);
-            } catch (InterruptedException | ExecutionException ex) {
-                Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
-            }
+            Integer result = dWorkerResponse.get();
+            LOGGER.log(Level.FINE, "result: {0}, #: {1}", new Object[]{result , i});
         }
 
         long stopTime = System.currentTimeMillis();
         long elapsedTime = stopTime - startTime;
-        System.out.println("Avg time duration:" + elapsedTime);
+        LOGGER.log(Level.INFO, "Avg time duration: {0}", elapsedTime);
     }
     
-    public void callJaccard(){
+    /**
+     * 
+     * @throws InterruptedException
+     * @throws ExecutionException 
+     */
+    public void callJaccard() throws InterruptedException, ExecutionException{
         checkPrimeValidity();
-        
-        ExecutorService es = Executors.newFixedThreadPool(1);
         
         JaccardDistance jdistance = new JaccardDistance(x, y.get(0), asymmetricBit, 
                                     decimalTiShares, pidMapper, commonSender, 
                                     clientId, decPrime, 0, 
                                     new LinkedList<>(protocolIdQueue),partyCount);
         
-        Future<List<List<Integer>>> jaccardTask = es.submit(jdistance);
-        es.shutdown();
-        
-        try {
-            List<List<Integer>> result = jaccardTask.get();
-            System.out.println("result of jaccard distance comparison: " + result);
-        } catch (InterruptedException | ExecutionException ex) {
-            Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
-        }
-    }
+        List<List<Integer>> result = jdistance.call();
+        LOGGER.log(Level.INFO, "result of jaccard distance comparison: {0}", result);
 
-    /**
-     * Main compute model function for the protocols
-     *
-     * @param protocolName
-     */
-    public void compute(String protocolName) {
-
-        switch (protocolName) {
-            case "Truncation":
-                callTruncation();
-                break;
-            case "MatrixInversion":
-                callMatrixInversion();
-                break;
-            case "MatrixMultiplication":
-                callMatrixMultiplication();
-                break;
-            case "ArgMax":
-                callArgMax();
-                break;
-            case "OIS":
-                callOIS();
-                break;
-            case "OR_XOR":
-                callOR_XOR();
-                break;
-            case "BitDecomposition":
-                callBitDecomposition();
-                break;
-            case "Multiplication":
-                callMultiplication();
-                break;
-            case "DotProduct":
-                callDotProduct();
-                break;
-            case "Comparison":
-                callComparison();
-                break;
-            case "Unicast":
-                callUnicast();
-                break;
-            default:
-                break;
-        }
     }
 
     /**
@@ -348,7 +363,7 @@ public class TestModel extends Model {
      *
      * @param args
      */
-    private void initalizeModelVariables(String[] args) {
+    private void initalizeModelVariables(String[] args) throws FileNotFoundException, IOException{
 
         for (String arg : args) {
             String[] currInput = arg.split("=");
@@ -367,22 +382,16 @@ public class TestModel extends Model {
                     y = FileIO.loadIntListFromFile(value);
                     break;
                 case "vShares":
-                    try {
-                        BufferedReader buf = new BufferedReader(new FileReader(value));
-                        String line = null;
-                        while ((line = buf.readLine()) != null) {
-                            String[] vListShares = line.split(";");
-                            List<List<Integer>> vline = new ArrayList<>();
-                            for (String str : vListShares) {
-                                int lineInt[] = Arrays.stream(str.split(",")).mapToInt(Integer::parseInt).toArray();
-                                vline.add(Arrays.stream(lineInt).boxed().collect(Collectors.toList()));
-                            }
-                            v.add(vline);
+                    BufferedReader buf = new BufferedReader(new FileReader(value));
+                    String line = null;
+                    while ((line = buf.readLine()) != null) {
+                        String[] vListShares = line.split(";");
+                        List<List<Integer>> vline = new ArrayList<>();
+                        for (String str : vListShares) {
+                            int lineInt[] = Arrays.stream(str.split(",")).mapToInt(Integer::parseInt).toArray();
+                            vline.add(Arrays.stream(lineInt).boxed().collect(Collectors.toList()));
                         }
-                    } catch (FileNotFoundException ex) {
-                        Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
-                    } catch (IOException ex) {
-                        Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
+                        v.add(vline);
                     }
                     break;
                 case "xCsv":
@@ -406,7 +415,7 @@ public class TestModel extends Model {
     }
     
     /**
-     * Checking if the prime is initialized
+     * check if the decimal prime is initialized
      */
     private void checkPrimeValidity() {
         if(decPrime == -1) {
@@ -414,37 +423,35 @@ public class TestModel extends Model {
         }
     }
 
-    private void callMatrixInversion() {
-        ExecutorService es = Executors.newFixedThreadPool(1);
-
+    /**
+     * 
+     * @throws InterruptedException
+     * @throws ExecutionException 
+     */
+    private void callMatrixInversion() throws InterruptedException, ExecutionException {
+        
         long startTime = System.currentTimeMillis();
         MatrixInversion matrixInversion = new MatrixInversion(xBigInt, realTiShares,
                 tiTruncationPair,
                 1, pidMapper, commonSender, new LinkedList<>(protocolIdQueue),
                 clientId, asymmetricBit, partyCount, bigIntPrime);
 
-        Future<BigInteger[][]> matrixInversionTask = es.submit(matrixInversion);
-
-        es.shutdown();
-
-        BigInteger[][] result = null;
-        try {
-            result = matrixInversionTask.get();
-
-        } catch (InterruptedException | ExecutionException ex) {
-            Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        BigInteger[][] result = matrixInversion.call();
 
         long stopTime = System.currentTimeMillis();
         long elapsedTime = stopTime - startTime;
-        System.out.println("Avg time duration:" + elapsedTime);
+        LOGGER.log(Level.INFO, "Avg time duration: {0}", elapsedTime);
 
         FileIO.writeToCSV(result, outputPath, "matrixInversion", clientId);
     }
 
-    private void callMatrixMultiplication() {
-        ExecutorService es = Executors.newFixedThreadPool(1);
-
+    /**
+     * 
+     * @throws InterruptedException
+     * @throws ExecutionException 
+     */
+    private void callMatrixMultiplication() throws InterruptedException, ExecutionException {
+        
         int n = xBigInt.length;
         int l = xBigInt[0].length;
 
@@ -461,27 +468,23 @@ public class TestModel extends Model {
                 new LinkedList<>(protocolIdQueue),
                 partyCount);
 
-        Future<BigInteger[][]> matrixMultiplicationTask = es.submit(matrixMultiplication);
-
-        es.shutdown();
-        BigInteger[][] result = null;
-        try {
-            result = matrixMultiplicationTask.get();
-
-        } catch (InterruptedException | ExecutionException ex) {
-            Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        BigInteger[][] result = matrixMultiplication.call();
 
         long stopTime = System.currentTimeMillis();
         long elapsedTime = stopTime - startTime;
-        System.out.println("Avg time duration:" + elapsedTime);
+        LOGGER.log(Level.INFO, "Avg time duration: {0}", elapsedTime);
 
         FileIO.writeToCSV(result, outputPath, "matrixMultiplication", clientId);
 
     }
 
-    private void callTruncation() {
-        System.out.println("calling truncation");
+    /**
+     * 
+     * @throws InterruptedException
+     * @throws ExecutionException 
+     */
+    private void callBatchTruncation() throws InterruptedException, ExecutionException {
+        LOGGER.log(Level.INFO, "calling truncation");
 
         //Prepare matrix for truncation. Multiply the elements with 2^f
         int rows = xBigInt.length;
@@ -502,7 +505,7 @@ public class TestModel extends Model {
         int totalCases = xBigInt.length;
         int tiTruncationStartIndex = 0;
 
-        System.out.println("Total testcases:" + totalCases);
+        LOGGER.log(Level.INFO, "Total testcases: {0}", totalCases);
         for (int i = 0; i < totalCases; i++) {
 
             BatchTruncation truncationPair = new BatchTruncation(xBigInt[i],
@@ -518,18 +521,67 @@ public class TestModel extends Model {
         es.shutdown();
 
         for (int i = 0; i < totalCases; i++) {
-            try {
-                Future<BigInteger[]> task = taskList.get(i);
-                truncationOutput[i] = task.get();
-
-            } catch (InterruptedException | ExecutionException ex) {
-                Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
-            }
+            Future<BigInteger[]> task = taskList.get(i);
+            truncationOutput[i] = task.get();
         }
 
         long stopTime = System.currentTimeMillis();
         long elapsedTime = stopTime - startTime;
-        System.out.println("Avg time duration:" + elapsedTime);
+        LOGGER.log(Level.INFO, "Avg time duration: {0}", elapsedTime);
+
+        FileIO.writeToCSV(truncationOutput, outputPath, "truncation", clientId);
+
+    }
+    
+    /**
+     * 
+     * @throws InterruptedException
+     * @throws ExecutionException 
+     */
+    private void callTruncation() throws InterruptedException, ExecutionException {
+        LOGGER.log(Level.INFO, "calling truncation");
+
+        //Prepare matrix for truncation. Multiply the elements with 2^f
+        int rows = xBigInt.length;
+        int cols = xBigInt[0].length;
+        BigInteger fac = BigInteger.valueOf(2).pow(Constants.DECIMAL_PRECISION);
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < cols; j++) {
+                xBigInt[i][j] = xBigInt[i][j].multiply(fac).mod(bigIntPrime);
+
+            }
+        }
+        BigInteger[][] truncationOutput = new BigInteger[rows][cols];
+
+        ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
+        List<Future<BigInteger>> taskList = new ArrayList<>();
+
+        long startTime = System.currentTimeMillis();
+        int totalCases = xBigInt.length;
+        int tiTruncationStartIndex = 0;
+
+        LOGGER.log(Level.INFO, "Total testcases: {0}", totalCases);
+        for (int i = 0; i < totalCases; i++) {
+
+            Truncation truncationPair = new Truncation(xBigInt[i][0],
+                    tiTruncationPair.get(i),
+                    pidMapper, commonSender, new LinkedList<>(protocolIdQueue),
+                    clientId, bigIntPrime, i, asymmetricBit, partyCount);
+
+            Future<BigInteger> task = es.submit(truncationPair);
+            taskList.add(task);
+        }
+
+        es.shutdown();
+
+        for (int i = 0; i < totalCases; i++) {
+            Future<BigInteger> task = taskList.get(i);
+            truncationOutput[i][0] = task.get();
+        }
+
+        long stopTime = System.currentTimeMillis();
+        long elapsedTime = stopTime - startTime;
+        LOGGER.log(Level.INFO, "Avg time duration: {0}", elapsedTime);
 
         FileIO.writeToCSV(truncationOutput, outputPath, "truncation", clientId);
 
@@ -538,12 +590,14 @@ public class TestModel extends Model {
     /**
      * Call multiplication for n test cases in parallel
      *
+     * @throws java.lang.InterruptedException
+     * @throws java.util.concurrent.ExecutionException
      */
-    public void callMultiplication() {
+    public void callMultiplication() throws InterruptedException, ExecutionException {
         
         checkPrimeValidity();
         
-        ExecutorService es = Executors.newFixedThreadPool(100);
+        ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
         List<Future<Integer>> taskList = new ArrayList<>();
 
         long startTime = System.currentTimeMillis();
@@ -563,51 +617,75 @@ public class TestModel extends Model {
 
         for (int i = 0; i < totalCases; i++) {
             Future<Integer> dWorkerResponse = taskList.get(i);
-            try {
-                Integer result = dWorkerResponse.get();
-                //System.out.println("result:" + result + ", #:" + i);
-            } catch (InterruptedException | ExecutionException ex) {
-                Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
-            }
+            Integer result = dWorkerResponse.get();
+            LOGGER.log(Level.FINE, "result: {0}, #: {1}", new Object[]{result, i});
         }
 
         long stopTime = System.currentTimeMillis();
         long elapsedTime = stopTime - startTime;
-        System.out.println("Avg time duration:" + elapsedTime);
+        LOGGER.log(Level.INFO, "Avg time duration: {0}", elapsedTime);
+    }
+    
+    /**
+     * Call multiplication for n test cases in parallel
+     *
+     * @throws java.lang.InterruptedException
+     * @throws java.util.concurrent.ExecutionException
+     */
+    public void callBatchMultiplication() throws InterruptedException, ExecutionException {
+        
+        checkPrimeValidity();
+        
+        ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
+        List<Future<Integer[]>> taskList = new ArrayList<>();
+
+        long startTime = System.currentTimeMillis();
+        int totalCases = x.size();
+        // totalcases number of protocols are submitted to the executorservice
+        for (int i = 0; i < totalCases; i++) {
+            BatchMultiplicationInteger multiplicationModule = new BatchMultiplicationInteger(
+                    x.get(i), y.get(i),
+                    decimalTiShares, pidMapper, commonSender,
+                    new LinkedList<>(protocolIdQueue), clientId, decPrime, i, asymmetricBit, 0, partyCount);
+
+            Future<Integer[]> multiplicationTask = es.submit(multiplicationModule);
+            taskList.add(multiplicationTask);
+        }
+
+        es.shutdown();
+
+        for (int i = 0; i < totalCases; i++) {
+            Future<Integer[]> dWorkerResponse = taskList.get(i);
+            Integer[] result = dWorkerResponse.get();
+            LOGGER.log(Level.FINE, "result: {0}, #: {1}", new Object[]{result, i});
+        }
+
+        long stopTime = System.currentTimeMillis();
+        long elapsedTime = stopTime - startTime;
+        LOGGER.log(Level.INFO, "Avg time duration: {0}", elapsedTime);
     }
 
     /**
      * Test Unicast feature for n parties
      *
+     * @throws java.lang.InterruptedException
      */
-    public void callUnicast() {
+    public void callUnicast() throws InterruptedException {
 
         Random random = new Random();
 
         int value = random.nextInt();
         Message senderMessage = new Message(value,
                 clientId, protocolIdQueue, true);
-        Logger.getLogger(TestModel.class.getName())
-                .log(Level.INFO, "value sent:{0}, client Id:{1}", new Object[]{value, clientId});
+        LOGGER.log(Level.INFO, "value sent:{0}, client Id:{1}", new Object[]{value, clientId});
 
-        try {
-            commonSender.put(senderMessage);
-        } catch (InterruptedException ex) {
-            Logger.getLogger(MultiplicationInteger.class.getName())
-                    .log(Level.SEVERE, null, ex);
-        }
+        commonSender.put(senderMessage);
 
         if (asymmetricBit == 1) {
             for (int i = 0; i < partyCount - 1; i++) {
-                try {
-                    Message receivedMessage = pidMapper.get(protocolIdQueue).take();
-                    value = (Integer) receivedMessage.getValue();
-                    Logger.getLogger(TestModel.class.getName())
-                            .log(Level.INFO, "value recieved:{0}, client Id:{1}", new Object[]{value, clientId});
-                } catch (InterruptedException ex) {
-                    Logger.getLogger(TestModel.class.getName())
-                            .log(Level.SEVERE, null, ex);
-                }
+                Message receivedMessage = pidMapper.get(protocolIdQueue).take();
+                value = (Integer) receivedMessage.getValue();
+                LOGGER.log(Level.INFO, "value recieved:{0}, client Id:{1}", new Object[]{value, clientId});
             }
         }
 
@@ -616,12 +694,14 @@ public class TestModel extends Model {
     /**
      * Call dot product protocol for n test cases in parallel
      *
+     * @throws java.lang.InterruptedException
+     * @throws java.util.concurrent.ExecutionException
      */
-    public void callDotProduct() {
+    public void callDotProduct() throws InterruptedException, ExecutionException {
         
         checkPrimeValidity();
         
-        ExecutorService es = Executors.newFixedThreadPool(100);
+        ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
         List<Future<Integer>> taskList = new ArrayList<>();
 
         long startTime = System.currentTimeMillis();
@@ -640,17 +720,13 @@ public class TestModel extends Model {
 
         for (int i = 0; i < totalCases; i++) {
             Future<Integer> dWorkerResponse = taskList.get(i);
-            try {
-                Integer result = dWorkerResponse.get();
-                //System.out.println("result:" + result + ", #:" + i);
-            } catch (InterruptedException | ExecutionException ex) {
-                Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
-            }
+            Integer result = dWorkerResponse.get();
+            LOGGER.log(Level.FINE, "result: {0}, #: {1}", new Object[]{result, i});
         }
 
         long stopTime = System.currentTimeMillis();
         long elapsedTime = stopTime - startTime;
-        System.out.println("Avg time duration:" + elapsedTime);
+        LOGGER.log(Level.INFO, "Avg time duration: {0}", elapsedTime);
     }
 
 }

@@ -111,7 +111,7 @@ public class Constants {
         
         F_POW_2 = BigInteger.valueOf(2).pow(DECIMAL_PRECISION);
 
-        LOGGER.info("Properties file parsed:" + DEFAULT_PROPERTIES);
+        LOGGER.log(Level.INFO, "Properties file parsed: {0}", DEFAULT_PROPERTIES);
         LOGGER.log(Level.INFO, "Thread Count:{0}", THREAD_COUNT);
 
     }

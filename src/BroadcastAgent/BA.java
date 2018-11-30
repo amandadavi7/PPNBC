@@ -176,7 +176,7 @@ public class BA {
                 LOGGER.log(Level.SEVERE, "Unable to close party conection:" , ex);
             }
         }
-        LOGGER.info("Cleaned up BA and shutting down server");
+        LOGGER.log(Level.INFO, "Cleaned up BA and shutting down server");
         es.shutdownNow();
         clientHandlerThreads.shutdownNow();
     }

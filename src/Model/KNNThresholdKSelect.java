@@ -232,7 +232,7 @@ public class KNNThresholdKSelect extends Model {
         int maxIterations = (int) Math.ceil(Math.log(trainingSharesCount) / Math.log(2.0));
         ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
         while (stoppingBit == 0 && maxIterations >= 0) {
-            LOGGER.info("iteration countdown:" + maxIterations);
+            LOGGER.log(Level.INFO, "iteration countdown: {0}", maxIterations);
             thresholds = getThreshold(lbound_numerator,
                     lbound_denominator, ubound_numerator, ubound_denominator);
 
@@ -264,7 +264,7 @@ public class KNNThresholdKSelect extends Model {
 
             int gt = gtTask.get();
             int lt = ltTask.get();
-            LOGGER.fine("lt: " + lt + " gt: " + gt);
+            LOGGER.log(Level.FINE, "lt: {0}, gt: {1}", new Object[]{lt, gt});
 
             MultiplicationByte multTask = new MultiplicationByte(gt, lt,
                     binaryTiShares.get(binaryTiIndex), pidMapper, commonSender,
@@ -334,7 +334,7 @@ public class KNNThresholdKSelect extends Model {
         ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
         int classLabelSum = 0;
         int predictedClassLabel = -1;
-        LOGGER.info("computing class label");
+        LOGGER.log(Level.INFO, "computing class label");
         List<Integer> comparisonResultsList = Arrays.asList(comparisonResults);
         List<Future<Integer[]>> taskList = new ArrayList<>();
         int endIndex = K, distanceIndexStart = K - 1;
@@ -478,8 +478,8 @@ public class KNNThresholdKSelect extends Model {
         long stopTime = System.currentTimeMillis();
         long elapsedTime = stopTime - startTime;
 
-        LOGGER.info("Label:" + classLabel);
-        LOGGER.info("Time taken:" + elapsedTime + "ms");
+        LOGGER.log(Level.INFO, "Label: {0}", classLabel);
+        LOGGER.log(Level.INFO, "Time taken: {0} ms", elapsedTime);
 
         return 0;
     }
