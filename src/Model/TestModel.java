@@ -14,6 +14,8 @@ import Protocol.MatrixInversion;
 import Protocol.MultiplicationInteger;
 import Protocol.OIS;
 import Protocol.OR_XOR;
+import Protocol.Truncation;
+import Protocol.Utility.BatchMultiplicationInteger;
 import Protocol.Utility.JaccardDistance;
 import Protocol.Utility.BatchTruncation;
 import Protocol.Utility.MatrixMultiplication;
@@ -98,7 +100,7 @@ public class TestModel extends Model {
      */
     public void callBitDecomposition() throws InterruptedException, ExecutionException {
 
-        ExecutorService es = Executors.newFixedThreadPool(100);
+        ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
         List<Future<List<Integer>>> taskList = new ArrayList<>();
         long startTime = System.currentTimeMillis();
         
@@ -132,7 +134,7 @@ public class TestModel extends Model {
      */
     public void callArgMax() throws InterruptedException, ExecutionException {
 
-        ExecutorService es = Executors.newFixedThreadPool(100);
+        ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
         List<Future<Integer[]>> taskList = new ArrayList<>();
         long startTime = System.currentTimeMillis();
 
@@ -249,7 +251,7 @@ public class TestModel extends Model {
      * @throws java.util.concurrent.ExecutionException
      */
     public void callComparison() throws InterruptedException, ExecutionException {
-        ExecutorService es = Executors.newFixedThreadPool(100);
+        ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
         List<Future<Integer>> taskList = new ArrayList<>();
 
         long startTime = System.currentTimeMillis();
@@ -286,17 +288,12 @@ public class TestModel extends Model {
     public void callJaccard() throws InterruptedException, ExecutionException{
         checkPrimeValidity();
         
-        ExecutorService es = Executors.newFixedThreadPool(1);
-        
         JaccardDistance jdistance = new JaccardDistance(x, y.get(0), asymmetricBit, 
                                     decimalTiShares, pidMapper, commonSender, 
                                     clientId, decPrime, 0, 
                                     new LinkedList<>(protocolIdQueue),partyCount);
         
-        Future<List<List<Integer>>> jaccardTask = es.submit(jdistance);
-        es.shutdown();
-        
-        List<List<Integer>> result = jaccardTask.get();
+        List<List<Integer>> result = jdistance.call();
         LOGGER.log(Level.INFO, "result of jaccard distance comparison: {0}", result);
 
     }
@@ -312,7 +309,7 @@ public class TestModel extends Model {
 
         switch (protocolName) {
             case "Truncation":
-                callTruncation();
+                callBatchTruncation();
                 break;
             case "MatrixInversion":
                 callMatrixInversion();
@@ -337,6 +334,9 @@ public class TestModel extends Model {
                 break;
             case "Multiplication":
                 callMultiplication();
+                break;
+            case "BatchMultiplication":
+                callBatchMultiplication();
                 break;
             case "DotProduct":
                 callDotProduct();
@@ -423,20 +423,14 @@ public class TestModel extends Model {
      * @throws ExecutionException 
      */
     private void callMatrixInversion() throws InterruptedException, ExecutionException {
-        ExecutorService es = Executors.newFixedThreadPool(1);
-
+        
         long startTime = System.currentTimeMillis();
         MatrixInversion matrixInversion = new MatrixInversion(xBigInt, realTiShares,
                 tiTruncationPair,
                 1, pidMapper, commonSender, new LinkedList<>(protocolIdQueue),
                 clientId, asymmetricBit, partyCount, bigIntPrime);
 
-        Future<BigInteger[][]> matrixInversionTask = es.submit(matrixInversion);
-
-        es.shutdown();
-
-        BigInteger[][] result = null;
-        result = matrixInversionTask.get();
+        BigInteger[][] result = matrixInversion.call();
 
         long stopTime = System.currentTimeMillis();
         long elapsedTime = stopTime - startTime;
@@ -451,8 +445,7 @@ public class TestModel extends Model {
      * @throws ExecutionException 
      */
     private void callMatrixMultiplication() throws InterruptedException, ExecutionException {
-        ExecutorService es = Executors.newFixedThreadPool(1);
-
+        
         int n = xBigInt.length;
         int l = xBigInt[0].length;
 
@@ -469,11 +462,7 @@ public class TestModel extends Model {
                 new LinkedList<>(protocolIdQueue),
                 partyCount);
 
-        Future<BigInteger[][]> matrixMultiplicationTask = es.submit(matrixMultiplication);
-
-        es.shutdown();
-        BigInteger[][] result = null;
-        result = matrixMultiplicationTask.get();
+        BigInteger[][] result = matrixMultiplication.call();
 
         long stopTime = System.currentTimeMillis();
         long elapsedTime = stopTime - startTime;
@@ -488,7 +477,7 @@ public class TestModel extends Model {
      * @throws InterruptedException
      * @throws ExecutionException 
      */
-    private void callTruncation() throws InterruptedException, ExecutionException {
+    private void callBatchTruncation() throws InterruptedException, ExecutionException {
         LOGGER.log(Level.INFO, "calling truncation");
 
         //Prepare matrix for truncation. Multiply the elements with 2^f
@@ -537,6 +526,60 @@ public class TestModel extends Model {
         FileIO.writeToCSV(truncationOutput, outputPath, "truncation", clientId);
 
     }
+    
+    /**
+     * 
+     * @throws InterruptedException
+     * @throws ExecutionException 
+     */
+    private void callTruncation() throws InterruptedException, ExecutionException {
+        LOGGER.log(Level.INFO, "calling truncation");
+
+        //Prepare matrix for truncation. Multiply the elements with 2^f
+        int rows = xBigInt.length;
+        int cols = xBigInt[0].length;
+        BigInteger fac = BigInteger.valueOf(2).pow(Constants.DECIMAL_PRECISION);
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < cols; j++) {
+                xBigInt[i][j] = xBigInt[i][j].multiply(fac).mod(bigIntPrime);
+
+            }
+        }
+        BigInteger[][] truncationOutput = new BigInteger[rows][cols];
+
+        ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
+        List<Future<BigInteger>> taskList = new ArrayList<>();
+
+        long startTime = System.currentTimeMillis();
+        int totalCases = xBigInt.length;
+        int tiTruncationStartIndex = 0;
+
+        LOGGER.log(Level.INFO, "Total testcases: {0}", totalCases);
+        for (int i = 0; i < totalCases; i++) {
+
+            Truncation truncationPair = new Truncation(xBigInt[i][0],
+                    tiTruncationPair.get(i),
+                    pidMapper, commonSender, new LinkedList<>(protocolIdQueue),
+                    clientId, bigIntPrime, i, asymmetricBit, partyCount);
+
+            Future<BigInteger> task = es.submit(truncationPair);
+            taskList.add(task);
+        }
+
+        es.shutdown();
+
+        for (int i = 0; i < totalCases; i++) {
+            Future<BigInteger> task = taskList.get(i);
+            truncationOutput[i][0] = task.get();
+        }
+
+        long stopTime = System.currentTimeMillis();
+        long elapsedTime = stopTime - startTime;
+        LOGGER.log(Level.INFO, "Avg time duration: {0}", elapsedTime);
+
+        FileIO.writeToCSV(truncationOutput, outputPath, "truncation", clientId);
+
+    }
 
     /**
      * Call multiplication for n test cases in parallel
@@ -548,7 +591,7 @@ public class TestModel extends Model {
         
         checkPrimeValidity();
         
-        ExecutorService es = Executors.newFixedThreadPool(100);
+        ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
         List<Future<Integer>> taskList = new ArrayList<>();
 
         long startTime = System.currentTimeMillis();
@@ -569,6 +612,45 @@ public class TestModel extends Model {
         for (int i = 0; i < totalCases; i++) {
             Future<Integer> dWorkerResponse = taskList.get(i);
             Integer result = dWorkerResponse.get();
+            LOGGER.log(Level.FINE, "result: {0}, #: {1}", new Object[]{result, i});
+        }
+
+        long stopTime = System.currentTimeMillis();
+        long elapsedTime = stopTime - startTime;
+        LOGGER.log(Level.INFO, "Avg time duration: {0}", elapsedTime);
+    }
+    
+    /**
+     * Call multiplication for n test cases in parallel
+     *
+     * @throws java.lang.InterruptedException
+     * @throws java.util.concurrent.ExecutionException
+     */
+    public void callBatchMultiplication() throws InterruptedException, ExecutionException {
+        
+        checkPrimeValidity();
+        
+        ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
+        List<Future<Integer[]>> taskList = new ArrayList<>();
+
+        long startTime = System.currentTimeMillis();
+        int totalCases = x.size();
+        // totalcases number of protocols are submitted to the executorservice
+        for (int i = 0; i < totalCases; i++) {
+            BatchMultiplicationInteger multiplicationModule = new BatchMultiplicationInteger(
+                    x.get(i), y.get(i),
+                    decimalTiShares, pidMapper, commonSender,
+                    new LinkedList<>(protocolIdQueue), clientId, decPrime, i, asymmetricBit, 0, partyCount);
+
+            Future<Integer[]> multiplicationTask = es.submit(multiplicationModule);
+            taskList.add(multiplicationTask);
+        }
+
+        es.shutdown();
+
+        for (int i = 0; i < totalCases; i++) {
+            Future<Integer[]> dWorkerResponse = taskList.get(i);
+            Integer[] result = dWorkerResponse.get();
             LOGGER.log(Level.FINE, "result: {0}, #: {1}", new Object[]{result, i});
         }
 
@@ -614,7 +696,7 @@ public class TestModel extends Model {
         
         checkPrimeValidity();
         
-        ExecutorService es = Executors.newFixedThreadPool(100);
+        ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
         List<Future<Integer>> taskList = new ArrayList<>();
 
         long startTime = System.currentTimeMillis();
