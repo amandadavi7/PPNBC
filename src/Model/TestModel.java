@@ -636,30 +636,40 @@ public class TestModel extends Model {
         
         checkPrimeValidity();
         
-        ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
-        List<Future<Integer[]>> taskList = new ArrayList<>();
+        int vectorLength = x.get(0).size();
+
+        ExecutorService mults = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
+        ExecutorCompletionService<Integer[]> multCompletionService = new ExecutorCompletionService<>(mults);
+
+        int i = 0;
+        int startpid = 0;
 
         long startTime = System.currentTimeMillis();
         int totalCases = x.size();
-        // totalcases number of protocols are submitted to the executorservice
-        for (int i = 0; i < totalCases; i++) {
-            BatchMultiplicationInteger multiplicationModule = new BatchMultiplicationInteger(
-                    x.get(i), y.get(i),
-                    decimalTiShares, pidMapper, commonSender,
-                    new LinkedList<>(protocolIdQueue), clientId, decPrime, i, asymmetricBit, 0, partyCount);
 
-            Future<Integer[]> multiplicationTask = es.submit(multiplicationModule);
-            taskList.add(multiplicationTask);
+        do {
+            int toIndex = Math.min(i + Constants.BATCH_SIZE, vectorLength);
+
+            multCompletionService.submit(new BatchMultiplicationInteger(x.get(0).subList(i, toIndex),
+                    y.get(0).subList(i, toIndex), decimalTiShares.subList(0, Constants.BATCH_SIZE),
+                    pidMapper, commonSender, new LinkedList<>(protocolIdQueue),
+                    clientId, decPrime, startpid, asymmetricBit, 0, partyCount));
+
+            startpid++;
+            i = toIndex;
+
+        } while (i < vectorLength);
+
+        mults.shutdown();
+
+        for (i = 0; i < startpid; i++) {
+            Future<Integer[]> prod = multCompletionService.take();
+            Integer[] products = prod.get();
+            LOGGER.log(Level.FINE, "result: {0}, #: {1}", new Object[]{products, i});
         }
-
-        es.shutdown();
-
-        for (int i = 0; i < totalCases; i++) {
-            Future<Integer[]> dWorkerResponse = taskList.get(i);
-            Integer[] result = dWorkerResponse.get();
-            LOGGER.log(Level.FINE, "result: {0}, #: {1}", new Object[]{result, i});
-        }
-
+        
+        LOGGER.log(Level.INFO, "Total batches: {0}", startpid);
+        
         long stopTime = System.currentTimeMillis();
         long elapsedTime = stopTime - startTime;
         LOGGER.log(Level.INFO, "Avg time duration: {0}", elapsedTime);

@@ -73,11 +73,11 @@ Detailed wiki can be found at: https://bitbucket.org/uwtppml/lynx/wiki/Home
 
 ## Troubleshooting
 
-The default logging level is INFO throughtout the framework. In order to print more information and get detailed, intermediate results, run the commands with `-Djava.util.logng.config.file=config.properties`. For eg:
+The default logging level is INFO throughtout the framework. In order to print more information and get detailed, intermediate results, run the commands with `-Djava.util.logging.config.file=config.properties`. For eg:
 
 ```
   
-java -Djava.util.logng.config.file=config.properties -Dconfig.properties=config.properties -jar Party.jar party_port=<Party Port> ti=<TrustedInitializer-IP:TrustedInitializer-Port> ba=<BroadcastAgent-IP:BroadcastAgnet-Port> party_id=<Party-ID> partyCount=<number of parties> model=<model-ID> assymetricBit=<0 or 1 - This value should be 1 for one party and 0 for all the other parties> <All model specific inputs - Refer model specific wiki pages for details>
+java -Djava.util.logging.config.file=config.properties -Dconfig.properties=config.properties -jar Party.jar party_port=<Party Port> ti=<TrustedInitializer-IP:TrustedInitializer-Port> ba=<BroadcastAgent-IP:BroadcastAgnet-Port> party_id=<Party-ID> partyCount=<number of parties> model=<model-ID> assymetricBit=<0 or 1 - This value should be 1 for one party and 0 for all the other parties> <All model specific inputs - Refer model specific wiki pages for details>
   
 ```
 
