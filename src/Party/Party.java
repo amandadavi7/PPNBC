@@ -12,6 +12,7 @@ import Model.KNNThresholdKSelect;
 import Model.LinearRegressionEvaluation;
 import Model.LinearRegressionEvaluationDAMF;
 import Model.LinearRegressionTraining;
+import Model.PrivateSetIntersection;
 import Utility.Connection;
 import Model.TestModel;
 import Model.TreeEnsemble;
@@ -293,6 +294,12 @@ public class Party {
 
                 regressionEvaluationModelDAMF.predictValues();
                 break;
+            case "PrivateSetIntersection":
+            		// PSI
+            		PrivateSetIntersection psi = new PrivateSetIntersection(pidMapper, senderQueue, partyId,
+            				asymmetricBit, partyCount, protocolIdQueue, modelId, args, tiShares.binaryShares);
+            		System.out.println("PrivateSetIntersection");
+            		break;
             
             default:
                 // test model

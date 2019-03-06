@@ -114,6 +114,20 @@ public class Logging {
         System.out.println("java ShareDistribution partyCount=<number of parties> "
                 + "sourceFile=<inputfilePath> destPath=<output path>");
     }
+
+    /**
+     * Guidline to use the GenerateNGrams class
+     */
+    public static void nGramUsage() {
+        System.out.println("java GenerateNGrams sourceFile=<inputfilePath> destPath=<output path> gramCount=<nGrams>");
+    }
+    
+    /**
+     * Guidline to use the ClearSetIntersection class
+     */
+    public static void clearSetIntersection() {
+        System.out.println("java ClearSetIntersection destPath=<output path> featureFile=<inputfilePath> privateDoc=<nGrams>");
+    }
     
     /**
      * Guidelines to use the LinearRegression Training

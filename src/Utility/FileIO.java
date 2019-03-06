@@ -15,6 +15,9 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.RoundingMode;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -23,6 +26,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import Client.GenerateNGrams;
 
 /**
  * The class deals with all input/ output utils. Have functions related to
@@ -286,5 +290,17 @@ public class FileIO {
         }
         return value;
     }
+
+    // reads file and converts it to a string
+    // https://stackoverflow.com/questions/326390/how-do-i-create-a-java-string-from-the-contents-of-a-file
+    public static String readFile(String path, Charset encoding) {
+            try {
+                byte[] encoded = Files.readAllBytes(Paths.get(path));
+                return new String(encoded, encoding);
+            } catch (IOException ex) {
+                Logger.getLogger(GenerateNGrams.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            return "";
+        }
 
 }
