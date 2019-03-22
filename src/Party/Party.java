@@ -12,6 +12,7 @@ import Model.KNNThresholdKSelect;
 import Model.LinearRegressionEvaluation;
 import Model.LinearRegressionEvaluationDAMF;
 import Model.LinearRegressionTraining;
+import Model.LogisticRegressionScoring;
 import Utility.Connection;
 import Model.TestModel;
 import Model.TreeEnsemble;
@@ -292,6 +293,13 @@ public class Party {
                                 partyId, partyCount, args, protocolIdQueue, modelId);
 
                 regressionEvaluationModelDAMF.predictValues();
+                break;
+             
+            case "LogisticRegressionScoring":
+                // Logistic Regression Scoring
+                LogisticRegressionScoring lr = new LogisticRegressionScoring(tiShares.decimalShares, tiShares.binaryShares,
+                                pidMapper, senderQueue, partyId, asymmetricBit, partyCount, args, protocolIdQueue, modelId);
+                lr.scoreLogisticRegression();
                 break;
             
             default:
