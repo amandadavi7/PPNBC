@@ -10,6 +10,7 @@ import Protocol.ArgMax;
 import Protocol.BitDecomposition;
 import Protocol.Comparison;
 import Protocol.DotProductInteger;
+import Protocol.EqualityByte;
 import Protocol.MatrixInversion;
 import Protocol.MultiplicationInteger;
 import Protocol.OIS;
@@ -145,6 +146,9 @@ public class TestModel extends Model {
                 break;
             case "Unicast":
                 callUnicast();
+                break;
+            case "EqualityByte":
+                callEqualityByte();
                 break;
             default:
                 break;
@@ -724,6 +728,40 @@ public class TestModel extends Model {
             LOGGER.log(Level.FINE, "result: {0}, #: {1}", new Object[]{result, i});
         }
 
+        long stopTime = System.currentTimeMillis();
+        long elapsedTime = stopTime - startTime;
+        LOGGER.log(Level.INFO, "Avg time duration: {0}", elapsedTime);
+    }
+    
+    /**
+     * Call EqualityByte protocol for n test cases in parallel
+     *
+     * @throws java.lang.InterruptedException
+     * @throws java.util.concurrent.ExecutionException
+     */
+    public void callEqualityByte() throws InterruptedException, ExecutionException {
+        
+        ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
+        List<Future<Integer>> taskList = new ArrayList<>();
+        
+        long startTime = System.currentTimeMillis();
+        int totalCases = x.size(); // number of test cases, number of rows in csv
+        
+        for (int i = 0; i < totalCases; i++){
+            EqualityByte EqModule = new EqualityByte(x.get(i), y.get(i),
+                    binaryTiShares.get(i), pidMapper, commonSender,
+                    new LinkedList<>(protocolIdQueue), clientId, decPrime, i, asymmetricBit, partyCount);
+            Future<Integer> EqTask = es.submit(EqModule);
+            taskList.add(EqTask);
+        }
+        es.shutdown();
+        
+        for (int i = 0; i < totalCases; i++) {
+            Future<Integer> eResponse = taskList.get(i);
+            Integer result = eResponse.get();
+            LOGGER.log(Level.INFO, "result: {0}, #: {1}", new Object[]{result, i});
+        }     
+        
         long stopTime = System.currentTimeMillis();
         long elapsedTime = stopTime - startTime;
         LOGGER.log(Level.INFO, "Avg time duration: {0}", elapsedTime);
