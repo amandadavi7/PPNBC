@@ -299,6 +299,7 @@ public class Party {
             		PrivateSetIntersection psi = new PrivateSetIntersection(pidMapper, senderQueue, partyId,
             				asymmetricBit, partyCount, protocolIdQueue, modelId, args, tiShares.binaryShares);
             		System.out.println("PrivateSetIntersection");
+            		psi.runPSI();
             		break;
             
             default:

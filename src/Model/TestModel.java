@@ -747,7 +747,7 @@ public class TestModel extends Model {
         long startTime = System.currentTimeMillis();
         int totalCases = x.size(); // number of test cases, number of rows in csv
         
-        for (int i = 0; i < totalCases; i++){
+        for (int i = 0; i < totalCases; i++) {
             EqualityByte EqModule = new EqualityByte(x.get(i), y.get(i),
                     binaryTiShares.get(i), pidMapper, commonSender,
                     new LinkedList<>(protocolIdQueue), clientId, decPrime, i, asymmetricBit, partyCount);

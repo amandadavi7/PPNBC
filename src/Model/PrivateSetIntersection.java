@@ -14,7 +14,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 import Communication.Message;
-import Protocol.Utility.BatchMultiplicationByte;
+import Protocol.EqualityByte;
+import Protocol.MultiplicationByte;
 import TrustedInitializer.TripleByte;
 import Utility.Constants;
 import Utility.FileIO;
@@ -37,34 +38,8 @@ public class PrivateSetIntersection extends Model {
 	Queue<Integer> protocolIdQueue, int protocolID, String[] args, List<TripleByte> tiShares) throws IOException, InterruptedException, ExecutionException {
 		
 		super(pidMapper, senderQueue, clientId, asymmetricBit, partyCount, protocolIdQueue, protocolID);
-		
 		this.initializeModelVariables(args);
-		
-		ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
-		List<Future<Integer>> taskList = new ArrayList<>();
-		
-		for (List<Integer> share : privateDocumentShares) {
-			for (int i = 0; i < featureShares.size(); i++) {
-				// replace task for equality test of featureShares.get(i) and share
-				BatchMultiplicationByte task = new BatchMultiplicationByte(
-	                    featureShares.get(i), share,
-	                    this.tiShares, this.pidMapper, this.commonSender,
-	                    this.protocolIdQueue, this.clientId, Constants.BINARY_PRIME, this.modelProtocolId, this.asymmetricBit, this.pid, partyCount);
-				
-				// Future<Integer> equality = es.submit(task);
-			
-				// taskList.add(equality);
-			}
-		}
-		
-		Integer[] result = new Integer[featureShares.size()];
-		
-		int size = taskList.size();
-		
-		for (int i = 0; i < size; i++) {
-			result[(i % featureShares.size())] += taskList.get(i).get() % Constants.BINARY_PRIME;
-		}
-		
+		this.tiShares = tiShares;
 	}
 	
 	/**
@@ -111,6 +86,43 @@ public class PrivateSetIntersection extends Model {
 	                		break;
 	            }
 	    	}
+    }
+    
+    /**
+     * Main method
+     * @throws java.lang.InterruptedException
+     * @throws java.util.concurrent.ExecutionException
+     */
+    public void runPSI() throws InterruptedException, ExecutionException {
+    		int pid = 0;
+    		
+		ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
+		List<Future<Integer>> taskList = new ArrayList<>();
+		
+		for (List<Integer> share : privateDocumentShares) {
+			for (int i = 0; i < featureShares.size(); i++) {
+				// replace task with equality test of featureShares.get(i) and share
+				EqualityByte task = new EqualityByte(this.featureShares.get(i), share, this.tiShares.get(i), this.pidMapper, this.commonSender, this.protocolIdQueue, this.clientId, Constants.BINARY_PRIME, pid++, this.asymmetricBit, this.partyCount);
+				// MultiplicationByte task = new MultiplicationByte(0, 1, tiShares.get(i), pidMapper, this.commonSender, protocolIdQueue,this.clientId, Constants.BINARY_PRIME, this.modelProtocolId, this.asymmetricBit, pid++, this.partyCount);
+				Future<Integer> equality = es.submit(task);
+			
+				taskList.add(equality);
+			}
+		}
+		Integer[] result = new Integer[featureShares.size()];
+		
+		es.shutdown();
+		int size = taskList.size();
+
+		
+		for (int i = 0; i < size; i++) {
+			Future<Integer> resp = taskList.get(i);
+			System.out.println(resp);
+			Integer res = resp.get();
+			System.out.println("Finished: " + i);
+			System.out.println(res);
+			result[(i % featureShares.size())] += res % Constants.BINARY_PRIME;
+		}
     }
 
 }
