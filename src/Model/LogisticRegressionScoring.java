@@ -35,7 +35,7 @@ import java.util.logging.Logger;
  */
 public class LogisticRegressionScoring extends Model {
 
-    List<List<Integer>> testVector, modelVector;
+    List<List<Integer>> testVector, modelVector, zeroList;
     int intercept;
     int vectorSize;
     int numTests;
@@ -86,7 +86,10 @@ public class LogisticRegressionScoring extends Model {
         this.intTriples = intTriples;
         this.binaryTriples = binaryTriples;
         primeBitShares = new ArrayList();
-        this.prime = Constants.PRIME;
+        testVector = new ArrayList();
+        zeroList = new ArrayList();
+        hasModel = false;
+//        this.prime = Constants.PRIME;
         LOGGER = Logger.getLogger(LogisticRegressionScoring.class.getName());
         
     }
@@ -137,10 +140,9 @@ public class LogisticRegressionScoring extends Model {
 
             switch (command) {
                 case "testCsv":
-                    // party that has the test vector
+                    // both parties have shares of the test vector
                     testVector = FileIO.loadIntListFromFile(value);
                     vectorSize = testVector.get(0).size();
-                    hasModel = false;
                     break;
                 case "storedModel":
                     // party that has the model
@@ -155,9 +157,15 @@ public class LogisticRegressionScoring extends Model {
                 case "bitLength":
                     // bit length used for BitDecomposition (both parties)
                     bitLength = Integer.parseInt(value);
+                    prime = (int) Math.pow(2, bitLength);
                     break;
 
             }
+        }
+        
+        zeroList.add(new ArrayList(Collections.nCopies(vectorSize, 0)));
+        if (testVector.isEmpty()){
+            testVector = zeroList;
         }
     }
 
@@ -168,16 +176,16 @@ public class LogisticRegressionScoring extends Model {
      * @throws ExecutionException 
      */
     private void runDotProduct() throws InterruptedException, ExecutionException {
-        ArrayList zeroList = new ArrayList(Collections.nCopies(vectorSize, 0));
+        
         DotProductInteger dotProduct;
 
         if (hasModel) {
-            dotProduct = new DotProductInteger(modelVector.get(0), zeroList, intTriples,
+            dotProduct = new DotProductInteger(modelVector.get(0), testVector.get(0), intTriples,
                     pidMapper, commonSender, new LinkedList<>(protocolIdQueue),
                     clientId, prime, pid, asymmetricBit, partyCount);
             dpResult = intercept;
         } else {
-            dotProduct = new DotProductInteger(zeroList, testVector.get(0), intTriples,
+            dotProduct = new DotProductInteger(zeroList.get(0), testVector.get(0), intTriples,
                     pidMapper, commonSender, new LinkedList<>(protocolIdQueue),
                     clientId, prime, pid, asymmetricBit, partyCount);
         }
