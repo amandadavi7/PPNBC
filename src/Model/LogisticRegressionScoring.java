@@ -56,13 +56,13 @@ public class LogisticRegressionScoring extends Model {
     /**
      * Constructor 2 party Logistic Regression scoring:
      *
-     * one party has the model vectors, one party has the test vector in args
+     * one party has the model vectors, one or both parties have the test vector in args
      *
      * party1: pass the test vector as csv file (testCsv), pass the bit length
      * as an integer (bitLength)
      *
      * party2: pass the model as a csv file (storedModel), pass the intercept as
-     * a csv file (intercept)
+     * a csv file (intercept), if applicable pass shares of test vector as csv file (testCsv)
      *
      * @param intTriples
      * @param binaryTriples
@@ -102,20 +102,35 @@ public class LogisticRegressionScoring extends Model {
      * @throws ExecutionException 
      */
     public void scoreLogisticRegression() throws IOException, InterruptedException, ExecutionException {
-        long startTime = System.currentTimeMillis();
 
         initializeModelVariables(args);
 
         dpResult = 0;
+        
+        long startTime = System.currentTimeMillis();
+        
+        long dotTime = System.currentTimeMillis();
         runDotProduct();
+        long dotTimeend = System.currentTimeMillis();
+        long bitTime = System.currentTimeMillis();
         runBitDecomp();
+        long bitTimeend = System.currentTimeMillis();
+        long compTime = System.currentTimeMillis();
         runComparison();
+        long compTimeend = System.currentTimeMillis();
 
         long stopTime = System.currentTimeMillis();
         long elapsedTime = stopTime - startTime;
+        
+        long timeDot = dotTimeend-dotTime;
+        long timeBit = bitTimeend-bitTime;
+        long timeComp = compTimeend-compTime;
 
         LOGGER.log(Level.INFO, "The output share: {0}", compResult);
         LOGGER.log(Level.INFO, "Avg time duration:{0}", elapsedTime);
+        LOGGER.log(Level.INFO, "dot time duration:{0}", timeDot);
+        LOGGER.log(Level.INFO, "bit time duration:{0}", timeBit);
+        LOGGER.log(Level.INFO, "comp time duration:{0}", timeComp);
 
     }
 
