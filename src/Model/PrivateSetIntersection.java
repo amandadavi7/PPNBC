@@ -4,6 +4,8 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
@@ -95,14 +97,14 @@ public class PrivateSetIntersection extends Model {
      */
     public void runPSI() throws InterruptedException, ExecutionException {
     		int pid = 0;
-    		
+    		long startTime = System.currentTimeMillis();
 		ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
 		List<Future<Integer>> taskList = new ArrayList<>();
 		
 		for (List<Integer> share : privateDocumentShares) {
 			for (int i = 0; i < featureShares.size(); i++) {
 				// replace task with equality test of featureShares.get(i) and share
-				EqualityByte task = new EqualityByte(this.featureShares.get(i), share, this.tiShares.get(i), this.pidMapper, this.commonSender, this.protocolIdQueue, this.clientId, Constants.BINARY_PRIME, pid++, this.asymmetricBit, this.partyCount);
+				EqualityByte task = new EqualityByte(this.featureShares.get(i), share, this.tiShares, this.pidMapper, this.commonSender, new LinkedList<>(this.protocolIdQueue), this.clientId, Constants.BINARY_PRIME, pid++, this.asymmetricBit, this.partyCount);
 				// MultiplicationByte task = new MultiplicationByte(0, 1, tiShares.get(i), pidMapper, this.commonSender, protocolIdQueue,this.clientId, Constants.BINARY_PRIME, this.modelProtocolId, this.asymmetricBit, pid++, this.partyCount);
 				Future<Integer> equality = es.submit(task);
 			
@@ -110,19 +112,31 @@ public class PrivateSetIntersection extends Model {
 			}
 		}
 		Integer[] result = new Integer[featureShares.size()];
+		for (int i = 0; i < result.length; i++) {
+			result[i] = new Integer(0);
+		}
 		
 		es.shutdown();
 		int size = taskList.size();
+		System.out.println(size);
 
 		
 		for (int i = 0; i < size; i++) {
 			Future<Integer> resp = taskList.get(i);
-			System.out.println(resp);
 			Integer res = resp.get();
-			System.out.println("Finished: " + i);
-			System.out.println(res);
-			result[(i % featureShares.size())] += res % Constants.BINARY_PRIME;
+			result[(i % featureShares.size())] = new Integer((result[(i % featureShares.size())].intValue() + res));
 		}
+		
+		System.out.println(Arrays.toString(result));
+		
+		for (int i = 0; i < featureShares.size(); i++) {
+			result[i] = new Integer((result[i].intValue() % 2));
+		}
+		
+	    long stopTime = System.currentTimeMillis();
+        long elapsedTime = stopTime - startTime;
+        System.out.println(elapsedTime);
+		System.out.println(Arrays.toString(result));
     }
 
 }

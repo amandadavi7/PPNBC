@@ -6,6 +6,7 @@
 package Protocol;
 
 import Communication.Message;
+import Protocol.Utility.ParallelMultiplication;
 import TrustedInitializer.TripleByte;
 import Utility.Constants;
 import java.util.ArrayList;
@@ -15,6 +16,9 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.LinkedList;
 
 /**
@@ -29,7 +33,7 @@ public class EqualityByte extends CompositeProtocol implements Callable<Integer>
 
     List<Integer> x;
     List<Integer> y;
-    TripleByte tiShares;
+    List<TripleByte> tiShares;
     
 /**
      * Constructor
@@ -48,7 +52,7 @@ public class EqualityByte extends CompositeProtocol implements Callable<Integer>
      * @param asymmetricBit [[1]] with the Party
      * @param partyCount
      */
-    public EqualityByte(List<Integer> x, List<Integer> y, TripleByte tiShares,
+    public EqualityByte(List<Integer> x, List<Integer> y, List<TripleByte> tiShares,
             ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper,
             BlockingQueue<Message> senderQueue,
             Queue<Integer> protocolIdQueue,
@@ -77,25 +81,15 @@ public class EqualityByte extends CompositeProtocol implements Callable<Integer>
     public Integer call() throws InterruptedException, ExecutionException {
 
         //System.out.println("x=" + x + " y=" + y);
-
         int bitLength = x.size();
         ArrayList<Integer> r = new ArrayList<>();
         for (int i = 0; i < bitLength; i++) {
             int bitResult = Math.floorMod(x.get(i) + y.get(i) + asymmetricBit, Constants.BINARY_PRIME);
             r.add(bitResult);
         }
-
-        // call MultiplicationByte protocol: multiplies sequentially across r vector
-        int result = r.get(0);
-        int pid = 0;
-        for (int i = 1; i < bitLength; i++) {
-            MultiplicationByte MBModule = new MultiplicationByte(result, r.get(i), tiShares, pidMapper, senderQueue,
-                    new LinkedList<>(protocolIdQueue), clientID, Constants.BINARY_PRIME, pid, asymmetricBit, 0, partyCount);
-            result = MBModule.call();
-            pid++;
-        }
-
-        return result;
+        
+        return new ParallelMultiplication(r, tiShares, clientID, Constants.BINARY_PRIME, 
+        			0, asymmetricBit, pidMapper, senderQueue, new LinkedList<>(protocolIdQueue),partyCount).call();
 
     }
 }

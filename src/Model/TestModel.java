@@ -749,7 +749,7 @@ public class TestModel extends Model {
         
         for (int i = 0; i < totalCases; i++) {
             EqualityByte EqModule = new EqualityByte(x.get(i), y.get(i),
-                    binaryTiShares.get(i), pidMapper, commonSender,
+                    binaryTiShares, pidMapper, commonSender,
                     new LinkedList<>(protocolIdQueue), clientId, decPrime, i, asymmetricBit, partyCount);
             Future<Integer> EqTask = es.submit(EqModule);
             taskList.add(EqTask);
