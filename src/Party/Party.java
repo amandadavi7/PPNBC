@@ -6,6 +6,7 @@
 package Party;
 
 import Communication.Message;
+import Model.BinaryAdaboostScoring;
 import Model.DecisionTreeScoring;
 import Model.KNNSortAndSwap;
 import Model.KNNThresholdKSelect;
@@ -292,6 +293,14 @@ public class Party {
                                 partyId, partyCount, args, protocolIdQueue, modelId);
 
                 regressionEvaluationModelDAMF.predictValues();
+                break;
+             
+            case "AdaBoostScoring":
+                BinaryAdaboostScoring ab = new BinaryAdaboostScoring(asymmetricBit, pidMapper, 
+                        senderQueue, partyId, tiShares.binaryShares, tiShares.decimalShares,
+                        partyCount, args, protocolIdQueue, modelId);
+                
+                ab.scoreAdaboost();
                 break;
             
             default:
