@@ -47,6 +47,7 @@ public class LogisticRegressionScoring extends Model {
     boolean hasModel;
     List<TripleInteger> intTriples;
     List<TripleByte> binaryTriples;
+    int intSharesStartInd, binSharesStartInd;
     int prime;
     int pid = 0;
     int dpResult;
@@ -92,6 +93,8 @@ public class LogisticRegressionScoring extends Model {
         this.args = args;
         this.intTriples = intTriples;
         this.binaryTriples = binaryTriples;
+        intSharesStartInd = 0;
+        binSharesStartInd = 0;
         primeBitShares = new ArrayList();
         testVector = new ArrayList();
         zeroList = new ArrayList();
@@ -191,16 +194,17 @@ public class LogisticRegressionScoring extends Model {
         OR_XOR xor;
         if (asymmetricBit ==1){
             xor = new OR_XOR(testVector.get(0), zeroList.get(0), 
-                    intTriples,
+                    intTriples.subList(intSharesStartInd, intSharesStartInd + vectorSize),
                     asymmetricBit, 2, pidMapper, commonSender,
                     new LinkedList<>(protocolIdQueue), clientId, prime, pid, partyCount);
         } else {
             xor = new OR_XOR(zeroList.get(0), testVector.get(0), 
-                    intTriples,
+                    intTriples.subList(intSharesStartInd, intSharesStartInd + vectorSize),
                     asymmetricBit, 2, pidMapper, commonSender,
                     new LinkedList<>(protocolIdQueue), clientId, prime, pid, partyCount);
         }
         pid++;
+        intSharesStartInd += vectorSize;
         testVectorPrime = xor.call();
 
     }
@@ -216,18 +220,21 @@ public class LogisticRegressionScoring extends Model {
         DotProductInteger dotProduct;
 
         if (hasModel) {
-            dotProduct = new DotProductInteger(modelVector.get(0), Arrays.asList(testVectorPrime), intTriples,
+            dotProduct = new DotProductInteger(modelVector.get(0), Arrays.asList(testVectorPrime), 
+                    intTriples.subList(intSharesStartInd, intSharesStartInd + vectorSize),
                     pidMapper, commonSender, new LinkedList<>(protocolIdQueue),
                     clientId, prime, pid, asymmetricBit, partyCount);
             dpResult = intercept;
         } else {
-            dotProduct = new DotProductInteger(zeroList.get(0), Arrays.asList(testVectorPrime), intTriples,
+            dotProduct = new DotProductInteger(zeroList.get(0), Arrays.asList(testVectorPrime), 
+                    intTriples.subList(intSharesStartInd, intSharesStartInd + vectorSize),
                     pidMapper, commonSender, new LinkedList<>(protocolIdQueue),
                     clientId, prime, pid, asymmetricBit, partyCount);
         }
         dpResult = Math.floorMod(dpResult + dotProduct.call(), prime);
 
         pid++;
+        intSharesStartInd += vectorSize;
 
     }
 
@@ -240,10 +247,12 @@ public class LogisticRegressionScoring extends Model {
      */
     private void runBitDecomp() throws InterruptedException, ExecutionException {
         BitDecomposition bitDecomp = new BitDecomposition(dpResult,
-                binaryTriples, asymmetricBit, bitLength, pidMapper, commonSender,
+                binaryTriples.subList(binSharesStartInd, binSharesStartInd + vectorSize), 
+                asymmetricBit, bitLength, pidMapper, commonSender,
                 new LinkedList<>(protocolIdQueue), clientId, Constants.BINARY_PRIME, pid, partyCount);
         bitShares = bitDecomp.call();
         pid++;
+        binSharesStartInd += vectorSize;
         
         int middle = (prime / 2) - 1; // comparison point for negative or positive number
 
@@ -260,10 +269,12 @@ public class LogisticRegressionScoring extends Model {
      */
     private void runComparison() throws InterruptedException, ExecutionException {
         Comparison comp = new Comparison(primeBitShares, bitShares,
-                binaryTriples, asymmetricBit, pidMapper, commonSender, new LinkedList<>(protocolIdQueue),
+                binaryTriples.subList(binSharesStartInd, binSharesStartInd + vectorSize), 
+                asymmetricBit, pidMapper, commonSender, new LinkedList<>(protocolIdQueue),
                 clientId, Constants.BINARY_PRIME, pid, partyCount);
         compResult = comp.call();
         pid++;
+        binSharesStartInd += vectorSize;
     }
 
     /**
