@@ -9,6 +9,7 @@ import Communication.Message;
 import Protocol.BitDecomposition;
 import Protocol.Comparison;
 import Protocol.DotProductInteger;
+import Protocol.OR_XOR;
 import TrustedInitializer.TripleByte;
 import TrustedInitializer.TripleInteger;
 import Utility.Constants;
@@ -17,6 +18,7 @@ import Utility.Logging;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -28,6 +30,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
+ * Logistic Regression Scoring (binary classification)
+ * 
  * This class takes a test vector (attribute values) and predicts the class
  * label using the logistic regression model (model vectors)
  * 
@@ -48,15 +52,18 @@ public class LogisticRegressionScoring extends Model {
     int dpResult;
     List<Integer> bitShares;
     List<Integer> primeBitShares;
+    Integer [] testVectorPrime;
     int compResult;
     int bitLength;
+    boolean sharesMod2;
     Logger LOGGER;
 
     
     /**
-     * Constructor 2 party Logistic Regression scoring:
+     * Constructor for 2 party Logistic Regression scoring:
      *
-     * one party has the model vectors, one or both parties have the test vector in args
+     * One party has the model vectors, one or both parties have the test vector in args
+     * If test vector is shared over mod 2, both parties must enter parameter mod=2
      *
      * party1: pass the test vector as csv file (testCsv), pass the bit length
      * as an integer (bitLength)
@@ -89,7 +96,7 @@ public class LogisticRegressionScoring extends Model {
         testVector = new ArrayList();
         zeroList = new ArrayList();
         hasModel = false;
-//        this.prime = Constants.PRIME;
+        sharesMod2 = false;
         LOGGER = Logger.getLogger(LogisticRegressionScoring.class.getName());
         
     }
@@ -108,29 +115,19 @@ public class LogisticRegressionScoring extends Model {
         dpResult = 0;
         
         long startTime = System.currentTimeMillis();
+        if(sharesMod2){
+            runXOR();
+        }
         
-        long dotTime = System.currentTimeMillis();
         runDotProduct();
-        long dotTimeend = System.currentTimeMillis();
-        long bitTime = System.currentTimeMillis();
         runBitDecomp();
-        long bitTimeend = System.currentTimeMillis();
-        long compTime = System.currentTimeMillis();
         runComparison();
-        long compTimeend = System.currentTimeMillis();
 
         long stopTime = System.currentTimeMillis();
         long elapsedTime = stopTime - startTime;
-        
-        long timeDot = dotTimeend-dotTime;
-        long timeBit = bitTimeend-bitTime;
-        long timeComp = compTimeend-compTime;
 
         LOGGER.log(Level.INFO, "The output share: {0}", compResult);
         LOGGER.log(Level.INFO, "Avg time duration:{0}", elapsedTime);
-        LOGGER.log(Level.INFO, "dot time duration:{0}", timeDot);
-        LOGGER.log(Level.INFO, "bit time duration:{0}", timeBit);
-        LOGGER.log(Level.INFO, "comp time duration:{0}", timeComp);
 
     }
 
@@ -157,6 +154,7 @@ public class LogisticRegressionScoring extends Model {
                 case "testCsv":
                     // both parties have shares of the test vector
                     testVector = FileIO.loadIntListFromFile(value);
+                    testVectorPrime = testVector.get(0).toArray(new Integer[0]);
                     vectorSize = testVector.get(0).size();
                     break;
                 case "storedModel":
@@ -174,6 +172,10 @@ public class LogisticRegressionScoring extends Model {
                     bitLength = Integer.parseInt(value);
                     prime = (int) Math.pow(2, bitLength);
                     break;
+                case "mod":
+                    if(Integer.parseInt(value) == 2){
+                        sharesMod2 = true;
+                    }
 
             }
         }
@@ -181,7 +183,26 @@ public class LogisticRegressionScoring extends Model {
         zeroList.add(new ArrayList(Collections.nCopies(vectorSize, 0)));
         if (testVector.isEmpty()){
             testVector = zeroList;
+            testVectorPrime = testVector.get(0).toArray(new Integer[0]);
         }
+    }
+    
+    private void runXOR() throws InterruptedException, ExecutionException{
+        OR_XOR xor;
+        if (asymmetricBit ==1){
+            xor = new OR_XOR(testVector.get(0), zeroList.get(0), 
+                    intTriples,
+                    asymmetricBit, 2, pidMapper, commonSender,
+                    new LinkedList<>(protocolIdQueue), clientId, prime, pid, partyCount);
+        } else {
+            xor = new OR_XOR(zeroList.get(0), testVector.get(0), 
+                    intTriples,
+                    asymmetricBit, 2, pidMapper, commonSender,
+                    new LinkedList<>(protocolIdQueue), clientId, prime, pid, partyCount);
+        }
+        pid++;
+        testVectorPrime = xor.call();
+
     }
 
     /**
@@ -195,12 +216,12 @@ public class LogisticRegressionScoring extends Model {
         DotProductInteger dotProduct;
 
         if (hasModel) {
-            dotProduct = new DotProductInteger(modelVector.get(0), testVector.get(0), intTriples,
+            dotProduct = new DotProductInteger(modelVector.get(0), Arrays.asList(testVectorPrime), intTriples,
                     pidMapper, commonSender, new LinkedList<>(protocolIdQueue),
                     clientId, prime, pid, asymmetricBit, partyCount);
             dpResult = intercept;
         } else {
-            dotProduct = new DotProductInteger(zeroList.get(0), testVector.get(0), intTriples,
+            dotProduct = new DotProductInteger(zeroList.get(0), Arrays.asList(testVectorPrime), intTriples,
                     pidMapper, commonSender, new LinkedList<>(protocolIdQueue),
                     clientId, prime, pid, asymmetricBit, partyCount);
         }
