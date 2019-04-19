@@ -3,10 +3,6 @@ JC = javac
 CLASSPATH = ../build/classes/
 MKDIR_P = mkdir -p
 .SUFFIXES: .java .class
-.java.class:
-	$(MKDIR_P) ../build/
-	$(MKDIR_P) $(CLASSPATH)
-	$(JC) $(JFLAGS) $(CLASSPATH) $*.java
 
 CLASSES = \
         ./BroadcastAgent/*.java \
@@ -19,12 +15,17 @@ CLASSES = \
         ./TrustedInitializer/*.java \
         ./Utility/*.java
 
-default: classes
+.java.class:
+	$(MKDIR_P) ../build/
+	$(MKDIR_P) $(CLASSPATH)
+	$(JC) $(JFLAGS) $(CLASSPATH) $(CLASSES)
 
-classes: $(CLASSES:.java=.class)
+default: .java.class
 
-jar: $(CLASSES:.java=.class)
-	jar cvfe ../build/LinearRegressionSplitData.jar Client.LinearRegressionSplitData -C $(CLASSPATH) Client -C $(CLASSPATH) Utility resources 
+jar: $(.java.class)
+	jar cvfe ../build/LinearRegressionSplitData.jar Client.LinearRegressionSplitData -C $(CLASSPATH) Client -C $(CLASSPATH) Utility resources
+	jar cvfe ../build/GenerateNGrams.jar Client.GenerateNGrams -C $(CLASSPATH) Client -C $(CLASSPATH) Utility resources 
+	jar cvfe ../build/ClearSetIntersection.jar Client.ClearSetIntersection -C $(CLASSPATH) Client -C $(CLASSPATH) Utility resources 
 	jar cvfe ../build/LinearRegressionComputeRMSE.jar Client.LinearRegressionComputeRMSE -C $(CLASSPATH) Client -C $(CLASSPATH) Utility resources
 	jar cvfe ../build/LinearRegressionComputeDamfRMSE.jar Client.LinearRegressionComputeDamfRMSE -C $(CLASSPATH) Client -C $(CLASSPATH) Utility resources
 	jar cvfe ../build/Party.jar Party.Party -C $(CLASSPATH) Model -C $(CLASSPATH) Party -C $(CLASSPATH) Protocol -C $(CLASSPATH) Utility -C $(CLASSPATH) Communication -C $(CLASSPATH) TrustedInitializer resources
