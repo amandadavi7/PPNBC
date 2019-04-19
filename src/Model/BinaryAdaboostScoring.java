@@ -151,7 +151,7 @@ public class BinaryAdaboostScoring extends Model {
         modifyTestVector();
 
         long startTime = System.currentTimeMillis();
-
+        
         runXOR(); // convert binary shares to shares over prime field
         runDotProduct();
         runBitDecomp();
@@ -263,12 +263,12 @@ public class BinaryAdaboostScoring extends Model {
      */
     private void runComparison() throws InterruptedException, ExecutionException {
         Comparison comp = new Comparison(bitShares1, bitShares0,
-                binaryTiShares.subList(binSharesStartInd, binSharesStartInd + numFeatures),
+                binaryTiShares.subList(binSharesStartInd, binSharesStartInd + (bitLength*bitLength)),
                 asymmetricBit, pidMapper, commonSender, new LinkedList<>(protocolIdQueue),
                 clientId, Constants.BINARY_PRIME, pid, partyCount);
         compResult = comp.call();
         pid++;
-        binSharesStartInd += numFeatures;
+        binSharesStartInd += bitLength*bitLength;
     }
 
 }
