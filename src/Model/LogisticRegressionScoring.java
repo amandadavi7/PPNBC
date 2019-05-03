@@ -269,12 +269,12 @@ public class LogisticRegressionScoring extends Model {
      */
     private void runComparison() throws InterruptedException, ExecutionException {
         Comparison comp = new Comparison(primeBitShares, bitShares,
-                binaryTriples.subList(binSharesStartInd, binSharesStartInd + vectorSize), 
+                binaryTriples.subList(binSharesStartInd, binSharesStartInd + bitLength*bitLength), 
                 asymmetricBit, pidMapper, commonSender, new LinkedList<>(protocolIdQueue),
                 clientId, Constants.BINARY_PRIME, pid, partyCount);
         compResult = comp.call();
         pid++;
-        binSharesStartInd += vectorSize;
+        binSharesStartInd += bitLength*bitLength;
     }
 
     /**
