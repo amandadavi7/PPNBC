@@ -247,12 +247,12 @@ public class LogisticRegressionScoring extends Model {
      */
     private void runBitDecomp() throws InterruptedException, ExecutionException {
         BitDecomposition bitDecomp = new BitDecomposition(dpResult,
-                binaryTriples.subList(binSharesStartInd, binSharesStartInd + vectorSize), 
+                binaryTriples.subList(binSharesStartInd, binSharesStartInd + bitLength*bitLength), 
                 asymmetricBit, bitLength, pidMapper, commonSender,
                 new LinkedList<>(protocolIdQueue), clientId, Constants.BINARY_PRIME, pid, partyCount);
         bitShares = bitDecomp.call();
         pid++;
-        binSharesStartInd += vectorSize;
+        binSharesStartInd += bitLength*bitLength;
         
         int middle = (prime / 2) - 1; // comparison point for negative or positive number
 
