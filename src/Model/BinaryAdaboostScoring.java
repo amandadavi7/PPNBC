@@ -167,13 +167,14 @@ public class BinaryAdaboostScoring extends Model {
 
     /**
      * Modifies the test vector to be double the length, including the negated
-     * values [x1, x2, x3] --> [x1, !x1, x2, !x2, x3, !x3]
+     * values [x1, x2, x3] --> [!x1, x1, !x2, x2, !x3, x3]
      */
     private void modifyTestVector() {
         // include in test vector the negated values
         for (int i = 0; i < testVector.get(0).size(); i++) {
-            modifiedTestVector.add(testVector.get(0).get(i));
             modifiedTestVector.add(Math.floorMod(testVector.get(0).get(i) + asymmetricBit, 2));
+            modifiedTestVector.add(testVector.get(0).get(i));
+            
         }
 
     }
