@@ -109,8 +109,10 @@ public class Party {
                     break;
                 case "partyCount":
                     partyCount = Integer.parseInt(value);
+                    break;
                 case "protocolName":
                     protocolName = value;
+                    break;
             }
 
         }
@@ -241,7 +243,7 @@ public class Party {
             case "LinearRegressionEvaluation":
                 // LR Evaluation
                 LinearRegressionEvaluation regressionEvaluationModel
-                        = new LinearRegressionEvaluation(tiShares.bigIntShares,
+                        = new LinearRegressionEvaluation(tiShares.realShares,
                                 tiShares.truncationPair, asymmetricBit,
                                 pidMapper, senderQueue, partyId, partyCount,
                                 args, protocolIdQueue, modelId);
@@ -252,7 +254,7 @@ public class Party {
             case "LinearRegressionTraining":
                 // LR Training
                 LinearRegressionTraining regressionTrainingModel
-                        = new LinearRegressionTraining(tiShares.bigIntShares,
+                        = new LinearRegressionTraining(tiShares.realShares,
                                 tiShares.truncationPair, pidMapper, senderQueue, partyId,
                                 asymmetricBit, partyCount, args, protocolIdQueue, modelId);
 
@@ -297,20 +299,24 @@ public class Party {
                 
             case "DecisionTreeTraining":
                 // Decision Tree Training
-                /*DecisionTreeTraining dtModel = new DecisionTreeTraining(asymmetricBit,
-                        pidMapper, senderQueue, partyId, tiShares.binaryShares,
-                        tiShares.decimalShares, tiShares.equalityShares, 2, 3, 2, 10,
-                        dataset, attrValues, classLabels, classValues, partyCount, protocolIdQueue, modelId);
-                dtModel.trainDecisionTree();*/
+                DecisionTreeTraining dtModel = new DecisionTreeTraining(
+			         asymmetricBit, pidMapper, senderQueue, partyId, 
+			         tiShares.binaryShares, tiShares.bigIntShares, 
+			         tiShares.decimalShares,
+			         tiShares.bigIntEqualityShares, args, partyCount,
+			         protocolIdQueue, modelId);
+
+                dtModel.trainDecisionTree();
                 break;
             
             default:
                 // test model
                 TestModel testModel = new TestModel(tiShares.binaryShares,
-                        tiShares.decimalShares, tiShares.bigIntShares,
-                        tiShares.equalityShares, tiShares.truncationPair,
-                        asymmetricBit, pidMapper, senderQueue, partyId,
-                        partyCount, args, protocolIdQueue, modelId);
+                        tiShares.decimalShares, tiShares.realShares,
+                        tiShares.bigIntShares, tiShares.equalityShares, 
+                        tiShares.truncationPair, asymmetricBit, pidMapper, 
+                        senderQueue, partyId, partyCount, args, protocolIdQueue, 
+                        modelId);
                 testModel.compute(protocolName);
                 break;
         }

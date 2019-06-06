@@ -6,9 +6,9 @@
 package Model;
 
 import Communication.Message;
-import Protocol.DotProductReal;
+import Protocol.DotProductBigInteger;
 import Protocol.Utility.BatchTruncation;
-import TrustedInitializer.TripleReal;
+import TrustedInitializer.TripleBigInteger;
 import TrustedInitializer.TruncationPair;
 import Utility.Constants;
 import Utility.FileIO;
@@ -36,7 +36,7 @@ public class LinearRegressionEvaluation extends Model {
     BigInteger prime;
     String outputPath;
     int testCases;
-    List<TripleReal> realTiShares;
+    List<TripleBigInteger> realTiShares;
     List<TruncationPair> truncationTiShares;
 
     /**
@@ -54,7 +54,7 @@ public class LinearRegressionEvaluation extends Model {
      * @param protocolID
      *
      */
-    public LinearRegressionEvaluation(List<TripleReal> realTriples,
+    public LinearRegressionEvaluation(List<TripleBigInteger> realTriples,
             List<TruncationPair> truncationShares, int asymmetricBit,
             ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper,
             BlockingQueue<Message> senderQueue, int clientId, int partyCount,
@@ -104,7 +104,7 @@ public class LinearRegressionEvaluation extends Model {
         int tiStartIndex = 0;
         for (int i = 0; i < testCases; i++) {
 
-            DotProductReal DPModule = new DotProductReal(x.get(i),
+            DotProductBigInteger DPModule = new DotProductBigInteger(x.get(i),
                     beta, realTiShares.subList(
                             tiStartIndex, tiStartIndex + x.get(i).size()),
                     pidMapper, commonSender, 

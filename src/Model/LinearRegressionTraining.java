@@ -8,7 +8,7 @@ package Model;
 import Communication.Message;
 import Protocol.MatrixInversion;
 import Protocol.Utility.MatrixMultiplication;
-import TrustedInitializer.TripleReal;
+import TrustedInitializer.TripleBigInteger;
 import TrustedInitializer.TruncationPair;
 import Utility.Constants;
 import Utility.FileIO;
@@ -39,7 +39,7 @@ public class LinearRegressionTraining extends Model {
     BigInteger[][] y;
 
     static List<TruncationPair> tiTruncationPair;
-    static List<TripleReal> realTriples;
+    static List<TripleBigInteger> realTriples;
 
     static BigInteger prime;
     String outputPath;
@@ -58,7 +58,7 @@ public class LinearRegressionTraining extends Model {
      * @param protocolIdQueue 
      * @param protocolID 
      */
-    public LinearRegressionTraining(List<TripleReal> realTriples,
+    public LinearRegressionTraining(List<TripleBigInteger> realTriples,
             List<TruncationPair> tiTruncationPair,
             ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper, 
             BlockingQueue<Message> senderQueue,

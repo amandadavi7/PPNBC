@@ -6,7 +6,7 @@
 package Protocol.Utility;
 
 import Communication.Message;
-import TrustedInitializer.TripleReal;
+import TrustedInitializer.TripleBigInteger;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -21,12 +21,12 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  * @author keerthanaa
  */
-public class BatchMultiplicationReal extends BatchMultiplication
+public class BatchMultiplicationBigInteger extends BatchMultiplication
         implements Callable<BigInteger[]> {
 
     List<BigInteger> x;
     List<BigInteger> y;
-    List<TripleReal> tiShares;
+    List<TripleBigInteger> tiShares;
 
     BigInteger prime;
 
@@ -46,8 +46,8 @@ public class BatchMultiplicationReal extends BatchMultiplication
      * @param parentID
      * @param partyCount
      */
-    public BatchMultiplicationReal(List<BigInteger> x, List<BigInteger> y,
-            List<TripleReal> tiShares,
+    public BatchMultiplicationBigInteger(List<BigInteger> x, List<BigInteger> y,
+            List<TripleBigInteger> tiShares,
             ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper,
             BlockingQueue<Message> senderQueue,
             Queue<Integer> protocolIdQueue,

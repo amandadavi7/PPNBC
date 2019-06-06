@@ -53,6 +53,9 @@ public class TItoPeerCommunication implements Runnable {
             tishare.binaryShares.forEach((t) -> {
                 System.out.println("u : " + t.u + ",v : " + t.v + ",w : " + t.w);
             });
+            tishare.realShares.forEach((t) -> {
+                System.out.println("u : " + t.u + ",v : " + t.v + ",w : " + t.w);
+            });
             tishare.bigIntShares.forEach((t) -> {
                 System.out.println("u : " + t.u + ",v : " + t.v + ",w : " + t.w);
             });

@@ -8,20 +8,24 @@ package Model;
 import Communication.Message;
 import Protocol.ArgMax;
 import Protocol.BitDecomposition;
+import Protocol.BitDecompositionBigInteger;
 import Protocol.Comparison;
 import Protocol.DotProductInteger;
+import Protocol.DotProductBigInteger;
 import Protocol.Equality;
 import Protocol.MatrixInversion;
 import Protocol.MultiplicationInteger;
+import Protocol.MultiplicationBigInteger;
 import Protocol.OIS;
 import Protocol.OR_XOR;
+import Protocol.OR_XOR_BigInteger;
 import Protocol.Utility.JaccardDistance;
 import Protocol.Utility.BatchTruncation;
 import Protocol.Utility.MatrixMultiplication;
 import TrustedInitializer.TripleByte;
 import TrustedInitializer.TripleInteger;
-import TrustedInitializer.TripleReal;
 import TrustedInitializer.TruncationPair;
+import TrustedInitializer.TripleBigInteger;
 import Utility.Constants;
 import Utility.FileIO;
 import Utility.Logging;
@@ -44,9 +48,13 @@ import java.util.stream.Collectors;
 public class TestModel extends Model {
 
     List<List<Integer>> x;
-    BigInteger[][] xBigInt;
+    BigInteger[][] xBigIntArr;
     List<List<Integer>> y;
     List<List<List<Integer>>> v;
+
+	List<BigInteger> xBigInt;
+    List<BigInteger> yBigInt;
+    
 
     List<TruncationPair> tiTruncationPair;
     BigInteger bigIntPrime;
@@ -54,8 +62,10 @@ public class TestModel extends Model {
     String outputPath;
     List<TripleByte> binaryTiShares;
     List<TripleInteger> decimalTiShares;
-    List<TripleReal> realTiShares;
+    List<TripleBigInteger> realTiShares;
     List<Integer> equalityTiShares;
+    List<TripleBigInteger> bigIntTiShares;
+
 
     /**
      * Constructor
@@ -63,6 +73,7 @@ public class TestModel extends Model {
      * @param binaryTriples
      * @param decimalTriples
      * @param realTiShares
+     * @param bigIntShares
      * @param equalityTiShares
      * @param tiTruncationPair
      * @param asymmetricBit
@@ -75,7 +86,7 @@ public class TestModel extends Model {
      * @param protocolID
      */
     public TestModel(List<TripleByte> binaryTriples, List<TripleInteger> decimalTriples,
-            List<TripleReal> realTiShares, List<Integer> equalityTiShares, List<TruncationPair> tiTruncationPair, 
+            List<TripleBigInteger> realTiShares, List<TripleBigInteger> bigIntShares, List<Integer> equalityTiShares, List<TruncationPair> tiTruncationPair, 
             int asymmetricBit, ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper, 
             BlockingQueue<Message> senderQueue, int clientId, int partyCount, String[] args, 
             Queue<Integer> protocolIdQueue, int protocolID) {
@@ -90,6 +101,11 @@ public class TestModel extends Model {
         this.decimalTiShares = decimalTriples;
         this.realTiShares = realTiShares;
         this.equalityTiShares = equalityTiShares;
+       
+        this.bigIntTiShares = bigIntShares;
+        while(bigIntTiShares.size() == 0);
+        System.out.println("Received ["+bigIntTiShares.size()+"] big int shares");
+
         initalizeModelVariables(args);
     }
 
@@ -345,6 +361,21 @@ public class TestModel extends Model {
             case "Equality":
                 callEquality();
                 break;
+            case "MultiplicationBigInt":
+            	callBigIntMultiplication();
+            	break;
+            case "DotProductBigInt":
+                callBigIntDotProduct();
+                break;
+            case "BitDecompositionBigInt":
+                callBitDecompositionBigInt();
+                break;
+            case "OR_XOR_BigInteger":
+                callOR_XOR_BigInteger();
+                break;
+            case "ChangeBinaryToBigIntegerField":
+                callChangeBinaryToBigIntegerField();
+                break;
             default:
                 break;
         }
@@ -396,13 +427,20 @@ public class TestModel extends Model {
                     List<List<BigInteger>> xList = FileIO.loadMatrixFromFile(value, bigIntPrime);
                     int row = xList.size();
                     int col = xList.get(0).size();
-                    xBigInt = new BigInteger[row][col];
+                    xBigIntArr = new BigInteger[row][col];
                     for (int i = 0; i < row; i++) {
                         for (int j = 0; j < col; j++) {
-                            xBigInt[i][j] = xList.get(i).get(j);
+                            xBigIntArr[i][j] = xList.get(i).get(j);
                         }
                     }
                     break;
+
+                case "xBigInt":
+                	xBigInt = FileIO.loadListFromFile(value);
+                	break;
+                case "yBigInt":
+                	yBigInt = FileIO.loadListFromFile(value);
+                	break; 	
                 case "output":
                     outputPath = value;
                     break;
@@ -457,7 +495,7 @@ public class TestModel extends Model {
         ExecutorService es = Executors.newFixedThreadPool(1);
 
         long startTime = System.currentTimeMillis();
-        MatrixInversion matrixInversion = new MatrixInversion(xBigInt, realTiShares,
+        MatrixInversion matrixInversion = new MatrixInversion(xBigIntArr, realTiShares,
                 tiTruncationPair,
                 1, pidMapper, commonSender, new LinkedList<>(protocolIdQueue),
                 clientId, asymmetricBit, partyCount, bigIntPrime);
@@ -484,17 +522,17 @@ public class TestModel extends Model {
     private void callMatrixMultiplication() {
         ExecutorService es = Executors.newFixedThreadPool(1);
 
-        int n = xBigInt.length;
-        int l = xBigInt[0].length;
+        int n = xBigIntArr.length;
+        int l = xBigIntArr[0].length;
 
-        BigInteger xT[][] = LocalMath.transposeMatrix(xBigInt);
+        BigInteger xT[][] = LocalMath.transposeMatrix(xBigIntArr);
         int m = xT[0].length;
 
         long startTime = System.currentTimeMillis();
 
         //TODO fix ti share count
         MatrixMultiplication matrixMultiplication = new MatrixMultiplication(
-                xT, xBigInt, realTiShares,
+                xT, xBigIntArr, realTiShares,
                 tiTruncationPair,
                 clientId, bigIntPrime, 1, asymmetricBit, pidMapper, commonSender,
                 new LinkedList<>(protocolIdQueue),
@@ -523,12 +561,12 @@ public class TestModel extends Model {
         System.out.println("calling truncation");
 
         //Prepare matrix for truncation. Multiply the elements with 2^f
-        int rows = xBigInt.length;
-        int cols = xBigInt[0].length;
+        int rows = xBigIntArr.length;
+        int cols = xBigIntArr[0].length;
         BigInteger fac = BigInteger.valueOf(2).pow(Constants.DECIMAL_PRECISION);
         for (int i = 0; i < rows; i++) {
             for (int j = 0; j < cols; j++) {
-                xBigInt[i][j] = xBigInt[i][j].multiply(fac).mod(bigIntPrime);
+                xBigIntArr[i][j] = xBigIntArr[i][j].multiply(fac).mod(bigIntPrime);
 
             }
         }
@@ -538,15 +576,15 @@ public class TestModel extends Model {
         List<Future<BigInteger[]>> taskList = new ArrayList<>();
 
         long startTime = System.currentTimeMillis();
-        int totalCases = xBigInt.length;
+        int totalCases = xBigIntArr.length;
         int tiTruncationStartIndex = 0;
 
         System.out.println("Total testcases:" + totalCases);
         for (int i = 0; i < totalCases; i++) {
 
-            BatchTruncation truncationPair = new BatchTruncation(xBigInt[i],
+            BatchTruncation truncationPair = new BatchTruncation(xBigIntArr[i],
                     tiTruncationPair.subList(tiTruncationStartIndex,
-                            tiTruncationStartIndex + xBigInt[i].length),
+                            tiTruncationStartIndex + xBigIntArr[i].length),
                     pidMapper, commonSender, new LinkedList<>(protocolIdQueue),
                     clientId, bigIntPrime, i, asymmetricBit, partyCount);
 
@@ -692,4 +730,165 @@ public class TestModel extends Model {
         System.out.println("Avg time duration:" + elapsedTime);
     }
 
+    public void callBigIntMultiplication() {
+
+        System.out.print("xShares: ");
+        for(int i=0; i<xBigInt.size(); i++) {
+            System.out.print(xBigInt.get(i) + " ");
+        } System.out.println();
+
+        System.out.print("yShares: ");
+        for(int i=0; i<yBigInt.size(); i++) {
+            System.out.print(yBigInt.get(i) + " ");
+        } System.out.println();
+
+
+    	checkBigIntPrimeValidity();
+
+    	ExecutorService es = Executors.newFixedThreadPool(100);
+        List<Future<BigInteger>> taskList = new ArrayList<>();
+
+        long startTime = System.currentTimeMillis();
+        int totalCases = xBigInt.size();
+        // totalcases number of protocols are submitted to the executorservice
+        for (int i = 0; i < totalCases; i++) {
+            MultiplicationBigInteger multiplicationModule = new MultiplicationBigInteger(
+                    xBigInt.get(i), yBigInt.get(i),
+                    bigIntTiShares.get(i), pidMapper, commonSender,
+                    new LinkedList<>(protocolIdQueue), clientId, 
+                    Constants.BIG_INT_PRIME, i, asymmetricBit, partyCount);
+
+            Future<BigInteger> multiplicationTask = es.submit(multiplicationModule);
+            taskList.add(multiplicationTask);
+        }
+
+        es.shutdown();
+
+        List<BigInteger> results = new ArrayList<>();
+        for (int i = 0; i < totalCases; i++) {
+            Future<BigInteger> dWorkerResponse = taskList.get(i);
+            try {
+                BigInteger result = dWorkerResponse.get();
+                results.add(result);
+                System.out.println("result:" + result.toString() + ", #:" + i);
+            } catch (InterruptedException | ExecutionException ex) {
+                Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+
+        FileIO.writeToCSV(results, outputPath, "bigIntMultResult", clientId);
+
+        long stopTime = System.currentTimeMillis();
+        long elapsedTime = stopTime - startTime;
+        System.out.println("Avg time duration:" + elapsedTime);
+
+    }
+
+   private void checkBigIntPrimeValidity() {
+
+   		if(Constants.BIG_INT_PRIME.equals( new BigInteger("-1"))) {
+   			throw new IllegalArgumentException(
+   				"Please add a valid big int prime to the config file");
+   		}
+   }
+
+       /**
+     * Call dot product protocol for n test cases in parallel
+     *
+     */
+    public void callBigIntDotProduct() {
+        
+        checkBigIntPrimeValidity();
+
+        long startTime = System.currentTimeMillis();
+    
+        DotProductBigInteger DPModule = new DotProductBigInteger(xBigInt,
+                yBigInt, bigIntTiShares, pidMapper, commonSender,
+                new LinkedList<>(protocolIdQueue), clientId, Constants.BIG_INT_PRIME, 
+                0, asymmetricBit, partyCount);
+    
+        try {
+            BigInteger result = DPModule.call();
+            System.out.println("result:" + result.toString());
+
+            List<BigInteger> results = new ArrayList<>();
+            results.add(result);
+            FileIO.writeToCSV(results, outputPath, "bigIntDotProductResult", clientId);
+
+           
+        } catch (InterruptedException | ExecutionException ex) {
+            Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    
+        long stopTime = System.currentTimeMillis();
+        long elapsedTime = stopTime - startTime;
+        System.out.println("Avg time duration:" + elapsedTime);
+    }
+
+        /**
+     * Call bitD bigint protocol for testing 1 test case
+     */
+    public void callBitDecompositionBigInt() {
+
+        ExecutorService es = Executors.newFixedThreadPool(1);
+
+        BitDecompositionBigInteger bitTest = new BitDecompositionBigInteger(
+            xBigInt.get(0), binaryTiShares,
+            asymmetricBit, Constants.BIT_LENGTH, pidMapper, commonSender,
+            new LinkedList<>(protocolIdQueue), clientId,
+            Constants.BINARY_PRIME, 0, partyCount);
+
+        Future<List<Integer>> bitdecompositionTask = es.submit(bitTest);
+
+        try {
+            List<Integer> result = bitdecompositionTask.get();
+            System.out.print("Big Int Decomposition: ");
+            for(int i=0; i<result.size(); i++) {
+                System.out.print(result.get(i));
+            } System.out.println();
+        } catch (InterruptedException | ExecutionException ex) {
+            Logger.getLogger(TestModel.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
+        es.shutdown();
+    }
+
+    public void callOR_XOR_BigInteger() throws InterruptedException, ExecutionException {
+        
+        checkBigIntPrimeValidity();
+
+
+        OR_XOR_BigInteger or_bigInteger = new OR_XOR_BigInteger(
+            xBigInt, yBigInt, bigIntTiShares,
+                asymmetricBit, 1, pidMapper, commonSender,
+                new LinkedList<>(protocolIdQueue), clientId, Constants.BIG_INT_PRIME, 0, partyCount);
+        
+        try{
+            BigInteger[] resultOR = or_bigInteger.call();
+            System.out.println("X OR Y:");
+            for(BigInteger bi : resultOR) {
+                System.out.println(bi);
+            }
+        } catch(InterruptedException ie) {System.out.println(ie);}
+
+        OR_XOR_BigInteger xor_bigInteger = new OR_XOR_BigInteger(
+            xBigInt, yBigInt, bigIntTiShares,
+                asymmetricBit, 2, pidMapper, commonSender,
+                new LinkedList<>(protocolIdQueue), clientId, Constants.BIG_INT_PRIME, 1, partyCount);
+        try{        
+            BigInteger[] resultXOR = xor_bigInteger.call();
+            System.out.println("\nX XOR Y:");
+            for(BigInteger bi : resultXOR) {
+                System.out.println(bi);
+            }
+        } catch(InterruptedException ie) {System.out.println(ie); }
+
+    }
+
+    public void callChangeBinaryToBigIntegerField() {
+
+
+        checkBigIntPrimeValidity();
+        // TODO Add test procedure
+    }
 }

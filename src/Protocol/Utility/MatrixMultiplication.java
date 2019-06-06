@@ -7,8 +7,8 @@ package Protocol.Utility;
 
 import Communication.Message;
 import Protocol.CompositeProtocol;
-import Protocol.DotProductReal;
-import TrustedInitializer.TripleReal;
+import Protocol.DotProductBigInteger;
+import TrustedInitializer.TripleBigInteger;
 import TrustedInitializer.TruncationPair;
 import Utility.Constants;
 import java.math.BigInteger;
@@ -28,7 +28,7 @@ import java.util.concurrent.Future;
 /**
  * Class to take care of matrix multiplication
  *
- * uses n*l*m TripleReal shares uses n*l TruncationPair shares
+ * uses n*l*m TripleBigInteger shares uses n*l TruncationPair shares
  *
  * @author anisha
  */
@@ -37,7 +37,7 @@ public class MatrixMultiplication extends CompositeProtocol implements
 
     BigInteger[][] a;
     List<List<BigInteger>> bT;
-    List<TripleReal> tiRealShares;
+    List<TripleBigInteger> tiRealShares;
     List<TruncationPair> tiTruncationPair;
     BigInteger prime;
     int globalProtocolId;
@@ -61,7 +61,7 @@ public class MatrixMultiplication extends CompositeProtocol implements
      * @param partyCount
      */
     public MatrixMultiplication(BigInteger[][] a, BigInteger[][] b,
-            List<TripleReal> tiRealshares, List<TruncationPair> tiTruncationPair,
+            List<TripleBigInteger> tiRealshares, List<TruncationPair> tiTruncationPair,
             int clientID, BigInteger prime, int protocolID,
             int asymmetricBit,
             ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper,
@@ -112,7 +112,7 @@ public class MatrixMultiplication extends CompositeProtocol implements
         for (int i = 0; i < n; i++) {
             List<BigInteger> row = Arrays.asList(a[i]);
             for (int j = 0; j < l; j++) {
-                DotProductReal DPModule = new DotProductReal(row,
+                DotProductBigInteger DPModule = new DotProductBigInteger(row,
                         bT.get(j), tiRealShares.subList(
                         tiRealStartIndex, tiRealStartIndex + m),
                         pidMapper, senderQueue,

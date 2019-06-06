@@ -7,7 +7,7 @@ package Protocol;
 
 import Communication.Message;
 import Protocol.Utility.MatrixMultiplication;
-import TrustedInitializer.TripleReal;
+import TrustedInitializer.TripleBigInteger;
 import TrustedInitializer.TruncationPair;
 import Utility.Constants;
 import Utility.LocalMath;
@@ -30,7 +30,7 @@ public class MatrixInversion extends CompositeProtocol implements
 
     private static BigInteger[][] Ashares, I2;
     
-    List<TripleReal> tishares;
+    List<TripleBigInteger> tishares;
     List<TruncationPair> tiTruncationPair;
     
     private final int matrixSize;
@@ -41,7 +41,7 @@ public class MatrixInversion extends CompositeProtocol implements
     
     private final BigInteger prime;
 
-    public MatrixInversion(BigInteger[][] Ashares, List<TripleReal> tishares,
+    public MatrixInversion(BigInteger[][] Ashares, List<TripleBigInteger> tishares,
             List<TruncationPair> tiTruncationPair,
             int protocolId, 
             ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper,
@@ -227,7 +227,7 @@ public class MatrixInversion extends CompositeProtocol implements
         for (int i = 0; i < nrRounds; i++) {
 
             // AX = DM(A.X)
-            MultiplicationReal multiplicationModule = new MultiplicationReal(A,
+            MultiplicationBigInteger multiplicationModule = new MultiplicationBigInteger(A,
                     X, tishares.get(tiRealIndex), pidMapper, senderQueue,
                     new LinkedList<>(protocolIdQueue),
                     clientID, prime, globalPid, asymmetricBit, partyCount);
@@ -255,7 +255,7 @@ public class MatrixInversion extends CompositeProtocol implements
                     .subtract(truncatedAX).mod(prime);
 
             // X = DM(X.subtractedAX)
-            MultiplicationReal multiplicationModuleNext = new MultiplicationReal(
+            MultiplicationBigInteger multiplicationModuleNext = new MultiplicationBigInteger(
                     X, subtractedAX, tishares.get(tiRealIndex),
                     pidMapper, senderQueue,
                     new LinkedList<>(protocolIdQueue),

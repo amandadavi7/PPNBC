@@ -7,7 +7,8 @@ package TrustedInitializer;
 
 import Utility.Constants;
 import java.math.BigInteger;
-import java.util.Random;
+import java.security.SecureRandom;
+
 
 /**
  *
@@ -24,7 +25,7 @@ public class RandomGenerator {
      */
     public static void generateDecimalTriples(int decTriples, int clientCount,
             TIShare[] tiShare) {
-        Random rand = new java.util.Random();
+        SecureRandom rand = new SecureRandom();
         for (int i = 0; i < decTriples; i++) {
             int U = rand.nextInt(Constants.PRIME);
             int V = rand.nextInt(Constants.PRIME);
@@ -57,7 +58,7 @@ public class RandomGenerator {
      */
     public static void generateBinaryTriples(int binTriples, int clientCount,
             TIShare[] tiShare) {
-        Random rand = new java.util.Random();
+        SecureRandom rand = new SecureRandom();
         for (int i = 0; i < binTriples; i++) {
             int U = rand.nextInt(Constants.BINARY_PRIME);
             int V = rand.nextInt(Constants.BINARY_PRIME);
@@ -84,40 +85,42 @@ public class RandomGenerator {
     /**
      * Generate Big Integer Triples
      *
-     * @param bigIntTriples
+     * @param realTriples
      * @param clientCount
      * @param tiShare
      */
-    public static void generateBigIntTriples(int bigIntTriples, int clientCount,
+    public static void generateRealTriples(int realTriples, int clientCount,
             TIShare[] tiShare) {
-        Random rand = new java.util.Random();
+        SecureRandom rand = new SecureRandom();
         BigInteger Zq = BigInteger.valueOf(2).pow(Constants.INTEGER_PRECISION
                 + 2 * Constants.DECIMAL_PRECISION + 1).nextProbablePrime();
 
-        for (int i = 0; i < bigIntTriples; i++) {
+        for (int i = 0; i < realTriples; i++) {
             BigInteger U = new BigInteger(Constants.INTEGER_PRECISION, rand).mod(Zq);
             BigInteger V = new BigInteger(Constants.INTEGER_PRECISION, rand).mod(Zq);
             BigInteger W = U.multiply(V).mod(Zq);
             
             BigInteger usum = BigInteger.ZERO, vsum = BigInteger.ZERO, wsum = BigInteger.ZERO;
             for (int j = 0; j < clientCount - 1; j++) {
-                TripleReal t = new TripleReal();
+                TripleBigInteger t = new TripleBigInteger();
                 t.u = new BigInteger(Constants.INTEGER_PRECISION, rand);
                 t.v = new BigInteger(Constants.INTEGER_PRECISION, rand);
                 t.w = new BigInteger(Constants.INTEGER_PRECISION, rand);
                 usum = usum.add(t.u);
                 vsum = vsum.add(t.v);
                 wsum = wsum.add(t.w);
-                tiShare[j].addBigInt(t);
+                tiShare[j].addReal(t);
             }
-            TripleReal t = new TripleReal();
+            TripleBigInteger t = new TripleBigInteger();
             t.u = (U.subtract(usum)).mod(Zq);
             t.v = (V.subtract(vsum)).mod(Zq);
             t.w = (W.subtract(wsum)).mod(Zq);
-            tiShare[clientCount - 1].addBigInt(t);
+            tiShare[clientCount - 1].addReal(t);
         }
 
     }
+
+
 
     /**
      * Generate Truncation Pairs
@@ -129,7 +132,7 @@ public class RandomGenerator {
     public static void generateTruncationPairs(int truncationPairs,
             int clientCount, TIShare[] tiShare) {
         System.out.println("Generating " + truncationPairs + " truncation shares");
-        Random rand = new java.util.Random();
+        SecureRandom rand = new SecureRandom();
         BigInteger Zq = BigInteger.valueOf(2).pow(Constants.INTEGER_PRECISION
                 + 2 * Constants.DECIMAL_PRECISION + 1).nextProbablePrime();
 
@@ -168,7 +171,7 @@ public class RandomGenerator {
     
     public static void generateEqualityShares(int equalityCount, int clientCount,
             TIShare[] tiShare) {
-        Random rand = new java.util.Random();
+        SecureRandom rand = new SecureRandom();
         for(int i=0;i<equalityCount;i++) {
             int R = rand.nextInt(Constants.PRIME-1) + 1;
             int rsum = 0;
@@ -182,4 +185,59 @@ public class RandomGenerator {
         }
         
     }
+    public static void generateBigIntegerEqualityShares(int equalityCount, int clientCount,
+            TIShare[] tiShare) {
+        SecureRandom rand = new SecureRandom();
+        for(int i=0;i<equalityCount;i++) {
+            BigInteger R = (new BigInteger(Constants.BIT_LENGTH, rand)).add(BigInteger.ONE);
+            BigInteger rsum = BigInteger.ZERO;
+            for(int j=0; j<clientCount-1; j++){
+                BigInteger r = new BigInteger(Constants.BIT_LENGTH, rand);
+                rsum = rsum.add(r);
+                tiShare[j].addBigIntegerEqualityShare(r);
+            }
+            BigInteger r = (R.subtract(rsum)).mod(Constants.BIG_INT_PRIME);
+            tiShare[clientCount-1].addBigIntegerEqualityShare(r);
+        }
+        
+    }
+
+
+    /**
+     * Generate Big Integer Triples
+     *
+     * @param bigDecTriples
+     * @param clientCount
+     * @param tiShare
+     */
+    public static void generateBigIntTriples(int bigIntTriples, int clientCount,
+            TIShare[] tiShare) {
+        SecureRandom rand = new SecureRandom();
+        for (int i = 0; i < bigIntTriples; i++) {
+            BigInteger U = new BigInteger(Constants.BIT_LENGTH, rand);
+            BigInteger V = new BigInteger(Constants.BIT_LENGTH, rand);
+            BigInteger W = (U.multiply(V)).mod(Constants.BIG_INT_PRIME);
+            
+            BigInteger usum = BigInteger.ZERO, 
+                       vsum = BigInteger.ZERO, 
+                       wsum = BigInteger.ZERO;
+
+            for (int j = 0; j < clientCount - 1; j++) {
+                TripleBigInteger t = new TripleBigInteger();
+                t.u = new BigInteger(Constants.BIT_LENGTH, rand);
+                t.v = new BigInteger(Constants.BIT_LENGTH, rand);
+                t.w = new BigInteger(Constants.BIT_LENGTH, rand);
+                usum = usum.add(t.u);
+                vsum = vsum.add(t.v);
+                wsum = wsum.add(t.w);
+                tiShare[j].addBigInt(t);
+            }
+            TripleBigInteger t = new TripleBigInteger();
+            t.u = (U.subtract(usum)).mod(Constants.BIG_INT_PRIME);
+            t.v = (V.subtract(vsum)).mod(Constants.BIG_INT_PRIME);
+            t.w = (W.subtract(wsum)).mod(Constants.BIG_INT_PRIME);
+            tiShare[clientCount - 1].addBigInt(t);
+        }
+    }
+
 }

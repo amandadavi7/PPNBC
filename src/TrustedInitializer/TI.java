@@ -17,18 +17,16 @@ import java.util.logging.Logger;
 
 /**
  * Trusted Initializer that generates the randomness
- *
  * @author keerthanaa
  */
 public class TI {
 
-    static int tiPort, clientCount, decTriples, binTriples, bigIntTriples, 
-            truncationPairs, equalityCount;
+    static int tiPort, clientCount, decTriples, binTriples, realTriples, 
+            truncationPairs, equalityCount, equalityBigIntCount, bigIntTriples;
     static TIShare[] tiShare;
 
     /**
      * Constructor
-     *
      * @param args
      */
     public static void initializeVariables(String[] args) {
@@ -55,13 +53,19 @@ public class TI {
                     binTriples = Integer.valueOf(value);
                     break;
                 case "real":
-                    bigIntTriples = Integer.parseInt(value);
+                    realTriples = Integer.parseInt(value);
                     break;
                 case "truncation":
                     truncationPairs = Integer.valueOf(value);
                     break;
                 case "equality":
                     equalityCount = Integer.parseInt(value);
+                    break;
+                case "equalityBigInt":
+                    equalityBigIntCount = Integer.parseInt(value);
+                    break;
+                case "bigInt":
+                    bigIntTriples = Integer.parseInt(value);
                     break;
             }
         }
@@ -70,10 +74,7 @@ public class TI {
         for (int i = 0; i < clientCount; i++) {
             tiShare[i] = new TIShare();
         }
-        
     }
-
-    
 
     /**
      * Send shares to parties
@@ -118,11 +119,10 @@ public class TI {
     private static void generateRandomShares() {
         RandomGenerator.generateDecimalTriples(decTriples, clientCount, tiShare);
         RandomGenerator.generateBinaryTriples(binTriples, clientCount, tiShare);
-        RandomGenerator.generateBigIntTriples(bigIntTriples, clientCount, tiShare);
+        RandomGenerator.generateRealTriples(realTriples, clientCount, tiShare);
         RandomGenerator.generateTruncationPairs(truncationPairs, clientCount, tiShare);
         RandomGenerator.generateEqualityShares(equalityCount, clientCount, tiShare);
+        RandomGenerator.generateBigIntegerEqualityShares(equalityBigIntCount, clientCount, tiShare);
+        RandomGenerator.generateBigIntTriples(bigIntTriples, clientCount, tiShare);
     }
-
-    
-
 }

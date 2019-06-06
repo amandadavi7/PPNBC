@@ -105,11 +105,17 @@ public class DotProductInteger extends DotProduct implements Callable<Integer> {
         for (i = 0; i < startpid; i++) {
             Future<Integer[]> prod = multCompletionService.take();
             Integer[] products = prod.get();
+	    
+        
+	
+	    /*System.out.println("Intermediate DP results:");
+		for(int j : products) System.out.print(j + " ");
+		System.out.println();*/
+		
             for (int j : products) {
                 dotProduct = Math.floorMod(dotProduct + j, prime);
             }
-        }
-
+	}
         LOGGER.log(Level.FINE, "dot product:{0}, protocol id:{1}", new Object[]{dotProduct, protocolId});
         return dotProduct;
 
