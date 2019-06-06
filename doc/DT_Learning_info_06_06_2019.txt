@@ -1,0 +1,47 @@
+////////////////////// DT LEARNING TO DO ////////////////////////////////
+
+- Ti index increments
+- Complete small subset base case
+- Private tree version
+
+
+///////////////////// RUNNING DT LEARNING ////////////////////////////////
+
+// Instructions:
+
+- Pick bitLengths given by:
+
+baseBitLength = ceil(log_2(datasetSize));
+bitLength >= attrValueCount*(baseBitLength + 4) +
+ 			(attrValueCount-1)*(baseBitLength+4) + 
+ 			2*ceil(log(datasetSize)) + 2*baseBitLength 
+
+- In config.properties, set:
+
+	prime = 2^baseBitLength
+	big.int.bit.length =  bitLength
+	big.int.prime = 2^bitLength
+	batch.size >= bitLength
+
+- Shares needed (exact amounts still pending): 
+
+	decimal = medium
+	binary = many
+	equalityBigInt = few
+	bigInt = many
+
+- run 'make ; make jar' in /src
+- for TI, BA, and each of n parties, run the following commands from /build
+
+// TI
+java -Dconfig.properties=${CONFIG_PATH}/config.properties -jar TI.jar port=4001 partyCount=2 decimal=2000 binary=2000 equalityBigInt=2000 real=0 truncation=0 bigInt=2000
+
+// BA
+java -Dconfig.properties=${CONFIG_PATH}/config.properties -jar "BA.jar" port=5001 partyCount=2
+
+// Party0
+java -Dconfig.properties=${CONFIG_PATH}/config.properties -jar "Party.jar" party_port=6000 ti=127.0.0.1:4001 ba=127.0.0.1:5001 party_id=0 partyCount=2 datasetShare=${INPUT_PATH}/party0shares.csv asymmetricBit=1 output="output/"  model="DecisionTreeTraining"
+
+// Party1
+java -Dconfig.properties=${CONFIG_PATH}/config.properties -jar "Party.jar" party_port=7000 ti=127.0.0.1:4001 ba=127.0.0.1:5001 party_id=1 partyCount=2 datasetShare=${INPUT_PATH}/party1shares.csv asymmetricBit=0 output="output/" model="DecisionTreeTraining"
+
