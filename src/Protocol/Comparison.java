@@ -69,7 +69,7 @@ public class Comparison extends CompositeProtocol implements Callable<Integer> {
      * @param partyCount
      */
     public Comparison(List<Integer> x, List<Integer> y, List<TripleByte> tiShares,
-            int asymmetricBit, 
+            int asymmetricBit,
             ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper,
             BlockingQueue<Message> senderQueue,
             Queue<Integer> protocolIdQueue,
@@ -109,10 +109,10 @@ public class Comparison extends CompositeProtocol implements Callable<Integer> {
                 Constants.THREAD_COUNT);
         Runnable dThread = () -> {
             try {
-                computeDSHares();
+                computeDShares();
             } catch (InterruptedException | ExecutionException ex) {
                 LOGGER.log(Level.SEVERE, null, ex);
-            } 
+            }
         };
 
         threadService.submit(dThread);
@@ -122,7 +122,7 @@ public class Comparison extends CompositeProtocol implements Callable<Integer> {
                 computeMultiplicationEParallel();
             } catch (InterruptedException | ExecutionException ex) {
                 LOGGER.log(Level.SEVERE, null, ex);
-            } 
+            }
         };
 
         threadService.submit(eThread);
@@ -130,8 +130,8 @@ public class Comparison extends CompositeProtocol implements Callable<Integer> {
 
         // Compute c and w sequentially when both threads end
         boolean threadsCompleted = threadService.awaitTermination(
-                    Long.MAX_VALUE, TimeUnit.NANOSECONDS);
-        
+                Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+
         if (threadsCompleted) {
             computeCShares();
             w = computeW();
@@ -157,7 +157,7 @@ public class Comparison extends CompositeProtocol implements Callable<Integer> {
      * @throws InterruptedException
      * @throws ExecutionException
      */
-    private void computeDSHares() throws InterruptedException, ExecutionException {
+    private void computeDShares() throws InterruptedException, ExecutionException {
 
         ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
         List<Future<Integer[]>> taskList = new ArrayList<>();
@@ -174,7 +174,7 @@ public class Comparison extends CompositeProtocol implements Callable<Integer> {
                     = new BatchMultiplicationByte(x.subList(i, toIndex),
                             y.subList(i, toIndex),
                             tiShares.subList(i, toIndex),
-                            pidMapper, senderQueue, 
+                            pidMapper, senderQueue,
                             new LinkedList<>(protocolIdQueue),
                             clientID, prime, startpid, asymmetricBit,
                             protocolId, partyCount);
@@ -192,14 +192,14 @@ public class Comparison extends CompositeProtocol implements Callable<Integer> {
         // Now when the result for all is received, compute y - x*y and add it to d[i]
         for (i = 0; i < taskLen; i++) {
             Future<Integer[]> prod = taskList.get(i);
-                Integer[] products = prod.get();
-                int prodLen = products.length;
-                for (int j = 0; j < prodLen; j++) {
-                    int globalIndex = i * 10 + j;
-                    int localDiff = y.get(globalIndex) - products[j];
-                    localDiff = Math.floorMod(localDiff, prime);
-                    dShares[globalIndex] = localDiff;
-                }
+            Integer[] products = prod.get();
+            int prodLen = products.length;
+            for (int j = 0; j < prodLen; j++) {
+                int globalIndex = i * 10 + j;
+                int localDiff = y.get(globalIndex) - products[j];
+                localDiff = Math.floorMod(localDiff, prime);
+                dShares[globalIndex] = localDiff;
+            }
         }
     }
 
@@ -255,7 +255,7 @@ public class Comparison extends CompositeProtocol implements Callable<Integer> {
             // Now when all result is received, compute y+ x*y and add it to d[i]
             for (i = 0; i < taskLen; i++) {
                 Future<Integer[]> prod = taskList.get(i);
-                    products.addAll(Arrays.asList(prod.get()));
+                products.addAll(Arrays.asList(prod.get()));
             }
 
             // in the end of one iteration, update tempmultE for next round of execution
@@ -298,9 +298,9 @@ public class Comparison extends CompositeProtocol implements Callable<Integer> {
                     = new BatchMultiplicationByte(
                             multiplicationEList.subList(i + 1, toIndex + 1),
                             dShareList.subList(i, toIndex),
-                            tiShares.subList(tiStartIndex, 
+                            tiShares.subList(tiStartIndex,
                                     tiStartIndex + tiCount), pidMapper, senderQueue,
-                            new LinkedList<>(protocolIdQueue), clientID, prime, 
+                            new LinkedList<>(protocolIdQueue), clientID, prime,
                             startpid, asymmetricBit, protocolId, partyCount);
 
             Future<Integer[]> multiplicationTask = es.submit(batchMultiplication);
@@ -317,12 +317,12 @@ public class Comparison extends CompositeProtocol implements Callable<Integer> {
         // Now when result for all is received, compute y+ x*y and add it to d[i]
         for (i = 0; i < taskLen; i++) {
             Future<Integer[]> prod = taskList.get(i);
-                Integer[] products = prod.get();
-                int prodLen = products.length;
-                for (int j = 0; j < prodLen; j++) {
-                    int globalIndex = i * 10 + j;
-                    cShares[globalIndex] = products[j];
-                }
+            Integer[] products = prod.get();
+            int prodLen = products.length;
+            for (int j = 0; j < prodLen; j++) {
+                int globalIndex = i * 10 + j;
+                cShares[globalIndex] = products[j];
+            }
         }
 
         cShares[bitLength - 1] = dShares[bitLength - 1];

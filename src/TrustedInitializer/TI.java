@@ -23,7 +23,7 @@ import java.util.logging.Logger;
 public class TI {
 
     static int tiPort, clientCount, decTriples, binTriples, bigIntTriples, 
-            truncationPairs;
+            truncationPairs, equalityCount, rowCount, colCount, featureCount, treeCount, classValueCount;
     static TIShare[] tiShare;
 
     /**
@@ -60,7 +60,24 @@ public class TI {
                 case "truncation":
                     truncationPairs = Integer.valueOf(value);
                     break;
-                    
+                case "equality":
+                    equalityCount = Integer.parseInt(value);
+                    break;
+                case "rowCount":
+                    rowCount = Integer.parseInt(value);
+                    break;
+                case "colCount":
+                    colCount = Integer.parseInt(value) - 1;
+                    break;
+                case "featureCount":
+                    featureCount = Integer.parseInt(value);
+                    break;
+                case "treeCount":
+                    treeCount = Integer.parseInt(value);
+                    break;
+                case "classValueCount":
+                    classValueCount = Integer.parseInt(value);
+                    break;
             }
         }
 
@@ -117,8 +134,9 @@ public class TI {
         RandomGenerator.generateBinaryTriples(binTriples, clientCount, tiShare);
         RandomGenerator.generateBigIntTriples(bigIntTriples, clientCount, tiShare);
         RandomGenerator.generateTruncationPairs(truncationPairs, clientCount, tiShare);
+        RandomGenerator.generateEqualityShares(equalityCount, clientCount, tiShare);
+        RandomGenerator.generateRowShares(rowCount, colCount, treeCount, clientCount, tiShare);
+        RandomGenerator.generateColShares(featureCount, treeCount, colCount, clientCount, tiShare);
+        RandomGenerator.generateWholeNumShares(classValueCount, clientCount, tiShare);
     }
-
-    
-
 }

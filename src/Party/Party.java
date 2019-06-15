@@ -7,6 +7,8 @@ package Party;
 
 import Communication.Message;
 import Model.DecisionTreeScoring;
+import Model.DecisionTreeTraining;
+import Model.ExtraTreesTraining;
 import Model.KNNSortAndSwap;
 import Model.KNNThresholdKSelect;
 import Model.LinearRegressionEvaluation;
@@ -108,8 +110,10 @@ public class Party {
                     break;
                 case "partyCount":
                     partyCount = Integer.parseInt(value);
+                    break;
                 case "protocolName":
                     protocolName = value;
+                    break;
             }
 
         }
@@ -293,7 +297,34 @@ public class Party {
 
                 regressionEvaluationModelDAMF.predictValues();
                 break;
+                
+            case "DecisionTreeTraining":
+                // Decision Tree Training
+
+                DecisionTreeTraining dtModel = new DecisionTreeTraining(
+			asymmetricBit, 
+			pidMapper, 
+			senderQueue, 
+			partyId, 
+			tiShares.binaryShares, 
+			tiShares.decimalShares, 
+			tiShares.equalityShares, 
+			args,
+			partyCount,
+			protocolIdQueue, 
+			modelId
+			
+			);
+
+                dtModel.trainDecisionTree();
+                break;
             
+            case "ExtraTrees":
+                //Extra Trees
+                ExtraTreesTraining extraTreesModel = new ExtraTreesTraining(asymmetricBit, pidMapper, senderQueue, partyId, partyCount, tiShares.rowShares, tiShares.colShares, tiShares.decimalShares, tiShares.binaryShares, tiShares.wholeNumShares, tiShares.equalityShares, args, protocolIdQueue, modelId);
+                extraTreesModel.runModel();
+                break;
+                
             default:
                 // test model
                 TestModel testModel = new TestModel(tiShares.binaryShares,

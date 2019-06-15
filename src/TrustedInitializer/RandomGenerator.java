@@ -7,6 +7,8 @@ package TrustedInitializer;
 
 import Utility.Constants;
 import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.Collections;
 
 /**
  *
@@ -97,7 +99,7 @@ public class RandomGenerator {
             BigInteger U = new BigInteger(Constants.INTEGER_PRECISION, rand).mod(Zq);
             BigInteger V = new BigInteger(Constants.INTEGER_PRECISION, rand).mod(Zq);
             BigInteger W = U.multiply(V).mod(Zq);
-            
+
             BigInteger usum = BigInteger.ZERO, vsum = BigInteger.ZERO, wsum = BigInteger.ZERO;
             for (int j = 0; j < clientCount - 1; j++) {
                 TripleReal t = new TripleReal();
@@ -163,5 +165,92 @@ public class RandomGenerator {
             tiShare[clientCount - 1].addTruncationPair(t);
         }
 
+    }
+
+    public static void generateEqualityShares(int equalityCount, int clientCount,
+            TIShare[] tiShare) {
+        java.util.Random rand = new java.util.Random();
+        for (int i = 0; i < equalityCount; i++) {
+            int R = rand.nextInt(Constants.PRIME - 1) + 1;
+            int rsum = 0;
+            for (int j = 0; j < clientCount - 1; j++) {
+                int r = rand.nextInt(Constants.PRIME);
+                rsum += r;
+                tiShare[j].addEqualityShare(r);
+            }
+            int r = Math.floorMod(R - rsum, Constants.PRIME);
+            tiShare[clientCount - 1].addEqualityShare(r);
+        }
+
+    }
+
+    public static void generateRowShares(int rowCount, int colCount, int treeCount, int clientCount, TIShare[] tiShare) {
+        System.out.println("Generating " + rowCount + " row shares");
+        java.util.Random rand = new java.util.Random();
+        for (int treeNum = 0; treeNum < treeCount; treeNum++) {
+            for (int i = 0; i < colCount; i++) {
+                int r = rand.nextInt(rowCount);
+                for (int j = 0; j < rowCount; j++) {
+                    int valueToBeShared = (j == r) ? 1 : 0;
+                    int sum = 0;
+                    for (int k = 0; k < clientCount - 1; k++) {
+                        int currValue = rand.nextInt(Constants.PRIME);
+                        sum = Math.floorMod(sum + currValue, Constants.PRIME);
+                        tiShare[k].addRowShare(i, currValue, treeNum);
+                    }
+                    int currValue = Math.floorMod(valueToBeShared - sum, Constants.PRIME);
+                    tiShare[clientCount - 1].addRowShare(i, currValue, treeNum);
+                }
+            }
+        }
+    }
+
+    public static void generateColShares(int featureCount, int treeCount, int colCount, int clientCount, TIShare[] tiShare) {
+        System.out.println("Generating" + treeCount + " col shares");
+        ArrayList<Integer> helperList, finalList;
+        java.util.Random rand = new java.util.Random();
+        for (int i = 0; i < treeCount; i++) {
+            helperList = new ArrayList<>();
+            finalList = new ArrayList<>(Collections.nCopies(colCount, 0));
+            for (int k = 0; k < colCount; k++) {
+                helperList.add(k);
+            }
+            int boundary = colCount;
+            for (int l = 0; l < featureCount; l++) {
+                int r = rand.nextInt(boundary);
+                Collections.swap(helperList, r, boundary - 1);
+                boundary--;
+            }
+            for (int l = boundary; l < colCount; l++) {
+                finalList.set(helperList.get(l), 1);
+            }
+            for (int j = 0; j < colCount; j++) {
+                int valueToBeShared = finalList.get(j);
+                int sum = 0;
+                for (int k = 0; k < clientCount - 1; k++) {
+                    int currValue = rand.nextInt(Constants.PRIME);
+                    sum = Math.floorMod(sum + currValue, Constants.PRIME);
+                    tiShare[k].addColShare(i, currValue);
+                }
+                int currValue = Math.floorMod(valueToBeShared - sum, Constants.PRIME);
+                tiShare[clientCount - 1].addColShare(i, currValue);
+            }
+        }
+    }
+
+    static void generateWholeNumShares(int classValueCount, int clientCount, TIShare[] tiShare) {
+        System.out.println("Generating whole num shares");
+        java.util.Random rand = new java.util.Random();
+        for (int classValue = 0; classValue < classValueCount; classValue++) {
+            int valueToBeShared = classValue;
+            int sum = 0;
+            for (int k = 0; k < clientCount - 1; k++) {
+                int currValue = rand.nextInt(Constants.PRIME);
+                sum = Math.floorMod(sum + currValue, Constants.PRIME);
+                tiShare[k].addWholeNumShare(currValue);
+            }
+            int currValue = Math.floorMod(valueToBeShared - sum, Constants.PRIME);
+            tiShare[clientCount - 1].addWholeNumShare(currValue);
+        }
     }
 }
