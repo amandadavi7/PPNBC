@@ -144,6 +144,35 @@ public class FileIO {
 
     }
 
+    public static List<List<Integer>> loadIntMatrixFromFile(String sourceFile) {
+        
+        List<List<Integer>> ret = new ArrayList<>();
+
+        try {
+            Scanner inputStream = new Scanner (new File(sourceFile));
+            while(inputStream.hasNextLine()) {
+
+                ret.add(
+                    Arrays.asList(
+                        Stream.of(inputStream.nextLine().split(","))
+                        .map(Integer::valueOf).toArray(Integer[]::new)
+                    ));
+            }
+            inputStream.close();
+
+        } catch (FileNotFoundException ex) {
+            LOGGER.log(Level.SEVERE, "File not found: ", ex);
+        }
+
+        for(int i=0; i<ret.size(); i++) {
+            for(int j=0; j<ret.get(0).size(); j++) {
+                System.out.print(ret.get(i).get(j) + " ");
+            }
+            System.out.println();
+        }
+
+        return ret;
+    }
     /**
      * Load list of values from file as BigInteger
      *

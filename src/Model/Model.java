@@ -27,6 +27,7 @@ public class Model {
     int partyCount;
     int asymmetricBit;
     int modelProtocolId;
+    int threadID;
     
     /**
      * 
@@ -40,7 +41,7 @@ public class Model {
      */
     public Model(ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper, 
             BlockingQueue<Message> senderQueue, int clientId, int asymmetricBit,
-            int partyCount, Queue<Integer> protocolIdQueue, int protocolID) {
+            int partyCount, Queue<Integer> protocolIdQueue, int protocolID, int threadID) {
 
         this.asymmetricBit = asymmetricBit;
         this.partyCount = partyCount;
@@ -49,6 +50,7 @@ public class Model {
         this.pidMapper = pidMapper;
         this.modelProtocolId = protocolID;
         this.protocolIdQueue = protocolIdQueue;
+        this.threadID = threadID;
         protocolIdQueue.add(protocolID);
         pidMapper.putIfAbsent(protocolIdQueue, new LinkedBlockingQueue<>());
 

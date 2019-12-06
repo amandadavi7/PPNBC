@@ -75,9 +75,9 @@ public class RandomForestDTScoring extends DecisionTreeScoring implements Callab
             BlockingQueue<Message> senderQueue, int clientId,
             List<TripleByte> binaryTriples, List<TripleInteger> decimalTriples,
             int partyCount, String[] args, Queue<Integer> protocolIdQueue,
-            int protocolID) {
+            int protocolID, int threadID) {
 
-        super(asymmetricBit, pidMapper, senderQueue, clientId, binaryTriples, partyCount, args, protocolIdQueue, protocolID);
+        super(asymmetricBit, pidMapper, senderQueue, clientId, binaryTriples, partyCount, args, protocolIdQueue, protocolID, threadID);
 
         pid = 0;
         tiBinaryStartIndex = 0;
@@ -184,7 +184,7 @@ public class RandomForestDTScoring extends DecisionTreeScoring implements Callab
         init();
 
         convertThresholdsToBits();
-        LOGGER.log(Level.FINE, "Converted Thresholds to Bits");
+        LOGGER.fine("Converted Thresholds to Bits");
 
         if (!partyHasTree) {
             convertTestVectorToBits(testVectorsDecimal.get(0));
@@ -222,7 +222,6 @@ public class RandomForestDTScoring extends DecisionTreeScoring implements Callab
     /**
      * calls the PolynomialComputing class and gets the final output
      *
-     * @param startpid
      */
     @Override
     void computePolynomialEquation() throws InterruptedException, ExecutionException {
@@ -250,7 +249,7 @@ public class RandomForestDTScoring extends DecisionTreeScoring implements Callab
                     depth, comparisonOutputs, binaryTiShares.subList(tiBinaryStartIndex,
                             tiBinaryStartIndex + polynomialComputationTiCount),
                     new LinkedList<>(protocolIdQueue), pidMapper, commonSender,
-                    pid, clientId, asymmetricBit, partyCount);
+                    pid, clientId, asymmetricBit, partyCount, threadID);
 
             pid++;
             //tiBinaryStartIndex += polynomialComputationTiCount;
@@ -280,11 +279,11 @@ public class RandomForestDTScoring extends DecisionTreeScoring implements Callab
         if(asymmetricBit == 1) {
             xorModule = new OR_XOR(Arrays.asList(result), dummy, decimalTiShares.subList(0, leafNodes), 
                     asymmetricBit, 2, pidMapper, commonSender, new LinkedList<>(protocolIdQueue), 
-                    clientId, prime, pid, partyCount);
+                    clientId, prime, pid, partyCount, threadID);
         } else {
             xorModule = new OR_XOR(dummy, Arrays.asList(result), decimalTiShares.subList(0, leafNodes), 
                     asymmetricBit, 2, pidMapper, commonSender, new LinkedList<>(protocolIdQueue), 
-                    clientId, prime, pid, partyCount);
+                    clientId, prime, pid, partyCount, threadID);
         }
         Future<Integer[]> xorTask = es.submit(xorModule);
         one_hot_encoding_leaf_predicted = xorTask.get();
@@ -295,7 +294,7 @@ public class RandomForestDTScoring extends DecisionTreeScoring implements Callab
             for(int i = 0; i < classLabelCount; i++) {
                 DotProductInteger dpModule = new DotProductInteger(Arrays.asList(one_hot_encoding_leaf_predicted), 
                         dummy, decimalTiShares, pidMapper, commonSender, 
-                        new LinkedList<>(protocolIdQueue), clientId, prime, pid, asymmetricBit, partyCount);
+                        new LinkedList<>(protocolIdQueue), clientId, prime, pid, asymmetricBit, partyCount, threadID);
                 dpTaskList.add(es.submit(dpModule));
                 pid++;
             }
@@ -304,7 +303,7 @@ public class RandomForestDTScoring extends DecisionTreeScoring implements Callab
                 DotProductInteger dpModule = new DotProductInteger(Arrays.asList(one_hot_encoding_leaf_predicted),
                         Arrays.asList(leafToClassIndexMappingTransposed[i]), decimalTiShares,
                         pidMapper, commonSender, new LinkedList<>(protocolIdQueue),
-                        clientId, prime, pid, asymmetricBit, partyCount);
+                        clientId, prime, pid, asymmetricBit, partyCount, threadID);
                 dpTaskList.add(es.submit(dpModule));
                 pid++;
             }

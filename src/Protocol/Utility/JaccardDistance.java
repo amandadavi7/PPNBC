@@ -53,9 +53,9 @@ public class JaccardDistance extends CompositeProtocol implements Callable<List<
             List<Integer> testShare, int asymmetricBit, List<TripleInteger> tiShares,
             ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper, BlockingQueue<Message> senderQueue,
             int clientId, int prime,
-            int protocolID, Queue<Integer> protocolIdQueue, int partyCount) {
+            int protocolID, Queue<Integer> protocolIdQueue, int partyCount,int threadID) {
 
-        super(protocolID, pidMapper, senderQueue, protocolIdQueue, clientId, asymmetricBit, partyCount);
+        super(protocolID, pidMapper, senderQueue, protocolIdQueue, clientId, asymmetricBit, partyCount,threadID);
 
         this.trainingShares = trainingShares;
         this.testShare = testShare;
@@ -83,7 +83,7 @@ public class JaccardDistance extends CompositeProtocol implements Callable<List<
             OR_XOR orModule = new OR_XOR(trainingShares.get(i), testShare,
                     decimalTiShares.subList(tiStartIndex, tiStartIndex + attrLength),
                     asymmetricBit, 1, pidMapper, senderQueue,
-                    new LinkedList<>(protocolIdQueue), clientID, prime, startpid, partyCount);
+                    new LinkedList<>(protocolIdQueue), clientID, prime, startpid, partyCount,threadID);
 
             Future<Integer[]> orTask = es.submit(orModule);
             orTaskList.add(orTask);
@@ -93,7 +93,7 @@ public class JaccardDistance extends CompositeProtocol implements Callable<List<
             OR_XOR xorModule = new OR_XOR(trainingShares.get(i), testShare,
                     decimalTiShares.subList(tiStartIndex, tiStartIndex + attrLength),
                     asymmetricBit, 2, pidMapper, senderQueue,
-                    new LinkedList<>(protocolIdQueue), clientID, prime, startpid, partyCount);
+                    new LinkedList<>(protocolIdQueue), clientID, prime, startpid, partyCount,threadID);
 
             Future<Integer[]> xorTask = es.submit(xorModule);
             xorTaskList.add(xorTask);

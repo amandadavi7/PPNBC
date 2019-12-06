@@ -8,7 +8,7 @@ package Model;
 import Communication.Message;
 import Protocol.MatrixInversion;
 import Protocol.Utility.MatrixMultiplication;
-import TrustedInitializer.TripleReal;
+import TrustedInitializer.TripleBigInteger;
 import TrustedInitializer.TruncationPair;
 import Utility.Constants;
 import Utility.FileIO;
@@ -39,7 +39,7 @@ public class LinearRegressionTraining extends Model {
     BigInteger[][] y;
 
     static List<TruncationPair> tiTruncationPair;
-    static List<TripleReal> realTriples;
+    static List<TripleBigInteger> realTriples;
 
     static BigInteger prime;
     String outputPath;
@@ -58,14 +58,14 @@ public class LinearRegressionTraining extends Model {
      * @param protocolIdQueue 
      * @param protocolID 
      */
-    public LinearRegressionTraining(List<TripleReal> realTriples,
+    public LinearRegressionTraining(List<TripleBigInteger> realTriples,
             List<TruncationPair> tiTruncationPair,
             ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper, 
             BlockingQueue<Message> senderQueue,
             int clientId, int asymmetricBit, int partyCount, String[] args,
-            Queue<Integer> protocolIdQueue, int protocolID) {
+            Queue<Integer> protocolIdQueue, int protocolID, int threadID) {
 
-        super(pidMapper, senderQueue, clientId, asymmetricBit, partyCount, protocolIdQueue, protocolID);
+        super(pidMapper, senderQueue, clientId, asymmetricBit, partyCount, protocolIdQueue, protocolID, threadID);
         LinearRegressionTraining.tiTruncationPair = tiTruncationPair;
         LinearRegressionTraining.realTriples = realTriples;
         globalProtocolId = 0;
@@ -92,7 +92,7 @@ public class LinearRegressionTraining extends Model {
         MatrixInversion matrixInversion = new MatrixInversion(gamma1,
                 realTriples, tiTruncationPair, globalProtocolId, pidMapper, commonSender,
                 new LinkedList<>(protocolIdQueue), clientId, asymmetricBit,
-                partyCount, prime);
+                partyCount, prime, threadID);
 
         globalProtocolId++;
 
@@ -101,7 +101,7 @@ public class LinearRegressionTraining extends Model {
         MatrixMultiplication matrixMultiplication = new MatrixMultiplication(gamma1Inv,
                 gamma2, realTriples, tiTruncationPair, clientId, prime, globalProtocolId,
                 asymmetricBit, pidMapper, commonSender,
-                new LinkedList<>(protocolIdQueue), partyCount);
+                new LinkedList<>(protocolIdQueue), partyCount, threadID);
 
         BigInteger[][] beta = matrixMultiplication.call();
         

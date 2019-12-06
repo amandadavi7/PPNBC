@@ -6,9 +6,9 @@
 package Model;
 
 import Communication.Message;
-import Protocol.DotProductReal;
+import Protocol.DotProductBigInteger;
 import Protocol.Utility.BatchTruncation;
-import TrustedInitializer.TripleReal;
+import TrustedInitializer.TripleBigInteger;
 import TrustedInitializer.TruncationPair;
 import Utility.Constants;
 import Utility.FileIO;
@@ -36,7 +36,7 @@ public class LinearRegressionEvaluation extends Model {
     BigInteger prime;
     String outputPath;
     int testCases;
-    List<TripleReal> realTiShares;
+    List<TripleBigInteger> realTiShares;
     List<TruncationPair> truncationTiShares;
 
     /**
@@ -54,13 +54,13 @@ public class LinearRegressionEvaluation extends Model {
      * @param protocolID
      *
      */
-    public LinearRegressionEvaluation(List<TripleReal> realTriples,
+    public LinearRegressionEvaluation(List<TripleBigInteger> realTriples,
             List<TruncationPair> truncationShares, int asymmetricBit,
             ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper,
             BlockingQueue<Message> senderQueue, int clientId, int partyCount,
-            String[] args, Queue<Integer> protocolIdQueue, int protocolID) {
+            String[] args, Queue<Integer> protocolIdQueue, int protocolID, int threadID) {
 
-        super(pidMapper, senderQueue, clientId, asymmetricBit, partyCount, protocolIdQueue, protocolID);
+        super(pidMapper, senderQueue, clientId, asymmetricBit, partyCount, protocolIdQueue, protocolID, threadID);
         this.realTiShares = realTriples;
         this.truncationTiShares = truncationShares;
 
@@ -104,12 +104,12 @@ public class LinearRegressionEvaluation extends Model {
         int tiStartIndex = 0;
         for (int i = 0; i < testCases; i++) {
 
-            DotProductReal DPModule = new DotProductReal(x.get(i),
+            DotProductBigInteger DPModule = new DotProductBigInteger(x.get(i),
                     beta, realTiShares.subList(
                             tiStartIndex, tiStartIndex + x.get(i).size()),
                     pidMapper, commonSender, 
                     new LinkedList<>(protocolIdQueue),
-                    clientId, prime, i, asymmetricBit, partyCount);
+                    clientId, prime, i, asymmetricBit, partyCount, threadID);
 
             Future<BigInteger> DPTask = es.submit(DPModule);
             taskList.add(DPTask);
@@ -126,7 +126,7 @@ public class LinearRegressionEvaluation extends Model {
                 truncationTiShares, pidMapper, 
                 commonSender,
                 new LinkedList<>(protocolIdQueue),
-                clientId, prime, testCases, asymmetricBit, partyCount);
+                clientId, prime, testCases, asymmetricBit, partyCount, threadID);
         Future<BigInteger[]> truncationTask = es.submit(truncationModule);
 
         y = truncationTask.get();        

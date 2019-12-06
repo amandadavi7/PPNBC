@@ -32,10 +32,10 @@ public class CompositeProtocol extends Protocol {
             ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper, 
             BlockingQueue<Message> senderQueue,
             Queue<Integer> protocolIdQueue,
-            int clientId, int asymmetricBit, int partyCount) {
+            int clientId, int asymmetricBit, int partyCount, int threadID) {
 
         super(protocolId, pidMapper, senderQueue, protocolIdQueue, clientId, 
-                asymmetricBit, partyCount);
+                asymmetricBit, partyCount, threadID);
         
     }
 }

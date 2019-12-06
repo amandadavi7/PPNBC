@@ -51,9 +51,9 @@ public class DotProductByte extends DotProduct implements Callable<Integer> {
             ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper,
             BlockingQueue<Message> senderqueue,
             Queue<Integer> protocolIdQueue,
-            int clientID, int prime, int protocolID, int asymmetricBit, int partyCount) {
+            int clientID, int prime, int protocolID, int asymmetricBit, int partyCount,int threadID) {
 
-        super(pidMapper, senderqueue, protocolIdQueue, clientID, protocolID, asymmetricBit, partyCount);
+        super(pidMapper, senderqueue, protocolIdQueue, clientID, protocolID, asymmetricBit, partyCount,threadID);
 
         this.xShares = xShares;
         this.yShares = yShares;
@@ -88,7 +88,7 @@ public class DotProductByte extends DotProduct implements Callable<Integer> {
             multCompletionService.submit(new BatchMultiplicationByte(xShares.subList(i, toIndex),
                     yShares.subList(i, toIndex), tiShares.subList(i, toIndex), pidMapper,
                     senderQueue, new LinkedList<>(protocolIdQueue),
-                    clientID, prime, startpid, asymmetricBit, protocolId, partyCount));
+                    clientID, prime, startpid, asymmetricBit, protocolId, partyCount,threadID));
 
             startpid++;
             i = toIndex;

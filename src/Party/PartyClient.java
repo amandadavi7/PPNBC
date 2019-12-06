@@ -9,6 +9,7 @@ import Communication.Message;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.net.Socket;
+import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
@@ -25,7 +26,7 @@ public class PartyClient implements Runnable {
     ObjectInputStream iStream = null;
     Socket receiveSocket = null;
     ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper;
-
+    List<ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>>> pidMapperList=null;
     /**
      * Constructor
      * takes common receiver queue, socket and input stream object
@@ -40,8 +41,15 @@ public class PartyClient implements Runnable {
         this.iStream = iStream;
     }
 
+    public PartyClient(List<ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>>> pidMapperList,
+                       Socket socket, ObjectInputStream iStream) {
+        this.pidMapperList = pidMapperList;
+        this.receiveSocket = socket;
+        this.iStream = iStream;
+    }
+
     /**
-     * receive message from BA and add to receiver queue
+     * receive message from other party and add to receiver queue
      */
     @Override
     public void run() {
@@ -50,8 +58,22 @@ public class PartyClient implements Runnable {
             Message msgs;
             try {
                 msgs = (Message) iStream.readObject();
-                pidMapper.putIfAbsent(msgs.getProtocolIDs(), new LinkedBlockingQueue<>());
-                pidMapper.get(msgs.getProtocolIDs()).add(msgs);
+                if(pidMapperList!=null){
+                    ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> tempMapper = pidMapperList.get(msgs.getThreadID());
+                    if (tempMapper.contains(msgs.getProtocolIDs())) {
+                        System.out.print("Queue already contains protocol IDs:");
+                        for (int x : msgs.getProtocolIDs()) {
+                            System.out.print(" " + x);
+                        }
+                        System.out.println("");
+                    }
+                    tempMapper.putIfAbsent(msgs.getProtocolIDs(), new LinkedBlockingQueue<>());
+                    tempMapper.get(msgs.getProtocolIDs()).add(msgs);
+                }else{
+                    pidMapper.putIfAbsent(msgs.getProtocolIDs(), new LinkedBlockingQueue<>());
+                    pidMapper.get(msgs.getProtocolIDs()).add(msgs);
+                }
+
             } catch (IOException ex) {
                 try {
                     iStream.close();

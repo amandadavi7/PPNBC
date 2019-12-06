@@ -57,9 +57,9 @@ public class LinearRegressionEvaluationDAMF extends Model {
             BlockingQueue<Message> senderQueue,
             int clientId,
             int partyCount, String[] args,
-            Queue<Integer> protocolIdQueue, int protocolID) {
+            Queue<Integer> protocolIdQueue, int protocolID, int threadID) {
 
-        super(pidMapper, senderQueue, clientId, asymmetricBit, partyCount, protocolIdQueue, protocolID);
+        super(pidMapper, senderQueue, clientId, asymmetricBit, partyCount, protocolIdQueue, protocolID, threadID);
 
         prime = BigInteger.valueOf(2).pow(Constants.INTEGER_PRECISION
                 + 2 * Constants.DECIMAL_PRECISION + 1).nextProbablePrime();  //Zq must be a prime field
@@ -92,6 +92,7 @@ public class LinearRegressionEvaluationDAMF extends Model {
         // Broadcast random ri
         Message senderMessage = new Message(r,
                 clientId, protocolIdQueue, true);
+        senderMessage.setThreadID(threadID);
         commonSender.put(senderMessage);
 
         if (asymmetricBit == 1) {

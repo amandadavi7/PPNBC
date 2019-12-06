@@ -59,8 +59,8 @@ public class BatcherSortKNN extends CompositeProtocol implements Callable<List<L
             ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper,
             BlockingQueue<Message> senderQueue, int clientId, int prime,
             int protocolID, Queue<Integer> protocolIdQueue, int partyCount, int K,
-            int bitLength) {
-        super(protocolID, pidMapper, senderQueue, protocolIdQueue, clientId, asymmetricBit, partyCount);
+            int bitLength,int threadID) {
+        super(protocolID, pidMapper, senderQueue, protocolIdQueue, clientId, asymmetricBit, partyCount,threadID);
 
         this.KJaccardDistances = KJaccardDistances;
         this.K = K;
@@ -107,7 +107,7 @@ public class BatcherSortKNN extends CompositeProtocol implements Callable<List<L
                     binaryTiShares.subList(binaryTiIndex, binaryTiIndex + ccTICount), 
                     pidMapper, senderQueue, clientID, prime, 
                     Constants.BINARY_PRIME, pid, new LinkedList<>(protocolIdQueue), 
-                    partyCount, bitLength);
+                    partyCount, bitLength,threadID);
 
             Future<Integer> resultTask = es.submit(ccModule);
             pid++;
@@ -172,7 +172,7 @@ public class BatcherSortKNN extends CompositeProtocol implements Callable<List<L
                     binaryTiShares.subList(binaryTiIndex, binaryTiIndex + ccTICount), 
                     pidMapper, senderQueue, clientID, prime, 
                     Constants.BINARY_PRIME, pid, new LinkedList<>(protocolIdQueue), 
-                    partyCount, bitLength);
+                    partyCount, bitLength,threadID);
 
             Future<Integer> resultTask = es.submit(ccModule);
             pid++;
@@ -212,7 +212,7 @@ public class BatcherSortKNN extends CompositeProtocol implements Callable<List<L
         Integer[] c = CompareAndConvertField.changeBinaryToDecimalField(Arrays.asList(comparisonOutput),
                 decimalTiShares.subList(decimalTiIndex, decimalTiIndex + 1), pid,
                 pidMapper, senderQueue, protocolIdQueue, asymmetricBit, clientID,
-                prime, partyCount);
+                prime, partyCount,threadID);
 
         pid++;
         //decimalTiIndex++;
@@ -224,7 +224,7 @@ public class BatcherSortKNN extends CompositeProtocol implements Callable<List<L
         BatchMultiplicationInteger batchMult = new BatchMultiplicationInteger(C,
                 KJaccardDistances.get(rightIndex), decimalTiShares.subList(decimalTiIndex, decimalTiIndex + 3),
                 pidMapper, senderQueue, new LinkedList<>(protocolIdQueue),
-                clientID, prime, pid, asymmetricBit, 0, partyCount);
+                clientID, prime, pid, asymmetricBit, 0, partyCount,threadID);
         pid++;
         //decimalTiIndex += 3;
 
@@ -233,7 +233,7 @@ public class BatcherSortKNN extends CompositeProtocol implements Callable<List<L
         BatchMultiplicationInteger batchMult2 = new BatchMultiplicationInteger(notC,
                 KJaccardDistances.get(leftIndex), decimalTiShares.subList(decimalTiIndex, decimalTiIndex + 3),
                 pidMapper, senderQueue, new LinkedList<>(protocolIdQueue),
-                clientID, prime, pid, asymmetricBit, 0, partyCount);
+                clientID, prime, pid, asymmetricBit, 0, partyCount,threadID);
         pid++;
         //decimalTiIndex += 3;
 
@@ -243,7 +243,7 @@ public class BatcherSortKNN extends CompositeProtocol implements Callable<List<L
         BatchMultiplicationInteger batchMult3 = new BatchMultiplicationInteger(C,
                 KJaccardDistances.get(leftIndex), decimalTiShares.subList(decimalTiIndex, decimalTiIndex + 3),
                 pidMapper, senderQueue, new LinkedList<>(protocolIdQueue),
-                clientID, prime, pid, asymmetricBit, 0, partyCount);
+                clientID, prime, pid, asymmetricBit, 0, partyCount,threadID);
         pid++;
         //decimalTiIndex += 3;
 
@@ -252,7 +252,7 @@ public class BatcherSortKNN extends CompositeProtocol implements Callable<List<L
         BatchMultiplicationInteger batchMult4 = new BatchMultiplicationInteger(notC,
                 KJaccardDistances.get(rightIndex), decimalTiShares.subList(decimalTiIndex, decimalTiIndex + 3),
                 pidMapper, senderQueue, new LinkedList<>(protocolIdQueue),
-                clientID, prime, pid, asymmetricBit, 0, partyCount);
+                clientID, prime, pid, asymmetricBit, 0, partyCount,threadID);
         pid++;
         //decimalTiIndex += 3;
 

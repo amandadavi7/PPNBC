@@ -145,4 +145,21 @@ public class LocalMath {
 
         return error_sum/totalPredictions;
     }
+
+    /* truncate locally on a power two ring
+
+		current implementation works for only two parties
+     */
+    public static BigInteger truncate(BigInteger z, BigInteger prime, 
+    	int acc, int asymmetricBit) {
+
+    	if(asymmetricBit == 1) {
+
+    		return prime.subtract( (prime.subtract(z)).shiftRight(acc) );
+
+    	} else {
+
+    		return z.shiftRight(acc);
+		}
+    }
 }

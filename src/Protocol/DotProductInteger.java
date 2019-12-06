@@ -54,9 +54,9 @@ public class DotProductInteger extends DotProduct implements Callable<Integer> {
             ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper,
             BlockingQueue<Message> senderqueue,
             Queue<Integer> protocolIdQueue,
-            int clientID, int prime, int protocolID, int asymmetricBit, int partyCount) {
+            int clientID, int prime, int protocolID, int asymmetricBit, int partyCount,int threadID) {
 
-        super(pidMapper, senderqueue, protocolIdQueue, clientID, protocolID, asymmetricBit, partyCount);
+        super(pidMapper, senderqueue, protocolIdQueue, clientID, protocolID, asymmetricBit, partyCount,threadID);
 
         this.xShares = xShares;
         this.yShares = yShares;
@@ -93,7 +93,7 @@ public class DotProductInteger extends DotProduct implements Callable<Integer> {
             multCompletionService.submit(new BatchMultiplicationInteger(xShares.subList(i, toIndex),
                     yShares.subList(i, toIndex), tiShares.subList(i, toIndex),
                     pidMapper, senderQueue, new LinkedList<>(protocolIdQueue),
-                    clientID, prime, startpid, asymmetricBit, protocolId, partyCount));
+                    clientID, prime, startpid, asymmetricBit, protocolId, partyCount,threadID));
 
             startpid++;
             i = toIndex;
@@ -105,11 +105,17 @@ public class DotProductInteger extends DotProduct implements Callable<Integer> {
         for (i = 0; i < startpid; i++) {
             Future<Integer[]> prod = multCompletionService.take();
             Integer[] products = prod.get();
+	    
+        
+	
+	    /*System.out.println("Intermediate DP results:");
+		for(int j : products) System.out.print(j + " ");
+		System.out.println();*/
+		
             for (int j : products) {
                 dotProduct = Math.floorMod(dotProduct + j, prime);
             }
-        }
-
+	}
         LOGGER.log(Level.FINE, "dot product:{0}, protocol id:{1}", new Object[]{dotProduct, protocolId});
         return dotProduct;
 

@@ -38,10 +38,10 @@ public class Truncation extends Protocol implements Callable<BigInteger> {
             BlockingQueue<Message> senderqueue,
             Queue<Integer> protocolIdQueue,
             int clientID, BigInteger prime,
-            int protocolID, int asymmetricBit, int partyCount) {
+            int protocolID, int asymmetricBit, int partyCount,int threadID) {
 
         super(protocolID, pidMapper, senderqueue, protocolIdQueue, clientID,
-                asymmetricBit, partyCount);
+                asymmetricBit, partyCount,threadID);
         this.wShares = wShares;
         this.prime = prime;
         this.truncationShares = tiShares;
@@ -65,7 +65,7 @@ public class Truncation extends Protocol implements Callable<BigInteger> {
         // broadcast it to n parties
         Message senderMessage = new Message(zShares,
                 clientID, protocolIdQueue);
-
+        senderMessage.setThreadID(threadID);
         senderQueue.put(senderMessage);
     }
 

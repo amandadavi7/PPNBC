@@ -59,9 +59,9 @@ public class CrossMultiplyCompare extends CompositeProtocol implements Callable<
             List<TripleByte> binaryTiShares, ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper,
             BlockingQueue<Message> senderQueue, int clientId, int decimalPrime,
             int binaryPrime, int protocolID, Queue<Integer> protocolIdQueue,
-            int partyCount, int bitLength) {
+            int partyCount, int bitLength,int threadID) {
 
-        super(protocolID, pidMapper, senderQueue, protocolIdQueue, clientId, asymmetricBit, partyCount);
+        super(protocolID, pidMapper, senderQueue, protocolIdQueue, clientId, asymmetricBit, partyCount,threadID);
 
         this.numerator1 = numerator1;
         this.denominator1 = denominator1;
@@ -94,7 +94,7 @@ public class CrossMultiplyCompare extends CompositeProtocol implements Callable<
         MultiplicationInteger multiplicationModule = new MultiplicationInteger(numerator1,
                 denominator2, decimalTiShares.get(decimalTiIndex), pidMapper,
                 senderQueue, new LinkedList<>(protocolIdQueue), clientID,
-                decimalPrime, pid, asymmetricBit, 0, partyCount);
+                decimalPrime, pid, asymmetricBit, 0, partyCount,threadID);
 
         Future<Integer> firstCrossMultiplication = es.submit(multiplicationModule);
         pid++;
@@ -103,7 +103,7 @@ public class CrossMultiplyCompare extends CompositeProtocol implements Callable<
         MultiplicationInteger multiplicationModule2 = new MultiplicationInteger(numerator2,
                 denominator1, decimalTiShares.get(decimalTiIndex),
                 pidMapper, senderQueue, new LinkedList<>(protocolIdQueue), clientID,
-                decimalPrime, pid, asymmetricBit, 0, partyCount);
+                decimalPrime, pid, asymmetricBit, 0, partyCount,threadID);
 
         Future<Integer> secondCrossMultiplication = es.submit(multiplicationModule2);
         pid++;
@@ -116,7 +116,7 @@ public class CrossMultiplyCompare extends CompositeProtocol implements Callable<
 
         int result = CompareAndConvertField.compareIntegers(first, second, binaryTiShares,
                 asymmetricBit, pidMapper, senderQueue, protocolIdQueue, clientID,
-                pid, bitLength, partyCount, pid, false, null);
+                pid, bitLength, partyCount, pid, false, null,threadID);
 
         //binaryTiIndex += 2*bitDTICount + comparisonTICount;
         return result;

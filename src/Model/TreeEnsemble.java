@@ -12,6 +12,7 @@ import TrustedInitializer.TripleByte;
 import TrustedInitializer.TripleInteger;
 import Utility.Constants;
 import Utility.Logging;
+
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -50,11 +51,11 @@ public class TreeEnsemble extends Model {
 
     /**
      * Constructor:
-     *
+     * <p>
      * Party 1: contains the decision trees Each tree is stored in a properties
      * file the metadata is passed to party as "randomforeststored" contains
      * number of trees and the names of the property files
-     *
+     * <p>
      * party 2: csv file, properties file with name "randomforestproperties" -
      * list of properties filenames about all the trees
      *
@@ -70,12 +71,12 @@ public class TreeEnsemble extends Model {
      * @param protocolID
      */
     public TreeEnsemble(int asymmetricBit,
-            ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper,
-            BlockingQueue<Message> senderQueue, int clientId, List<TripleByte> binaryTriples,
-            List<TripleInteger> decimalTriples, int partyCount, String[] args,
-            Queue<Integer> protocolIdQueue, int protocolID) throws IOException {
+                        ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper,
+                        BlockingQueue<Message> senderQueue, int clientId, List<TripleByte> binaryTriples,
+                        List<TripleInteger> decimalTriples, int partyCount, String[] args,
+                        Queue<Integer> protocolIdQueue, int protocolID, int threadID) throws IOException {
 
-        super(pidMapper, senderQueue, clientId, asymmetricBit, partyCount, protocolIdQueue, protocolID);
+        super(pidMapper, senderQueue, clientId, asymmetricBit, partyCount, protocolIdQueue, protocolID, threadID);
 
         initializeModelVariables(args);
         pid = 0;
@@ -84,7 +85,7 @@ public class TreeEnsemble extends Model {
         treeOutputs = new ArrayList<>();
         LOGGER = Logger.getLogger(TreeEnsemble.class.getName());
         this.prime = Constants.PRIME;
-        if(prime == -1) {
+        if (prime == -1) {
             throw new IllegalArgumentException("Please add a valid prime to the config file");
         }
     }
@@ -139,6 +140,7 @@ public class TreeEnsemble extends Model {
 
     /**
      * Main method
+     *
      * @throws java.lang.InterruptedException
      * @throws java.util.concurrent.ExecutionException
      */
@@ -152,7 +154,7 @@ public class TreeEnsemble extends Model {
         // TODO - How to handle TiShares here????
         String args[];
         for (int i = 0; i < treeCount; i++) {
-            LOGGER.log(Level.INFO, "calling RF: {0}", pid);
+            LOGGER.info("calling RF: " + pid);
             if (partyHasTrees) {
                 args = new String[1];
                 args[0] = "storedtree=" + propertyFiles[i];
@@ -164,7 +166,7 @@ public class TreeEnsemble extends Model {
 
             RandomForestDTScoring DTScoreModule = new RandomForestDTScoring(asymmetricBit,
                     pidMapper, commonSender, clientId, binaryTiShares, decimalTiShares,
-                    partyCount, args, new LinkedList<>(protocolIdQueue), pid);
+                    partyCount, args, new LinkedList<>(protocolIdQueue), pid, threadID);
 
             Future<Integer[]> output = es.submit(DTScoreModule);
             taskList.add(output);
@@ -180,20 +182,20 @@ public class TreeEnsemble extends Model {
 
         int classLabelCount = treeOutputs.get(0).length;
         int[] weightedProbabilityVector = new int[classLabelCount];
-        
-        for(Integer[] output: treeOutputs) {
-            for(int i = 0; i < classLabelCount; i++) {
-                weightedProbabilityVector[i] = Math.floorMod(weightedProbabilityVector[i]+output[i], prime);
+
+        for (Integer[] output : treeOutputs) {
+            for (int i = 0; i < classLabelCount; i++) {
+                weightedProbabilityVector[i] = Math.floorMod(weightedProbabilityVector[i] + output[i], prime);
             }
         }
 
         LOGGER.log(Level.FINE, "weighted prob vector output{0}", Arrays.toString(weightedProbabilityVector));
 
         List<Future<List<Integer>>> bitDtaskList = new ArrayList<>();
-        for(int i = 0; i < classLabelCount; i++) {
-            BitDecomposition bitDModule = new BitDecomposition(weightedProbabilityVector[i], 
-                    binaryTiShares, asymmetricBit, bitLength, pidMapper, commonSender, 
-                    new LinkedList<>(protocolIdQueue), clientId, Constants.BINARY_PRIME, pid, partyCount);
+        for (int i = 0; i < classLabelCount; i++) {
+            BitDecomposition bitDModule = new BitDecomposition(weightedProbabilityVector[i],
+                    binaryTiShares, asymmetricBit, bitLength, pidMapper, commonSender,
+                    new LinkedList<>(protocolIdQueue), clientId, Constants.BINARY_PRIME, pid, partyCount, threadID);
             bitDtaskList.add(es.submit(bitDModule));
             pid++;
         }
@@ -206,7 +208,7 @@ public class TreeEnsemble extends Model {
 
         ArgMax argmaxModule = new ArgMax(bitSharesProbs, binaryTiShares, asymmetricBit,
                 pidMapper, commonSender, new LinkedList<>(protocolIdQueue), clientId,
-                Constants.BINARY_PRIME, pid, partyCount);
+                Constants.BINARY_PRIME, pid, partyCount, threadID);
         pid++;
 
         Future<Integer[]> classIndexResult = es.submit(argmaxModule);

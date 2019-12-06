@@ -38,10 +38,10 @@ public abstract class BatchMultiplication extends Protocol {
             BlockingQueue<Message> senderQueue,
             Queue<Integer> protocolIdQueue,
             int clientId,
-            int protocolID, int asymmetricBit, int parentID, int partyCount) {
+            int protocolID, int asymmetricBit, int parentID, int partyCount,int threadID) {
 
         super(protocolID, pidMapper, senderQueue, protocolIdQueue, clientId,
-                asymmetricBit, partyCount);
+                asymmetricBit, partyCount,threadID);
         this.parentID = parentID;
     }
 

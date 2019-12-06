@@ -65,9 +65,9 @@ public class SwapCircuitKNN extends CompositeProtocol implements Callable<Intege
             ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper,
             BlockingQueue<Message> senderQueue, int clientId, List<TripleInteger> tiShares,
             List<Integer> jaccardDistanceTraining, List<Integer> jaccardDistanceSorted,
-            List<Integer> jaccardDistanceSortedprev, int partyCount) {
+            List<Integer> jaccardDistanceSortedprev, int partyCount,int threadID) {
 
-        super(protocolID, pidMapper, senderQueue, protocolIdQueue, clientId, oneShare, partyCount);
+        super(protocolID, pidMapper, senderQueue, protocolIdQueue, clientId, oneShare, partyCount,threadID);
         this.trainingIndex = trainingIndex;
         this.position = position;
         this.comparisonResults = comparisonResults;
@@ -95,7 +95,7 @@ public class SwapCircuitKNN extends CompositeProtocol implements Callable<Intege
                 productComps, decimalTiShares.subList(decimalTiIndex, decimalTiIndex + 3),
                 pidMapper, senderQueue,
                 new LinkedList<>(protocolIdQueue), clientID, prime,
-                pid, asymmetricBit, 0, partyCount);
+                pid, asymmetricBit, 0, partyCount,threadID);
         Future<Integer[]> multTask1 = es.submit(cmNotCJdi);
         pid++;
         decimalTiIndex += 3;
@@ -106,7 +106,7 @@ public class SwapCircuitKNN extends CompositeProtocol implements Callable<Intege
                 C, decimalTiShares.subList(decimalTiIndex, decimalTiIndex + 3),
                 pidMapper, senderQueue,
                 new LinkedList<>(protocolIdQueue), clientID, prime,
-                pid, asymmetricBit, 0, partyCount);
+                pid, asymmetricBit, 0, partyCount,threadID);
         Future<Integer[]> multTask3 = es.submit(CJdj);
         pid++;
         //decimalTiIndex += 3;
@@ -122,7 +122,7 @@ public class SwapCircuitKNN extends CompositeProtocol implements Callable<Intege
                     notC, decimalTiShares.subList(decimalTiIndex, decimalTiIndex + 3),
                     pidMapper, senderQueue,
                     new LinkedList<>(protocolIdQueue), clientID, prime,
-                    pid, asymmetricBit, 0, partyCount);
+                    pid, asymmetricBit, 0, partyCount,threadID);
             Future<Integer[]> multTask2 = es.submit(notCprevJdprev);
             pid++;
             //decimalTiIndex += 3;

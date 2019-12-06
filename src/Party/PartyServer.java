@@ -46,20 +46,11 @@ public class PartyServer implements Runnable {
 
     /**
      * Continuously running thread that takes entries from sender queue and send
-     * them to BA
+     * them to other party
      */
     @Override
     public void run() {
 
-        try {
-            // first send the id for the BA to store
-            oStream.writeInt(clientId);
-            oStream.writeInt(asymmetricBit);
-            oStream.flush();
-        } catch (IOException ex) {
-            LOGGER.log(Level.SEVERE, "Error sending clientId", ex);
-            return;
-        }
         while (!(Thread.currentThread().isInterrupted())) {
             try {
                 Message msg = senderQueue.take();

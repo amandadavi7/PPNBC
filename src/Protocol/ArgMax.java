@@ -21,6 +21,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * Computes the ArgMax of a given set of numbers (binary representation)
@@ -60,9 +61,9 @@ public class ArgMax extends CompositeProtocol implements Callable<Integer[]> {
             BlockingQueue<Message> senderQueue,
             Queue<Integer> protocolIdQueue,
             int clientId, int prime,
-            int protocolID, int partyCount) {
+            int protocolID, int partyCount, int threadID) {
 
-        super(protocolID, pidMapper, senderQueue, protocolIdQueue, clientId, asymmetricBit, partyCount);
+        super(protocolID, pidMapper, senderQueue, protocolIdQueue, clientId, asymmetricBit, partyCount, threadID);
 
         this.vShares = vShares;
         this.tiShares = tiShares;
@@ -128,7 +129,7 @@ public class ArgMax extends CompositeProtocol implements Callable<Integer[]> {
                     Comparison comparisonModule = new Comparison(vShares.get(i), vShares.get(j),
                             tiShares.subList(tiIndex, tiIndex + tiCount), asymmetricBit,
                             pidMapper, senderQueue, new LinkedList<>(protocolIdQueue),
-                            clientID, prime, key, partyCount);
+                            clientID, prime, key, partyCount, threadID);
                     tiIndex += tiCount;
                     Future<Integer> comparisonTask = es.submit(comparisonModule);
                     taskList.add(comparisonTask);
@@ -170,7 +171,7 @@ public class ArgMax extends CompositeProtocol implements Callable<Integer[]> {
             ParallelMultiplication rowMultiplication = new ParallelMultiplication(
                     wIntermediate.get(i), tiShares.subList(tiIndex, tiIndex + tiCount), clientID, prime, i,
                     asymmetricBit, pidMapper, senderQueue, 
-                    new LinkedList<>(protocolIdQueue), partyCount);
+                    new LinkedList<>(protocolIdQueue), partyCount, threadID);
             tiIndex += tiCount;
 
             Future<Integer> wRowProduct = es.submit(rowMultiplication);

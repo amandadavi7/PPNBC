@@ -6,8 +6,8 @@
 package Protocol;
 
 import Communication.Message;
-import Protocol.Utility.BatchMultiplicationReal;
-import TrustedInitializer.TripleReal;
+import Protocol.Utility.BatchMultiplicationBigInteger;
+import TrustedInitializer.TripleBigInteger;
 import Utility.Constants;
 import java.math.BigInteger;
 import java.util.LinkedList;
@@ -29,14 +29,14 @@ import java.util.concurrent.Future;
  *
  * @author anisha
  */
-public class DotProductReal extends DotProduct implements Callable<BigInteger> {
+public class DotProductBigInteger extends DotProduct implements Callable<BigInteger> {
 
     List<BigInteger> xShares, yShares;
     BigInteger prime;
-    List<TripleReal> tiShares;
+    List<TripleBigInteger> tiShares;
 
     /**
-     * Constructor for DotProduct on Real Numbers
+     * Constructor for DotProduct on BigInteger Numbers
      *
      * @param xShares
      * @param yShares
@@ -50,16 +50,16 @@ public class DotProductReal extends DotProduct implements Callable<BigInteger> {
      * @param asymmetricBit
      * @param partyCount
      */
-    public DotProductReal(List<BigInteger> xShares, List<BigInteger> yShares,
-            List<TripleReal> tiShares,
+    public DotProductBigInteger(List<BigInteger> xShares, List<BigInteger> yShares,
+            List<TripleBigInteger> tiShares,
             ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper,
             BlockingQueue<Message> senderqueue,
             Queue<Integer> protocolIdQueue,
             int clientID, BigInteger prime,
-            int protocolID, int asymmetricBit, int partyCount) {
+            int protocolID, int asymmetricBit, int partyCount, int threadID) {
 
         super(pidMapper, senderqueue, protocolIdQueue, clientID, protocolID,
-                asymmetricBit, partyCount);
+                asymmetricBit, partyCount, threadID);
 
         this.xShares = xShares;
         this.yShares = yShares;
@@ -89,12 +89,13 @@ public class DotProductReal extends DotProduct implements Callable<BigInteger> {
         int startpid = 0;
 
         do {
+           // System.out.println("\t[i="+i+"]: creating batch mult task");
             int toIndex = Math.min(i + Constants.BATCH_SIZE, vectorLength);
 
-            multCompletionService.submit(new BatchMultiplicationReal(xShares.subList(i, toIndex),
+            multCompletionService.submit(new BatchMultiplicationBigInteger(xShares.subList(i, toIndex),
                     yShares.subList(i, toIndex), tiShares.subList(i, toIndex), pidMapper, senderQueue,
                     new LinkedList<>(protocolIdQueue),
-                    clientID, prime, startpid, asymmetricBit, protocolId, partyCount));
+                    clientID, prime, startpid, asymmetricBit, protocolId, partyCount, threadID));
 
             startpid++;
             i = toIndex;
@@ -102,14 +103,19 @@ public class DotProductReal extends DotProduct implements Callable<BigInteger> {
         } while (i < vectorLength);
 
         mults.shutdown();
-
+       
         for (i = 0; i < startpid; i++) {
+            //System.out.println("\t[i="+i+"]: taking instance of dp");
             Future<BigInteger[]> prod = multCompletionService.take();
+            //System.out.println("\t[i="+i+"]: getting product");
             BigInteger[] products = prod.get();
             for (BigInteger j : products) {
                 dotProduct = dotProduct.add(j).mod(prime);
             }
         }
+
+        //System.out.println("\tReturning result");
+        
         return dotProduct;
     }
 

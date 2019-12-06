@@ -19,6 +19,7 @@ public class Message implements Serializable {
     int clientId;
     Queue<Integer> protocolIds;
     boolean isUnicast;
+    int threadID;
 
     /**
      * Constructor
@@ -28,12 +29,12 @@ public class Message implements Serializable {
      * @param protocolIdQueue
      */
     public Message(Object value, int clientId,
-            Queue<Integer> protocolIdQueue) {
+                   Queue<Integer> protocolIdQueue) {
         this.value = value;
         this.clientId = clientId;
         protocolIds = protocolIdQueue;
     }
-    
+
     /**
      * Constructor
      *
@@ -43,11 +44,20 @@ public class Message implements Serializable {
      * @param isUnicast
      */
     public Message(Object value, int clientId,
-            Queue<Integer> protocolIdQueue, boolean isUnicast) {
+                   Queue<Integer> protocolIdQueue, boolean isUnicast) {
         this.value = value;
         this.clientId = clientId;
         this.isUnicast = isUnicast;
         protocolIds = protocolIdQueue;
+    }
+
+    public Message(Object value, int clientId,
+                   Queue<Integer> protocolIdQueue, boolean isUnicast, int threadID) {
+        this.value = value;
+        this.clientId = clientId;
+        this.isUnicast = isUnicast;
+        protocolIds = protocolIdQueue;
+        this.threadID = threadID;
     }
 
     /**
@@ -103,7 +113,7 @@ public class Message implements Serializable {
     public int getClientId() {
         return clientId;
     }
-    
+
     /**
      * Get unicast bit
      *
@@ -111,6 +121,14 @@ public class Message implements Serializable {
      */
     public boolean isUnicast() {
         return isUnicast;
+    }
+
+    public int getThreadID() {
+        return threadID;
+    }
+
+    public void setThreadID(int threadID) {
+        this.threadID = threadID;
     }
 
     /**

@@ -53,10 +53,10 @@ public class EqualityByte extends CompositeProtocol implements Callable<Integer>
             BlockingQueue<Message> senderQueue,
             Queue<Integer> protocolIdQueue,
             int clientId, int prime, int protocolID, 
-            int asymmetricBit, int partyCount) {
+            int asymmetricBit, int partyCount, int threadID) {
 
         super(protocolID, pidMapper, senderQueue, protocolIdQueue,
-                clientId, asymmetricBit, partyCount);
+                clientId, asymmetricBit, partyCount, threadID);
 
         this.x = x;
         this.y = y;
@@ -90,7 +90,7 @@ public class EqualityByte extends CompositeProtocol implements Callable<Integer>
         int pid = 0;
         for (int i = 1; i < bitLength; i++) {
             MultiplicationByte MBModule = new MultiplicationByte(result, r.get(i), tiShares, pidMapper, senderQueue,
-                    new LinkedList<>(protocolIdQueue), clientID, Constants.BINARY_PRIME, pid, asymmetricBit, 0, partyCount);
+                    new LinkedList<>(protocolIdQueue), clientID, Constants.BINARY_PRIME, pid, asymmetricBit, 0, partyCount, threadID);
             result = MBModule.call();
             pid++;
         }

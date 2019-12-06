@@ -80,7 +80,7 @@ public class Logging {
     public static void partyUsage() {
         System.out.println("Usage: \n java Party.Party party_port=<port> "
                 + "ti=<TI IP:port> \n"
-                + "ba=<BA IP:port> \n"
+                + "other_party=<Other party IP:port> \n"
                 + "partyCount=<total number of parties involved> \n"
                 + "party_id=<Party Id> \n"
                 + "asymmetricBit=<asymmetric bit 0/1> \n"

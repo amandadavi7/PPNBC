@@ -18,17 +18,18 @@ import Utility.Constants;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.Queue;
-
+import java.math.BigInteger;
 /**
  * The class takes as input shares of a value and converts it to the
  * corresponding shares of bits of the value
  *
  * @author bhagatsanchya
  */
-public class BitDecomposition extends CompositeProtocol implements
+public class BitDecompositionBigInteger extends CompositeProtocol implements
         Callable<List<Integer>> {
 
-    int input, tiStartIndex;
+    BigInteger input;
+    int tiStartIndex;
     List<List<Integer>> inputShares;
     List<TripleByte> tiShares;
 
@@ -56,7 +57,7 @@ public class BitDecomposition extends CompositeProtocol implements
      * @param protocolID
      * @param partyCount
      */
-    public BitDecomposition(Integer input, List<TripleByte> tiShares,
+    public BitDecompositionBigInteger(BigInteger input, List<TripleByte> tiShares,
             int asymmetricBit, int bitLength,
             ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper,
             BlockingQueue<Message> senderQueue,
@@ -75,7 +76,7 @@ public class BitDecomposition extends CompositeProtocol implements
         // convert decimal to binary notation
         // TODO - generalize to n parties with a for loop
         inputShares = new ArrayList<>();
-        List<Integer> temp = decimalToBinary(this.input);
+        List<Integer> temp = bigIntToBinary(this.input);
 
         // System.out.print("Bit Decomp: Binary version of share: ");
         // for(int i=0; i < temp.size(); i++) {
@@ -244,16 +245,18 @@ public class BitDecomposition extends CompositeProtocol implements
     }
 
     /**
-     * Converts decimal value to List<> of bits (binary)
+     * Converts big int value to List<> of bits (binary)
      *
-     * @param decimal_val
+     * @param bigIntVal
      * @return
      */
-    public static List<Integer> decimalToBinary(int decimal_val) {
+    public static List<Integer> bigIntToBinary(BigInteger bigIntVal) {
+        
+    	BigInteger two = new BigInteger("2");
         List<Integer> bits = new ArrayList<>();
-        while (decimal_val > 0) {
-            bits.add(decimal_val % 2);
-            decimal_val = decimal_val / 2;
+        while (!bigIntVal.equals(BigInteger.ZERO)) {
+            bits.add( bigIntVal.mod(two).intValue() );
+            bigIntVal = bigIntVal.divide(two);
         }
         return bits;
     }

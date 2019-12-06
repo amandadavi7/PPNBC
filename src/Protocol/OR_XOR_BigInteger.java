@@ -7,7 +7,10 @@ package Protocol;
 
 import Communication.Message;
 import Protocol.Utility.BatchMultiplicationInteger;
+import Protocol.Utility.BatchMultiplicationBigInteger;
 import TrustedInitializer.TripleInteger;
+import TrustedInitializer.TripleBigInteger;
+
 import Utility.Constants;
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -20,18 +23,18 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-
+import java.math.BigInteger;
 /**
  *
  * @author keerthanaa
  */
-public class OR_XOR extends CompositeProtocol implements Callable<Integer[]> {
+public class OR_XOR_BigInteger extends CompositeProtocol implements Callable<BigInteger[]> {
 
-    List<Integer> xShares, yShares;
-    int constantMultiplier;
-    List<TripleInteger> decimalTiShares;
+    List<BigInteger> xShares, yShares;
+    BigInteger constantMultiplier;
+    List<TripleBigInteger> bigIntTiShares;
     int bitLength;
-    int prime;
+    BigInteger prime;
 
     /**
      * constantMultiplier = 1 for OR constantMultiplier = 2 for XOR Does OR or
@@ -50,12 +53,12 @@ public class OR_XOR extends CompositeProtocol implements Callable<Integer[]> {
      * @param protocolID
      * @param partyCount
      */
-    public OR_XOR(List<Integer> x, List<Integer> y, List<TripleInteger> tiShares,
+    public OR_XOR_BigInteger(List<BigInteger> x, List<BigInteger> y, List<TripleBigInteger> tiShares,
             int asymmetricBit, int constantMultiplier,
             ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper,
             BlockingQueue<Message> senderQueue,
             Queue<Integer> protocolIdQueue,
-            int clientId, int prime, int protocolID, int partyCount,int threadID) {
+            int clientId, BigInteger prime, int protocolID, int partyCount,int threadID) {
 
         super(protocolID, pidMapper, senderQueue, protocolIdQueue, clientId, asymmetricBit, partyCount,threadID);
 
@@ -63,8 +66,8 @@ public class OR_XOR extends CompositeProtocol implements Callable<Integer[]> {
         this.yShares = y;
         this.prime = prime;
         bitLength = xShares.size();
-        this.constantMultiplier = constantMultiplier;
-        this.decimalTiShares = tiShares;
+        this.constantMultiplier = BigInteger.valueOf(constantMultiplier);
+        this.bigIntTiShares = tiShares;
     }
 
     /**
@@ -74,12 +77,12 @@ public class OR_XOR extends CompositeProtocol implements Callable<Integer[]> {
      * @throws java.util.concurrent.ExecutionException
      */
     @Override
-    public Integer[] call() throws InterruptedException, ExecutionException {
-        Integer[] output = new Integer[bitLength];
+    public BigInteger[] call() throws InterruptedException, ExecutionException {
+        BigInteger[] output = new BigInteger[bitLength];
         //System.out.println("x=" + xShares + " y=" + yShares);
         ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
 
-        List<Future<Integer[]>> taskList = new ArrayList<>();
+        List<Future<BigInteger[]>> taskList = new ArrayList<>();
 
         int i = 0;
         int startpid = 0;
@@ -88,19 +91,18 @@ public class OR_XOR extends CompositeProtocol implements Callable<Integer[]> {
 
             int toIndex = Math.min(i + Constants.BATCH_SIZE, bitLength);
 
-            BatchMultiplicationInteger batchMultiplication = new BatchMultiplicationInteger(
+            BatchMultiplicationBigInteger batchMultiplication = new BatchMultiplicationBigInteger(
                     xShares.subList(i, toIndex),
                     yShares.subList(i, toIndex),
-                    decimalTiShares.subList(i, toIndex), pidMapper,
+                    bigIntTiShares.subList(i, toIndex), pidMapper,
                     senderQueue, new LinkedList<>(protocolIdQueue),
                     clientID, prime, startpid, asymmetricBit, protocolId, partyCount,threadID);
 
-            Future<Integer[]> multiplicationTask = es.submit(batchMultiplication);
+            Future<BigInteger[]> multiplicationTask = es.submit(batchMultiplication);
             taskList.add(multiplicationTask);
 
             startpid++;
             i += Constants.BATCH_SIZE;
-
         } while (i < bitLength);
 
         es.shutdown();
@@ -108,17 +110,22 @@ public class OR_XOR extends CompositeProtocol implements Callable<Integer[]> {
         int taskLen = taskList.size();
 
         for (i = 0; i < taskLen; i++) {
-
-            Future<Integer[]> prod = taskList.get(i);
-            Integer[] products = prod.get();
+            Future<BigInteger[]> prod = taskList.get(i);
+            BigInteger[] products = prod.get();
             int prodLen = products.length;
             for (int j = 0; j < prodLen; j++) {
-                output[globalIndex] = Math.floorMod(xShares.get(globalIndex) + yShares.get(globalIndex)
-                        - (constantMultiplier * products[j]), prime);
+                output[globalIndex] = ((xShares.get(globalIndex)
+                        .add(yShares.get(globalIndex)))
+                        .subtract(constantMultiplier.multiply(products[j])))
+                        .mod(prime);
+           
                 globalIndex++;
             }
         }
 
+
+                // output[globalIndex] = Math.floorMod(xShares.get(globalIndex) + yShares.get(globalIndex)
+                //         - (constantMultiplier * products[j]), prime);
         return output;
     }
 

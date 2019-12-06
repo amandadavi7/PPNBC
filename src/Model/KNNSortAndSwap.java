@@ -63,9 +63,9 @@ public class KNNSortAndSwap extends Model {
     public KNNSortAndSwap(int asymmetricBit, ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper,
             BlockingQueue<Message> senderQueue, int clientId, List<TripleByte> binaryTriples,
             List<TripleInteger> decimalTriples, int partyCount, String[] args,
-            Queue<Integer> protocolIdQueue, int protocolID) {
+            Queue<Integer> protocolIdQueue, int protocolID, int threadID) {
 
-        super(pidMapper, senderQueue, clientId, asymmetricBit, partyCount, protocolIdQueue, protocolID);
+        super(pidMapper, senderQueue, clientId, asymmetricBit, partyCount, protocolIdQueue, protocolID, threadID);
         pid = 0;
 
         initalizeModelVariables(args);
@@ -144,7 +144,7 @@ public class KNNSortAndSwap extends Model {
                     binaryTiShares.subList(binaryTiIndex, binaryTiIndex + ccTICount),
                     pidMapper, commonSender, clientId, prime,
                     Constants.BINARY_PRIME, pid, new LinkedList<>(protocolIdQueue), 
-                    partyCount, bitLength);
+                    partyCount, bitLength, threadID);
 
             pid++;
             //decimalTiIndex += 2;
@@ -179,7 +179,7 @@ public class KNNSortAndSwap extends Model {
             MultiplicationByte mult = new MultiplicationByte(comparisonMultiplications[i], 
                     comparisonResults[i], binaryTiShares.get(binaryTiIndex), 
                     pidMapper, commonSender, new LinkedList<>(protocolIdQueue), 
-                    clientId, Constants.BINARY_PRIME, pid, asymmetricBit, 0, partyCount);
+                    clientId, Constants.BINARY_PRIME, pid, asymmetricBit, 0, partyCount, threadID);
             pid++;
             comparisonMultiplications[i + 1] = mult.call();
         }
@@ -213,7 +213,7 @@ public class KNNSortAndSwap extends Model {
                     Math.floorMod(asymmetricBit - comparisonResults[i], Constants.BINARY_PRIME),
                     binaryTiShares.get(binaryTiIndex), pidMapper, commonSender,
                     new LinkedList<>(protocolIdQueue), clientId,
-                    Constants.BINARY_PRIME, pid, asymmetricBit, 0, partyCount);
+                    Constants.BINARY_PRIME, pid, asymmetricBit, 0, partyCount, threadID);
 
             //binaryTiIndex++;
             pid++;
@@ -229,13 +229,13 @@ public class KNNSortAndSwap extends Model {
         // Convert comparisonResults and comparisonMultiplications from binary prime to decimal prime
         comparisonResults = CompareAndConvertField.changeBinaryToDecimalField(
                 Arrays.asList(comparisonResults), decimalTiShares, pid, pidMapper,
-                commonSender, protocolIdQueue, asymmetricBit, clientId, prime, partyCount);
+                commonSender, protocolIdQueue, asymmetricBit, clientId, prime, partyCount, threadID);
         pid++;
         //decimalTiIndex+=K;
 
         comparisonMultiplications = CompareAndConvertField.changeBinaryToDecimalField(
                 Arrays.asList(comparisonMultiplications), decimalTiShares, pid,
-                pidMapper, commonSender, protocolIdQueue, asymmetricBit, clientId, prime, partyCount);
+                pidMapper, commonSender, protocolIdQueue, asymmetricBit, clientId, prime, partyCount, threadID);
         pid++;
         //decimalTiIndex += K;
 
@@ -255,7 +255,7 @@ public class KNNSortAndSwap extends Model {
                     new LinkedList<>(protocolIdQueue), prime, asymmetricBit,
                     pidMapper, commonSender, clientId,
                     decimalTiShares.subList(decimalTiIndex, decimalTiIndex + 9),
-                    jaccardDistances.get(index), KjaccardDistances.get(i), prev, partyCount);
+                    jaccardDistances.get(index), KjaccardDistances.get(i), prev, partyCount, threadID);
 
             swapTaskList.add(es.submit(swapModule));
             pid++;
@@ -294,7 +294,7 @@ public class KNNSortAndSwap extends Model {
 
         predictedClassLabel = CompareAndConvertField.compareIntegers(oneCount, zeroCount,
                 binaryTiShares, asymmetricBit, pidMapper, commonSender, protocolIdQueue,
-                clientId, prime, bitLength, partyCount, pid, false, null);
+                clientId, prime, bitLength, partyCount, pid, false, null, threadID);
 
         pid += 3;
         //binaryTiIndex += 2*bitDTICount + comparisonTICount;
@@ -317,7 +317,7 @@ public class KNNSortAndSwap extends Model {
         JaccardDistance jdModule = new JaccardDistance(trainingShares, testShare,
                 asymmetricBit, decimalTiShares, pidMapper, commonSender,
                 clientId, prime, pid,
-                new LinkedList<>(protocolIdQueue), partyCount);
+                new LinkedList<>(protocolIdQueue), partyCount, threadID);
 
         jaccardDistances = jdModule.call();
         pid++;
@@ -338,7 +338,7 @@ public class KNNSortAndSwap extends Model {
         BatcherSortKNN sortModule = new BatcherSortKNN(KjaccardDistances,
                 asymmetricBit, decimalTiShares, binaryTiShares,
                 pidMapper, commonSender, clientId, prime, pid,
-                new LinkedList<>(protocolIdQueue), partyCount, K, bitLength);
+                new LinkedList<>(protocolIdQueue), partyCount, K, bitLength, threadID);
 
         KjaccardDistances = sortModule.call();
 

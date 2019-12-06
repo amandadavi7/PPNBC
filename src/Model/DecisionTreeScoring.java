@@ -81,9 +81,9 @@ public class DecisionTreeScoring extends Model {
      */
     public DecisionTreeScoring(int asymmetricBit, ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper,
             BlockingQueue<Message> senderQueue, int clientId, List<TripleByte> binaryTriples,
-            int partyCount, String[] args, Queue<Integer> protocolIdQueue, int protocolID) {
+            int partyCount, String[] args, Queue<Integer> protocolIdQueue, int protocolID, int threadID) {
 
-        super(pidMapper, senderQueue, clientId, asymmetricBit, partyCount, protocolIdQueue, protocolID);
+        super(pidMapper, senderQueue, clientId, asymmetricBit, partyCount, protocolIdQueue, protocolID, threadID);
 
         this.args = args;
         pid = 0;
@@ -197,11 +197,11 @@ public class DecisionTreeScoring extends Model {
         long startTime = System.currentTimeMillis();
 
         convertThresholdsToBits();
-        LOGGER.log(Level.FINE, "Converted Thresholds to Bits");
+        LOGGER.fine("Converted Thresholds to Bits");
 
         if (!partyHasTree) {
             convertTestVectorToBits(testVectorsDecimal.get(0));
-            LOGGER.log(Level.FINE, "Converted feature vector to bits");
+            LOGGER.fine("Converted feature vector to bits");
         }
 
         getFeatureVectors();
@@ -236,7 +236,7 @@ public class DecisionTreeScoring extends Model {
                         tiBinaryStartIndex + (attributeBitLength * attributeCount)),
                         asymmetricBit, pidMapper, commonSender, new LinkedList<>(protocolIdQueue),
                         clientId, Constants.BINARY_PRIME, pid, attributeBitLength,
-                        nodeToAttributeIndexMapping[i], attributeCount, partyCount);
+                        nodeToAttributeIndexMapping[i], attributeCount, partyCount, threadID);
                 tiBinaryStartIndex += attributeBitLength * attributeCount;
                 pid++;
                 Future<Integer[]> task = es.submit(ois);
@@ -250,7 +250,7 @@ public class DecisionTreeScoring extends Model {
                         tiBinaryStartIndex + (attributeBitLength * attributeCount)),
                         asymmetricBit, pidMapper, commonSender, new LinkedList<>(protocolIdQueue),
                         clientId, Constants.BINARY_PRIME, pid,
-                        attributeBitLength, -1, attributeCount, partyCount);
+                        attributeBitLength, -1, attributeCount, partyCount, threadID);
                 tiBinaryStartIndex += attributeBitLength * attributeCount;
                 pid++;
                 Future<Integer[]> task = es.submit(ois);
@@ -270,7 +270,6 @@ public class DecisionTreeScoring extends Model {
     /**
      * Converts all the attribute thresholds to bits protocol
      *
-     * @param startpid
      */
     void convertThresholdsToBits() {
 
@@ -289,7 +288,6 @@ public class DecisionTreeScoring extends Model {
     /**
      * compares the attribute threshold with the test vector's attribute value
      *
-     * @param startpid
      */
     void doThresholdComparisons() throws InterruptedException, ExecutionException {
 
@@ -301,7 +299,7 @@ public class DecisionTreeScoring extends Model {
             Comparison comp = new Comparison(Arrays.asList(featureVectors[i]), attributeThresholdsBitShares.get(i),
                     binaryTiShares.subList(tiBinaryStartIndex, tiBinaryStartIndex + comparisonTiCount),
                     asymmetricBit, pidMapper, commonSender, new LinkedList<>(protocolIdQueue),
-                    clientId, Constants.BINARY_PRIME, pid, partyCount);
+                    clientId, Constants.BINARY_PRIME, pid, partyCount, threadID);
 
             Future<Integer> task = es.submit(comp);
             pid++;
@@ -346,7 +344,6 @@ public class DecisionTreeScoring extends Model {
     /**
      * calls the PolynomialComputing class and gets the final output
      *
-     * @param startpid
      */
     void computePolynomialEquation() throws InterruptedException, ExecutionException {
 
@@ -381,7 +378,7 @@ public class DecisionTreeScoring extends Model {
                     depth, comparisonOutputs, binaryTiShares.subList(tiBinaryStartIndex,
                             tiBinaryStartIndex + polynomialComputationTiCount),
                     new LinkedList<>(protocolIdQueue), pidMapper, commonSender,
-                    pid, clientId, asymmetricBit, partyCount);
+                    pid, clientId, asymmetricBit, partyCount, threadID);
 
             pid++;
             tiBinaryStartIndex += polynomialComputationTiCount;

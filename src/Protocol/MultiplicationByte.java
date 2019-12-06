@@ -50,10 +50,10 @@ public class MultiplicationByte extends Protocol implements Callable<Integer> {
             BlockingQueue<Message> senderQueue,
             Queue<Integer> protocolIdQueue,
             int clientId, int prime, int protocolID, int asymmetricBit,
-            int parentID, int partyCount) {
+            int parentID, int partyCount,int threadID) {
 
         super(protocolID, pidMapper, senderQueue, protocolIdQueue,
-                clientId, asymmetricBit, partyCount);
+                clientId, asymmetricBit, partyCount,threadID);
         this.x = x;
         this.y = y;
         this.tiShares = tiShares;
@@ -97,6 +97,7 @@ public class MultiplicationByte extends Protocol implements Callable<Integer> {
         diffList.add(Math.floorMod(y - tiShares.v, prime));
 
         Message senderMessage = new Message(diffList, clientID, protocolIdQueue);
+        senderMessage.setThreadID(threadID);
         senderQueue.put(senderMessage);
     }
 }

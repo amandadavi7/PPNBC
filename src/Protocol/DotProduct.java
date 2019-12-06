@@ -32,10 +32,10 @@ public abstract class DotProduct extends CompositeProtocol {
     public DotProduct(ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper,
             BlockingQueue<Message> senderqueue, 
             Queue<Integer> protocolIdQueue,
-            int clientID, int protocolID, int asymmetricBit, int partyCount) {
+            int clientID, int protocolID, int asymmetricBit, int partyCount, int threadID) {
 
         super(protocolID, pidMapper, senderqueue, protocolIdQueue, clientID,
-                asymmetricBit, partyCount);
+                asymmetricBit, partyCount, threadID);
 
     }
 

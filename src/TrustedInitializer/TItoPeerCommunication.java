@@ -43,6 +43,7 @@ public class TItoPeerCommunication implements Runnable {
             System.out.println("Connected to:" + socket + ": sending,");
             ObjectOutputStream oStream = new ObjectOutputStream(socket.getOutputStream());
             oStream.writeObject(tishare);
+            System.out.println("Ensemble method shares would not be presented");
             System.out.println("Sent " + tishare.bigIntShares.size() + " shares to "
                     + socket.getInetAddress());
             //TODO the socket life depends on the below print now 
@@ -51,6 +52,9 @@ public class TItoPeerCommunication implements Runnable {
                 System.out.println("u : " + t.u + ",v : " + t.v + ",w : " + t.w);
             });
             tishare.binaryShares.forEach((t) -> {
+                System.out.println("u : " + t.u + ",v : " + t.v + ",w : " + t.w);
+            });
+            tishare.realShares.forEach((t) -> {
                 System.out.println("u : " + t.u + ",v : " + t.v + ",w : " + t.w);
             });
             tishare.bigIntShares.forEach((t) -> {

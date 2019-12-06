@@ -8,6 +8,7 @@ package TrustedInitializer;
 import Utility.Connection;
 import Utility.Constants;
 import Utility.Logging;
+
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.util.concurrent.ExecutorService;
@@ -22,8 +23,9 @@ import java.util.logging.Logger;
  */
 public class TI {
 
-    static int tiPort, clientCount, decTriples, binTriples, bigIntTriples, 
-            truncationPairs, equalityCount, rowCount, colCount, featureCount, treeCount, classValueCount;
+    static int tiPort, clientCount, decTriples, binTriples, realTriples,
+            truncationPairs, equalityCount, equalityBigIntCount, bigIntTriples, rowCount, columnCount, ensembleRounds, rowRange, columnRange,
+            eTRowCount, eTColCount, featureCount, treeCount, classValueCount;
     static TIShare[] tiShare;
 
     /**
@@ -55,7 +57,7 @@ public class TI {
                     binTriples = Integer.valueOf(value);
                     break;
                 case "real":
-                    bigIntTriples = Integer.parseInt(value);
+                    realTriples = Integer.parseInt(value);
                     break;
                 case "truncation":
                     truncationPairs = Integer.valueOf(value);
@@ -63,11 +65,31 @@ public class TI {
                 case "equality":
                     equalityCount = Integer.parseInt(value);
                     break;
+                case "equalityBigInt":
+                    equalityBigIntCount = Integer.parseInt(value);
+                    break;
+                case "bigInt":
+                    bigIntTriples = Integer.parseInt(value);
                 case "rowCount":
                     rowCount = Integer.parseInt(value);
                     break;
-                case "colCount":
-                    colCount = Integer.parseInt(value) - 1;
+                case "columnCount":
+                    columnCount = Integer.parseInt(value);
+                    break;
+                case "rowRange":
+                    rowRange = Integer.parseInt(value);
+                    break;
+                case "columnRange":
+                    columnRange = Integer.parseInt(value);
+                    break;
+                case "ensembleRounds":
+                    ensembleRounds = Integer.parseInt(value);
+                    break;
+                case "eTRowCount":
+                    eTRowCount = Integer.parseInt(value);
+                    break;
+                case "eTColCount":
+                    eTColCount = Integer.parseInt(value) - 1;
                     break;
                 case "featureCount":
                     featureCount = Integer.parseInt(value);
@@ -84,10 +106,13 @@ public class TI {
         tiShare = new TIShare[clientCount];
         for (int i = 0; i < clientCount; i++) {
             tiShare[i] = new TIShare();
+            if (ensembleRounds != 0) {
+                for (int j = 0; j < ensembleRounds; j++) {
+                    tiShare[i].ensembleShares.add(new TIShare());
+                }
+            }
         }
     }
-
-    
 
     /**
      * Send shares to parties
@@ -130,13 +155,29 @@ public class TI {
     }
 
     private static void generateRandomShares() {
-        RandomGenerator.generateDecimalTriples(decTriples, clientCount, tiShare);
-        RandomGenerator.generateBinaryTriples(binTriples, clientCount, tiShare);
-        RandomGenerator.generateBigIntTriples(bigIntTriples, clientCount, tiShare);
-        RandomGenerator.generateTruncationPairs(truncationPairs, clientCount, tiShare);
-        RandomGenerator.generateEqualityShares(equalityCount, clientCount, tiShare);
-        RandomGenerator.generateRowShares(rowCount, colCount, treeCount, clientCount, tiShare);
-        RandomGenerator.generateColShares(featureCount, treeCount, colCount, clientCount, tiShare);
-        RandomGenerator.generateWholeNumShares(classValueCount, clientCount, tiShare);
+        if (ensembleRounds == 0) {
+            RandomGenerator.generateDecimalTriples(decTriples, clientCount, tiShare, -1);
+            RandomGenerator.generateBinaryTriples(binTriples, clientCount, tiShare, -1);
+            RandomGenerator.generateRealTriples(realTriples, clientCount, tiShare, -1);
+            RandomGenerator.generateTruncationPairs(truncationPairs, clientCount, tiShare, -1);
+            RandomGenerator.generateEqualityShares(equalityCount, clientCount, tiShare, -1);
+            RandomGenerator.generateBigIntegerEqualityShares(equalityBigIntCount, clientCount, tiShare, -1);
+            RandomGenerator.generateBigIntTriples(bigIntTriples, clientCount, tiShare, -1);
+            RandomGenerator.generateRowShares(eTRowCount, eTColCount, treeCount, clientCount, tiShare);
+            RandomGenerator.generateColShares(featureCount, treeCount, eTColCount, clientCount, tiShare);
+            RandomGenerator.generateWholeNumShares(classValueCount, clientCount, tiShare);
+        } else {
+            for (int i = 0; i < ensembleRounds; i++) {
+                RandomGenerator.generateDecimalTriples(decTriples, clientCount, tiShare, i);
+                RandomGenerator.generateBinaryTriples(binTriples, clientCount, tiShare, i);
+                RandomGenerator.generateRealTriples(realTriples, clientCount, tiShare, i);
+                RandomGenerator.generateTruncationPairs(truncationPairs, clientCount, tiShare, i);
+                RandomGenerator.generateEqualityShares(equalityCount, clientCount, tiShare, i);
+                RandomGenerator.generateBigIntegerEqualityShares(equalityBigIntCount, clientCount, tiShare, i);
+                RandomGenerator.generateBigIntTriples(bigIntTriples, clientCount, tiShare, i);
+                RandomGenerator.generateRowFeatureSampling(rowRange, rowCount, true, clientCount, tiShare, i);
+                RandomGenerator.generateRowFeatureSampling(columnRange, columnCount, false, clientCount, tiShare, i);
+            }
+        }
     }
 }

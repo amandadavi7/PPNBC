@@ -6,7 +6,7 @@
 package Protocol;
 
 import Communication.Message;
-import TrustedInitializer.TripleReal;
+import TrustedInitializer.TripleBigInteger;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
@@ -21,11 +21,11 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  * @author anisha
  */
-public class MultiplicationReal extends Protocol implements Callable<BigInteger> {
+public class MultiplicationBigInteger extends Protocol implements Callable<BigInteger> {
 
     BigInteger x;
     BigInteger y;
-    TripleReal tiRealShares;
+    TripleBigInteger tiRealShares;
     BigInteger prime;
 
     /**
@@ -44,15 +44,15 @@ public class MultiplicationReal extends Protocol implements Callable<BigInteger>
      * @param partyCount
      *
      */
-    public MultiplicationReal(BigInteger x, BigInteger y, TripleReal tiShares,
+    public MultiplicationBigInteger(BigInteger x, BigInteger y, TripleBigInteger tiShares,
             ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper,
             BlockingQueue<Message> senderQueue,
             Queue<Integer> protocolIdQueue,
             int clientId, BigInteger prime,
-            int protocolID, int asymmetricBit, int partyCount) {
+            int protocolID, int asymmetricBit, int partyCount,int threadID) {
 
         super(protocolID, pidMapper, senderQueue, protocolIdQueue,
-                clientId, asymmetricBit, partyCount);
+                clientId, asymmetricBit, partyCount,threadID);
         this.x = x;
         this.y = y;
         this.tiRealShares = tiShares;
@@ -103,6 +103,7 @@ public class MultiplicationReal extends Protocol implements Callable<BigInteger>
 
         Message senderMessage = new Message(diffList,
                 clientID, protocolIdQueue);
+        senderMessage.setThreadID(threadID);
         senderQueue.put(senderMessage);
     }
 }

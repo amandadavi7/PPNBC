@@ -51,10 +51,10 @@ public class BatchMultiplicationByte extends BatchMultiplication
             BlockingQueue<Message> senderQueue,
             Queue<Integer> protocolIdQueue,
             int clientId, int prime, int protocolID, int asymmetricBit,
-            int parentID, int partyCount) {
+            int parentID, int partyCount,int threadID) {
 
         super(pidMapper, senderQueue, protocolIdQueue, clientId, protocolID,
-                asymmetricBit, parentID, partyCount);
+                asymmetricBit, parentID, partyCount,threadID);
         this.x = x;
         this.y = y;
         this.prime = prime;
@@ -118,6 +118,7 @@ public class BatchMultiplicationByte extends BatchMultiplication
 
         Message senderMessage = new Message(diffList,
                 clientID, protocolIdQueue);
+        senderMessage.setThreadID(threadID);
         senderQueue.put(senderMessage);
     }
 }

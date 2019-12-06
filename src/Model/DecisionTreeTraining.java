@@ -8,45 +8,41 @@ package Model;
 import Communication.Message;
 import Protocol.ArgMax;
 import Protocol.BitDecomposition;
-import Protocol.DotProductByte;
+import Protocol.DotProductBigInteger;
 import Protocol.DotProductInteger;
-import Protocol.Equality;
-import Protocol.MultiplicationInteger;
+import Protocol.EqualityBigInteger;
+import Protocol.MultiplicationBigInteger;
 import Protocol.Utility.BatchMultiplicationByte;
-import Protocol.Utility.BatchMultiplicationInteger;
+import Protocol.Utility.BatchMultiplicationBigInteger;
 import Protocol.Utility.CompareAndConvertField;
-import Protocol.Utility.ParallelMultiplication;
+import Protocol.Utility.ParallelMultiplicationBigInteger;
 import TrustedInitializer.TripleByte;
 import TrustedInitializer.TripleInteger;
+import TrustedInitializer.TripleBigInteger;
 import Utility.Constants;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
-import java.io.File;
+import java.util.concurrent.*;
+import java.math.BigInteger;
+import java.io.File; /* TODO: Mpve parsing to FileIO */
 import java.io.FileNotFoundException;
 import java.util.Scanner;
+
 
 public class DecisionTreeTraining extends Model {
 
     /* Share types needed for DT Learn */
-    List<Integer> equalityTiShares;
+    List<BigInteger> equalityTiShares;
     List<TripleByte> binaryTiShares;
+    List<TripleBigInteger> bigIntTiShares;
     List<TripleInteger> decimalTiShares;
-
     /* Constants related to cutoff size TODO: should be in config file */
-    int alpha;
+    BigInteger alpha;
     double epsilon;
     int cutoffTransactionSetSize;
 
@@ -57,211 +53,321 @@ public class DecisionTreeTraining extends Model {
     int classValueCount;
 
     /* Data set prime field representations */
-    Integer[][][] attrValues;
-    Integer[][] classValues;
-    List<List<List<Integer>>> attributeValueTransactionVector;
-    List<List<List<Integer>>> attributeValueTransactionVectorDecimal;
-    List<List<Integer>> classValueTransactionVector;
-    List<List<Integer>> classValueTransactionVectorDecimal;
+    Byte[][][] attrValues;
+    Byte[][] classValues;
+
+    List<List<List<Byte>>> attributeValueTransactionVector;
+    List<List<Byte>> classValueTransactionVector;
+
+    List<List<List<Integer>>> attributeValueTransactionVectorInteger;
+    List<List<Integer>> classValueTransactionVectorInteger;
+
+    List<List<List<BigInteger>>> attributeValueTransactionVectorBigInteger;
+    List<List<BigInteger>> classValueTransactionVectorBigInteger;
+        
+        List<Integer> selectedFeatureMapping;
 
     /* Recursive protocol paramters */
     int levelCounter;
-    Integer[] subsetTransactionBitVector;
-    Integer[] attributeBitVector;
+    Byte[] subsetTransactionBitVector;
+    Byte[] attributeBitVector;
 
     // a global ID series - TODO
-    int pid, binaryTiIndex, decimalTiIndex, equalityTiIndex;
+    int pid, binaryTiIndex, bigIntTiIndex, equalityTiIndex;
     int bitDTiCount, comparisonTiCount, bitLength;
-    int prime;
+    BigInteger prime;
+    int datasetSizePrime;
+    int datasetSizeBitLength;
+
+    // feature selections & sample selections
+    List<Integer> featureSelections;
+    List<Integer> sampleSelections;
 
     // TODO: replace with tree
     List<String> decisionTreeNodes;
-
+    boolean multiThreadMode = false;
+    int threadID = 0;
     /**
      * @param asymmetricBit
      * @param pidMapper
      * @param senderQueue
      * @param clientId
      * @param binaryTriples
-     * @param decimalTriple
+     * @param bigIntTriples
      * @param equalityShares
+     * @param decTriples
      * @param args
      * @param partyCount
      * @param protocolIdQueue
      * @param protocolID
+     * @param threadID
      */
     public DecisionTreeTraining(int asymmetricBit,
-            ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper,
-            BlockingQueue<Message> senderQueue, int clientId,
-            List<TripleByte> binaryTriples, List<TripleInteger> decimalTriple,
-            List<Integer> equalityShares, String[] args, int partyCount,
-            Queue<Integer> protocolIdQueue, int protocolID) {
+                                ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper,
+                                BlockingQueue<Message> senderQueue, int clientId,
+                                List<TripleByte> binaryTriples, List<TripleBigInteger> bigIntTriples,
+                                List<TripleInteger> decTriples, List<BigInteger> equalityShares, String[] args, int partyCount,
+                                Queue<Integer> protocolIdQueue, int protocolID, int threadID) {
 
         /* Initialization of generic Model type */
         super(pidMapper, senderQueue, clientId, asymmetricBit,
-                partyCount, protocolIdQueue, protocolID);
-
-        /* Initialization of input parameters */
-        initalizeModelVariables(args);
-
-        this.decimalTiShares = decimalTriple;
-        this.binaryTiShares = binaryTriples;
-        this.equalityTiShares = equalityShares;
+                partyCount, protocolIdQueue, protocolID, threadID);
 
         this.levelCounter = attrCount;
+                
+        /* Initialization of input parameters */
+        initializeModelVariables(args);
+
+        this.bigIntTiShares = bigIntTriples;
+        this.binaryTiShares = binaryTriples;
+        this.equalityTiShares = equalityShares;
+        this.decimalTiShares = decTriples;
+
 
         /* TODO: initiate asymmetric bit holder from config file */
-        this.alpha = 8;
+        this.alpha = BigInteger.valueOf(8);
         this.epsilon = 0.1;
         this.cutoffTransactionSetSize = (int) (epsilon * (double) datasetSize);
 
         /* Initialization of architectural indeces */
         pid = 0;
-        decimalTiIndex = 0;
+        bigIntTiIndex = 0;
         binaryTiIndex = 0;
         equalityTiIndex = 0;
 
+        //prime = (int) Math.pow(2, bitLength);
+        this.bitLength = Constants.BIT_LENGTH;
+        this.prime = Constants.BIG_INT_PRIME;
 
-        /* Currently need to change prime in config file to same value as prime here */
-        int baseBitLength = (int) Math.ceil(Math.log(datasetSize) / Math.log(2));
-        bitLength
-                = /* attrValueCount*(baseBitLength + 4)+*/ (attrValueCount - 1) * (baseBitLength + 4)
-                + (int) Math.ceil(Math.log(datasetSize) / Math.log(2))
-                + (int) Math.ceil(Math.log(datasetSize) / Math.log(2))
-                + 2 * baseBitLength - 2; // -2 added just so int will work
-
-        prime = (int) Math.pow(2, bitLength);
-
-        System.out.println("Prime: " + prime);
-        System.out.println("Bitlength: " + bitLength);
+        //System.out.println("Prime: " + prime);
+        //System.out.println("Bitlength: " + bitLength);
 
         /* Increment for TI Shares */
         bitDTiCount = bitLength * 3 - 2;
         comparisonTiCount = (2 * bitLength) + ((bitLength * (bitLength - 1)) / 2);
+
+        this.datasetSizeBitLength = (int) Math.ceil(Math.log(datasetSize) / Math.log(2));
+        this.datasetSizePrime = (int) Math.pow(2, datasetSizeBitLength);
+
+        //System.out.println("DatasetSize Prime: " + datasetSizePrime);
+        //System.out.println("DatasetSize Bitlength: " + datasetSizeBitLength);
 
         // TODO replace with tree
         decisionTreeNodes = new ArrayList<>();
     }
-    
-    public DecisionTreeTraining(int asymmetricBit,
-            ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper,
-            BlockingQueue<Message> senderQueue, int clientId,
-            List<TripleByte> binaryTriples, List<TripleInteger> decimalTriple,
-            List<Integer> equalityShares, int partyCount,
-            Queue<Integer> protocolIdQueue, int protocolID, int classValueCount,
-            int attrCount, int attrValueCount, int datasetSize,
-            Integer[][][] attrValues,Integer[][] classValues) {
 
+    public DecisionTreeTraining(int asymmetricBit,
+                                ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper,
+                                BlockingQueue<Message> senderQueue, int clientId,
+                                List<TripleByte> binaryTriples, List<TripleBigInteger> bigIntTriples,
+                                List<TripleInteger> decTriples, List<BigInteger> equalityShares, String[] args, int partyCount,
+                                Queue<Integer> protocolIdQueue, int protocolID, List<Integer> featureSelections, List<Integer> sampleSelections, boolean multiThreadMode, int threadID) {
         /* Initialization of generic Model type */
         super(pidMapper, senderQueue, clientId, asymmetricBit,
-                partyCount, protocolIdQueue, protocolID);
+                partyCount, protocolIdQueue, protocolID, threadID);
+
+        this.featureSelections = featureSelections;
+        this.sampleSelections = sampleSelections;
+        this.multiThreadMode = multiThreadMode;
+        pid = 0;
+        this.threadID = threadID;
 
         /* Initialization of input parameters */
-        this.classValueCount = classValueCount;
-        this.attrCount = attrCount;
-        this.attrValueCount = attrValueCount;
-        this.datasetSize = datasetSize;
-        this.attrValues = attrValues;
-        this.classValues = classValues;
-        //initalizeModelVariables(args);
+        initializeModelVariables(args);
 
-        this.decimalTiShares = decimalTriple;
+        this.bigIntTiShares = bigIntTriples;
         this.binaryTiShares = binaryTriples;
         this.equalityTiShares = equalityShares;
+        this.decimalTiShares = decTriples;
 
-        this.levelCounter = attrCount;
 
         /* TODO: initiate asymmetric bit holder from config file */
-        this.alpha = 8;
+        this.alpha = BigInteger.valueOf(8);
         this.epsilon = 0.1;
         this.cutoffTransactionSetSize = (int) (epsilon * (double) datasetSize);
-
         /* Initialization of architectural indeces */
-        pid = 0;
-        decimalTiIndex = 0;
+
+
+        bigIntTiIndex = 0;
         binaryTiIndex = 0;
         equalityTiIndex = 0;
 
+        //prime = (int) Math.pow(2, bitLength);
+        this.bitLength = Constants.BIT_LENGTH;
+        this.prime = Constants.BIG_INT_PRIME;
 
-        /* Currently need to change prime in config file to same value as prime here */
-        int baseBitLength = (int) Math.ceil(Math.log(datasetSize) / Math.log(2));
-        bitLength
-                = /* attrValueCount*(baseBitLength + 4)+*/ (attrValueCount - 1) * (baseBitLength + 4)
-                + (int) Math.ceil(Math.log(datasetSize) / Math.log(2))
-                + (int) Math.ceil(Math.log(datasetSize) / Math.log(2))
-                + 2 * baseBitLength - 2; // -2 added just so int will work
-
-        prime = (int) Math.pow(2, bitLength);
-
-        System.out.println("Prime: " + prime);
-        System.out.println("Bitlength: " + bitLength);
+        //System.out.println("Prime: " + prime);
+        //System.out.println("Bitlength: " + bitLength);
 
         /* Increment for TI Shares */
         bitDTiCount = bitLength * 3 - 2;
         comparisonTiCount = (2 * bitLength) + ((bitLength * (bitLength - 1)) / 2);
 
+        this.datasetSizeBitLength = (int) Math.ceil(Math.log(datasetSize) / Math.log(2));
+        this.datasetSizePrime = (int) Math.pow(2, datasetSizeBitLength);
+
+        //System.out.println("DatasetSize Prime: " + datasetSizePrime);
+        //System.out.println("DatasetSize Bitlength: " + datasetSizeBitLength);
+
         // TODO replace with tree
         decisionTreeNodes = new ArrayList<>();
+
+    }
+
+        public DecisionTreeTraining(int asymmetricBit,
+            ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper,
+            BlockingQueue<Message> senderQueue, int clientId,
+            List<TripleByte> binaryTriples, List<TripleBigInteger> bigIntTriples,
+            List<TripleInteger> decimalTriples, List<BigInteger> equalityShares, int partyCount,
+            Queue<Integer> protocolIdQueue, int protocolID, int classValueCount,
+            int attrCount, int attrValueCount, int datasetSize,
+            Byte[][][] attrValues, Byte[][] classValues, boolean multiThreadMode, int threadID, int maxTreeDepth,
+            List<Integer> selectedFeatureMapping) {
+
+            /* Initialization of generic Model type */
+            super(pidMapper, senderQueue, clientId, asymmetricBit,
+                    partyCount, protocolIdQueue, protocolID, threadID);
+
+            /* Initialization of input parameters */
+            this.classValueCount = classValueCount;
+            this.attrCount = attrCount;
+            this.attrValueCount = attrValueCount;
+            this.datasetSize = datasetSize;
+            this.attrValues = attrValues;
+            this.classValues = classValues;
+            this.selectedFeatureMapping = selectedFeatureMapping;
+            
+            this.multiThreadMode = multiThreadMode;
+            this.threadID = threadID;
+            //initalizeModelVariables(args);
+
+            this.bigIntTiShares  = bigIntTriples;
+            this.binaryTiShares   = binaryTriples;
+            this.equalityTiShares = equalityShares;
+            this.decimalTiShares = decimalTriples;
+
+            this.levelCounter = maxTreeDepth == 0 ? attrCount : maxTreeDepth;
+
+            /* TODO: initiate asymmetric bit holder from config file */
+            this.alpha = BigInteger.valueOf(8);
+            this.epsilon = 0.1;
+            this.cutoffTransactionSetSize = (int) (epsilon * (double)datasetSize);
+
+            /* Initialization of architectural indexes */
+            pid = 0;
+            bigIntTiIndex = 0;
+            binaryTiIndex = 0;
+            equalityTiIndex = 0;
+
+            /* Currently need to change prime in config file to same value as prime here */
+            //int baseBitLength = (int) Math.ceil(Math.log(datasetSize)/Math.log(2));
+            //bitLength = /* attrValueCount*(baseBitLength + 4)+*/
+            //          (attrValueCount-1)*(baseBitLength+4) +
+            //          (int) Math.ceil(Math.log(datasetSize)/Math.log(2)) +
+            //          (int) Math.ceil(Math.log(datasetSize)/Math.log(2)) +
+            //          2*baseBitLength - 2; // -2 added just so int will work
+
+            //prime = (int) Math.pow(2, bitLength);
+            this.bitLength = Constants.BIT_LENGTH;
+            this.prime = Constants.BIG_INT_PRIME;
+
+            //System.out.println("Prime: " + prime);
+            //System.out.println("Bitlength: " + bitLength);
+
+            /* Increment for TI Shares */
+            bitDTiCount = bitLength * 3 - 2;
+            comparisonTiCount = (2 * bitLength) + ((bitLength * (bitLength - 1)) / 2);
+
+            this.datasetSizeBitLength = (int) Math.ceil(Math.log(datasetSize) / Math.log(2));
+            this.datasetSizePrime = (int) Math.pow(2, datasetSizeBitLength);
+
+            //System.out.println("DatasetSize Prime: " + datasetSizePrime);
+            //System.out.println("DatasetSize Bitlength: " + datasetSizeBitLength);
+
+            // TODO replace with tree
+            decisionTreeNodes = new ArrayList<>();
+        }
+
+    private void incrementPid() {
+        pid++;
     }
 
     public void trainDecisionTree()
             throws InterruptedException, ExecutionException {
 
         final long startTime = System.currentTimeMillis();
-
+                /*System.out.println("AttrValues are - ");
+                for(int i=0; i<attrValues.length; i++) {
+                    for(int j=0; j<attrValues[i].length; j++) {
+                        for(int k=0; k<attrValues[i][j].length; k++) {
+                            System.out.print(attrValues[i][j][k] + " ");
+                        }
+                        System.out.println("");
+                    }
+                }
+                
+                System.out.println("ClassValues are - ");
+                for(int i=0; i<classValues.length; i++) {
+                    for(int j=0; j<classValues[i].length; j++) {
+                        System.out.print(classValues[i][j] + " ");
+                    }
+                    System.out.println("");
+                }*/
         init();
-        System.out.println(this);
-        System.out.println("\nBeginning Model...\n");
+//      //System.out.println(this);
+//      {
+//          BigInteger i = BigInteger.ZERO;
+//          for (; ; ) {
+//              if (i.compareTo(new BigInteger("10000000", 10)) == 0)
+//                  break;
+//              i = i.add(BigInteger.ONE);
+//          }
+//      }
+        //System.out.println("\nBeginning Model...\n");
         ID3Model(subsetTransactionBitVector, attributeBitVector, levelCounter);
 
         final long endTime = System.currentTimeMillis();
 
-        System.out.println("______________________________________");
-        System.out.println("AttrCnt=" + attrCount + " TransactionCnt=" + datasetSize
-                + " Runtime=" + String.valueOf(endTime - startTime) + "ms");
+        /*System.out.println("______________________________________");
+        System.out.println("AttrCnt=" + attrCount + " TransactionCnt=" + datasetSize +
+                " Runtime=" + String.valueOf(endTime - startTime) + "ms");
         System.out.println("\nDecision Tree:");
-        for (int i = 0; i < decisionTreeNodes.size(); i++) {
-            System.out.println(decisionTreeNodes.get(i));
-        }
-        System.out.println("\n");
 
+        for (int i = 0; i < decisionTreeNodes.size(); i++)
+            System.out.println(decisionTreeNodes.get(i));
+        System.out.println("\n");*/
     }
 
-    void ID3Model(Integer[] transactions, Integer[] attributes, int r)
+    void ID3Model(Byte[] transactions, Byte[] attributes, int r)
             throws InterruptedException, ExecutionException {
 
-        System.out.println("______________________________________");
+        /*System.out.println("______________________________________");
         System.out.println("Recursion Level (public): " + r);
-        System.out.print("Attribute Subset (public): ");
-        for (int el : attributes) {
-            System.out.print(el /*+ " "*/);
-        }
-        System.out.println();
-
-        System.out.print("Transaction Subset: ");
-        for (int el : transactions) {
-            System.out.print(el /*+ " "*/);
-        }
-        System.out.println();
-
-        System.out.println("______________________________________");
+        System.out.print("Attribute Subset (public): ");*/
+        //for (int el : attributes) System.out.print(el /*+ " "*/);
+        /*System.out.println();
+        System.out.print("Transaction Subset: ");*/
+        //for (int el : transactions) System.out.print(el /*+ " "*/);
+        /*System.out.println();
+        System.out.println("______________________________________");*/
 
         // Get majority cass index one-hot encoding
-        Integer[] majorityClassIndex = findCommonClassIndex(transactions);
+        Byte[] majorityClassIndex = findCommonClassIndex(transactions);
 
         // Make majority class index one-hot encoding public
-        Integer[] majorityClassIndexShared = new Integer[classValueCount];
+        Byte[] majorityClassIndexShared = new Byte[classValueCount];
         for (int i = 0; i < classValueCount; i++) {
 
             Message senderMessage = new Message(majorityClassIndex[i],
                     clientId, protocolIdQueue);
-            Integer majorityClassIndex2 = 0;
+            senderMessage.setThreadID(this.threadID);
+            Byte majorityClassIndex2 = 0;
             commonSender.put(senderMessage);
             Message receivedMessage = pidMapper.get(protocolIdQueue).take();
-            majorityClassIndex2 = (Integer) receivedMessage.getValue();
-            majorityClassIndexShared[i] = Math.floorMod(
-                    majorityClassIndex[i] + majorityClassIndex2, 2);
-
+            //System.out.println("receivedMessage majority class index:" + receivedMessage.getValue());
+            majorityClassIndex2 = (Byte) receivedMessage.getValue();
+            majorityClassIndexShared[i] = (byte) Math.floorMod(
+                    majorityClassIndex[i] + majorityClassIndex2, Constants.BINARY_PRIME);
         }
 
         // Find the integer version of the majority class index
@@ -277,156 +383,167 @@ public class DecisionTreeTraining extends Model {
             majorityClassIndexShared[i] = 0;
         }
 
-        System.out.println("Majority Class Index (public): " + majorityIndexAsInt);
-        System.out.print("Maj Index One-Hot (public): ");
-        for (int el : majorityClassIndexShared) {
-            System.out.print(el/* + " "*/);
-        }
-        System.out.println();
+        /*System.out.println("Majority Class Index (public): " + majorityIndexAsInt);
+        System.out.print("Maj Index One-Hot (public): ");*/
+        //for (int el : majorityClassIndexShared) {
+        //  System.out.print(el/* + " "*/);
+        //}
+        //System.out.println();
+
 
         // quit if no attributes left in subset
         if (r == 0) {
-            System.out.println("Exited on base case: Recursion Level == 0");
+            //System.out.println("Exited on base case: Recursion Level == 0");
             decisionTreeNodes.add("class=" + majorityIndexAsInt);
             return;
         }
 
         // create shares of one-hot majority index over decimal field
-        Integer[] majorityClassIndexDecimal = asymmetricBit == 1
-                ? CompareAndConvertField.changeBinaryToDecimalField(Arrays.asList(
-                        majorityClassIndexShared), decimalTiShares, pid, pidMapper, commonSender,
-                        protocolIdQueue, asymmetricBit, clientId, prime, partyCount)
-                : CompareAndConvertField.changeBinaryToDecimalField(Collections.nCopies(
-                        classValueCount, 0), decimalTiShares, pid, pidMapper, commonSender,
-                        protocolIdQueue, asymmetricBit, clientId, prime, partyCount);
-        pid++;
+        BigInteger[] majorityClassIndexDecimal = asymmetricBit == 1 ?
+
+                CompareAndConvertField.changeBinaryToBigIntegerField(Arrays.asList(
+                        majorityClassIndexShared), bigIntTiShares, pid, pidMapper, commonSender,
+                        protocolIdQueue, asymmetricBit, clientId, prime, partyCount, threadID) :
+
+                CompareAndConvertField.changeBinaryToBigIntegerField(Collections.nCopies(
+                        classValueCount, new Byte("0")), bigIntTiShares, pid, pidMapper, commonSender,
+                        protocolIdQueue, asymmetricBit, clientId, prime, partyCount, threadID);
+        incrementPid();
 
         // Convert transactions to decimal field
-        Integer[] transactionsDecimal
-                = CompareAndConvertField.changeBinaryToDecimalField(Arrays.asList(
-                        transactions), decimalTiShares, pid, pidMapper, commonSender,
-                        protocolIdQueue, asymmetricBit, clientId, prime, partyCount);
-        pid++;
+        BigInteger[] transactionsDecimal =
+                CompareAndConvertField.changeBinaryToBigIntegerField(Arrays.asList(
+                        transactions), bigIntTiShares, pid, pidMapper, commonSender,
+                        protocolIdQueue, asymmetricBit, clientId, prime, partyCount, threadID);
+        incrementPid();
 
         // Generate a vector for each class value that contains:
         // - all 0's if i is not the majority class index
-        // - the current subset of transactions if i is the majority class index  
+        // - the current subset of transactions if i is the majority class index
         ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
-        List<Future<Integer[]>> batchMultTasks1 = new ArrayList<>();
+        List<Future<BigInteger[]>> batchMultTasks1 = new ArrayList<>();
         for (int i = 0; i < classValueCount; i++) {
-            BatchMultiplicationInteger bm = new BatchMultiplicationInteger(
-                    Arrays.asList(transactionsDecimal), Collections.nCopies(datasetSize, majorityClassIndexDecimal[i]),
-                    decimalTiShares, pidMapper, commonSender,
+            BatchMultiplicationBigInteger bm = new BatchMultiplicationBigInteger(
+                    Arrays.asList(transactionsDecimal),
+                    Collections.nCopies(datasetSize, majorityClassIndexDecimal[i]),
+                    bigIntTiShares, pidMapper, commonSender,
                     new LinkedList<>(protocolIdQueue), clientId,
                     prime, pid, asymmetricBit, modelProtocolId,
-                    partyCount);
-            pid++;
+                    partyCount, threadID);
+            incrementPid();
             batchMultTasks1.add(es.submit(bm));
         }
-        List<Integer[]> majClassOfSubsetTransactions = new ArrayList<>();
+        List<BigInteger[]> majClassOfSubsetTransactions = new ArrayList<>();
         for (int i = 0; i < classValueCount; i++) {
-            Future<Integer[]> bmTask1 = batchMultTasks1.get(i);
+            Future<BigInteger[]> bmTask1 = batchMultTasks1.get(i);
             majClassOfSubsetTransactions.add(bmTask1.get());
         }
 
         // Determine the number of transactions in the subset that predict the
         // majority class value
-        int majorityClassTransactionCount = 0;
+        BigInteger majorityClassTransactionCount = BigInteger.ZERO;
 
-        List<Future<Integer>> dpTasks = new ArrayList<>();
+        List<Future<BigInteger>> dpTasks = new ArrayList<>();
         for (int i = 0; i < classValueCount; i++) {
-            DotProductInteger dpModule = new DotProductInteger(
+            DotProductBigInteger dpModule = new DotProductBigInteger(
                     /*Collections.nCopies(datasetSize, majorityClassIndexDecimal[i])*/
                     Arrays.asList(majClassOfSubsetTransactions.get(i)),
-                    classValueTransactionVectorDecimal.get(i), decimalTiShares,
+                    classValueTransactionVectorBigInteger.get(i), bigIntTiShares,
                     pidMapper, commonSender, new LinkedList<>(protocolIdQueue),
-                    clientId, prime, pid, asymmetricBit, partyCount);
-            Future<Integer> dpResult = es.submit(dpModule);
-            pid++;
+                    clientId, prime, pid, asymmetricBit, partyCount, threadID);
+            Future<BigInteger> dpResult = es.submit(dpModule);
+            incrementPid();
             dpTasks.add(dpResult);
         }
         for (int i = 0; i < classValueCount; i++) {
-            Future<Integer> dpResult = dpTasks.get(i);
-            majorityClassTransactionCount
-                    = Math.floorMod(majorityClassTransactionCount + dpResult.get(), prime);
+            Future<BigInteger> dpResult = dpTasks.get(i);
+            majorityClassTransactionCount =
+                    (majorityClassTransactionCount.add(dpResult.get())).mod(prime);
         }
 
-        System.out.println("Majority Class Transaction Count: "
-                + majorityClassTransactionCount);
+        /*System.out.println("Majority Class Transaction Count: " +
+                majorityClassTransactionCount);*/
 
         // Convert subset of transactions to decimal field (HAS THIS ALREADY BEEN DONE?)
-        Integer[] subsetTransactionsDecimal
-                = CompareAndConvertField.changeBinaryToDecimalField(
-                        Arrays.asList(transactions), decimalTiShares,
+        BigInteger[] subsetTransactionsDecimal =
+                CompareAndConvertField.changeBinaryToBigIntegerField(
+                        Arrays.asList(transactions), bigIntTiShares,
                         pid, pidMapper, commonSender, protocolIdQueue, asymmetricBit,
-                        clientId, prime, partyCount);
-        pid++;
+                        clientId, prime, partyCount, threadID);
+        incrementPid();
 
         // Count the total number of transactions in the current subset
-        int transactionCount = 0;
-        DotProductInteger dpm = new DotProductInteger(
+        BigInteger transactionCount = BigInteger.ZERO;
+        DotProductBigInteger dpm = new DotProductBigInteger(
                 Arrays.asList(subsetTransactionsDecimal),
-                Collections.nCopies(transactions.length, asymmetricBit), decimalTiShares,
-                pidMapper, commonSender, new LinkedList<>(protocolIdQueue), clientId, prime,
-                pid, asymmetricBit, partyCount);
-        pid++;
+                Collections.nCopies(datasetSize, asymmetricBit == 1 ?
+                        BigInteger.ONE : BigInteger.ZERO), bigIntTiShares, pidMapper,
+                commonSender, new LinkedList<>(protocolIdQueue), clientId, prime,
+                pid, asymmetricBit, partyCount, threadID);
+        incrementPid();
         transactionCount = dpm.call();
 
-        System.out.println("Transactions in current subset: " + transactionCount);
+        //System.out.println("Transactions in current subset: " + transactionCount);
 
         // Determine if the entire subset of transactions predicts the majority class
-        // attribute
-        Equality eq = new Equality(transactionCount,
+        // attribute -- TODO: Can't be 0 index every time
+        EqualityBigInteger eq = new EqualityBigInteger(transactionCount,
                 majorityClassTransactionCount, equalityTiShares.get(0),
-                decimalTiShares.get(0), asymmetricBit, pidMapper, commonSender,
+                bigIntTiShares.get(0), asymmetricBit, pidMapper, commonSender,
                 clientId, prime, pid, new LinkedList<>(protocolIdQueue),
-                partyCount);
-        pid++;
-        int eqResult = eq.call();
+                partyCount, threadID);
+        incrementPid();
+        BigInteger eqResult = eq.call();
 
-        System.out.println("MajClassTrans = SubsetTrans? (Non-zero -> not equal): "
-                + eqResult);
+        /*System.out.println("MajClassTrans = SubsetTrans? (Non-zero -> not equal): "
+                + eqResult);*/
 
         // Determine if cutoff transactions size has been reached TODO
-        int compResult = 1; // non-zero means |T| is NOT <= e|t|
+        BigInteger compResult = BigInteger.ONE; // non-zero means |T| is NOT <= e|t|
 
         // Determine if either base case condition has been reached with
         // NOT(NOT x AND NOT y) in place of x OR y
-        MultiplicationInteger mult = new MultiplicationInteger(eqResult,
-                compResult, decimalTiShares.get(decimalTiIndex), pidMapper,
+        MultiplicationBigInteger mult = new MultiplicationBigInteger(eqResult,
+                compResult, bigIntTiShares.get(bigIntTiIndex), pidMapper,
                 commonSender, new LinkedList<>(protocolIdQueue), clientId, prime,
-                pid, asymmetricBit, modelProtocolId, partyCount);
-        pid++;
-        int stoppingBit = mult.call();
+                pid, asymmetricBit, partyCount, threadID);
+        incrementPid();
+        BigInteger stoppingBit = mult.call();
 
         // Make result public: if x OR y is true, exit on base case
         Message senderMessage = new Message(stoppingBit, clientId, protocolIdQueue);
-        Integer stoppingBit2 = 0;
+        senderMessage.setThreadID(this.threadID);
+        BigInteger stoppingBit2 = BigInteger.ZERO;
         commonSender.put(senderMessage);
         Message receivedMessage = pidMapper.get(protocolIdQueue).take();
-        stoppingBit2 = (Integer) receivedMessage.getValue();
-        if (Math.floorMod(stoppingBit + stoppingBit2, prime) == 0) {
-            System.out.println("Exited on base case: All transactions predict same outcome");
+
+        //System.out.println("receivedMessage:" + receivedMessage.getValue());
+        stoppingBit2 = (BigInteger) receivedMessage.getValue();
+        /* TODO: Check compareTo return value */
+        if (((stoppingBit.add(stoppingBit2)).mod(prime)).compareTo(BigInteger.ZERO) == 0) { //Math.floorMod(stoppingBit+stoppingBit2, prime)==0) {
+            //System.out.println("Exited on base case: All transactions predict same outcome");
             decisionTreeNodes.add("class=" + majorityIndexAsInt);
             es.shutdown();
             return;
         }
-        System.out.println("Base case not reached. Continuing.");
+        //System.out.println("Base case not reached. Continuing.");
 
-        List<List<Integer>> UDecimal = new ArrayList<>();
+        List<List<BigInteger>> UDecimal = new ArrayList<>();
         List<Future<Integer[]>> UtaskList = new ArrayList<>();
 
         // Generate each subset of transactions within the current subset
-        // that predict the i-th class value	
+        // that predict the i-th class value
+
         for (int i = 0; i < classValueCount; i++) {
 
             BatchMultiplicationByte batchMult = new BatchMultiplicationByte(
-                    Arrays.asList(transactions), classValueTransactionVector.get(i),
+                    convertToIntList(transactions, null),
+                    convertToIntList(null, classValueTransactionVector.get(i)),
                     binaryTiShares, pidMapper, commonSender,
                     new LinkedList<>(protocolIdQueue), clientId,
                     Constants.BINARY_PRIME, pid, asymmetricBit, modelProtocolId,
-                    partyCount);
-            pid++;
+                    partyCount, threadID);
+            incrementPid();
             UtaskList.add(es.submit(batchMult));
         }
         pid += classValueCount;
@@ -435,318 +552,285 @@ public class DecisionTreeTraining extends Model {
         for (int i = 0; i < classValueCount; i++) {
             Future<Integer[]> taskResponse = UtaskList.get(i);
             UDecimal.add(Arrays.asList(
-                    CompareAndConvertField.changeBinaryToDecimalField(
-                            Arrays.asList(taskResponse.get()), decimalTiShares,
+                    CompareAndConvertField.changeBinaryToBigIntegerField(
+                            convertToByteList(taskResponse.get(), null), bigIntTiShares,
                             pid, pidMapper, commonSender, protocolIdQueue, asymmetricBit,
-                            clientId, prime, partyCount)));
-            pid++;
+                            clientId, prime, partyCount, threadID)));
+            incrementPid();
         }
 
-        Integer[][][] X = new Integer[attrCount][classValueCount][attrValueCount];
-        Integer[][][] X2 = new Integer[attrCount][classValueCount][attrValueCount];
-        Integer[][] Y = new Integer[attrCount][attrValueCount];
-        Integer[] giniNumerators = new Integer[attrCount];
-        Integer[] giniDenominators = new Integer[attrCount];
+        BigInteger[][][] X = new BigInteger[attrCount][classValueCount][attrValueCount];
+        BigInteger[][][] X2 = new BigInteger[attrCount][classValueCount][attrValueCount];
+        BigInteger[][] Y = new BigInteger[attrCount][attrValueCount];
+        BigInteger[] giniNumerators = new BigInteger[attrCount];
+        BigInteger[] giniDenominators = new BigInteger[attrCount];
 
-        List<Future<Integer>> xTasks = new ArrayList<>();
+        List<Future<BigInteger>> xTasks = new ArrayList<>();
 
         // For every attribute in the current subset
         for (int k = 0; k < attrCount; k++) {
             if (attributes[k] != 0) {
-                // System.out.println("______________________________________");
-                // System.out.println("Attribute ["+k+"]:");
+                // //System.out.println("______________________________________");
+                // //System.out.println("Attribute ["+k+"]:");
 
                 // For every value taken by the k-th attribute
                 for (int j = 0; j < attrValueCount; j++) {
                     xTasks.clear();
-                    Y[k][j] = 0;
+                    Y[k][j] = BigInteger.ZERO;
 
                     // Determine the number of transactions that are:
                     // 1. in the current subset
                     // 2. predict the i-th class value
                     // 3. and have the j-th value of the k-th attribute
                     for (int i = 0; i < classValueCount; i++) {
-                        DotProductInteger dp = new DotProductInteger(UDecimal.get(i),
-                                attributeValueTransactionVectorDecimal.get(k).get(j),
-                                decimalTiShares, pidMapper, commonSender,
+                        DotProductBigInteger dp = new DotProductBigInteger(UDecimal.get(i),
+                                attributeValueTransactionVectorBigInteger.get(k).get(j),
+                                bigIntTiShares, pidMapper, commonSender,
                                 new LinkedList<>(protocolIdQueue), clientId, prime,
-                                pid, asymmetricBit, partyCount);
-                        pid++;
-                        Future<Integer> dpTask = es.submit(dp);
+                                pid, asymmetricBit, partyCount, threadID);
+                        incrementPid();
+                        Future<BigInteger> dpTask = es.submit(dp);
                         xTasks.add(dpTask);
                     }
 
                     for (int i = 0; i < classValueCount; i++) {
-                        Future<Integer> dpResult = xTasks.get(i);
+                        Future<BigInteger> dpResult = xTasks.get(i);
                         X[k][i][j] = dpResult.get();
-                        // System.out.println("X["+k+"]["+j+"]["+i+"]: " + X[k][i][j]);
-                        Y[k][j] = Math.floorMod(Y[k][j] + X[k][i][j], prime);
+                        // //System.out.println("X["+k+"]["+j+"]["+i+"]: " + X[k][i][j]);
+                        Y[k][j] = (Y[k][j].add(X[k][i][j])).mod(prime);
                     }
-                    // System.out.println("Y["+k+"]["+j+"]:" + Y[k][j]);
-                    // System.out.println();
+                    // //System.out.println("Y["+k+"]["+j+"]:" + Y[k][j]);
+                    // //System.out.println();
 
-                    // Y contains the total number of transactions in the current subset 
+                    // Y contains the total number of transactions in the current subset
                     // in which the j-th value of the k-th attribute is present
                     // The max bitLength of Y is bitLength
-                    // this line makes bitlength need to be bitLength + 4 (for alpha=8) 
-                    Y[k][j] = Math.floorMod(
-                            alpha * Y[k][j] + asymmetricBit, prime);
-
+                    // this line makes bitlength need to be bitLength + 4 (for alpha=8)
+                    Y[k][j] = ((alpha.multiply(Y[k][j]))
+                            .add(asymmetricBit == 1 ? BigInteger.ONE : BigInteger.ZERO))
+                            .mod(prime);
                 }
 
-                /* Compute X^2 for every X
-			   this makes the bitLength need to be 2*bitLength */
-                List<Future<Integer[]>> batchMultTasks = new ArrayList<>();
+            /* Compute X^2 for every X
+               this makes the bitLength need to be 2*bitLength */
+                List<Future<BigInteger[]>> batchMultTasks = new ArrayList<>();
                 for (int i = 0; i < classValueCount; i++) {
-                    BatchMultiplicationInteger batchMult
-                            = new BatchMultiplicationInteger(Arrays.asList(X[k][i]),
-                                    Arrays.asList(X[k][i]), decimalTiShares, pidMapper,
+                    BatchMultiplicationBigInteger batchMult =
+                            new BatchMultiplicationBigInteger(Arrays.asList(X[k][i]),
+                                    Arrays.asList(X[k][i]), bigIntTiShares, pidMapper,
                                     commonSender, new LinkedList<>(protocolIdQueue),
                                     clientId, prime, pid, asymmetricBit,
-                                    modelProtocolId, partyCount);
-                    pid++;
-                    Future<Integer[]> bmTask = es.submit(batchMult);
+                                    modelProtocolId, partyCount, threadID);
+                    incrementPid();
+                    Future<BigInteger[]> bmTask = es.submit(batchMult);
                     batchMultTasks.add(bmTask);
                 }
                 for (int i = 0; i < classValueCount; i++) {
-                    Future<Integer[]> bmTask = batchMultTasks.get(i);
+                    Future<BigInteger[]> bmTask = batchMultTasks.get(i);
                     X2[k][i] = bmTask.get();
                 }
 
-                /* Compute the product of all Y's : These are the Gini Gain denominators.
-			   the max bitLength of Y can be (bitLength + 4), so bitlength 
-			   should be attrValCount * (bitLength + 4)                       */
-                ParallelMultiplication pMult = new ParallelMultiplication(
-                        Arrays.asList(Y[k]), binaryTiShares, clientId, prime, pid,
+            /* Compute the product of all Y's : These are the Gini Gain denominators.
+               the max bitLength of Y can be (bitLength + 4), so bitlength
+               should be attrValCount * (bitLength + 4)                       */
+                ParallelMultiplicationBigInteger pMult = new ParallelMultiplicationBigInteger(
+                        Arrays.asList(Y[k]), bigIntTiShares/*binaryTiShares*/, clientId, prime, pid,
                         asymmetricBit, pidMapper, commonSender,
-                        new LinkedList<>(protocolIdQueue), partyCount);
-                pid++;
+                        new LinkedList<>(protocolIdQueue), partyCount, threadID);
+                incrementPid();
                 giniDenominators[k] = pMult.call();
 
-                /* Compute the Gini Gain numerator as the product of each Y w/o j
-			   multiplied by the sum over Xij^2's.
-			- Y w/o J needs bitLength (attrVaCount - 1)*(bitLength + 4)
-			- X^2 has bitlength of 2*bitLength, so the sum over Xij^2's needs
-			  ceil[ log(attrValCount) ] + ceil[ log(classValCount) ] + 2*bitLength
-			- Then, the entire Gini Numerator needs a bit length of:
-				(attrValCount-1)*(bitlength + 4) + 
-				ceil[ log(classValCount) ] + 
-				ceil[ log(attrValCount) ] + 2*bitLength                       */
-                giniNumerators[k] = 0;
+
+            /* Compute the Gini Gain numerator as the product of each Y w/o j
+               multiplied by the sum over Xij^2's.
+            - Y w/o J needs bitLength (attrVaCount - 1)*(bitLength + 4)
+            - X^2 has bitlength of 2*bitLength, so the sum over Xij^2's needs
+              ceil[ log(attrValCount) ] + ceil[ log(classValCount) ] + 2*bitLength
+            - Then, the entire Gini Numerator needs a bit length of:
+                (attrValCount-1)*(bitlength + 4) +
+                ceil[ log(classValCount) ] +
+                ceil[ log(attrValCount) ] + 2*bitLength                       */
+                giniNumerators[k] = BigInteger.ZERO;
                 for (int j = 0; j < attrValueCount; j++) {
-                    List<Integer> YwithoutJ = new ArrayList<>();
+                    List<BigInteger> YwithoutJ = new ArrayList<>();
                     for (int l = 0; l < Y[k].length; l++) {
-                        if (j != l) {
+                        if (j != l)
                             YwithoutJ.add(Y[k][l]);
-                        }
                     }
-                    int YprodWithoutJ = 0;
-                    ParallelMultiplication pMult0 = new ParallelMultiplication(
-                            YwithoutJ, binaryTiShares, clientId, prime, pid,
+                    BigInteger YprodWithoutJ = BigInteger.ZERO;
+                    ParallelMultiplicationBigInteger pMult0 = new ParallelMultiplicationBigInteger(
+                            YwithoutJ, bigIntTiShares, clientId, prime, pid,
                             asymmetricBit, pidMapper, commonSender,
-                            new LinkedList<>(protocolIdQueue), partyCount);
-                    pid++;
+                            new LinkedList<>(protocolIdQueue), partyCount, threadID);
+                    incrementPid();
 
                     YprodWithoutJ = pMult0.call();
 
-                    Integer sumX2 = 0;
+                    BigInteger sumX2 = BigInteger.ZERO;
                     for (int i = 0; i < classValueCount; i++) {
-                        sumX2 = Math.floorMod(sumX2 + X2[k][i][j], prime);
+                        sumX2 = (sumX2.add(X2[k][i][j])).mod(prime);
                     }
 
-                    MultiplicationInteger mult0 = new MultiplicationInteger(sumX2,
-                            YprodWithoutJ, decimalTiShares.get(decimalTiIndex), pidMapper,
+                    MultiplicationBigInteger mult0 = new MultiplicationBigInteger(sumX2,
+                            YprodWithoutJ, bigIntTiShares.get(bigIntTiIndex), pidMapper,
                             commonSender, new LinkedList<>(protocolIdQueue), clientId, prime,
-                            pid, asymmetricBit, modelProtocolId, partyCount);
+                            pid, asymmetricBit, partyCount, threadID);
 
-                    pid++;
+                    incrementPid();
 
-                    giniNumerators[k] = Math.floorMod(mult0.call() + giniNumerators[k], prime);
+                    giniNumerators[k] = (mult0.call().add(giniNumerators[k])).mod(prime);
                 }
             }
         }
 
-        for (int k = 0; k < attrCount; k++) {
-            System.out.println("Gini_Gain[" + k + "]: num=" + giniNumerators[k]
-                    + ", denom=" + giniDenominators[k]);
-        }
-
-        int k = 0;
-        while (attributes[k] == 0) {
-            k++;
-        }
+        /*for (int k = 0; k < attrCount; k++) {
+            System.out.println("Gini_Gain[" + k + "]: num=" + giniNumerators[k] +
+                    ", denom=" + giniDenominators[k]);
+        }*/
 
         /* The argmax of Gini Gains over k is computed by performing pairwise
-		   comparisons between the current max Gini Gain and the next Gini Gain.
-		   This is done by multiplying each denominator by the other Numerator.
-		   A denominator has max bitlength : attrValCount * (bitLength + 4) 
-		   A numerator has max bitlength: 
+           comparisons between the current max Gini Gain and the next Gini Gain.
+           This is done by multiplying each denominator by the other Numerator.
+           A denominator has max bitlength : attrValCount * (bitLength + 4)
+           A numerator has max bitlength:
 
-				(attrValCount-1)*(bitlength + 4) + 
-				ceil[ log(classValCount) ] + 
-				ceil[ log(attrValCount) ] + 2*bitLength
+                (attrValCount-1)*(bitlength + 4) +
+                ceil[ log(classValCount) ] +
+                ceil[ log(attrValCount) ] + 2*bitLength
 
-			So the total bitLength needed is the sum of the two:
+            So the total bitLength needed is the sum of the two:
 
-				attrValCount*(bitLength + 4) +
- 				(attrValCount-1)*(bitlength + 4) + 
-				ceil[ log(classValCount) ] + 
-				ceil[ log(attrValCount) ] + 2*bitLength
+                attrValCount*(bitLength + 4) +
+                (attrValCount-1)*(bitlength + 4) +
+                ceil[ log(classValCount) ] +
+                ceil[ log(attrValCount) ] + 2*bitLength
 
-         */
-        Integer giniMaxNumerator = giniNumerators[k];
-        Integer giniMaxDenominator = giniDenominators[k];
-        int giniArgmax = k;
+           */
+
+        int k = 0;
+        while (attributes[k] == 0) k++;
+
+        BigInteger giniMaxNumerator = giniNumerators[k];
+        BigInteger giniMaxDenominator = giniDenominators[k];
+        //BigInteger giniArgmax = BigInteger.valueOf(k);
+                BigInteger giniArgmax = BigInteger.valueOf(asymmetricBit == 1 ? k : 0);
 
         k++;
-        for (; k < giniNumerators.length; k++) {
+        for (; k < attrCount; k++) {
             if (attributes[k] == 1) {
 
-                Message senderMessage1 = new Message(giniNumerators[k],
-                        clientId, protocolIdQueue);
-                Integer giniNumerator2 = 0;
-                commonSender.put(senderMessage1);
-                Message receivedMessage1 = pidMapper.get(protocolIdQueue).take();
-                giniNumerator2 = (Integer) receivedMessage1.getValue();
-                giniNumerators[k] = asymmetricBit == 1 ? Math.floorMod(
-                        giniNumerators[k] + giniNumerator2, prime) : 0;
+                BigInteger leftOperand, rightOperand;
+                BigInteger[] giniArgmaxes = {
+                        BigInteger.valueOf(asymmetricBit == 1 ? k : 0), giniArgmax};
+                BigInteger[] numerators = {giniNumerators[k], giniMaxNumerator};
+                BigInteger[] denominators = {giniDenominators[k], giniMaxDenominator};
+                BigInteger[] newAssignmentsBin = new BigInteger[2];
+                BigInteger[] newAssignments = new BigInteger[2];
 
-                Message senderMessage2 = new Message(giniDenominators[k],
-                        clientId, protocolIdQueue);
-                Integer giniDenominators2 = 0;
-                commonSender.put(senderMessage2);
-                Message receivedMessage2 = pidMapper.get(protocolIdQueue).take();
-                giniDenominators2 = (Integer) receivedMessage2.getValue();
-                giniDenominators[k] = asymmetricBit == 1 ? Math.floorMod(
-                        giniDenominators[k] + giniDenominators2, prime) : 0;
+                MultiplicationBigInteger mult0 = new MultiplicationBigInteger(numerators[0],
+                        denominators[1], bigIntTiShares.get(bigIntTiIndex), pidMapper,
+                        commonSender, new LinkedList<>(protocolIdQueue), clientId, prime,
+                        pid, asymmetricBit, partyCount,threadID);
+                incrementPid();
+                leftOperand = mult0.call();
 
-                Message senderMessage3 = new Message(giniMaxNumerator,
-                        clientId, protocolIdQueue);
-                Integer giniMaxNumerator2 = 0;
-                commonSender.put(senderMessage3);
-                Message receivedMessage3 = pidMapper.get(protocolIdQueue).take();
-                giniMaxNumerator2 = (Integer) receivedMessage3.getValue();
-                giniMaxNumerator = asymmetricBit == 1 ? Math.floorMod(
-                        giniMaxNumerator + giniMaxNumerator2, prime) : 0;
+                MultiplicationBigInteger mult1 = new MultiplicationBigInteger(numerators[1],
+                        denominators[0], bigIntTiShares.get(bigIntTiIndex), pidMapper,
+                        commonSender, new LinkedList<>(protocolIdQueue), clientId, prime,
+                        pid, asymmetricBit, partyCount, threadID);
+                incrementPid();
+                rightOperand = mult1.call();
 
-                Message senderMessage4 = new Message(giniMaxDenominator,
-                        clientId, protocolIdQueue);
-                Integer giniMaxDenominator2 = 0;
-                commonSender.put(senderMessage4);
-                Message receivedMessage4 = pidMapper.get(protocolIdQueue).take();
-                giniMaxDenominator2 = (Integer) receivedMessage4.getValue();
-                giniMaxDenominator = asymmetricBit == 1 ? Math.floorMod(
-                        giniMaxDenominator + giniMaxDenominator2, prime) : 0;
-
-                int leftOperand = giniNumerators[k] * giniMaxDenominator;
-                int rightOperand = giniMaxNumerator * giniDenominators[k];
-
-                int comparisonResult = 0;
-                int compResultInverse = 0;
-                if (asymmetricBit == 1) {
-
-                    comparisonResult = (leftOperand >= rightOperand) ? 1 : 0;
-                    compResultInverse = Math.floorMod(comparisonResult + 1, 2);
-                }
-                //   System.out.println("GiniMaxNum=" + giniMaxNumerator + ", giniMaxDenominator=" + giniMaxDenominator);
-                //   System.out.println("GiniNums[k]=" + giniNumerators[k] + ", GiniDenoms[k]=" + giniDenominators[k]);
-                // int leftOperand=0;
-
-                // MultiplicationInteger mult0 = new MultiplicationInteger(giniNumerators[k], 
-                // 				giniMaxDenominator, decimalTiShares.get(decimalTiIndex), pidMapper,
-                // 				commonSender, new LinkedList<>(protocolIdQueue), clientId, prime,
-                // 				pid, asymmetricBit, modelProtocolId, partyCount);
-                // 			pid++;
-                // leftOperand = mult0.call();
-                // System.out.println("New Num * Old Denom: " + leftOperand);
-                // int rightOperand=0;
-                // MultiplicationInteger mult1 = new MultiplicationInteger(giniMaxNumerator, 
-                // 				giniDenominators[k], decimalTiShares.get(decimalTiIndex), pidMapper,
-                // 				commonSender, new LinkedList<>(protocolIdQueue), clientId, prime,
-                // 				pid, asymmetricBit, modelProtocolId, partyCount);
-                // 			pid++;
-                // rightOperand = mult1.call();
-                // System.out.println("Old Num * New Denom: " + rightOperand);
-                int placeheHolder = CompareAndConvertField.compareIntegers(
-                        1, 1, binaryTiShares,
+                newAssignmentsBin[0] = CompareAndConvertField.compareBigIntegers(
+                        leftOperand, rightOperand, binaryTiShares,
                         asymmetricBit, pidMapper, commonSender, new LinkedList<>(protocolIdQueue),
                         clientId, prime, bitLength, partyCount, pid,
-                        false, decimalTiShares);
-                pid++;
+                         false, bigIntTiShares, threadID);
+                incrementPid();
 
-                //         	int compResultInverse = comparisonResult;
-                //         	if(asymmetricBit==1) {
-                //         		compResultInverse = Math.floorMod(comparisonResult+1, 2);
-                //         	}
-                //    	System.out.println("CompResult: "+comparisonResult + ", CompResultInv: " + compResultInverse);
-                //         	// convert to decimal field compResult and inverse to decimal
-                //         	//Integer[] newAssignmentsBin = {compResultInverse, comparisonResult};
-                Integer[] newAssignmentsBin = {comparisonResult, compResultInverse};
+                newAssignmentsBin[1] = (newAssignmentsBin[0]
+                        .add(asymmetricBit == 1 ? BigInteger.ONE : BigInteger.ZERO))
+                        .mod(BigInteger.valueOf(Constants.BINARY_PRIME));
 
-                Integer[] newAssignments
-                        = CompareAndConvertField.changeBinaryToDecimalField(
-                                Arrays.asList(newAssignmentsBin), decimalTiShares,
+                newAssignments =
+                        CompareAndConvertField.changeBinaryToBigIntegerField(
+                                convertBigIntToByteList(newAssignmentsBin, null), bigIntTiShares,
                                 pid, pidMapper, commonSender, protocolIdQueue,
-                                asymmetricBit, clientId, prime, partyCount);
-                pid++;
+                                asymmetricBit, clientId, prime, partyCount, threadID);
+                incrementPid();
 
-                Integer[] giniArgmaxes = {k, giniArgmax};
-                if (asymmetricBit == 0) {
-                    giniArgmaxes[0] = 0;
-                }
-                Integer[] numerators = {giniNumerators[k], giniMaxNumerator};
-                Integer[] denominators = {giniDenominators[k], giniMaxDenominator};
-
-                DotProductInteger dp1 = new DotProductInteger(Arrays.asList(newAssignments),
-                        Arrays.asList(giniArgmaxes), decimalTiShares, pidMapper, commonSender,
+                DotProductBigInteger dp1 = new DotProductBigInteger(Arrays.asList(newAssignments),
+                        Arrays.asList(giniArgmaxes), bigIntTiShares, pidMapper, commonSender,
                         new LinkedList<>(protocolIdQueue), clientId, prime,
-                        pid, asymmetricBit, partyCount);
-                pid++;
+                        pid, asymmetricBit, partyCount,threadID);
+                incrementPid();
                 giniArgmax = dp1.call();
 
-                DotProductInteger dp2 = new DotProductInteger(Arrays.asList(newAssignments),
-                        Arrays.asList(numerators), decimalTiShares, pidMapper, commonSender,
+                DotProductBigInteger dp2 = new DotProductBigInteger(Arrays.asList(newAssignments),
+                        Arrays.asList(numerators), bigIntTiShares, pidMapper, commonSender,
                         new LinkedList<>(protocolIdQueue), clientId, prime,
-                        pid, asymmetricBit, partyCount);
-                pid++;
+                        pid, asymmetricBit, partyCount, threadID);
+                incrementPid();
                 giniMaxNumerator = dp2.call();
 
-                DotProductInteger dp3 = new DotProductInteger(Arrays.asList(newAssignments),
-                        Arrays.asList(denominators), decimalTiShares, pidMapper, commonSender,
+
+                DotProductBigInteger dp3 = new DotProductBigInteger(Arrays.asList(newAssignments),
+                        Arrays.asList(denominators), bigIntTiShares, pidMapper, commonSender,
                         new LinkedList<>(protocolIdQueue), clientId, prime,
-                        pid, asymmetricBit, partyCount);
-                pid++;
+                        pid, asymmetricBit, partyCount, threadID);
+                incrementPid();
                 giniMaxDenominator = dp3.call();
+
+                /*System.out.println("k = " + k);
+                System.out.println("New Num x Old Denom : " + leftOperand);
+                System.out.println("Old Num x New Denom : " + rightOperand);
+                System.out.println("New >= Old          : " + newAssignmentsBin[0]);
+                System.out.println("New >= Old (dec)    : " + newAssignments[0]);
+                System.out.println("New <  Old          : " + newAssignmentsBin[1]);
+                System.out.println("New <  Old (dec)    : " + newAssignments[1]);
+                System.out.println("Updated argmax: " + giniArgmax);
+                System.out.println("Updated numerator   : " + giniMaxNumerator);
+                System.out.println("Updated denominator : " + giniMaxDenominator);*/
 
             }
         }
+        //System.out.println(attributes.length);
+        //System.out.println("Sending giniArgmax from thread " + this.threadID + ": " + giniArgmax);
 
         Message sendMessage = new Message(giniArgmax, clientId, protocolIdQueue);
-        Integer giniArgmax2 = 0;
+        sendMessage.setThreadID(this.threadID);
         commonSender.put(sendMessage);
         Message receiveMessage = pidMapper.get(protocolIdQueue).take();
-        giniArgmax2 = (Integer) receiveMessage.getValue();
-        Integer sharedGiniArgmax = Math.floorMod(giniArgmax + giniArgmax2, prime);
-        System.out.println("Gini Gain Argmax (public): " + sharedGiniArgmax);
+                //System.out.println("Current threadID is " + this.threadID + " Send Message threadID is " + sendMessage.getThreadID() + " Received Message threadID is " + receiveMessage.getThreadID());
+                BigInteger giniArgmax2 = (BigInteger) receiveMessage.getValue();
+                //System.out.println("Gini Argmax2 for thread " + this.threadID + ": " + giniArgmax2);
+        //System.out.println("Gini Gain Argmax:" + giniArgmax.add(giniArgmax2));
+                //System.out.println("Long sharedGiniArgmax " + (giniArgmax.add(giniArgmax2)).mod(prime).longValue());
+                //System.out.println("Int sharedGiniArgmax " + (giniArgmax.add(giniArgmax2)).mod(prime).intValue());
+        int sharedGiniArgmax = (int) ((giniArgmax.add(giniArgmax2)).mod(prime).longValue());
+        //System.out.println("Gini Gain Argmax (public): " + sharedGiniArgmax);
 
         attributes[sharedGiniArgmax] = 0;
 
-        decisionTreeNodes.add("attr=" + sharedGiniArgmax);
+                if(selectedFeatureMapping == null)
+                    decisionTreeNodes.add("attr=" + sharedGiniArgmax);
+                else
+                    decisionTreeNodes.add("attr=" + selectedFeatureMapping.get(sharedGiniArgmax));
 
-        // for each j in attrValue, batchmult transactions (*) subsetTransactionBitVector[giniArgmax][j]
-        // dtLearn(transactions', attributes', --r);
+        // Create transaction subsets for each of the following recursive calls.
+        // One for each subset where the k*-th attribute takes the j-th value
         List<Future<Integer[]>> batchMultTasks0 = new ArrayList<>();
         List<Integer[]> updatedTransactions = new ArrayList<>();
 
         for (int j = 0; j < attrValueCount; j++) {
 
-            BatchMultiplicationByte batchMult
-                    = new BatchMultiplicationByte(Arrays.asList(transactions),
-                            attributeValueTransactionVector.get(sharedGiniArgmax).get(j),
+            BatchMultiplicationByte batchMult =
+                    new BatchMultiplicationByte(convertToIntList(transactions, null),
+                            convertToIntList(null, attributeValueTransactionVector.get(sharedGiniArgmax).get(j)),
                             binaryTiShares, pidMapper, commonSender,
                             new LinkedList<>(protocolIdQueue), clientId,
-                            Constants.BINARY_PRIME, pid, asymmetricBit, modelProtocolId, partyCount);
-            pid++;
+                            Constants.BINARY_PRIME, pid, asymmetricBit, modelProtocolId, partyCount,threadID);
+            incrementPid();
             Future<Integer[]> bmTask = es.submit(batchMult);
             batchMultTasks0.add(bmTask);
         }
@@ -757,46 +841,52 @@ public class DecisionTreeTraining extends Model {
             updatedTransactions.add(bmTask.get());
         }
 
+        // Make a recursive call to ID3 for each new subset of transactions w/o A_k*
         for (int j = 0; j < attrValueCount; j++) {
-            ID3Model(updatedTransactions.get(j), attributes, r - 1);
+            ID3Model(convertToByteArray(updatedTransactions.get(j), null), attributes.clone(), r - 1);
         }
         es.shutdown();
     }
 
-    Integer[] findCommonClassIndex(Integer[] subsetTransactions)
+    Byte[] findCommonClassIndex(Byte[] subsetTransactionsByte)
             throws InterruptedException, ExecutionException {
 
+        Integer[] subsetTransactions = convertToIntArr(subsetTransactionsByte, null);
+
         int[] s = new int[classValueCount];
-        ExecutorService es
-                = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
+        ExecutorService es =
+                Executors.newFixedThreadPool(Constants.THREAD_COUNT);
 
         List<Future<Integer>> DPtaskList = new ArrayList<>();
 
-        Integer[] subsetTransactionsDecimal
-                = CompareAndConvertField.changeBinaryToDecimalField(
+        Integer[] subsetTransactionsDecimal =
+                CompareAndConvertField.changeBinaryToDecimalField(
                         Arrays.asList(subsetTransactions), decimalTiShares,
                         pid, pidMapper, commonSender, protocolIdQueue, asymmetricBit,
-                        clientId, prime, partyCount);
-        pid++;
+                        clientId, datasetSizePrime, partyCount, threadID);
+        incrementPid();
 
-        // System.out.println("Subset Transactions (bin): ");
+        // //System.out.println("Subset Transactions (bin): ");
         // for(Integer i : subsetTransactions)
-        // 	System.out.print(i + " ");
-        // System.out.println();
-        // System.out.println("Subset Transactions (dec): ");
+        //  System.out.print(i + " ");
+        // //System.out.println();
+
+        // //System.out.println("Subset Transactions (dec): ");
         // for(Integer i : subsetTransactionsDecimal)
-        // 	System.out.print(i + " ");
-        // System.out.println();
+        //  System.out.print(i + " ");
+        // //System.out.println();
+
+
         for (int i = 0; i < classValueCount; i++) {
 
             DotProductInteger dp = new DotProductInteger(
                     Arrays.asList(subsetTransactionsDecimal),
-                    classValueTransactionVectorDecimal.get(i), decimalTiShares,
+                    classValueTransactionVectorInteger.get(i), decimalTiShares,
                     pidMapper, commonSender, new LinkedList<>(protocolIdQueue),
-                    clientId, prime, pid, asymmetricBit, partyCount);
+                    clientId, datasetSizePrime, pid, asymmetricBit, partyCount, threadID);
 
             Future<Integer> dpresult = es.submit(dp);
-            pid++;
+            incrementPid();
 
             DPtaskList.add(dpresult);
         }
@@ -806,18 +896,18 @@ public class DecisionTreeTraining extends Model {
             s[i] = dpresult.get();
         }
 
-        for (int i = 0; i < classValueCount; i++) {
+        /*for (int i = 0; i < classValueCount; i++) {
             System.out.println("Tranactions w/ c.v. [" + i + "]: " + s[i]);
-        }
+        }*/
 
         List<Future<List<Integer>>> BDtaskList = new ArrayList<>();
         for (int i = 0; i < classValueCount; i++) {
             BitDecomposition bitD = new BitDecomposition(s[i], binaryTiShares,
-                    asymmetricBit, bitLength, pidMapper, commonSender,
+                    asymmetricBit, datasetSizeBitLength, pidMapper, commonSender,
                     new LinkedList<>(protocolIdQueue), clientId,
-                    Constants.BINARY_PRIME, pid, partyCount);
+                    Constants.BINARY_PRIME, pid, partyCount, threadID);
             BDtaskList.add(es.submit(bitD));
-            pid++;
+            incrementPid();
         }
 
         List<List<Integer>> bitSharesS = new ArrayList<>();
@@ -826,44 +916,128 @@ public class DecisionTreeTraining extends Model {
             bitSharesS.add(taskResponse.get());
         }
 
-        for (int i = 0; i < classValueCount; i++) {
-            System.out.print("Bit decomp of c.v. [" + i + "] count: ");
-            for (int j = 0; j < bitLength; j++) {
-                System.out.print(bitSharesS.get(i).get(j) /* + " "*/);
-            }
-            System.out.println();
-        }
+        //for (int i = 0; i < classValueCount; i++) {
+        //  System.out.print("Bit decomp of c.v. [" + i + "] count: ");
+        //  for (int j = 0; j < datasetSizeBitLength; j++) {
+        //      System.out.print(bitSharesS.get(i).get(j) /* + " "*/);
+        //  }
+        //  System.out.println();
+        //}
 
         ArgMax argmax = new ArgMax(bitSharesS, binaryTiShares, asymmetricBit,
                 pidMapper, commonSender, new LinkedList<>(protocolIdQueue),
-                clientId, Constants.BINARY_PRIME, pid, partyCount);
-        pid++;
+                clientId, Constants.BINARY_PRIME, pid, partyCount, threadID);
+        incrementPid();
         Integer[] majorityClassIndex = argmax.call();
 
-        System.out.print("One Hot Common Class Index: ");
-        for (Integer i : majorityClassIndex) {
-            System.out.print(i /*+ " "*/);
-        }
-        System.out.println();
+        //System.out.print("One Hot Common Class Index: ");
+        //for (Integer i : majorityClassIndex)
+        //  System.out.print(i /*+ " "*/);
+        //System.out.println();
 
         es.shutdown();
 
-        return majorityClassIndex;
+        return convertToByteArray(majorityClassIndex, null);
     }
+    //   Byte[] findCommonClassIndex(Byte[] subsetTransactions)
+    //      throws InterruptedException, ExecutionException {
+
+    //      BigInteger[] s = new BigInteger[classValueCount];
+
+    //      BigInteger[] subsetTransactionsDecimal =
+    //          CompareAndConvertField.changeBinaryToBigIntegerField(
+    //              Arrays.asList(subsetTransactions), bigIntTiShares,
+    //              pid, pidMapper, commonSender, protocolIdQueue, asymmetricBit,
+    //              clientId, prime, partyCount, threadID);
+    //      incrementPid();
+
+    //      //System.out.println("Subset Transactions (bin): ");
+    //      for(Byte i : subsetTransactions) System.out.print(i + " ");
+    //      //System.out.println();
+    //      //System.out.println("Subset Transactions (dec): ");
+    //      for(BigInteger i : subsetTransactionsDecimal) System.out.print(i + " ");
+    //      //System.out.println();
+
+    //       ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
+    //       List<Future<BigInteger>> DPtaskList = new ArrayList<>();
+
+    //      for(int i=0; i<classValueCount; i++) {
+
+    //          DotProductBigInteger dp = new DotProductBigInteger(
+    //              Arrays.asList(subsetTransactionsDecimal),
+    //              classValueTransactionVectorBigInteger.get(i), bigIntTiShares,
+    //              pidMapper, commonSender, new LinkedList<>(protocolIdQueue),
+    //              clientId, prime, pid, asymmetricBit, partyCount, threadID);
+
+    //          Future<BigInteger> dpresult = es.submit(dp);
+    //          incrementPid();
+
+    //          DPtaskList.add(dpresult);
+    //      }
+
+    //      for(int i=0; i<classValueCount; i++) {
+    //          Future<BigInteger> dpresult = DPtaskList.get(i);
+    //          s[i] = dpresult.get();
+    //      }
+
+    //      for(int i=0; i<classValueCount; i++)
+    //        //System.out.println("Tranactions w/ c.v. ["+i+"]: "+s[i]);
+
+    // List<Future<List<Integer>>> BDtaskList = new ArrayList<>();
+    // for(int i=0; i<classValueCount; i++) {
+    //  BitDecompositionBigInteger bitD = new BitDecompositionBigInteger(
+    //               s[i], binaryTiShares, asymmetricBit, bitLength, pidMapper,
+    //               commonSender, new LinkedList<>(protocolIdQueue), clientId,
+    //      Constants.BINARY_PRIME, pid, partyCount, threadID);
+    //           BDtaskList.add(es.submit(bitD));
+    //  incrementPid();
+    // }
+
+    // List<List<Integer>> bitSharesS = new ArrayList<>();
+    // for(int i=0; i<classValueCount; i++) {
+    //  Future<List<Integer>> taskResponse = BDtaskList.get(i);
+    //  bitSharesS.add(taskResponse.get());
+    // }
+
+    // for(int i=0; i<classValueCount; i++) {
+    //  System.out.print("Bit decomp of c.v. ["+i+"] count: ");
+    //  for(int j=0; j<bitLength; j++) {
+    //      System.out.print(bitSharesS.get(i).get(j) /* + " "*/);
+    //  } //System.out.println();
+    // }
+
+    //       ArgMax argmax = new ArgMax(bitSharesS, binaryTiShares, asymmetricBit,
+    //  pidMapper, commonSender, new LinkedList<>(protocolIdQueue),
+    //  clientId, Constants.BINARY_PRIME, pid, partyCount, threadID);
+    // incrementPid();
+    // Integer[] majorityClassIndex = argmax.call();
+
+    // System.out.print("One Hot Common Class Index: ");
+    // for(Integer i : majorityClassIndex)
+    //  System.out.print(i /*+ " "*/);
+    // //System.out.println();
+
+    //      es.shutdown();
+
+    //       Byte[] majorityClassIndexByte = new Byte[classValueCount];
+    //       for(int i=0; i<classValueCount; i++) {
+    //           majorityClassIndexByte[i] = majorityClassIndex[i].byteValue();
+    //       }
+
+    //      return majorityClassIndexByte;
+    //   }
 
     void init() throws InterruptedException, ExecutionException {
 
-        subsetTransactionBitVector = new Integer[datasetSize];
+        this.subsetTransactionBitVector = new Byte[datasetSize];
 
-        for (int i = 0; i < datasetSize; i++) {
-            subsetTransactionBitVector[i] = asymmetricBit;
-        }
+        for (int i = 0; i < datasetSize; i++)
+            subsetTransactionBitVector[i] = Byte.valueOf((byte) asymmetricBit);
 
-        attributeBitVector = new Integer[attrCount];
+        this.attributeBitVector = new Byte[attrCount];
 
-        for (int i = 0; i < attrCount; i++) {
+        for (int i = 0; i < attrCount; i++)
             attributeBitVector[i] = 1;
-        }
 
         attributeValueTransactionVector = new ArrayList<>();
 
@@ -875,38 +1049,78 @@ public class DecisionTreeTraining extends Model {
             }
         }
 
-        classValueTransactionVector = new ArrayList<>();
+        this.classValueTransactionVector = new ArrayList<>();
 
         for (int i = 0; i < classValues.length; i++) {
             classValueTransactionVector.add(Arrays.asList(classValues[i]));
         }
 
-        attributeValueTransactionVectorDecimal = new ArrayList<>();
+        this.attributeValueTransactionVectorInteger = new ArrayList<>();
+        this.attributeValueTransactionVectorBigInteger = new ArrayList<>();
+
         for (int i = 0; i < attrCount; i++) {
-            attributeValueTransactionVectorDecimal.add(new ArrayList<>());
+
+            attributeValueTransactionVectorInteger.add(new ArrayList<>());
+            attributeValueTransactionVectorBigInteger.add(new ArrayList<>());
+
             for (int j = 0; j < attrValueCount; j++) {
-                attributeValueTransactionVectorDecimal.get(i).add(Arrays.asList(
+
+
+                attributeValueTransactionVectorInteger.get(i).add(Arrays.asList(
                         CompareAndConvertField.changeBinaryToDecimalField(
-                                attributeValueTransactionVector.get(i).get(j),
+                                convertToIntList(null, attributeValueTransactionVector.get(i).get(j)),
                                 decimalTiShares, pid, pidMapper, commonSender,
+                                protocolIdQueue, asymmetricBit, clientId, datasetSizePrime,
+                                partyCount, threadID)));
+                incrementPid();
+
+                attributeValueTransactionVectorBigInteger.get(i).add(Arrays.asList(
+                        CompareAndConvertField.changeBinaryToBigIntegerField(
+                                attributeValueTransactionVector.get(i).get(j),
+                                bigIntTiShares, pid, pidMapper, commonSender,
                                 protocolIdQueue, asymmetricBit, clientId, prime,
-                                partyCount)));
-                pid++;
+                                partyCount, threadID)));
+                incrementPid();
             }
         }
 
-        classValueTransactionVectorDecimal = new ArrayList<>();
+        classValueTransactionVectorInteger = new ArrayList<>();
+        classValueTransactionVectorBigInteger = new ArrayList<>();
+
+        //System.out.println("DatasetSize prime: " + datasetSizePrime);
         for (int i = 0; i < classValueCount; i++) {
-            classValueTransactionVectorDecimal.add(Arrays.asList(
+
+            //System.out.print("Class Value [" + i + "] (Byte): ");
+            //for (int j = 0; j < datasetSize; j++) {
+            //  System.out.print(classValueTransactionVector.get(i).get(j));
+            //}
+            //System.out.println();
+            //System.out.print("Class Value [" + i + "]  (Int): ");
+            //List<Integer> temp = convertToIntList(null, classValueTransactionVector.get(i));
+            //for (int j = 0; j < datasetSize; j++) {
+            //  System.out.print(temp.get(j));
+            //}
+            //System.out.println();
+
+
+            classValueTransactionVectorInteger.add(Arrays.asList(
                     CompareAndConvertField.changeBinaryToDecimalField(
-                            classValueTransactionVector.get(i), decimalTiShares,
+                            convertToIntList(null, classValueTransactionVector.get(i)),
+                            decimalTiShares, pid, pidMapper, commonSender,
+                            protocolIdQueue, asymmetricBit, clientId, datasetSizePrime,
+                            partyCount, threadID)));
+            incrementPid();
+
+            classValueTransactionVectorBigInteger.add(Arrays.asList(
+                    CompareAndConvertField.changeBinaryToBigIntegerField(
+                            classValueTransactionVector.get(i), bigIntTiShares,
                             pid, pidMapper, commonSender, protocolIdQueue,
-                            asymmetricBit, clientId, prime, partyCount)));
-            pid++;
+                            asymmetricBit, clientId, prime, partyCount, threadID)));
+            incrementPid();
         }
     }
 
-    void initalizeModelVariables(String[] args) {
+    void initializeModelVariables(String[] args) {
 
         for (String arg : args) {
 
@@ -930,27 +1144,65 @@ public class DecisionTreeTraining extends Model {
                         this.attrCount = dimensions[1];
                         this.attrValueCount = dimensions[2];
                         this.datasetSize = dimensions[3];
+                        if (this.featureSelections != null) {
+                            int attrSelected = 0;
+                            for (Integer integer : featureSelections) {
+                                attrSelected += integer;
+                            }
+                            this.attrCount = attrSelected;
+                        }
+                        if (this.sampleSelections != null) {
+                            int sampleSelected = 0;
+                            for (Integer integer : sampleSelections) {
+                                sampleSelected += integer;
+                            }
+                            this.datasetSize = sampleSelected;
+                        }
 
-                        this.attrValues
-                                = new Integer[attrCount][attrValueCount][datasetSize];
+                        this.attrValues =
+                                new Byte[this.attrCount][this.attrValueCount][this.datasetSize];
 
-                        for (int i = 0; i < attrCount; i++) {
-                            for (int j = 0; j < attrValueCount; j++) {
-                                String[] temp = new String[datasetSize];
-                                temp = s.nextLine().split(",");
-                                for (int k = 0; k < datasetSize; k++) {
-                                    attrValues[i][j][k] = Integer.parseInt(temp[k]);
+                        int attrSelectedCount = 0;
+                        for (int i = 0; i < dimensions[1]; i++) {
+                            boolean attrSelected = true;
+                            if (this.featureSelections != null) {
+                                attrSelected = this.featureSelections.get(i) == 1;
+                            }
+                            if (attrSelected) {
+                                for (int j = 0; j < this.attrValueCount; j++) {
+                                    String[] temp;
+                                    temp = s.nextLine().split(",");
+                                    int sampleSelectedCount = 0;
+                                    for (int k = 0; k < dimensions[3]; k++) {
+                                        int sampleSelectedTimes = 1;
+                                        if (this.sampleSelections != null) {
+                                            sampleSelectedTimes = this.sampleSelections.get(k);
+                                        }
+                                        for (int n = 0; n < sampleSelectedTimes; n++) {
+                                            this.attrValues[attrSelectedCount][j][sampleSelectedCount] = Byte.valueOf(temp[k]);
+                                            sampleSelectedCount += 1;
+                                        }
+                                    }
                                 }
+                                attrSelectedCount += 1;
                             }
                         }
 
-                        this.classValues = new Integer[classValueCount][datasetSize];
+                        this.classValues = new Byte[this.classValueCount][this.datasetSize];
 
-                        for (int i = 0; i < classValueCount; i++) {
+                        for (int i = 0; i < this.classValueCount; i++) {
                             String[] temp = new String[datasetSize];
                             temp = s.nextLine().split(",");
-                            for (int j = 0; j < datasetSize; j++) {
-                                classValues[i][j] = Integer.parseInt(temp[j]);
+                            int sampleSelectedCount = 0;
+                            for (int j = 0; j < dimensions[3]; j++) {
+                                int sampleSelectedTimes = 1;
+                                if (this.sampleSelections != null) {
+                                    sampleSelectedTimes = this.sampleSelections.get(j);
+                                }
+                                for (int n = 0; n < sampleSelectedTimes; n++) {
+                                    this.classValues[i][sampleSelectedCount] = Byte.valueOf(temp[j]);
+                                    sampleSelectedCount += 1;
+                                }
                             }
                         }
 
@@ -960,7 +1212,9 @@ public class DecisionTreeTraining extends Model {
                     }
 
                     break;
-
+                case "maxDepth":
+                    this.levelCounter = Integer.parseInt(value);
+                    break;
                 case "output":
                     //TODO: add output path
                     break;
@@ -972,17 +1226,15 @@ public class DecisionTreeTraining extends Model {
     public String toString() {
 
         String ret = "attrCount=" + attrCount + ", attrValueCount=" + attrValueCount
-                + ", classValueCount=" + classValueCount + ", datasetSize="
-                + datasetSize + "\n\nattrValues:\n";
+                + ", classValueCount=" + classValueCount + ", datasetSize=" +
+                datasetSize + "\n\nattrValues:\n";
 
         for (int i = 0; i < attrCount; i++) {
             for (int j = 0; j < attrValueCount; j++) {
                 for (int k = 0; k < datasetSize; k++) {
                     ret += attributeValueTransactionVector.get(i).get(j).get(k) /*+ " "*/;
                 }
-                if (j < attrValueCount - 1) {
-                    ret += "; ";
-                }
+                if (j < attrValueCount - 1) ret += "; ";
             }
             ret += "\n";
         }
@@ -991,29 +1243,152 @@ public class DecisionTreeTraining extends Model {
             for (int j = 0; j < datasetSize; j++) {
                 ret += classValueTransactionVector.get(i).get(j) /*+ " "*/;
             }
-            if (i < classValueCount - 1) {
-                ret += "; ";
-            };
+            if (i < classValueCount - 1) ret += "; ";
+            ;
         }
-        // ret += "\n\nattrValues(dec):\n";
-        // for(int i=0; i<attrCount; i++) {
-        // 	for(int j=0; j<attrValueCount; j++) {
-        // 		for(int k=0; k<datasetSize; k++) {
-        // 			ret+=attributeValueTransactionVectorDecimal.get(i).get(j).get(k) + " ";
-        // 		}
-        // 		if(j < attrValueCount-1) ret += "; ";
-        // 	}
-        // 	ret += "\n";
-        // }
-        // ret += "\nclassValues(dec):\n";
-        // for(int i=0; i<classValueCount; i++) {
-        // 	for(int j=0; j<datasetSize; j++) {
-        // 		ret+=classValueTransactionVectorDecimal.get(i).get(j) + " ";
-        // 	}
-        // 	if(i < classValueCount-1) ret += "; ";
-        // }
+        ret += "\n\nattrValues(dec):\n";
+        for (int i = 0; i < attrCount; i++) {
+            for (int j = 0; j < attrValueCount; j++) {
+                for (int k = 0; k < datasetSize; k++) {
+                    ret += attributeValueTransactionVectorInteger.get(i).get(j).get(k) + " ";
+                }
+                if (j < attrValueCount - 1) ret += "; ";
+            }
+            ret += "\n";
+        }
+        ret += "\nclassValues(dec):\n";
+        for (int i = 0; i < classValueCount; i++) {
+            for (int j = 0; j < datasetSize; j++) {
+                ret += classValueTransactionVectorInteger.get(i).get(j) + " ";
+            }
+            if (i < classValueCount - 1) ret += "; ";
+        }
 
         return ret + "\n";
+    }
+
+
+    private static List<Integer> convertToIntList(Byte[] arr, List<Byte> list) {
+
+        List<Integer> ret = new ArrayList<>();
+
+        if (arr != null && list == null) {
+
+            for (Byte el : arr)
+                ret.add(el.intValue());
+
+        } else if (arr == null && list != null) {
+
+            for (int i = 0; i < list.size(); i++) {
+                ret.add(list.get(i).intValue());
+            }
+
+
+        } else {
+
+            System.out.println("CONVERT_TO_INT_LIST: Bad parameters");
+        }
+        return ret;
+
+    }
+
+    private static Integer[] convertToIntArr(Byte[] arr, List<Byte> list) {
+
+        Integer[] ret = null;
+
+        if (arr != null && list == null) {
+
+            ret = new Integer[arr.length];
+
+            for (int i = 0; i < arr.length; i++)
+                ret[i] = arr[i].intValue();
+
+        } else if (arr == null && list != null) {
+
+            ret = new Integer[list.size()];
+
+            for (int i = 0; i < list.size(); i++)
+                ret[i] = list.get(i).intValue();
+
+        } else {
+
+            System.out.println("CONVERT_TO_INT_LIST: Bad parameters");
+        }
+        return ret;
+
+    }
+
+    private static List<Byte> convertToByteList(Integer[] arr, List<Integer> list) {
+
+        List<Byte> ret = new ArrayList<>();
+
+        if (arr != null && list == null) {
+
+            for (Integer el : arr)
+                ret.add(el.byteValue());
+
+        } else if (arr == null && list != null) {
+
+            for (int i = 0; i < list.size(); i++)
+                ret.add(list.get(i).byteValue());
+
+        } else {
+
+            System.out.println("CONVERT_TO_BYTE_LIST: Bad parameters");
+        }
+        return ret;
+
+    }
+
+    private static Byte[] convertToByteArray(Integer[] arr, List<Integer> list) {
+
+        Byte[] ret = null;
+
+        if (arr != null && list == null) {
+
+            ret = new Byte[arr.length];
+
+            for (int i = 0; i < arr.length; i++)
+                ret[i] = arr[i].byteValue();
+
+        } else if (arr == null && list != null) {
+
+            ret = new Byte[list.size()];
+
+            for (int i = 0; i < list.size(); i++)
+                ret[i] = list.get(i).byteValue();
+
+        } else {
+
+            System.out.println("CONVERT_TO_BYTE_ARR: Bad parameters");
+        }
+        return ret;
+
+    }
+
+
+    private static List<Byte> convertBigIntToByteList(BigInteger[] arr, List<BigInteger> list) {
+
+        List<Byte> ret = new ArrayList<>();
+
+        if (arr != null && list == null) {
+
+            for (BigInteger el : arr) {
+                //System.out.println("BigInt:" + el);
+                ret.add(el.byteValue());
+            }
+
+        } else if (arr == null && list != null) {
+
+            for (int i = 0; i < list.size(); i++)
+                ret.add(list.get(i).byteValue());
+
+        } else {
+
+            System.out.println("CONVERT_TO_BYTE_LIST: Bad parameters");
+        }
+        return ret;
+
     }
 
 }

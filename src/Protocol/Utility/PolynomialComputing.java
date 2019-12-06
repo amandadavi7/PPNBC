@@ -58,10 +58,10 @@ public class PolynomialComputing extends CompositeProtocol implements Callable<I
             Queue<Integer> protocolIdQueue,
             ConcurrentHashMap<Queue<Integer>, BlockingQueue<Message>> pidMapper,
             BlockingQueue<Message> senderQueue,
-            int protocolID, int clientId, int asymmetricBit, int partyCount) {
+            int protocolID, int clientId, int asymmetricBit, int partyCount,int threadID) {
 
         super(protocolID, pidMapper, senderQueue, protocolIdQueue, clientId,
-                asymmetricBit, partyCount);
+                asymmetricBit, partyCount,threadID);
 
         this.level = depth;
         nodeIndex = 1;
@@ -99,7 +99,7 @@ public class PolynomialComputing extends CompositeProtocol implements Callable<I
                         pidMapper, senderQueue,
                         new LinkedList<>(protocolIdQueue), clientID,
                         Constants.BINARY_PRIME, pid, asymmetricBit, protocolId,
-                        partyCount);
+                        partyCount,threadID);
 
                 Future<Integer[]> task = es.submit(mults);
                 taskList.add(task);
