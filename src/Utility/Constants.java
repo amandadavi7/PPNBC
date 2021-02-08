@@ -54,6 +54,7 @@ public class Constants {
         Properties prop = new Properties();
         Properties defaultProperty = new Properties();
         InputStream input = ClassLoader.getSystemClassLoader().getResourceAsStream(DEFAULT_PROPERTIES);
+
         try {
             defaultProperty.load(input);
         } catch (IOException ex) {
@@ -63,6 +64,7 @@ public class Constants {
         try {
             // LOAD custom properties file first
             String propertyPath = System.getProperty(CONFIG_FILE);
+ //           System.out.println(propertyPath);
             if (propertyPath != null) {
                 final FileInputStream in = new FileInputStream(propertyPath);
                 prop.load(in);

@@ -76,7 +76,6 @@ public class OR_XOR extends CompositeProtocol implements Callable<Integer[]> {
     @Override
     public Integer[] call() throws InterruptedException, ExecutionException {
         Integer[] output = new Integer[bitLength];
-        //System.out.println("x=" + xShares + " y=" + yShares);
         ExecutorService es = Executors.newFixedThreadPool(Constants.THREAD_COUNT);
 
         List<Future<Integer[]>> taskList = new ArrayList<>();
@@ -112,11 +111,10 @@ public class OR_XOR extends CompositeProtocol implements Callable<Integer[]> {
             int prodLen = products.length;
             for (int j = 0; j < prodLen; j++) {
                 output[globalIndex] = Math.floorMod(xShares.get(globalIndex) + yShares.get(globalIndex)
-                        - (constantMultiplier * products[j]), prime);
+                        - (constantMultiplier * products[j]), prime); 
                 globalIndex++;
             }
-        }
-
+        }       
         return output;
     }
 

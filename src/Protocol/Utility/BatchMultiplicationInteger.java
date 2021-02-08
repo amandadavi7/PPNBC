@@ -87,7 +87,7 @@ public class BatchMultiplicationInteger extends BatchMultiplication
                 e.set(j, Math.floorMod(e.get(j) + diffList.get(j).get(1), prime));
             }
         }
-
+        
         for (int i = 0; i < batchSize; i++) {
             int D = Math.floorMod(x.get(i) - tiShares.get(i).u + d.get(i), prime);
             int E = Math.floorMod(y.get(i) - tiShares.get(i).v + e.get(i), prime);
@@ -95,10 +95,10 @@ public class BatchMultiplicationInteger extends BatchMultiplication
                     + (tiShares.get(i).u * E) + (D * E * asymmetricBit);
             product = Math.floorMod(product, prime);
             products[i] = product;
+
         }
-
+        
         return products;
-
     }
 
     /**

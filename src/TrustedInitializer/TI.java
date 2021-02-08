@@ -106,9 +106,9 @@ public class TI {
         System.out.println("Generated shares");
 
         try {
-            sendShares();
+           sendShares();
         } catch (IOException ex) {
-            Logger.getLogger(TI.class.getName()).log(Level.SEVERE, null, ex);
+           Logger.getLogger(TI.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 

@@ -78,20 +78,20 @@ public class BitDecomposition extends CompositeProtocol implements
         List<Integer> temp = decimalToBinary(this.input);
         List<Integer> temp0 = new ArrayList<>(Collections.nCopies(bitLength, 0));
         int diff = Math.abs(bitLength - temp.size());
-
+        
         for (int i = 0; i < diff; i++) {
             temp.add(0);
         }
-
+        
         // TODO - client ID - change to zero indexed
         for (int i = 0; i < partyCount; i++) {
             if (i + 1 == clientId) {
                 inputShares.add(temp);
-            } else {
+            } else {                             
                 inputShares.add(temp0);
             }
-        }
-
+       }
+             
         this.tiShares = tiShares;
         tiStartIndex = 0;
         eShares = new Integer[bitLength];
@@ -119,7 +119,6 @@ public class BitDecomposition extends CompositeProtocol implements
         int first_c_share = bitMultiplication(inputShares.get(0).get(0),
                 inputShares.get(1).get(0));
         cShares[0] = Math.floorMod(first_c_share, prime);
-
         computeDShares();
         for (int i = 1; i < bitLength; i++) {
             computeVariables(i);
@@ -156,7 +155,7 @@ public class BitDecomposition extends CompositeProtocol implements
         int multiplication_result = -1;
 
         ExecutorService es = Executors.newSingleThreadExecutor();
-
+        
         //compute local shares of d and e and add to the message queue
         MultiplicationByte multiplicationModule
                 = new MultiplicationByte(first_bit, second_bit,
@@ -170,7 +169,7 @@ public class BitDecomposition extends CompositeProtocol implements
         Future<Integer> multiplicationTask = es.submit(multiplicationModule);
         es.shutdown();
         multiplication_result = multiplicationTask.get();
-
+      
         return multiplication_result;
     }
 
@@ -225,7 +224,7 @@ public class BitDecomposition extends CompositeProtocol implements
             // Iterate through each batch to do computations and save values in dShares
             for (Integer d_batch1 : d_batch) {
                 int d = d_batch1 + asymmetricBit;
-                dShares[globalIndex++] = Math.floorMod(d, prime);
+                dShares[globalIndex++] = Math.floorMod(d, prime);                
             }
         }
 

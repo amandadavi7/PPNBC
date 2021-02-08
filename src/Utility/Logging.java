@@ -32,6 +32,15 @@ public class Logging {
         System.out.println("");
     }
     
+        public static void logShares_Amanda(ArrayList<Integer> shares) {
+        int n = 0;
+        shares.forEach((share) -> {
+            System.out.print(share + " ");
+        });
+        System.out.println("");
+    }
+    
+    
     /**
      * Log matrix
      *

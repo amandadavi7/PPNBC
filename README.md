@@ -1,9 +1,9 @@
 
-# Lynx: A Framework for Privacy Preserving Machine Learning
+# Privacy-Preserving Machine Learning Classifier
 
-Lynx is a framework to do privacy preserving machine learning. It helps the users with sensitive information to apply various machine learning models without other users or the server getting to know any information on the data. This framework uses secure multiparty computation, a field of cryptography where parties compute a mathematical function on the inputs without getting to know the inputs by working on shares of the inputs. The framework uses beavers triples to create a randomization to ensure the security of the data. The framework supports honest-but-curious security model. The architecture looks like follows:  
+## Privacy-Preserving Naive Bayes Classifier (PPNBC)
 
-![Lynx Architecture](doc/lynx_architecture.png)
+This is a java version of the PPNBC protocol presented in [1].
 
 ## Prerequisites
 
@@ -13,89 +13,91 @@ The framework uses Java (>=1.8). Ensure that JDK and JRE are installed.
 
 To install the framework,
 
-1. Clone the repository to the workspace
+1.  Clone a copy of the main git repository by running:
+
+	```
+	git clone git://github.com/amandadavi7/PPNBC
+	```
+		
 2. Build it:
 	a) Run make to build and generate the class files
 	b) Run make jar to generate class files and create JAR files
 3. Four Executable Jar files will be created in the build directory: Party.jar, BA.jar, TI.jar and Client.jar
 
-## Running
+### Executing the Code
 
-The framework needs a machine for the Trusted Initializer, a machine for the Broadcast Agent, and a machine for each party (minimum 2 parties)
+The framework needs a terminal for the Trusted Initializer, a terminal for the Broadcast Agent, and a terminal for each party (minimum 2 parties)
 
-In order to run the framework, run the following commands to trigger each process in the respective machines:
+In order to run the framework, run the following commands to trigger each process in the respective terminal:
 
- - Trusted Initializer:
+ - Trusted Initializer: The trusted initializer generates the Beavers Triples randomly and distributes the shares to the parties to introduce randomness.
 
-The trusted initializer generates the Beavers Triples randomly and distributes the shares to the parties to introduce randomness.
-
-```  
-
-java -Dconfig.properties=config.properties -jar TI.jar port=<TI-Port> partyCount=<number of parties> decimal=<No. of Integer Triples> binary=<No. of Binary Triples (For bits)> real=<No. of Big Integer Triples (For real numbers)> truncation=<No. of Big Integer Pairs (For real numbers)>  
-
+#### Template
+```
+java -Dconfig.properties=config.properties -jar TI.jar port=<TI-Port> partyCount=<number of parties> decimal=<No. of Integer Triples> binary=<No. of Binary Triples (For bits)> real=<No. of Big Integer Triples (For real numbers)> truncation=<No. of Big Integer Pairs (For real numbers)>
 ```
 
- - Broadcast Agent:
+#### Example to run
 
-The broadcast agent broadcasts the messages received from each party to all the other parties.
-
-```  
-
-java -Dconfig.properties=config.properties -jar BA.jar port=<BA Port> partyCount=<number of parties>  
-
+``` 
+java -Dconfig.properties=../src/resources/config.properties -jar TI.jar port=4000 partyCount=2 decimal=1000 binary=1000 real=0 truncation=0
 ```
 
- - Party:
+ - Broadcast Agent: The broadcast agent broadcasts the messages received from each party to all the other parties.
+#### Template
 
-The servers that executes the main model:
+``` 
+java -Dconfig.properties=config.properties -jar BA.jar port=<BA Port> partyCount=<number of parties>
+```
+#### Example to run
 
 ```
-  
-java -Dconfig.properties=config.properties -jar Party.jar party_port=<Party Port> ti=<TrustedInitializer-IP>:<TrustedInitializer-Port> ba=<BroadcastAgent-IP>:<BroadcastAgnet-Port> party_id=<Party-ID> partyCount=<number of parties> model=<model-name> assymetricBit=<0 or 1 - This value should be 1 for one party and 0 for all the other parties> <All model specific inputs - Refer model specific wiki pages for details>  
-
+java -Dconfig.properties=config.properties -jar BA.jar port=6000 partyCount=2
 ```
 
- - Client:
- 
- The data owner that splits the into #Party shares and stores the data in csv files.
- 
-```
+ - Party: The parties that execute the main model:
 
-java -Dconfig.properties=config.properties -jar Client.jar ShareDistribution partyCount=<number of parties> sourceFile=<input file path> destPath=<output path>
+#### Template
 
 ```
-
-## Documentation
-
-The code documentation is present at: https://uwtppml.bitbucket.io/  
-
-Detailed wiki can be found at: https://bitbucket.org/uwtppml/lynx/wiki/Home
-
-## Troubleshooting
-
-The default logging level is INFO throughtout the framework. In order to print more information and get detailed, intermediate results, run the commands with `-Djava.util.logng.config.file=config.properties`. For eg:
-
-```
-  
-java -Djava.util.logng.config.file=config.properties -Dconfig.properties=config.properties -jar Party.jar party_port=<Party Port> ti=<TrustedInitializer-IP:TrustedInitializer-Port> ba=<BroadcastAgent-IP:BroadcastAgnet-Port> party_id=<Party-ID> partyCount=<number of parties> model=<model-ID> assymetricBit=<0 or 1 - This value should be 1 for one party and 0 for all the other parties> <All model specific inputs - Refer model specific wiki pages for details>
-  
+java -Dconfig.properties=config.properties -jar Party.jar party_port=<Party Port> ti=<TrustedInitializer-IP>:<TrustedInitializer-Port> ba=<BroadcastAgent-IP>:<BroadcastAgnet-Port> party_id=<Party-ID> partyCount=<number of parties> hashLength<number of bits of each word> numberClasses<number of classes> model=<model-name> assymetricBit=<0 or 1 - This value should be 1 for one party and 0 for all the other parties> probWord=<CSV file with the secret share of the probabilities of each word> probClass<CSV file with the secret share of the probabilities of each class (spam/ham)> featureShares <CSV file with the secret share of each word in the dictionary> privateDocumentShares=<CSV file with the secret share of each word in an sms> 
 ```
 
-Also the config file should have the following properties:
+#### Example to run in two terminals
+
 ```
-  
-.level=FINE
-handlers=java.util.logging.FileHandler, java.util.logging.ConsoleHandler
-java.util.logging.ConsoleHandler.level=FINE
-  
+java -Dconfig.properties=../src/resources/config.properties -jar Party.jar party_port=3000 ti=127.0.0.1:4000 ba=127.0.0.1:6000 party_id=1 partyCount=2 hashLength=14 numberClasses=2 model=NaiveBayesScoring asymmetricBit=0 probWord=../data_example/l_probs_0.csv probClass=../data_example/class_priors_0.csv featureShares=../data_example/word_training0.csv privateDocumentShares=../data_example/word_example0.csv 
 ```
 
-## Acknowledgments
+```
+java -Dconfig.properties=../src/resources/config.properties -jar Party.jar party_port=500 ti=127.0.0.1:4000 ba=127.0.0.1:6000 party_id=1 partyCount=2 hashLength=14 numberClasses=2 model=NaiveBayesScoring asymmetricBit=1 probWord=../data_example/l_probs_1.csv probClass=../data_example/class_priors_1.csv featureShares=../data_example/word_training1.csv privateDocumentShares=../data_example/word_example1.csv 
+```
 
-We would like to thank our professors, who guided us in building this framework.
+#### Output
 
-Professor Martine De Cock, University of Washington, Tacoma
-http://faculty.washington.edu/mdecock/
+This should print the following output in the one terminal: 
 
-Professor Anderson Nascimento, University of Washington, Tacoma, http://directory.tacoma.uw.edu/employee/andclay
+```
+	PredictedClassLabel: 1
+```
+This should print the following output in the one terminal: 
+```
+	PredictedClassLabel: 1
+```
+or
+
+This should print the following output in the one terminal: 
+```
+	PredictedClassLabel: 0
+```
+This should print the following output in the one terminal: 
+```
+	PredictedClassLabel: 0
+```
+
+The result is (1+1)%2 = 0 or (0+0)%2 = 0. This is a example of a SMS classified as not spam (ham).
+
+### References
+
+[1] Amanda Resende, Davis Railsback, Rafael Dowsley, Anderson Nascimento and Diego Aranha. Fast Privacy-Preserving Text Classification based on Secure Multiparty Computation. In Cryptol. ePrint Arch., 2021.
 

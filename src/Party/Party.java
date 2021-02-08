@@ -6,15 +6,9 @@
 package Party;
 
 import Communication.Message;
-import Model.DecisionTreeScoring;
-import Model.KNNSortAndSwap;
-import Model.KNNThresholdKSelect;
-import Model.LinearRegressionEvaluation;
-import Model.LinearRegressionEvaluationDAMF;
-import Model.LinearRegressionTraining;
+
+import Model.NaiveBayesScoring;
 import Utility.Connection;
-import Model.TestModel;
-import Model.TreeEnsemble;
 import TrustedInitializer.TIShare;
 import Utility.Logging;
 import java.io.IOException;
@@ -227,82 +221,17 @@ public class Party {
      */
     private static void callModel(String[] args) throws InterruptedException, ExecutionException, IOException {
         int modelId = 1;
-        
+               
         switch (modelName) {
-            case "DecisionTreeScoring":
-                // DT Scoring
-                DecisionTreeScoring DTree = new DecisionTreeScoring(asymmetricBit,
-                        pidMapper, senderQueue, partyId, tiShares.binaryShares, 
-                        partyCount, args, protocolIdQueue, modelId);
-                DTree.scoreDecisionTree();
-                break;
-
-            case "LinearRegressionEvaluation":
-                // LR Evaluation
-                LinearRegressionEvaluation regressionEvaluationModel
-                        = new LinearRegressionEvaluation(tiShares.bigIntShares,
-                                tiShares.truncationPair, asymmetricBit,
-                                pidMapper, senderQueue, partyId, partyCount,
-                                args, protocolIdQueue, modelId);
-
-                regressionEvaluationModel.predictValues();
-                break;
-
-            case "LinearRegressionTraining":
-                // LR Training
-                LinearRegressionTraining regressionTrainingModel
-                        = new LinearRegressionTraining(tiShares.bigIntShares,
-                                tiShares.truncationPair, pidMapper, senderQueue, partyId,
-                                asymmetricBit, partyCount, args, protocolIdQueue, modelId);
-
-                regressionTrainingModel.trainModel();
-                break;
                 
-            case "KNNSortAndSwap":
-                // KNN
-                
-                KNNSortAndSwap knnModel = new KNNSortAndSwap(asymmetricBit, pidMapper,
-                        senderQueue, partyId, tiShares.binaryShares, 
-                        tiShares.decimalShares, partyCount, args, protocolIdQueue, modelId);
-        
-                knnModel.runModel();
-                break;
-                
-            case "KNNThresholdKSelect":
-                // KNN threshold K Select (binary search approach)
-                KNNThresholdKSelect knnThresholdSelectModel = new KNNThresholdKSelect(
-                        asymmetricBit, pidMapper, senderQueue, partyId,
-                        tiShares.binaryShares, tiShares.decimalShares, partyCount,
-                        args, protocolIdQueue, modelId);
-                knnThresholdSelectModel.runModel();
-                break;
-                
-            case "TreeEnsemble":
-                //Random Forest
-                TreeEnsemble TEModel = new TreeEnsemble(asymmetricBit, pidMapper,
-                        senderQueue,  partyId, tiShares.binaryShares,
-                        tiShares.decimalShares, partyCount, args, protocolIdQueue, modelId);
-                TEModel.runTreeEnsembles();
-                break;
+            case "NaiveBayesScoring":
+                NaiveBayesScoring bayesScoring = new NaiveBayesScoring(pidMapper, senderQueue, partyId, 
+                        asymmetricBit, partyCount, protocolIdQueue, modelId, args, tiShares.binaryShares, tiShares.decimalShares);
 
-            case "LinearRegressionDAMFPrediction":
-                // LR Evaluation
-                LinearRegressionEvaluationDAMF regressionEvaluationModelDAMF
-                        = new LinearRegressionEvaluationDAMF(asymmetricBit, pidMapper, senderQueue,
-                                partyId, partyCount, args, protocolIdQueue, modelId);
-
-                regressionEvaluationModelDAMF.predictValues();
+                bayesScoring.scoreNaiveBayes();
+                
                 break;
-            
-            default:
-                // test model
-                TestModel testModel = new TestModel(tiShares.binaryShares,
-                        tiShares.decimalShares, tiShares.bigIntShares,
-                        tiShares.truncationPair,
-                        asymmetricBit, pidMapper, senderQueue, partyId,
-                        partyCount, args, protocolIdQueue, modelId);
-                testModel.compute(protocolName);
-                break;
+           
         }
     }
 }

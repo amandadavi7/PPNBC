@@ -77,11 +77,13 @@ public class MultiplicationInteger extends Protocol implements Callable {
             d += diffList.get(0);
             e += diffList.get(1);
         }
-
+       
         d = Math.floorMod(x - tiShares.u + d, prime);
         e = Math.floorMod(y - tiShares.v + e, prime);
+        
         int product = tiShares.w + (d * tiShares.v) + (tiShares.u * e)
                 + (d * e * asymmetricBit);
+        
         product = Math.floorMod(product, prime);
         return product;
 
@@ -91,10 +93,11 @@ public class MultiplicationInteger extends Protocol implements Callable {
      * Bundle the d and e values and add to the sender queue
      */
     private void initProtocol() throws InterruptedException {
+
         List<Integer> diffList = new ArrayList<>();
         diffList.add(Math.floorMod(x - tiShares.u, prime));
         diffList.add(Math.floorMod(y - tiShares.v, prime));
-
+ 
         Message senderMessage = new Message(diffList,
                 clientID, protocolIdQueue);
         senderQueue.put(senderMessage);
